@@ -27,6 +27,7 @@ const I6_WARMUP_ITERATIONS: u32 = 3;
 const I6_MEASURED_ITERATIONS: u32 = 7;
 const I6_REQUIRED_IMPROVEMENT_BASIS_POINTS: u128 = 500;
 const I6_MAXIMUM_REGRESSION_BASIS_POINTS: u128 = 300;
+const I6_MAXIMUM_COMPILE_REGRESSION_BASIS_POINTS: u128 = 300;
 const SCALE_WARMUP_ITERATIONS: u32 = 1;
 const SCALE_MEASURED_ITERATIONS: u32 = 3;
 
@@ -385,9 +386,21 @@ fn compare_i6(
     }
 
     let improvement_basis_points =
-        relative_difference_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+        relative_decrease_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
     let slowdown_basis_points =
-        relative_difference_basis_points(candidate.median_scan_ns, baseline.median_scan_ns);
+        relative_increase_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+    let compile_slowdown_basis_points =
+        relative_increase_basis_points(baseline.median_compile_ns, candidate.median_compile_ns);
+    if compile_slowdown_basis_points > I6_MAXIMUM_COMPILE_REGRESSION_BASIS_POINTS {
+        return Err(format!(
+            "I6 compile regression gate failed for {}: baseline={}ns candidate={}ns slowdown={}.{:02}%",
+            baseline.scenario,
+            baseline.median_compile_ns,
+            candidate.median_compile_ns,
+            compile_slowdown_basis_points / 100,
+            compile_slowdown_basis_points % 100
+        ));
+    }
     match baseline.gate.as_str() {
         "improvement-5-percent"
             if improvement_basis_points < I6_REQUIRED_IMPROVEMENT_BASIS_POINTS =>
@@ -432,15 +445,24 @@ fn compare_i6(
         candidate_median_scan_ns: candidate.median_scan_ns,
         improvement_basis_points,
         slowdown_basis_points,
+        compile_slowdown_basis_points,
         status: "pass",
     })
 }
 
-fn relative_difference_basis_points(larger: u128, smaller: u128) -> u128 {
-    larger
-        .saturating_sub(smaller)
+fn relative_decrease_basis_points(baseline: u128, candidate: u128) -> u128 {
+    baseline
+        .saturating_sub(candidate)
         .saturating_mul(10_000)
-        .checked_div(larger)
+        .checked_div(baseline)
+        .unwrap_or(u128::MAX)
+}
+
+fn relative_increase_basis_points(baseline: u128, candidate: u128) -> u128 {
+    candidate
+        .saturating_sub(baseline)
+        .saturating_mul(10_000)
+        .checked_div(baseline)
         .unwrap_or(u128::MAX)
 }
 
@@ -1249,6 +1271,7 @@ struct I6ComparisonReceipt {
     candidate_median_scan_ns: u128,
     improvement_basis_points: u128,
     slowdown_basis_points: u128,
+    compile_slowdown_basis_points: u128,
     status: &'static str,
 }
 
@@ -1571,6 +1594,22 @@ mod tests {
         // Assert
         assert_eq!(comparison.status, "pass");
         Ok(())
+    }
+
+    #[test]
+    fn i6_comparison_rejects_a_repeatable_compile_regression() {
+        // Prepare
+        let baseline = i6_receipt(100_000_000, "base");
+        let mut candidate = i6_receipt(90_000_000, "candidate");
+        candidate.median_compile_ns = 1_040_000;
+
+        // Test
+        let result = compare_i6(&baseline, &candidate);
+
+        // Assert
+        assert!(
+            matches!(result, Err(message) if message.contains("compile regression gate failed"))
+        );
     }
 
     fn tripwire_receipt(median_scan_ns: u128) -> TripwireReceipt {

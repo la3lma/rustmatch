@@ -2,10 +2,9 @@
 
 ## Status
 
-Predeclared. The benchmark foundation is being established before the cache
-implementation. The exact baseline revision will be the merge commit that
-introduces `state-cache-campaign-v1`; it must be recorded here before cache code
-is written.
+Active. The benchmark foundation was merged before cache implementation. The
+exact baseline revision is frozen below; candidate code may not alter the
+fixtures or admission thresholds.
 
 ## Mechanism under test
 
@@ -20,13 +19,13 @@ experiment but supplies no admission evidence.
 
 ## Baseline and candidate
 
-- Baseline revision: **to be frozen after the benchmark-foundation merge and
-  before cache implementation**.
+- Baseline revision: **`9ef1b17cc6a865f44920c7c4f74f4a44b0b2c8f4`**.
 - Candidate revision: the final I6 implementation commit.
 - Build: `cargo build --locked --release --package rustmatch-bench` for both
   revisions.
 - Runner: the same identified physical runner and allocation for both builds.
-- Comparison command: `scripts/i6-campaign.sh`.
+- Focused comparison command: `scripts/i6-focused-campaign.sh`.
+- Scale command: `scripts/i6-campaign.sh`.
 
 ## Workloads
 
