@@ -40,6 +40,14 @@ const REPETITION_JAVA_RESULTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../compat/expected/java-2.0.0-RC1-ascii-repetition-v1.jsonl"
 ));
+const UTF16_FLAGS_FIXTURES: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/fixtures/utf16-flags-v1.jsonl"
+));
+const UTF16_FLAGS_JAVA_RESULTS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/expected/java-2.0.0-RC1-utf16-flags-v1.jsonl"
+));
 
 fn main() -> ExitCode {
     match run(env::args().skip(1)) {
@@ -64,7 +72,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
     let command = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition>"
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition|verify-utf16-flags>"
                 .to_owned(),
         );
     }
@@ -97,8 +105,15 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
             "ascii-repetition-v1",
             "I4-E1",
         ),
+        Some("verify-utf16-flags") => verify_fixture_set(
+            UTF16_FLAGS_FIXTURES,
+            UTF16_FLAGS_JAVA_RESULTS,
+            "utf16-flags-v1",
+            "utf16-flags-v1",
+            "I5-E1",
+        ),
         _ => Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition>"
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition|verify-utf16-flags>"
                 .to_owned(),
         ),
     }
@@ -177,9 +192,7 @@ fn verify_matched_fixture(fixture: &Fixture, expected: &ExpectedResult) -> Resul
     let matcher = builder
         .build()
         .map_err(|error| format!("{} build failed: {error}", fixture.case_id))?;
-    let input_text = String::from_utf16(&fixture.input_utf16)
-        .map_err(|error| format!("{} has invalid UTF-16 input: {error}", fixture.case_id))?;
-    let input = Utf16Text::from(input_text);
+    let input = Utf16Text::from_units(fixture.input_utf16.clone());
     let mut actual_events = Vec::new();
     matcher
         .scan(&input, |event| {
@@ -321,7 +334,8 @@ mod tests {
     use super::{
         COMPOSITION_FIXTURES, COMPOSITION_JAVA_RESULTS, EvidenceSummary, LITERAL_FIXTURES,
         LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES, PREDICATE_JAVA_RESULTS, REPETITION_FIXTURES,
-        REPETITION_JAVA_RESULTS, run, verify_fixture_set,
+        REPETITION_JAVA_RESULTS, UTF16_FLAGS_FIXTURES, UTF16_FLAGS_JAVA_RESULTS, run,
+        verify_fixture_set,
     };
 
     #[test]
@@ -482,5 +496,40 @@ mod tests {
                 && line.contains("\"status\":\"matched\"")
         ));
         assert!(REPETITION_FIXTURES.contains("pure-zero-width-repetition"));
+    }
+
+    #[test]
+    fn utf16_and_flag_evidence_agrees_with_the_pinned_java_results() -> Result<(), String> {
+        // Prepare
+        let arguments = ["verify-utf16-flags".to_owned()];
+
+        // Test
+        let summary = run(arguments.into_iter())?;
+
+        // Assert
+        assert_eq!(
+            summary,
+            EvidenceSummary {
+                schema_version: 1,
+                evidence_id: "I5-E1",
+                fixture_set: "utf16-flags-v1",
+                matched_cases: 21,
+                rejected_cases: 2,
+                status: "pass",
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn raw_surrogate_fixture_is_not_decoded_through_rust_string() {
+        // Prepare / Test
+        let fixture = UTF16_FLAGS_FIXTURES
+            .lines()
+            .find(|line| line.contains("dot-matches-isolated-surrogates"));
+
+        // Assert
+        assert!(matches!(fixture, Some(line) if line.contains("55296,56320")));
+        assert!(UTF16_FLAGS_JAVA_RESULTS.contains("dot-matches-isolated-surrogates"));
     }
 }

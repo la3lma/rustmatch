@@ -4,10 +4,12 @@
 //! can reuse it across inputs. The current executable slice accepts non-empty
 //! patterns composed of 7-bit ASCII literals, dot, character classes, ranges,
 //! escapes, ASCII shorthand classes, alternation, grouping without capture
-//! semantics, and greedy repetition. Unary and counted quantifiers bind to the
-//! immediately preceding atom or group, and counted bounds are capped at 1,000.
-//! This deliberately bounded language runs through the final-shaped parser,
-//! HIR, shared NFA, database, scan engine, and callback boundaries.
+//! semantics, greedy repetition, and prefix or typed case-insensitive flags.
+//! Inputs and predicates cover exact UTF-16 code units, including isolated
+//! surrogates. Unary and counted quantifiers bind to the immediately preceding
+//! atom or group, and counted bounds are capped at 1,000. This deliberately
+//! bounded language runs through the final-shaped parser, HIR, shared NFA,
+//! database, scan engine, and callback boundaries.
 //!
 //! # Example
 //!
@@ -30,6 +32,7 @@
 #![forbid(unsafe_code)]
 
 mod api;
+mod case_fold;
 mod engine;
 mod error;
 mod hir;
@@ -40,4 +43,4 @@ mod types;
 
 pub use api::{Matcher, MatcherBuilder};
 pub use error::Error;
-pub use types::{Match, PatternId, Utf16Span, Utf16Text};
+pub use types::{Match, PatternFlags, PatternId, Utf16Span, Utf16Text};

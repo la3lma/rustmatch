@@ -10,6 +10,8 @@ const ROADMAP_MARKDOWN: &str = "docs/roadmap.md";
 const ROADMAP_SOURCE: &str = "/tmp/rustmatch-roadmap.mmd";
 const ROADMAP_SVG: &str = "/tmp/rustmatch-roadmap.svg";
 const ORACLE_POM: &str = "compat/java-oracle/pom.xml";
+const CASE_FOLD_TABLE: &str = "compat/expected/java-21-case-fold-v1.bin";
+const CASE_FOLD_MANIFEST: &str = "compat/expected/java-21-case-fold-v1.manifest.json";
 const ORACLE_FIXTURE_SETS: &[OracleFixtureSet] = &[
     OracleFixtureSet {
         label: "ascii-literals-v1",
@@ -35,8 +37,14 @@ const ORACLE_FIXTURE_SETS: &[OracleFixtureSet] = &[
         expected_results: "compat/expected/java-2.0.0-RC1-ascii-repetition-v1.jsonl",
         expected_manifest: "compat/expected/java-2.0.0-RC1-ascii-repetition-v1.manifest.json",
     },
+    OracleFixtureSet {
+        label: "utf16-flags-v1",
+        fixtures: "compat/fixtures/utf16-flags-v1.jsonl",
+        expected_results: "compat/expected/java-2.0.0-RC1-utf16-flags-v1.jsonl",
+        expected_manifest: "compat/expected/java-2.0.0-RC1-utf16-flags-v1.manifest.json",
+    },
 ];
-const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","I2-E1","I3-E1","I4-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-E1","I3-E1","I4-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2","I3-E1","I4-E1"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-E1","I3-E1","I4-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3","I3-E1","I4-E1"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1"]}]}"#;
+const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","java-21-case-fold-v1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-E1","I3-E1","I4-E1","I5-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2","I3-E1","I4-E1","I5-E1"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3","I3-E1","I4-E1","I5-E1"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1"]}]}"#;
 
 struct OracleFixtureSet {
     label: &'static str,
@@ -184,10 +192,34 @@ fn run_evidence_summary() -> Result<(), String> {
     run_predicate_evidence()?;
     run_composition_evidence()?;
     run_repetition_evidence()?;
+    run_utf16_flags_evidence()?;
     run_benchmark_smoke()?;
     eprintln!("==> E0 use-case evidence summary");
     println!("{EVIDENCE_SUMMARY_JSON}");
     Ok(())
+}
+
+fn run_utf16_flags_evidence() -> Result<(), String> {
+    eprintln!("==> I5 UTF-16 and flags differential evidence");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--package",
+            "rustmatch-compat",
+            "--",
+            "verify-utf16-flags",
+        ])
+        .status()
+        .map_err(|error| format!("could not start UTF-16/flags evidence adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "UTF-16/flags evidence adapter failed with {status}"
+        ))
+    }
 }
 
 fn run_repetition_evidence() -> Result<(), String> {
@@ -303,7 +335,69 @@ fn run_java_oracle() -> Result<(), String> {
     for fixture_set in ORACLE_FIXTURE_SETS {
         verify_oracle_fixture_set(&java_home, fixture_set)?;
     }
+    verify_case_fold_table(&java_home)?;
     Ok(())
+}
+
+fn verify_case_fold_table(java_home: &Path) -> Result<(), String> {
+    let temp = env::temp_dir();
+    let process = std::process::id();
+    let first_table = temp.join(format!("rustmatch-case-fold-{process}-first.bin"));
+    let first_manifest = temp.join(format!("rustmatch-case-fold-{process}-first.manifest.json"));
+    let second_table = temp.join(format!("rustmatch-case-fold-{process}-second.bin"));
+    let second_manifest = temp.join(format!(
+        "rustmatch-case-fold-{process}-second.manifest.json"
+    ));
+
+    let result = (|| {
+        run_case_fold_once(java_home, &first_table, &first_manifest)?;
+        run_case_fold_once(java_home, &second_table, &second_manifest)?;
+        compare_files(&first_table, &second_table, "repeated case-fold tables")?;
+        compare_files(
+            &first_manifest,
+            &second_manifest,
+            "repeated case-fold manifests",
+        )?;
+        compare_files(
+            &first_table,
+            Path::new(CASE_FOLD_TABLE),
+            "committed case-fold table",
+        )?;
+        compare_files(
+            &first_manifest,
+            Path::new(CASE_FOLD_MANIFEST),
+            "committed case-fold manifest",
+        )?;
+        Ok(())
+    })();
+
+    if result.is_ok() {
+        for path in [first_table, first_manifest, second_table, second_manifest] {
+            let _ = fs::remove_file(path);
+        }
+    }
+    result
+}
+
+fn run_case_fold_once(
+    java_home: &Path,
+    table_path: &Path,
+    manifest_path: &Path,
+) -> Result<(), String> {
+    let table_property = format!("-Doracle.results={}", table_path.display());
+    let manifest_property = format!("-Doracle.manifest={}", manifest_path.display());
+    run_maven(
+        java_home,
+        &[
+            "-q",
+            "-f",
+            ORACLE_POM,
+            "exec:java",
+            "-Doracle.fixtures=--case-fold",
+            &table_property,
+            &manifest_property,
+        ],
+    )
 }
 
 fn verify_oracle_fixture_set(

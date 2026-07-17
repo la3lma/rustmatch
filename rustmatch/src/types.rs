@@ -1,6 +1,41 @@
 //! Public domain values used at the crate boundary.
 
 use std::fmt;
+use std::ops::{BitOr, BitOrAssign};
+
+/// Compile-time options applied to one registered pattern.
+///
+/// Flags affect only the registration that receives them. [`Self::NONE`]
+/// preserves ordinary matching, while [`Self::CASE_INSENSITIVE`] applies the
+/// Java-compatible single-UTF-16-unit case mapping at compile time.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub struct PatternFlags(u8);
+
+impl PatternFlags {
+    /// No optional pattern behavior.
+    pub const NONE: Self = Self(0);
+
+    /// Match literals and character classes without regard to single-unit case.
+    pub const CASE_INSENSITIVE: Self = Self(1);
+
+    pub(crate) const fn is_case_insensitive(self) -> bool {
+        self.0 & Self::CASE_INSENSITIVE.0 != 0
+    }
+}
+
+impl BitOr for PatternFlags {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl BitOrAssign for PatternFlags {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
 
 /// Stable caller-provided identity for one registered pattern.
 ///
@@ -101,14 +136,29 @@ impl Match {
 /// Finite text materialized as owned UTF-16 code units.
 ///
 /// Constructing this value from a Rust string performs the UTF-8 to UTF-16
-/// encoding once, before scanning. The current executable slice reports an
-/// error from [`crate::Matcher::scan`] if any code unit is outside 7-bit ASCII.
+/// encoding once, before scanning. Raw construction also admits isolated
+/// surrogate code units for exact compatibility and specialized inputs.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Utf16Text {
     units: Vec<u16>,
 }
 
 impl Utf16Text {
+    /// Creates finite input from its exact UTF-16 code units.
+    ///
+    /// No Unicode-scalar validation is performed: isolated surrogates are
+    /// valid engine symbols, matching the Java `char` model.
+    #[must_use]
+    pub fn from_units(units: Vec<u16>) -> Self {
+        Self { units }
+    }
+
+    /// Returns the exact UTF-16 code units scanned by the matcher.
+    #[must_use]
+    pub fn as_units(&self) -> &[u16] {
+        &self.units
+    }
+
     pub(crate) fn units(&self) -> &[u16] {
         &self.units
     }
@@ -131,5 +181,11 @@ impl From<&str> for Utf16Text {
 impl From<String> for Utf16Text {
     fn from(text: String) -> Self {
         Self::from(text.as_str())
+    }
+}
+
+impl From<Vec<u16>> for Utf16Text {
+    fn from(units: Vec<u16>) -> Self {
+        Self::from_units(units)
     }
 }

@@ -21,6 +21,12 @@ rustmatch.
   group cases. `ascii-repetition-v1` adds greedy unary and counted repetition,
   quantifier binding, overlapping starts, longest-match ambiguity, the 1,000
   expansion limit, and malformed counts.
+- `utf16-flags-v1` covers non-ASCII literals and ranges, supplementary and raw
+  surrogate inputs, prefix flags, Java single-`char` folding, titlecase edge
+  behavior, and malformed flag placement.
+- `expected/java-21-case-fold-v1.bin` records all 65,536 Java 21 lower/upper
+  `char` pairs in a fixed binary format. The oracle regenerates it twice and
+  compares its manifest and bytes before Rust differential evidence runs.
 - A pure zero-width alternation records one intentional difference explicitly:
   Java accepts it and emits no events, while the Rust product contract rejects
   patterns that can only produce a zero-width match.
@@ -42,6 +48,7 @@ cargo run -p rustmatch-compat -- verify-literals
 cargo run -p rustmatch-compat -- verify-predicates
 cargo run -p rustmatch-compat -- verify-composition
 cargo run -p rustmatch-compat -- verify-repetition
+cargo run -p rustmatch-compat -- verify-utf16-flags
 ```
 
 The command requires Java 21 and Maven. On macOS it selects an installed Java

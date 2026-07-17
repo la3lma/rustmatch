@@ -1,0 +1,14 @@
+{
+  "schema_version" : 1,
+  "table" : "java-char-case-fold-v1",
+  "entry_count" : 65536,
+  "encoding" : "RMF1 plus big-endian lower/upper u16 pairs",
+  "oracle" : {
+    "group_id" : "no.rmz",
+    "artifact_id" : "rmatch",
+    "version" : "2.0.0-RC1",
+    "jar_sha256" : "05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a",
+    "required_java_feature" : 21
+  },
+  "table_sha256" : "159531a10c144b10e448d7a66786978ba71d86dba966fc89f7191c0592bce4f4"
+}

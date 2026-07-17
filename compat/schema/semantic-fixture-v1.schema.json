@@ -25,7 +25,8 @@
         "ascii-literal-v1",
         "ascii-predicate-v1",
         "ascii-composition-v1",
-        "ascii-repetition-v1"
+        "ascii-repetition-v1",
+        "utf16-flags-v1"
       ]
     },
     "rust_expectation": {

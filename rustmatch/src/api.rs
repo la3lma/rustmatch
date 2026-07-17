@@ -6,7 +6,7 @@ use crate::engine;
 use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
 use crate::parser;
-use crate::{Error, Match, PatternId, Utf16Text};
+use crate::{Error, Match, PatternFlags, PatternId, Utf16Text};
 
 /// Collects and validates patterns before compiling an immutable matcher.
 ///
@@ -28,11 +28,11 @@ impl MatcherBuilder {
     /// Registers one caller-identified pattern.
     ///
     /// The current executable slice accepts non-empty patterns composed of
-    /// 7-bit ASCII literals, dot, character classes, ranges, supported escapes,
+    /// UTF-16 literals, dot, character classes, ranges, supported escapes,
     /// the ASCII shorthands `\d`, `\w`, and `\s` with their complements,
     /// alternation, and plain or non-capturing groups. Groups do not capture.
-    /// Quantifiers, assertions, flags, and non-ASCII code units return an error
-    /// without modifying the builder.
+    /// greedy quantifiers, and plain or non-capturing groups. Assertions and
+    /// flags return an error without modifying the builder.
     ///
     /// # Errors
     ///
@@ -40,10 +40,29 @@ impl MatcherBuilder {
     /// [`Error::InvalidPattern`] for malformed syntax, or another pattern error
     /// if `pattern` is empty or outside the current syntax.
     pub fn add(&mut self, pattern_id: PatternId, pattern: &str) -> Result<(), Error> {
+        self.add_with_flags(pattern_id, pattern, PatternFlags::NONE)
+    }
+
+    /// Registers one pattern with explicit compile-time matching options.
+    ///
+    /// [`PatternFlags::CASE_INSENSITIVE`] is equivalent to the leading `(?i)`
+    /// syntax. It uses Java-compatible single-UTF-16-unit mappings and does not
+    /// perform multi-code-point or locale-sensitive folding.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same errors as [`Self::add`]. A rejected registration does
+    /// not reserve the pattern ID or otherwise modify the builder.
+    pub fn add_with_flags(
+        &mut self,
+        pattern_id: PatternId,
+        pattern: &str,
+        flags: PatternFlags,
+    ) -> Result<(), Error> {
         if self.pattern_ids.contains(&pattern_id) {
             return Err(Error::DuplicatePatternId { pattern_id });
         }
-        let parsed = parser::parse(pattern_id, pattern)?;
+        let parsed = parser::parse_with_flags(pattern_id, pattern, flags)?;
         self.pattern_ids.insert(pattern_id);
         self.patterns.push(parsed);
         Ok(())
@@ -84,9 +103,8 @@ impl Matcher {
     ///
     /// # Errors
     ///
-    /// The current slice returns [`Error::UnsupportedInput`] if any input code
-    /// unit is outside 7-bit ASCII. The complete input is validated before the
-    /// first callback, so this error never represents a partial result.
+    /// Returns [`Error::InputTooLarge`] if an input position cannot be
+    /// represented by the public UTF-16 coordinate type.
     ///
     /// # Panics
     ///

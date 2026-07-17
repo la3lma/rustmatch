@@ -1,0 +1,14 @@
+{
+  "schema_version" : 1,
+  "fixture_file" : "utf16-flags-v1.jsonl",
+  "fixture_sha256" : "1189b6da102cac19a2c0806862de67a8c628854b6655a3273d788b46e6d3872f",
+  "case_count" : 23,
+  "oracle" : {
+    "group_id" : "no.rmz",
+    "artifact_id" : "rmatch",
+    "version" : "2.0.0-RC1",
+    "jar_sha256" : "05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a",
+    "required_java_feature" : 21
+  },
+  "result_sha256" : "3b40b858b018c73eec465d18c898cd569aa47eb095b5a8c55398faa5ab2d86b4"
+}
