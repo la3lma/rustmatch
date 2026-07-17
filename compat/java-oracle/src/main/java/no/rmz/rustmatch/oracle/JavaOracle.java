@@ -44,7 +44,8 @@ public final class JavaOracle {
 
   private static final int SCHEMA_VERSION = 1;
   private static final int REQUIRED_JAVA_FEATURE = 21;
-  private static final String FIXTURE_TIER = "ascii-literal-v1";
+  private static final Set<String> FIXTURE_TIERS =
+      Set.of("ascii-literal-v1", "ascii-predicate-v1");
   private static final String ORACLE_GROUP = "no.rmz";
   private static final String ORACLE_ARTIFACT = "rmatch";
   private static final String ORACLE_VERSION = "2.0.0-RC1";
@@ -182,7 +183,7 @@ public final class JavaOracle {
     if (!CASE_ID.matcher(caseId).matches()) {
       throw format("invalid case_id: " + caseId);
     }
-    if (!FIXTURE_TIER.equals(compatibilityTier)) {
+    if (!FIXTURE_TIERS.contains(compatibilityTier)) {
       throw format("unsupported compatibility_tier: " + compatibilityTier);
     }
     if (!RUST_EXPECTATIONS.contains(rustExpectation)) {
@@ -213,7 +214,7 @@ public final class JavaOracle {
         throw format("pattern is missing pattern_id or utf16");
       }
       if (codeUnits.length == 0) {
-        throw format("pattern utf16 must not be empty in " + FIXTURE_TIER);
+        throw format("pattern utf16 must not be empty");
       }
       if (!patternIds.add(patternId)) {
         throw format("duplicate pattern_id: " + patternId);

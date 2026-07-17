@@ -27,9 +27,10 @@ impl MatcherBuilder {
 
     /// Registers one caller-identified pattern.
     ///
-    /// The current executable slice accepts only non-empty 7-bit ASCII literal
-    /// text. Regex operators, escapes, and non-ASCII code units return an error
-    /// without modifying the builder.
+    /// The current executable slice accepts non-empty 7-bit ASCII literals and
+    /// dot, which matches any ASCII code unit including a newline. Other regex
+    /// operators, escapes, and non-ASCII code units return an error without
+    /// modifying the builder.
     ///
     /// # Errors
     ///

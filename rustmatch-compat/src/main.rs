@@ -8,13 +8,21 @@ use rustmatch::{MatcherBuilder, PatternId, Utf16Text};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-const FIXTURES: &str = include_str!(concat!(
+const LITERAL_FIXTURES: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../compat/fixtures/ascii-literals-v1.jsonl"
 ));
-const JAVA_RESULTS: &str = include_str!(concat!(
+const LITERAL_JAVA_RESULTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../compat/expected/java-2.0.0-RC1-ascii-literals-v1.jsonl"
+));
+const PREDICATE_FIXTURES: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/fixtures/ascii-predicates-v1.jsonl"
+));
+const PREDICATE_JAVA_RESULTS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/expected/java-2.0.0-RC1-ascii-predicates-v1.jsonl"
 ));
 
 fn main() -> ExitCode {
@@ -38,19 +46,34 @@ fn main() -> ExitCode {
 
 fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, String> {
     let command = arguments.next();
-    if arguments.next().is_some() || command.as_deref() != Some("verify-literals") {
-        return Err("usage: rustmatch-compat verify-literals".to_owned());
+    if arguments.next().is_some() {
+        return Err("usage: rustmatch-compat <verify-literals|verify-predicates>".to_owned());
     }
-    verify_literals()
+    match command.as_deref() {
+        Some("verify-literals") => verify_fixture_set(
+            LITERAL_FIXTURES,
+            LITERAL_JAVA_RESULTS,
+            "ascii-literal-v1",
+            "ascii-literals-v1",
+            "I1-E2",
+        ),
+        Some("verify-predicates") => verify_fixture_set(
+            PREDICATE_FIXTURES,
+            PREDICATE_JAVA_RESULTS,
+            "ascii-predicate-v1",
+            "ascii-predicates-v1",
+            "I2-DOT-E1",
+        ),
+        _ => Err("usage: rustmatch-compat <verify-literals|verify-predicates>".to_owned()),
+    }
 }
 
-fn verify_literals() -> Result<EvidenceSummary, String> {
-    verify_literals_with(FIXTURES, JAVA_RESULTS)
-}
-
-fn verify_literals_with(
+fn verify_fixture_set(
     fixture_jsonl: &str,
     java_result_jsonl: &str,
+    expected_tier: &str,
+    fixture_set: &'static str,
+    evidence_id: &'static str,
 ) -> Result<EvidenceSummary, String> {
     let fixtures: Vec<Fixture> = parse_jsonl("fixtures", fixture_jsonl)?;
     let expected_results: Vec<ExpectedResult> = parse_jsonl("Java results", java_result_jsonl)?;
@@ -65,7 +88,7 @@ fn verify_literals_with(
     let mut matched_cases = 0;
     let mut rejected_cases = 0;
     for fixture in &fixtures {
-        fixture.validate()?;
+        fixture.validate(expected_tier)?;
         let expected = expected_by_case
             .remove(&fixture.case_id)
             .ok_or_else(|| format!("{} has no Java result", fixture.case_id))?;
@@ -94,8 +117,8 @@ fn verify_literals_with(
 
     Ok(EvidenceSummary {
         schema_version: 1,
-        evidence_id: "I1-E2",
-        fixture_set: "ascii-literals-v1",
+        evidence_id,
+        fixture_set,
         matched_cases,
         rejected_cases,
         status: "pass",
@@ -188,8 +211,8 @@ struct Fixture {
 }
 
 impl Fixture {
-    fn validate(&self) -> Result<(), String> {
-        if self.schema_version != 1 || self.compatibility_tier != "ascii-literal-v1" {
+    fn validate(&self, expected_tier: &str) -> Result<(), String> {
+        if self.schema_version != 1 || self.compatibility_tier != expected_tier {
             return Err(format!(
                 "{} uses an unsupported schema or tier",
                 self.case_id
@@ -259,7 +282,10 @@ struct EvidenceSummary {
 
 #[cfg(test)]
 mod tests {
-    use super::{EvidenceSummary, FIXTURES, JAVA_RESULTS, run, verify_literals_with};
+    use super::{
+        EvidenceSummary, LITERAL_FIXTURES, LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES,
+        PREDICATE_JAVA_RESULTS, run, verify_fixture_set,
+    };
 
     #[test]
     fn literal_evidence_agrees_with_the_pinned_java_results() -> Result<(), String> {
@@ -287,12 +313,59 @@ mod tests {
     #[test]
     fn literal_evidence_rejects_a_corrupted_expected_event() {
         // Prepare
-        let corrupted = JAVA_RESULTS.replacen("\"end_utf16\":1", "\"end_utf16\":9", 1);
+        let corrupted = LITERAL_JAVA_RESULTS.replacen("\"end_utf16\":1", "\"end_utf16\":9", 1);
 
         // Test
-        let result = verify_literals_with(FIXTURES, &corrupted);
+        let result = verify_fixture_set(
+            LITERAL_FIXTURES,
+            &corrupted,
+            "ascii-literal-v1",
+            "ascii-literals-v1",
+            "I1-E2",
+        );
 
         // Assert
         assert!(matches!(result, Err(message) if message.contains("differs from Java")));
+    }
+
+    #[test]
+    fn predicate_evidence_agrees_with_the_pinned_java_results() -> Result<(), String> {
+        // Prepare
+        let arguments = ["verify-predicates".to_owned()];
+
+        // Test
+        let summary = run(arguments.into_iter())?;
+
+        // Assert
+        assert_eq!(
+            summary,
+            EvidenceSummary {
+                schema_version: 1,
+                evidence_id: "I2-DOT-E1",
+                fixture_set: "ascii-predicates-v1",
+                matched_cases: 3,
+                rejected_cases: 0,
+                status: "pass",
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn predicate_fixture_metadata_is_checked() {
+        // Prepare
+        let wrong_tier = PREDICATE_FIXTURES.replace("ascii-predicate-v1", "ascii-literal-v1");
+
+        // Test
+        let result = verify_fixture_set(
+            &wrong_tier,
+            PREDICATE_JAVA_RESULTS,
+            "ascii-predicate-v1",
+            "ascii-predicates-v1",
+            "I2-DOT-E1",
+        );
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("unsupported schema or tier")));
     }
 }

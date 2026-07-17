@@ -10,11 +10,28 @@ const ROADMAP_MARKDOWN: &str = "docs/roadmap.md";
 const ROADMAP_SOURCE: &str = "/tmp/rustmatch-roadmap.mmd";
 const ROADMAP_SVG: &str = "/tmp/rustmatch-roadmap.svg";
 const ORACLE_POM: &str = "compat/java-oracle/pom.xml";
-const ORACLE_FIXTURES: &str = "compat/fixtures/ascii-literals-v1.jsonl";
-const ORACLE_EXPECTED_RESULTS: &str = "compat/expected/java-2.0.0-RC1-ascii-literals-v1.jsonl";
-const ORACLE_EXPECTED_MANIFEST: &str =
-    "compat/expected/java-2.0.0-RC1-ascii-literals-v1.manifest.json";
-const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2"]}]}"#;
+const ORACLE_FIXTURE_SETS: &[OracleFixtureSet] = &[
+    OracleFixtureSet {
+        label: "ascii-literals-v1",
+        fixtures: "compat/fixtures/ascii-literals-v1.jsonl",
+        expected_results: "compat/expected/java-2.0.0-RC1-ascii-literals-v1.jsonl",
+        expected_manifest: "compat/expected/java-2.0.0-RC1-ascii-literals-v1.manifest.json",
+    },
+    OracleFixtureSet {
+        label: "ascii-predicates-v1",
+        fixtures: "compat/fixtures/ascii-predicates-v1.jsonl",
+        expected_results: "compat/expected/java-2.0.0-RC1-ascii-predicates-v1.jsonl",
+        expected_manifest: "compat/expected/java-2.0.0-RC1-ascii-predicates-v1.manifest.json",
+    },
+];
+const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","I2-DOT-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-DOT-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-DOT-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1"]}]}"#;
+
+struct OracleFixtureSet {
+    label: &'static str,
+    fixtures: &'static str,
+    expected_results: &'static str,
+    expected_manifest: &'static str,
+}
 
 #[derive(Debug, Eq, PartialEq)]
 struct QualityStep {
@@ -132,10 +149,32 @@ fn run_quality_gate() -> Result<(), String> {
 fn run_evidence_summary() -> Result<(), String> {
     run_java_oracle()?;
     run_literal_evidence()?;
+    run_predicate_evidence()?;
     run_benchmark_smoke()?;
     eprintln!("==> E0 use-case evidence summary");
     println!("{EVIDENCE_SUMMARY_JSON}");
     Ok(())
+}
+
+fn run_predicate_evidence() -> Result<(), String> {
+    eprintln!("==> I2 dot-predicate differential evidence");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--package",
+            "rustmatch-compat",
+            "--",
+            "verify-predicates",
+        ])
+        .status()
+        .map_err(|error| format!("could not start predicate evidence adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("predicate evidence adapter failed with {status}"))
+    }
 }
 
 fn run_benchmark_smoke() -> Result<(), String> {
@@ -183,18 +222,50 @@ fn run_literal_evidence() -> Result<(), String> {
 
 fn run_java_oracle() -> Result<(), String> {
     let java_home = find_java_21()?;
+    eprintln!("==> Java 2.0.0-RC1 compatibility oracle");
+    run_maven(&java_home, &["-q", "-f", ORACLE_POM, "compile"])?;
+    for fixture_set in ORACLE_FIXTURE_SETS {
+        verify_oracle_fixture_set(&java_home, fixture_set)?;
+    }
+    Ok(())
+}
+
+fn verify_oracle_fixture_set(
+    java_home: &Path,
+    fixture_set: &OracleFixtureSet,
+) -> Result<(), String> {
     let temp = env::temp_dir();
     let process = std::process::id();
-    let first_results = temp.join(format!("rustmatch-oracle-{process}-first.jsonl"));
-    let first_manifest = temp.join(format!("rustmatch-oracle-{process}-first.manifest.json"));
-    let second_results = temp.join(format!("rustmatch-oracle-{process}-second.jsonl"));
-    let second_manifest = temp.join(format!("rustmatch-oracle-{process}-second.manifest.json"));
+    let first_results = temp.join(format!(
+        "rustmatch-oracle-{process}-{}-first.jsonl",
+        fixture_set.label
+    ));
+    let first_manifest = temp.join(format!(
+        "rustmatch-oracle-{process}-{}-first.manifest.json",
+        fixture_set.label
+    ));
+    let second_results = temp.join(format!(
+        "rustmatch-oracle-{process}-{}-second.jsonl",
+        fixture_set.label
+    ));
+    let second_manifest = temp.join(format!(
+        "rustmatch-oracle-{process}-{}-second.manifest.json",
+        fixture_set.label
+    ));
 
     let result = (|| {
-        eprintln!("==> Java 2.0.0-RC1 compatibility oracle");
-        run_maven(&java_home, &["-q", "-f", ORACLE_POM, "compile"])?;
-        run_oracle_once(&java_home, &first_results, &first_manifest)?;
-        run_oracle_once(&java_home, &second_results, &second_manifest)?;
+        run_oracle_once(
+            java_home,
+            fixture_set.fixtures,
+            &first_results,
+            &first_manifest,
+        )?;
+        run_oracle_once(
+            java_home,
+            fixture_set.fixtures,
+            &second_results,
+            &second_manifest,
+        )?;
 
         compare_files(&first_results, &second_results, "repeated oracle results")?;
         compare_files(
@@ -204,12 +275,12 @@ fn run_java_oracle() -> Result<(), String> {
         )?;
         compare_files(
             &first_results,
-            Path::new(ORACLE_EXPECTED_RESULTS),
+            Path::new(fixture_set.expected_results),
             "committed oracle results",
         )?;
         compare_files(
             &first_manifest,
-            Path::new(ORACLE_EXPECTED_MANIFEST),
+            Path::new(fixture_set.expected_manifest),
             "committed oracle manifest",
         )?;
         Ok(())
@@ -230,10 +301,11 @@ fn run_java_oracle() -> Result<(), String> {
 
 fn run_oracle_once(
     java_home: &Path,
+    fixtures: &str,
     result_path: &Path,
     manifest_path: &Path,
 ) -> Result<(), String> {
-    let fixture_property = format!("-Doracle.fixtures={}", absolute(ORACLE_FIXTURES)?.display());
+    let fixture_property = format!("-Doracle.fixtures={}", absolute(fixtures)?.display());
     let result_property = format!("-Doracle.results={}", result_path.display());
     let manifest_property = format!("-Doracle.manifest={}", manifest_path.display());
     run_maven(

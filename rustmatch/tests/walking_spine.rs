@@ -86,7 +86,7 @@ fn every_reserved_operator_is_rejected_without_poisoning_the_builder() -> Result
     // Prepare
     let mut builder = MatcherBuilder::new();
     let operators = [
-        '\\', '.', '^', '$', '|', '?', '*', '+', '(', ')', '[', ']', '{', '}',
+        '\\', '^', '$', '|', '?', '*', '+', '(', ')', '[', ']', '{', '}',
     ];
 
     // Test
@@ -106,6 +106,43 @@ fn every_reserved_operator_is_rejected_without_poisoning_the_builder() -> Result
             .all(|result| matches!(result, Err(Error::UnsupportedPattern { .. })))
     );
     assert_eq!(recovered_events, vec![(100, 0, 5)]);
+    Ok(())
+}
+
+#[test]
+fn dot_matches_every_ascii_code_unit_including_newline() -> Result<(), Error> {
+    // Prepare
+    let pattern_id = PatternId::new(200);
+    let mut builder = MatcherBuilder::new();
+    builder.add(pattern_id, ".")?;
+    let matcher = builder.build()?;
+    let input: String = (0_u8..=127).map(char::from).collect();
+    let expected: Vec<_> = (0_u64..128)
+        .map(|start| (pattern_id.get(), start, start + 1))
+        .collect();
+
+    // Test
+    let events = collect(&matcher, &input)?;
+
+    // Assert
+    assert_eq!(events, expected);
+    Ok(())
+}
+
+#[test]
+fn dot_composes_with_literals_through_the_complete_spine() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(201), "a.")?;
+    builder.add(PatternId::new(202), ".b")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "a\nb")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(events, vec![(201, 0, 2), (202, 1, 3)]);
     Ok(())
 }
 

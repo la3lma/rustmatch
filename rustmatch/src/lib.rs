@@ -1,10 +1,11 @@
 //! Rust-native many-pattern matching with explicit UTF-16 coordinates.
 //!
 //! rustmatch builds an immutable matcher from caller-identified patterns and
-//! can reuse it across inputs. The current executable slice intentionally
-//! accepts only non-empty 7-bit ASCII literal patterns and ASCII input. This
-//! narrow language already runs through the final-shaped parser, HIR, shared
-//! NFA, database, scan engine, and callback boundaries.
+//! can reuse it across inputs. The current executable slice accepts non-empty
+//! patterns composed of 7-bit ASCII literals and dot; dot matches every ASCII
+//! code unit, including a newline. This narrow language runs through the
+//! final-shaped parser, HIR, shared NFA, database, scan engine, and callback
+//! boundaries.
 //!
 //! # Example
 //!
@@ -32,6 +33,7 @@ mod error;
 mod hir;
 mod nfa;
 mod parser;
+mod predicate;
 mod types;
 
 pub use api::{Matcher, MatcherBuilder};
