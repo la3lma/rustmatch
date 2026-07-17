@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: >-
+  If you use rustmatch in research, please cite the software and the exact
+  release or revision used.
+title: rustmatch
+type: software
+authors:
+  - family-names: Remseth
+    given-names: Bjorn
+license: Apache-2.0
+repository-code: https://github.com/la3lma/rustmatch
+abstract: >-
+  A native Rust implementation of the rmatch many-pattern regular-expression
+  engine, designed for semantic compatibility and independently measured
+  performance.
+keywords:
+  - regular expressions
+  - multi-pattern matching
+  - Rust

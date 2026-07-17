@@ -1,0 +1,60 @@
+name: Performance regression
+description: Report a measured slowdown with correctness and reproducibility evidence
+title: "performance: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Performance reports must compare complete receipts, not selected console
+        output. Confirm correctness before comparing throughput or latency.
+  - type: input
+    id: revisions
+    attributes:
+      label: Baseline and candidate revisions
+      placeholder: v0.x.y versus abc1234
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Stable test environment
+      description: Machine, CPU, memory, OS, Rust toolchain, power policy, and isolation.
+    validations:
+      required: true
+  - type: textarea
+    id: workload
+    attributes:
+      label: Workload
+      description: Corpus, pattern set, sizes, hashes, worker counts, warm-up, repetitions, and command.
+    validations:
+      required: true
+  - type: textarea
+    id: correctness
+    attributes:
+      label: Correctness evidence
+      description: Show that baseline and candidate produced the expected equivalent results.
+    validations:
+      required: true
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Complete measurements
+      description: Attach or link raw receipts and summarize the comparison and uncertainty.
+    validations:
+      required: true
+  - type: input
+    id: threshold
+    attributes:
+      label: Regression threshold
+      description: State the predeclared noise or failure threshold used.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: The receipts retain exact versions, inputs, hashes, and environment details.
+          required: true
+        - label: The result is reproducible and larger than the declared noise threshold.
+          required: true

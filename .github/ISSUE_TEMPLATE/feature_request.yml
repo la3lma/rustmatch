@@ -1,0 +1,58 @@
+name: Feature proposal
+description: Propose a user capability, semantic extension, or maintainability improvement
+title: "proposal: "
+body:
+  - type: input
+    id: roadmap
+    attributes:
+      label: Roadmap or use-case ID
+      description: Name the closest stable ID, or say that none exists yet.
+      placeholder: UC-2, I5, or none
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and user
+      description: Who is blocked, what are they trying to do, and why current behavior is insufficient?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Observable outcome
+      description: Describe the public behavior and evidence that would prove completion.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Include API, semantic, compatibility, and architecture implications where known.
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Classification
+      options:
+        - Semantic or user-facing capability
+        - Performance optimization
+        - Mixed semantic and performance change
+        - Documentation, tooling, or maintenance
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and tradeoffs
+      description: What simpler or different approaches were considered?
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and the roadmap for this proposal.
+          required: true
+        - label: I have not assumed that a Java optimization is automatically useful in Rust.
+          required: true

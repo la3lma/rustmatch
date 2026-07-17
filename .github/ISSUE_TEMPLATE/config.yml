@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/la3lma/rustmatch/blob/main/SECURITY.md
+    about: Report suspected vulnerabilities privately; do not open an issue.
+  - name: Support guide
+    url: https://github.com/la3lma/rustmatch/blob/main/SUPPORT.md
+    about: Check scope, expectations, and the information needed for help.

@@ -1,0 +1,69 @@
+name: Bug report
+description: Report reproducible incorrect behavior or a diagnostic problem
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make rustmatch reliable. Do not report security
+        vulnerabilities here; follow SECURITY.md instead.
+  - type: input
+    id: revision
+    attributes:
+      label: Release or revision
+      description: Exact release, commit SHA, or branch tested.
+      placeholder: main at abc1234
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Rust version, operating system, architecture, and enabled features.
+      placeholder: rustc 1.xx.x, Linux x86_64, default features
+    validations:
+      required: true
+  - type: textarea
+    id: prepare
+    attributes:
+      label: Prepare
+      description: Minimal patterns, input, configuration, and setup.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: Test
+      description: Exact commands or API calls that reproduce the behavior.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: Exact matches, spans, errors, or other observable result expected.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: What happened instead, including complete diagnostics.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Additional evidence
+      description: Reduced fixture, logs, stack trace, comparison, or related issue.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for this behavior.
+          required: true
+        - label: This report contains no secret or security-sensitive information.
+          required: true

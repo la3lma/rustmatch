@@ -5,6 +5,18 @@ Rust hygiene**. The repository is still in design, so some commands below will
 become executable with the Cargo workspace in increment I1. The standards apply
 as soon as their corresponding files exist.
 
+Before contributing, read the [Code of Conduct](CODE_OF_CONDUCT.md) and the
+[governance model](GOVERNANCE.md). Search the
+[issue tracker](https://github.com/la3lma/rustmatch/issues) and the
+[roadmap](docs/roadmap.md), then use the issue form that matches the work.
+Security vulnerabilities and conduct concerns must use the private channels in
+[SECURITY.md](SECURITY.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), not a
+public issue.
+
+Contributions are accepted under the repository's Apache License 2.0. The
+project does not currently require a separate contributor license agreement or
+Developer Certificate of Origin sign-off.
+
 ## The goal: neat for comprehension
 
 Rustmatch should be neat for practical reasons:
@@ -220,5 +232,4 @@ fuzz, Miri, package, consumer, and external benchmark gates described in the
 - [ ] Claimed optimizations have a positive Rust result beyond noise.
 - [ ] Generated and machine-readable artifacts are reproducible and validated.
 
-Contributions are submitted under the repository's
-[Apache License 2.0](LICENSE).
+See [SUPPORT.md](SUPPORT.md) for help and reporting boundaries.

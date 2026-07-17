@@ -42,6 +42,7 @@ flowchart TB
         P1["P1 Architecture and executable-spine strategy"]
         P2["P2 Use-case evidence contracts"]
         Q0["Q0 Documentation and Rust hygiene policy"]
+        Q1["Q1 Community health and repository governance"]
     end
 
     subgraph BOOT[Bootstrap and first executable system]
@@ -95,6 +96,7 @@ flowchart TB
     P1 --> I0
     P2 --> I0
     Q0 --> W0
+    Q1 --> W0
 
     I0 --> F0
     I0 --> W0
@@ -153,7 +155,7 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0 complete;
+    class P0,P1,P2,Q0,Q1 complete;
     class I0 next;
     class F0,B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
@@ -163,6 +165,7 @@ flowchart TB
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
     click P2 "https://github.com/la3lma/rustmatch/blob/main/README.md#use-case-evidence-contract" "Open evidence contracts"
     click Q0 "https://github.com/la3lma/rustmatch/blob/main/CONTRIBUTING.md" "Open documentation and Rust hygiene policy"
+    click Q1 "https://github.com/la3lma/rustmatch/blob/main/GOVERNANCE.md" "Open community health and governance policy"
     click I0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-0-time-box-the-semantic-charter" "Open I0 description"
     click F0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-0-time-box-the-semantic-charter" "Open fixture and oracle description"
     click W0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open workspace description"
@@ -214,6 +217,7 @@ and use-case evidence bundle pass from a clean checkout.
 | P1 | Architecture and executable-spine strategy | Complete | Architecture, boundaries, ADR backlog, and vertical delivery strategy in README |
 | P2 | Use-case evidence contracts | Complete | Evidence classes plus UC-0 through UC-12 proof requirements in README |
 | Q0 | Documentation and Rust hygiene policy | Complete | Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks |
+| Q1 | Community health and repository governance | Complete | Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked |
 | I0 | Time-boxed semantic charter | Next | UTF-16 and event ADRs, fixture schema, pinned Java oracle protocol, first ASCII fixture set |
 | I1 | Executable ASCII-literal spine | Planned | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |

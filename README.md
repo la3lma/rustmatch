@@ -14,6 +14,10 @@
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
 
+> **Project participation:** [Contributing](CONTRIBUTING.md) -
+> [Code of Conduct](CODE_OF_CONDUCT.md) - [Security](SECURITY.md) -
+> [Support](SUPPORT.md) - [Governance](GOVERNANCE.md)
+
 `rustmatch` is intended to be a native Rust implementation of the rmatch idea:
 register many regular expressions once, compile them into shared matching
 machinery, and scan large text inputs without running an independent full

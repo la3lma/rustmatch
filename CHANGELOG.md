@@ -1,0 +1,35 @@
+# Changelog
+
+All notable changes to rustmatch will be documented in this file.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and released versions will follow [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- Product requirements, architecture, use-case evidence contracts, and an
+  evidence-driven implementation roadmap.
+- Contribution, conduct, security, support, and governance policies.
+- Repository templates for bug, feature, performance, and pull-request work.
+
+### Changed
+
+- Nothing yet.
+
+### Deprecated
+
+- Nothing yet.
+
+### Removed
+
+- Nothing yet.
+
+### Fixed
+
+- Nothing yet.
+
+### Security
+
+- Nothing yet.
