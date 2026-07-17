@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/la3lma/rustmatch/compat/schema/semantic-fixture-v1.schema.json",
+  "title": "rustmatch semantic fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_id",
+    "compatibility_tier",
+    "rust_expectation",
+    "patterns",
+    "input_utf16"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "compatibility_tier": {
+      "const": "ascii-literal-v1"
+    },
+    "rust_expectation": {
+      "enum": ["matched", "rejected-invalid", "rejected-unsupported"]
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pattern_id", "utf16"],
+        "properties": {
+          "pattern_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "utf16": {
+            "$ref": "#/$defs/nonEmptyCodeUnits"
+          }
+        }
+      }
+    },
+    "input_utf16": {
+      "$ref": "#/$defs/codeUnits"
+    }
+  },
+  "$defs": {
+    "codeUnits": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 65535
+      }
+    },
+    "nonEmptyCodeUnits": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/codeUnits"
+        },
+        {
+          "minItems": 1
+        }
+      ]
+    }
+  }
+}
