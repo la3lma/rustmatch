@@ -15,6 +15,12 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
 - Repository templates for bug, feature, performance, and pull-request work.
 - Rust 2024 Cargo workspace, pinned primary and MSRV toolchains, GitHub Actions
   quality workflow, and a root `cargo xtask ci` command.
+- Accepted ADRs for canonical UTF-16 coordinates, normative match events, and
+  the minimal public API.
+- Versioned semantic fixtures and a deterministic Java 21 oracle pinned to the
+  published `no.rmz:rmatch:2.0.0-RC1` artifact and JAR checksum.
+- A first public builder and literal matcher running through private HIR, dense
+  shared NFA, immutable database, forward scan engine, and callback layers.
 
 ### Changed
 

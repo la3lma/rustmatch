@@ -70,12 +70,12 @@ canonical UTF-16 compatibility input and UTF-16 offsets. The first stable API
 must expose that fact honestly. An ergonomic UTF-8 facade may be added, but it
 must not quietly relabel byte offsets as Java-compatible offsets.
 
-### Intended API shape
+### Initial API
 
-The first public surface should be smaller than the eventual convenience API.
-This sketch communicates direction, not a frozen API:
+The first public surface is deliberately smaller than the eventual convenience
+API. It is implemented as follows:
 
-```rust,ignore
+```rust
 use rustmatch::{MatcherBuilder, PatternId, Utf16Text};
 
 let mut builder = MatcherBuilder::new();
@@ -1214,7 +1214,7 @@ cargo xtask roadmap
 |---|---|
 | [ADR-0001](docs/adr/0001-canonical-utf16-model.md) | Canonical UTF-16 symbol and offset model |
 | [ADR-0002](docs/adr/0002-match-event-semantics.md) | Normative match-event selection and ordering exclusions |
-| ADR-0003 | Public builder, input, and sink API |
+| [ADR-0003](docs/adr/0003-minimal-public-api.md) | Public builder, input, and callback API |
 | ADR-0004 | AST/HIR and Thompson NFA representation |
 | ADR-0005 | Lazy determinization and cache budget |
 | ADR-0006 | Assertion context and pay-for-use strategy |

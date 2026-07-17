@@ -1,11 +1,14 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-07-17  
-**Implementation increments started:** **1/12**  
-**Implementation increments complete:** **1/12**  
-**Active:** none
+**Last reviewed:** 2026-07-17
 
-**Available for execution:** **A0 - public builder, input, span, and sink API**
+**Implementation increments started:** **2/12**
+
+**Implementation increments complete:** **1/12**
+
+**Active:** **I1 - executable ASCII-literal spine**
+
+**Available for execution:** none until I1 completes
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -159,11 +162,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0 complete;
-    class A0 available;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0 complete;
+    class I1 active;
     class B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
-    class I1,I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
+    class I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -223,8 +226,10 @@ and use-case evidence bundle pass from a clean checkout.
 | Q0 | Documentation and Rust hygiene policy | Complete | Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks |
 | Q1 | Community health and repository governance | Complete | Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked |
 | I0 | Time-boxed semantic charter | Complete | Accepted UTF-16 and event ADRs, versioned fixture schema, exact Maven Central `no.rmz:rmatch:2.0.0-RC1` oracle, seven first-slice cases, deterministic golden results, and `cargo xtask ci` evidence |
+| F0 | Fixture schema and Java oracle | Complete | Raw UTF-16 JSONL schema, structured rejection output, exact artifact checksum, two-run determinism, golden results, manifest hashes, and mandatory CI comparison |
 | W0 | Cargo workspace and quality tooling | Complete | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run |
-| I1 | Executable ASCII-literal spine | Planned | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
+| A0 | Minimal public API | Complete | Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine |
+| I1 | Executable ASCII-literal spine | Active | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
 | I4 | Repetition and longest match | Planned | Exact overlap/ambiguity fixtures, quantifier binding, repetition limits, and Java event equality |

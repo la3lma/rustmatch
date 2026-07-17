@@ -1,0 +1,188 @@
+//! Dense Thompson-style NFA compilation and immutable pattern database.
+
+use crate::hir::{Hir, HirPattern};
+use crate::{Error, PatternId};
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct StateId(u32);
+
+impl StateId {
+    fn for_index(index: usize) -> Result<Self, Error> {
+        u32::try_from(index)
+            .map(Self)
+            .map_err(|_| Error::PatternSetTooLarge)
+    }
+
+    pub(crate) const fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum EdgeKind {
+    Epsilon,
+    Symbol(u16),
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct Edge {
+    pub(crate) kind: EdgeKind,
+    pub(crate) target: StateId,
+}
+
+#[derive(Debug)]
+struct State {
+    edge_start: usize,
+    edge_len: usize,
+    terminal_start: usize,
+    terminal_len: usize,
+}
+
+#[derive(Debug)]
+pub(crate) struct PatternDatabase {
+    root: StateId,
+    states: Box<[State]>,
+    edges: Box<[Edge]>,
+    terminal_ordinals: Box<[usize]>,
+    pattern_ids: Box<[PatternId]>,
+}
+
+impl PatternDatabase {
+    pub(crate) const fn root(&self) -> StateId {
+        self.root
+    }
+
+    pub(crate) const fn state_count(&self) -> usize {
+        self.states.len()
+    }
+
+    pub(crate) const fn pattern_count(&self) -> usize {
+        self.pattern_ids.len()
+    }
+
+    pub(crate) fn edges_from(&self, state: StateId) -> &[Edge] {
+        let state = &self.states[state.index()];
+        &self.edges[state.edge_start..state.edge_start + state.edge_len]
+    }
+
+    pub(crate) fn terminals_at(&self, state: StateId) -> &[usize] {
+        let state = &self.states[state.index()];
+        &self.terminal_ordinals[state.terminal_start..state.terminal_start + state.terminal_len]
+    }
+
+    pub(crate) fn pattern_id(&self, ordinal: usize) -> PatternId {
+        self.pattern_ids[ordinal]
+    }
+}
+
+pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error> {
+    let mut pending_edges: Vec<Vec<Edge>> = vec![Vec::new()];
+    let mut pending_terminals: Vec<Vec<usize>> = vec![Vec::new()];
+    let root = StateId::for_index(0)?;
+    let mut pattern_ids = Vec::with_capacity(patterns.len());
+
+    for (ordinal, pattern) in patterns.iter().enumerate() {
+        let first = add_state(&mut pending_edges, &mut pending_terminals)?;
+        pending_edges[root.index()].push(Edge {
+            kind: EdgeKind::Epsilon,
+            target: first,
+        });
+        let mut current = first;
+        let Hir::Literal(symbols) = pattern.expression();
+        debug_assert_eq!(
+            usize::try_from(pattern.source_span().len()),
+            Ok(symbols.len())
+        );
+        for &symbol in symbols {
+            let next = add_state(&mut pending_edges, &mut pending_terminals)?;
+            pending_edges[current.index()].push(Edge {
+                kind: EdgeKind::Symbol(symbol),
+                target: next,
+            });
+            current = next;
+        }
+        pending_terminals[current.index()].push(ordinal);
+        pattern_ids.push(pattern.pattern_id());
+    }
+
+    let mut states = Vec::with_capacity(pending_edges.len());
+    let edge_count = pending_edges.iter().map(Vec::len).sum();
+    let terminal_count = pending_terminals.iter().map(Vec::len).sum();
+    let mut edges = Vec::with_capacity(edge_count);
+    let mut terminal_ordinals = Vec::with_capacity(terminal_count);
+    for (state_edges, state_terminals) in pending_edges.into_iter().zip(pending_terminals) {
+        let edge_start = edges.len();
+        let edge_len = state_edges.len();
+        edges.extend(state_edges);
+        let terminal_start = terminal_ordinals.len();
+        let terminal_len = state_terminals.len();
+        terminal_ordinals.extend(state_terminals);
+        states.push(State {
+            edge_start,
+            edge_len,
+            terminal_start,
+            terminal_len,
+        });
+    }
+
+    Ok(PatternDatabase {
+        root,
+        states: states.into_boxed_slice(),
+        edges: edges.into_boxed_slice(),
+        terminal_ordinals: terminal_ordinals.into_boxed_slice(),
+        pattern_ids: pattern_ids.into_boxed_slice(),
+    })
+}
+
+fn add_state(
+    edges: &mut Vec<Vec<Edge>>,
+    terminals: &mut Vec<Vec<usize>>,
+) -> Result<StateId, Error> {
+    let id = StateId::for_index(edges.len())?;
+    edges.push(Vec::new());
+    terminals.push(Vec::new());
+    Ok(id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{EdgeKind, compile};
+    use crate::PatternId;
+    use crate::parser::parse;
+
+    #[test]
+    fn compiled_literal_has_dense_valid_shared_nfa() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [parse(PatternId::new(1), "cat")?];
+
+        // Test
+        let database = compile(&patterns)?;
+
+        // Assert
+        assert_eq!(database.root.index(), 0);
+        assert_eq!(database.state_count(), 5);
+        assert_eq!(database.pattern_count(), 1);
+        assert_eq!(database.edges_from(database.root).len(), 1);
+        assert_eq!(
+            database.edges_from(database.root)[0].kind,
+            EdgeKind::Epsilon
+        );
+        for state_index in 0..database.state_count() {
+            let state = super::StateId::for_index(state_index)?;
+            for edge in database.edges_from(state) {
+                assert!(edge.target.index() < database.state_count());
+            }
+            for &ordinal in database.terminals_at(state) {
+                assert!(ordinal < database.pattern_count());
+            }
+        }
+        let terminal_count = (0..database.state_count())
+            .map(super::StateId::for_index)
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+            .map(|&state| database.terminals_at(state).len())
+            .sum::<usize>();
+        assert_eq!(terminal_count, 1);
+        Ok(())
+    }
+}
