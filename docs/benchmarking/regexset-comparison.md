@@ -2,7 +2,7 @@
 
 - **Roadmap task:** B0
 - **Initial pinned competitor:** `regex` 1.13.1
-- **Status:** Active; harness smoke passes, retained stable-machine campaign pending
+- **Status:** Bootstrap smoke complete; scaling campaign deferred to X0/B1
 
 ## Why this belongs early
 

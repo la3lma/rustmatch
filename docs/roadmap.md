@@ -4,11 +4,11 @@
 
 **Implementation increments started:** **2/12**
 
-**Implementation increments complete:** **1/12**
+**Implementation increments complete:** **2/12**
 
-**Active:** **I1 - executable ASCII-literal spine**
+**Active:** none
 
-**Available for execution:** none until I1 completes
+**Available for execution:** **I2 - ASCII predicates**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -162,11 +162,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,C0,C1 complete;
-    class I1,B0 active;
-    class E0,X0,B1,H1,R1,R2 evidence;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,C0,C1,B0,E0 complete;
+    class I2 available;
+    class X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
-    class I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
+    class I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -229,12 +229,12 @@ and use-case evidence bundle pass from a clean checkout.
 | F0 | Fixture schema and Java oracle | Complete | Raw UTF-16 JSONL schema, structured rejection output, exact artifact checksum, two-run determinism, golden results, manifest hashes, and mandatory CI comparison |
 | W0 | Cargo workspace and quality tooling | Complete | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run |
 | A0 | Minimal public API | Complete | Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine |
-| I1 | Executable ASCII-literal spine | Active | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
+| I1 | Executable ASCII-literal spine | Complete | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, benchmark smoke, and E0 evidence summary |
 | C0 | Mandatory functional PR CI | Complete | Required GitHub quality gate runs formatting, Clippy, tests, Rustdoc, MSRV, the pinned Java oracle, literal differential evidence, and benchmark smoke |
-| B0 | RegexSet-aware benchmark smoke | Active | Correctness-gated RS-NATIVE set-membership and RS-EVENTS full-event lanes against pinned `regex` 1.13.1 pass locally; retained stable-machine receipts remain open |
+| B0 | RegexSet-aware benchmark smoke | Complete | Correctness-gated RS-NATIVE set-membership and overlap-preserving RS-EVENTS lanes pass against pinned `regex` 1.13.1; systematic stable-machine scaling is deferred to X0/B1 |
 | C1 | Coarse CI performance tripwire | Complete | Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner base/head comparator, catastrophic-slowdown tests, one automatic reverse-order retry, retained artifacts, and three green hosted-runner calibration attempts |
-| E0 | UC evidence summary command | Planned | One command reports the implemented use-case evidence and exact pass/fail state without relying on prose claims |
-| I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
+| E0 | UC evidence summary command | Complete | `cargo xtask evidence` runs the oracle, differential adapter, and benchmark smoke, then reports all UC-0 through UC-12 as partial or not started with named evidence |
+| I2 | ASCII predicates | Available | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
 | I4 | Repetition and longest match | Planned | Exact overlap/ambiguity fixtures, quantifier binding, repetition limits, and Java event equality |
 | I5 | UTF-16, flags, and assertions | Planned | Full documented syntax tier, exhaustive character/context evidence, and semantic parity manifests |

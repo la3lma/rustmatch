@@ -48,3 +48,9 @@ the pinned Java result. These dependencies likewise remain outside the
 ```sh
 cargo xtask evidence
 ```
+
+That command runs the pinned Java oracle, the Rust differential adapter, and
+the correctness-gated benchmark smoke before printing the E0 summary for every
+declared use case. A summary status of `pass` means the listed evidence ran and
+the incomplete use cases were reported honestly; it does not promote `partial`
+or `not-started` use cases to complete.
