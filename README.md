@@ -1212,8 +1212,8 @@ cargo xtask roadmap
 
 | ADR | Decision |
 |---|---|
-| ADR-0001 | Canonical UTF-16 symbol and offset model |
-| ADR-0002 | Normative match-event selection and ordering exclusions |
+| [ADR-0001](docs/adr/0001-canonical-utf16-model.md) | Canonical UTF-16 symbol and offset model |
+| [ADR-0002](docs/adr/0002-match-event-semantics.md) | Normative match-event selection and ordering exclusions |
 | ADR-0003 | Public builder, input, and sink API |
 | ADR-0004 | AST/HIR and Thompson NFA representation |
 | ADR-0005 | Lazy determinization and cache budget |

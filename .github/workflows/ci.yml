@@ -25,6 +25,11 @@ jobs:
         run: |
           rustup toolchain install 1.97.0 --profile minimal --component clippy,rustfmt
           rustup toolchain install 1.85.0 --profile minimal
+      - name: Install Java 21 for the compatibility oracle
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
       - name: Run repository quality gate
         run: cargo xtask ci
-

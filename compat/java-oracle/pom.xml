@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>no.rmz.rustmatch</groupId>
+  <artifactId>rustmatch-java-oracle</artifactId>
+  <version>0.0.0</version>
+  <name>rustmatch Java compatibility oracle</name>
+  <description>Development-only oracle for the pinned Java rmatch release.</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+    <rmatch.version>2.0.0-RC1</rmatch.version>
+    <jackson.version>2.22.1</jackson.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>no.rmz</groupId>
+      <artifactId>rmatch</artifactId>
+      <version>${rmatch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.15.0</version>
+        <configuration>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+            <arg>-Werror</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.3</version>
+        <configuration>
+          <mainClass>no.rmz.rustmatch.oracle.JavaOracle</mainClass>
+          <arguments>
+            <argument>${oracle.fixtures}</argument>
+            <argument>${oracle.results}</argument>
+            <argument>${oracle.manifest}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
