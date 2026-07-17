@@ -1,6 +1,6 @@
 //! Parser for the currently supported 7-bit ASCII syntax.
 
-use crate::hir::{Hir, HirAtom, HirPattern};
+use crate::hir::{Hir, HirPattern};
 use crate::predicate::AsciiPredicate;
 use crate::{Error, PatternId, Utf16Span};
 
@@ -15,11 +15,19 @@ pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, E
         }
     }
 
-    let atoms = Parser::new(pattern_id, &units).parse_sequence()?;
-    Ok(HirPattern::new(
-        pattern_id,
-        Hir::Sequence(atoms.into_boxed_slice()),
-    ))
+    let mut parser = Parser::new(pattern_id, &units);
+    let expression = parser.parse_alternation(false)?;
+    if parser.index != units.len() {
+        return Err(invalid(pattern_id, parser.index, parser.index + 1)?);
+    }
+    let pattern = HirPattern::new(pattern_id, expression);
+    if pattern.nullable()
+        && pattern.minimum_consumed() == Some(0)
+        && !pattern.expression().can_consume()
+    {
+        return Err(invalid(pattern_id, 0, units.len())?);
+    }
+    Ok(pattern)
 }
 
 struct Parser<'a> {
@@ -37,35 +45,84 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_sequence(mut self) -> Result<Vec<HirAtom>, Error> {
-        let mut atoms = Vec::with_capacity(self.units.len());
-        while let Some(&unit) = self.units.get(self.index) {
-            let atom = match unit {
-                value if value == u16::from(b'.') => {
-                    self.index += 1;
-                    HirAtom::Predicate(AsciiPredicate::any())
-                }
-                value if value == u16::from(b'\\') => self.parse_escape()?,
-                value if value == u16::from(b'[') => self.parse_character_class()?,
-                value if is_unsupported_regex_operator(value) => {
-                    return Err(unsupported(
-                        self.pattern_id,
-                        self.index,
-                        self.index + 1,
-                        value,
-                    )?);
-                }
-                value => {
-                    self.index += 1;
-                    HirAtom::Symbol(value)
-                }
-            };
-            atoms.push(atom);
+    fn parse_alternation(&mut self, in_group: bool) -> Result<Hir, Error> {
+        let mut alternatives = vec![self.parse_sequence(in_group)?];
+        while self.current_is(b'|') {
+            self.index += 1;
+            if self.index == self.units.len() || (in_group && self.current_is(b')')) {
+                break;
+            }
+            alternatives.push(self.parse_sequence(in_group)?);
         }
-        Ok(atoms)
+        Ok(Hir::alternation(alternatives))
     }
 
-    fn parse_escape(&mut self) -> Result<HirAtom, Error> {
+    fn parse_sequence(&mut self, in_group: bool) -> Result<Hir, Error> {
+        let mut expressions = Vec::new();
+        while let Some(&unit) = self.units.get(self.index) {
+            if unit == u16::from(b'|') || (in_group && unit == u16::from(b')')) {
+                break;
+            }
+            if unit == u16::from(b')') {
+                return Err(invalid(self.pattern_id, self.index, self.index + 1)?);
+            }
+            expressions.push(self.parse_atom()?);
+        }
+        Ok(Hir::sequence(expressions))
+    }
+
+    fn parse_atom(&mut self) -> Result<Hir, Error> {
+        let unit = self.units[self.index];
+        match unit {
+            value if value == u16::from(b'.') => {
+                self.index += 1;
+                Ok(Hir::Predicate(AsciiPredicate::any()))
+            }
+            value if value == u16::from(b'\\') => self.parse_escape(),
+            value if value == u16::from(b'[') => self.parse_character_class(),
+            value if value == u16::from(b'(') => self.parse_group(),
+            value if is_unsupported_regex_operator(value) => Err(unsupported(
+                self.pattern_id,
+                self.index,
+                self.index + 1,
+                value,
+            )?),
+            value => {
+                self.index += 1;
+                Ok(Hir::Symbol(value))
+            }
+        }
+    }
+
+    fn parse_group(&mut self) -> Result<Hir, Error> {
+        let start = self.index;
+        self.index += 1;
+        if self.current_is(b'?') {
+            self.index += 1;
+            if !self.current_is(b':') {
+                return Err(invalid(
+                    self.pattern_id,
+                    start,
+                    self.index.min(self.units.len()),
+                )?);
+            }
+            self.index += 1;
+        }
+
+        if self.current_is(b')') {
+            self.index += 1;
+            return Ok(Hir::Never);
+        }
+
+        let expression = self.parse_alternation(true)?;
+        if !self.current_is(b')') {
+            return Err(invalid(self.pattern_id, start, self.units.len())?);
+        }
+        self.index += 1;
+        Ok(expression)
+    }
+
+    fn parse_escape(&mut self) -> Result<Hir, Error> {
         let start = self.index;
         self.index += 1;
         let Some(&escaped) = self.units.get(self.index) else {
@@ -74,18 +131,18 @@ impl<'a> Parser<'a> {
         self.index += 1;
 
         match escaped {
-            value if is_escaped_literal(value) => Ok(HirAtom::Symbol(value)),
-            value if value == u16::from(b'n') => Ok(HirAtom::Symbol(u16::from(b'\n'))),
-            value if value == u16::from(b't') => Ok(HirAtom::Symbol(u16::from(b'\t'))),
-            value if value == u16::from(b'r') => Ok(HirAtom::Symbol(u16::from(b'\r'))),
-            value if value == u16::from(b'f') => Ok(HirAtom::Symbol(0x0c)),
-            value if is_shorthand(value) => Ok(HirAtom::Predicate(shorthand(value))),
+            value if is_escaped_literal(value) => Ok(Hir::Symbol(value)),
+            value if value == u16::from(b'n') => Ok(Hir::Symbol(u16::from(b'\n'))),
+            value if value == u16::from(b't') => Ok(Hir::Symbol(u16::from(b'\t'))),
+            value if value == u16::from(b'r') => Ok(Hir::Symbol(u16::from(b'\r'))),
+            value if value == u16::from(b'f') => Ok(Hir::Symbol(0x0c)),
+            value if is_shorthand(value) => Ok(Hir::Predicate(shorthand(value))),
             0x62 | 0x42 => Err(unsupported(self.pattern_id, start, self.index, escaped)?),
             _ => Err(invalid(self.pattern_id, start, self.index)?),
         }
     }
 
-    fn parse_character_class(&mut self) -> Result<HirAtom, Error> {
+    fn parse_character_class(&mut self) -> Result<Hir, Error> {
         let class_start = self.index;
         self.index += 1;
         let inverted = self.units.get(self.index) == Some(&u16::from(b'^'));
@@ -112,7 +169,7 @@ impl<'a> Parser<'a> {
                 if inverted {
                     predicate = predicate.complement();
                 }
-                return Ok(HirAtom::Predicate(predicate));
+                return Ok(Hir::Predicate(predicate));
             }
 
             match self.parse_class_token()? {
@@ -172,6 +229,10 @@ impl<'a> Parser<'a> {
             _ => Err(invalid(self.pattern_id, start, self.index)?),
         }
     }
+
+    fn current_is(&self, expected: u8) -> bool {
+        self.units.get(self.index) == Some(&u16::from(expected))
+    }
 }
 
 enum ClassToken {
@@ -229,10 +290,7 @@ fn position(pattern_id: PatternId, index: usize) -> Result<u64, Error> {
 }
 
 const fn is_unsupported_regex_operator(unit: u16) -> bool {
-    matches!(
-        unit,
-        0x5e | 0x24 | 0x7c | 0x3f | 0x2a | 0x2b | 0x28 | 0x29 | 0x7b
-    )
+    matches!(unit, 0x5e | 0x24 | 0x3f | 0x2a | 0x2b | 0x7b)
 }
 
 const fn is_escaped_literal(unit: u16) -> bool {
@@ -262,7 +320,7 @@ const fn is_shorthand(unit: u16) -> bool {
 #[cfg(test)]
 mod tests {
     use super::parse;
-    use crate::hir::{Hir, HirAtom};
+    use crate::hir::Hir;
     use crate::predicate::AsciiPredicate;
     use crate::{Error, PatternId, Utf16Span};
 
@@ -288,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn parser_lowers_dot_classes_and_escapes_to_atoms() -> Result<(), Error> {
+    fn parser_lowers_dot_classes_and_escapes_to_expressions() -> Result<(), Error> {
         // Prepare
         let pattern_id = PatternId::new(42);
 
@@ -296,11 +354,13 @@ mod tests {
         let pattern = parse(pattern_id, r"a.[b-d\d]\.")?;
 
         // Assert
-        let Hir::Sequence(atoms) = pattern.expression();
-        assert_eq!(atoms.len(), 4);
-        assert_eq!(atoms[0], HirAtom::Symbol(u16::from(b'a')));
-        assert_eq!(atoms[1], HirAtom::Predicate(AsciiPredicate::any()));
-        let HirAtom::Predicate(class) = atoms[2] else {
+        let Hir::Sequence(expressions) = pattern.expression() else {
+            panic!("pattern did not lower to a sequence");
+        };
+        assert_eq!(expressions.len(), 4);
+        assert_eq!(expressions[0], Hir::Symbol(u16::from(b'a')));
+        assert_eq!(expressions[1], Hir::Predicate(AsciiPredicate::any()));
+        let Hir::Predicate(class) = expressions[2] else {
             panic!("character class did not lower to a predicate");
         };
         assert!(class.matches(u16::from(b'b')));
@@ -308,15 +368,39 @@ mod tests {
         assert!(class.matches(u16::from(b'd')));
         assert!(class.matches(u16::from(b'7')));
         assert!(!class.matches(u16::from(b'a')));
-        assert_eq!(atoms[3], HirAtom::Symbol(u16::from(b'.')));
+        assert_eq!(expressions[3], Hir::Symbol(u16::from(b'.')));
+        assert!(!pattern.nullable());
+        assert_eq!(pattern.minimum_consumed(), Some(4));
         Ok(())
     }
 
     #[test]
-    fn parser_reports_malformed_escape_range_and_class_spans() {
+    fn parser_flattens_nested_composition_and_tracks_empty_branches() -> Result<(), Error> {
         // Prepare
         let pattern_id = PatternId::new(43);
-        let patterns = [r"ab\", "[z-a]", "[abc"];
+
+        // Test
+        let pattern = parse(pattern_id, "x(|(a|b))y")?;
+
+        // Assert
+        let Hir::Sequence(sequence) = pattern.expression() else {
+            panic!("outer sequence was not retained");
+        };
+        assert_eq!(sequence.len(), 3);
+        let Hir::Alternation(branches) = &sequence[1] else {
+            panic!("nested alternation was not retained");
+        };
+        assert_eq!(branches.len(), 3);
+        assert!(!pattern.nullable());
+        assert_eq!(pattern.minimum_consumed(), Some(2));
+        Ok(())
+    }
+
+    #[test]
+    fn parser_reports_malformed_escape_range_class_and_group_spans() {
+        // Prepare
+        let pattern_id = PatternId::new(44);
+        let patterns = [r"ab\", "[z-a]", "[abc", "(ab", "ab)", "(?=ab)"];
 
         // Test
         let errors: Vec<_> = patterns
@@ -335,9 +419,25 @@ mod tests {
     }
 
     #[test]
+    fn parser_rejects_pure_zero_width_composition() {
+        // Prepare
+        let pattern_id = PatternId::new(45);
+
+        // Test
+        let results = ["|", "||", "(|)", "|[]"].map(|pattern| parse(pattern_id, pattern));
+
+        // Assert
+        assert!(
+            results
+                .iter()
+                .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
+        );
+    }
+
+    #[test]
     fn parser_is_total_over_every_one_and_two_byte_ascii_pattern() {
         // Prepare
-        let pattern_id = PatternId::new(44);
+        let pattern_id = PatternId::new(46);
         let symbols: Vec<char> = (0_u8..=127).map(char::from).collect();
 
         // Test

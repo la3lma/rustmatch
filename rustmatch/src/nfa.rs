@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::hir::{Hir, HirAtom, HirPattern};
+use crate::hir::{Hir, HirPattern};
 use crate::predicate::AsciiPredicate;
 use crate::{Error, PatternId};
 
@@ -113,28 +113,21 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
 
     for (ordinal, pattern) in patterns.iter().enumerate() {
         let first = add_state(&mut pending_edges, &mut pending_terminals)?;
+        let terminal = add_state(&mut pending_edges, &mut pending_terminals)?;
         pending_edges[root.index()].push(Edge {
             kind: EdgeKind::Epsilon,
             target: first,
         });
-        let mut current = first;
-        let Hir::Sequence(atoms) = pattern.expression();
-        for &atom in atoms {
-            let next = add_state(&mut pending_edges, &mut pending_terminals)?;
-            pending_edges[current.index()].push(Edge {
-                kind: match atom {
-                    HirAtom::Symbol(symbol) => EdgeKind::Symbol(symbol),
-                    HirAtom::Predicate(predicate) => EdgeKind::Predicate(intern_predicate(
-                        &mut predicates,
-                        &mut predicate_ids,
-                        predicate,
-                    )?),
-                },
-                target: next,
-            });
-            current = next;
-        }
-        pending_terminals[current.index()].push(ordinal);
+        compile_expression(
+            pattern.expression(),
+            first,
+            terminal,
+            &mut pending_edges,
+            &mut pending_terminals,
+            &mut predicates,
+            &mut predicate_ids,
+        )?;
+        pending_terminals[terminal.index()].push(ordinal);
         pattern_ids.push(pattern.pattern_id());
     }
 
@@ -166,6 +159,66 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
         terminal_ordinals: terminal_ordinals.into_boxed_slice(),
         pattern_ids: pattern_ids.into_boxed_slice(),
     })
+}
+
+fn compile_expression(
+    expression: &Hir,
+    start: StateId,
+    end: StateId,
+    edges: &mut Vec<Vec<Edge>>,
+    terminals: &mut Vec<Vec<usize>>,
+    predicates: &mut Vec<AsciiPredicate>,
+    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
+) -> Result<(), Error> {
+    match expression {
+        Hir::Never => {}
+        Hir::Epsilon => edges[start.index()].push(Edge {
+            kind: EdgeKind::Epsilon,
+            target: end,
+        }),
+        Hir::Symbol(symbol) => edges[start.index()].push(Edge {
+            kind: EdgeKind::Symbol(*symbol),
+            target: end,
+        }),
+        Hir::Predicate(predicate) => edges[start.index()].push(Edge {
+            kind: EdgeKind::Predicate(intern_predicate(predicates, predicate_ids, *predicate)?),
+            target: end,
+        }),
+        Hir::Sequence(expressions) => {
+            let mut current = start;
+            for (index, item) in expressions.iter().enumerate() {
+                let next = if index + 1 == expressions.len() {
+                    end
+                } else {
+                    add_state(edges, terminals)?
+                };
+                compile_expression(
+                    item,
+                    current,
+                    next,
+                    edges,
+                    terminals,
+                    predicates,
+                    predicate_ids,
+                )?;
+                current = next;
+            }
+        }
+        Hir::Alternation(expressions) => {
+            for branch in expressions {
+                compile_expression(
+                    branch,
+                    start,
+                    end,
+                    edges,
+                    terminals,
+                    predicates,
+                    predicate_ids,
+                )?;
+            }
+        }
+    }
+    Ok(())
 }
 
 fn intern_predicate(
@@ -258,6 +311,44 @@ mod tests {
         assert_eq!(database.predicates.len(), 1);
         assert_eq!(predicate_edges.len(), 2);
         assert!(predicate_edges.windows(2).all(|ids| ids[0] == ids[1]));
+        Ok(())
+    }
+
+    #[test]
+    fn alternation_branches_and_converges_with_dense_valid_edges() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [parse(PatternId::new(1), "a|(bc|d)")?];
+
+        // Test
+        let database = compile(&patterns)?;
+        let first = database.edges_from(database.root)[0].target;
+        let branch_edges = database.edges_from(first);
+
+        // Assert
+        assert_eq!(branch_edges.len(), 3);
+        assert!(
+            branch_edges
+                .iter()
+                .all(|edge| edge.kind != EdgeKind::Epsilon)
+        );
+        for state_index in 0..database.state_count() {
+            let state = super::StateId::for_index(state_index)?;
+            assert!(
+                database
+                    .edges_from(state)
+                    .iter()
+                    .all(|edge| edge.target.index() < database.state_count())
+            );
+        }
+        assert_eq!(
+            (0..database.state_count())
+                .map(super::StateId::for_index)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .map(|&state| database.terminals_at(state).len())
+                .sum::<usize>(),
+            1
+        );
         Ok(())
     }
 }

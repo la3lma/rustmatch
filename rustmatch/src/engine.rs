@@ -141,3 +141,144 @@ impl Scratch {
         self.stack.clear();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::{extend_epsilon_closure, scan};
+    use crate::hir::Hir;
+    use crate::nfa;
+    use crate::parser::parse;
+    use crate::{PatternId, Utf16Text};
+
+    #[test]
+    fn epsilon_closure_reaches_empty_branch_without_duplicate_states() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [parse(PatternId::new(1), "|a")?];
+        let database = nfa::compile(&patterns)?;
+        let mut states = Vec::new();
+        let mut visited = vec![false; database.state_count()];
+        let mut stack = Vec::new();
+
+        // Test
+        extend_epsilon_closure(
+            &database,
+            database.root(),
+            &mut states,
+            &mut visited,
+            &mut stack,
+        );
+
+        // Assert
+        let unique: BTreeSet<_> = states.iter().map(|state| state.index()).collect();
+        assert_eq!(states.len(), unique.len());
+        assert!(
+            states
+                .iter()
+                .any(|&state| !database.terminals_at(state).is_empty())
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_generated_composition_agrees_with_tiny_hir_interpreter() -> Result<(), crate::Error>
+    {
+        // Prepare
+        let patterns = generated_patterns();
+        let inputs = generated_inputs();
+
+        // Test / Assert
+        for (ordinal, source) in patterns.iter().enumerate() {
+            let pattern_id = PatternId::new(u32::try_from(ordinal).expect("bounded pattern count"));
+            let parsed = parse(pattern_id, source)?;
+            let database = nfa::compile(std::slice::from_ref(&parsed))?;
+            for input in &inputs {
+                let text = Utf16Text::from(input.as_str());
+                let mut actual = Vec::new();
+                scan(&database, &text, |event| {
+                    actual.push((event.span().start(), event.span().end()));
+                })?;
+
+                let mut expected = Vec::new();
+                for start in 0..text.units().len() {
+                    let longest = interpret(parsed.expression(), text.units(), start)
+                        .into_iter()
+                        .filter(|&end| end > start)
+                        .max();
+                    if let Some(end) = longest {
+                        expected.push((
+                            u64::try_from(start).expect("bounded input"),
+                            u64::try_from(end).expect("bounded input"),
+                        ));
+                    }
+                }
+                assert_eq!(actual, expected, "pattern {source:?}, input {input:?}");
+            }
+        }
+        Ok(())
+    }
+
+    fn interpret(expression: &Hir, input: &[u16], start: usize) -> BTreeSet<usize> {
+        match expression {
+            Hir::Never => BTreeSet::new(),
+            Hir::Epsilon => BTreeSet::from([start]),
+            Hir::Symbol(expected) => input
+                .get(start)
+                .filter(|&&actual| actual == *expected)
+                .map_or_else(BTreeSet::new, |_| BTreeSet::from([start + 1])),
+            Hir::Predicate(predicate) => input
+                .get(start)
+                .filter(|&&actual| predicate.matches(actual))
+                .map_or_else(BTreeSet::new, |_| BTreeSet::from([start + 1])),
+            Hir::Sequence(expressions) => {
+                let mut positions = BTreeSet::from([start]);
+                for item in expressions {
+                    positions = positions
+                        .into_iter()
+                        .flat_map(|position| interpret(item, input, position))
+                        .collect();
+                }
+                positions
+            }
+            Hir::Alternation(expressions) => expressions
+                .iter()
+                .flat_map(|branch| interpret(branch, input, start))
+                .collect(),
+        }
+    }
+
+    fn generated_patterns() -> Vec<String> {
+        let atoms = ["a", "b", ".", "[ab]"];
+        let mut patterns = atoms.iter().map(ToString::to_string).collect::<Vec<_>>();
+        for left in atoms {
+            for right in atoms {
+                patterns.push(format!("{left}{right}"));
+                patterns.push(format!("{left}|{right}"));
+                patterns.push(format!("x({left}|{right})"));
+                patterns.push(format!("x(|{left}){right}"));
+            }
+        }
+        patterns
+    }
+
+    fn generated_inputs() -> Vec<String> {
+        let alphabet = ['a', 'b', '\n'];
+        let mut inputs = vec![String::new()];
+        let mut frontier = vec![String::new()];
+        for _ in 0..3 {
+            frontier = frontier
+                .into_iter()
+                .flat_map(|prefix| {
+                    alphabet.map(move |symbol| {
+                        let mut input = prefix.clone();
+                        input.push(symbol);
+                        input
+                    })
+                })
+                .collect();
+            inputs.extend(frontier.iter().cloned());
+        }
+        inputs
+    }
+}

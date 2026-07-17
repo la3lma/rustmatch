@@ -85,7 +85,7 @@ fn one_matcher_can_scan_empty_and_nonempty_inputs_repeatedly() -> Result<(), Err
 fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
-    let unsupported = ['^', '$', '|', '?', '*', '+', '(', ')', '{'];
+    let unsupported = ['^', '$', '?', '*', '+', '{'];
     let malformed = ['\\', '['];
 
     // Test
@@ -116,6 +116,103 @@ fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Er
             .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
     );
     assert_eq!(recovered_events, vec![(99, 0, 2), (100, 3, 8)]);
+    Ok(())
+}
+
+#[test]
+fn alternation_reports_the_longest_branch_at_each_start() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(400), "cat|dog")?;
+    builder.add(PatternId::new(401), "a|ab|abc")?;
+    builder.add(PatternId::new(402), "ab|ac")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "cat dog abc ac")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![
+            (400, 0, 3),
+            (400, 4, 7),
+            (401, 1, 2),
+            (401, 8, 11),
+            (401, 12, 13),
+            (402, 8, 10),
+            (402, 12, 14),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn plain_and_non_capturing_groups_compose_without_exposing_captures() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(410), "(a|b)c")?;
+    builder.add(PatternId::new(411), "(?:ab)c")?;
+    builder.add(PatternId::new(412), "(a(b|c))d")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "ac bc abc abd acd")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![
+            (410, 0, 2),
+            (410, 3, 5),
+            (410, 7, 9),
+            (410, 14, 16),
+            (411, 6, 9),
+            (412, 10, 13),
+            (412, 14, 17),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn empty_alternatives_follow_the_pinned_java_contract() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(420), "x(|a)y")?;
+    builder.add(PatternId::new(421), "x(a|)y")?;
+    builder.add(PatternId::new(422), "x()y")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "xy xay")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(events, vec![(420, 0, 2), (420, 3, 6), (421, 3, 6)]);
+    Ok(())
+}
+
+#[test]
+fn malformed_groups_are_rejected_without_poisoning_the_builder() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+
+    // Test
+    let unclosed = builder.add(PatternId::new(430), "(ab");
+    let unopened = builder.add(PatternId::new(431), "ab)");
+    let unsupported = builder.add(PatternId::new(432), "(?=ab)");
+    builder.add(PatternId::new(433), "(?:ab)")?;
+    let matcher = builder.build()?;
+    let recovered = collect(&matcher, "ab")?;
+
+    // Assert
+    assert!(matches!(unclosed, Err(Error::InvalidPattern { .. })));
+    assert!(matches!(unopened, Err(Error::InvalidPattern { .. })));
+    assert!(matches!(unsupported, Err(Error::InvalidPattern { .. })));
+    assert_eq!(recovered, vec![(433, 0, 2)]);
     Ok(())
 }
 

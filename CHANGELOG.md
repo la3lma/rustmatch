@@ -25,6 +25,8 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   and shorthand classes, backed by interned 128-bit predicates and differential
   evidence against the pinned Java reference.
 - A parser fuzz target compiled and linted by the ordinary quality gate.
+- Alternation, plain and non-capturing groups, normalized recursive HIR,
+  Thompson NFA branching, and pinned Java differential composition evidence.
 
 ### Changed
 
