@@ -93,6 +93,29 @@ register patterns -> build immutable matcher -> scan one or more inputs
 No pattern mutation occurs while a compiled matcher is in use. A changed rule
 set produces a new matcher.
 
+### Development strategy: an executable spine first
+
+The first implementation will be deliberately narrow but architecturally real.
+It may accept only non-empty 7-bit ASCII literal patterns and ASCII inputs, but
+it must already execute the intended end-to-end path:
+
+```text
+public builder
+    -> minimal parser and HIR
+    -> shared dense NFA compiler
+    -> immutable pattern database
+    -> production-shaped scan engine
+    -> longest-match event tracking
+    -> public match sink
+    -> oracle and benchmark adapters
+```
+
+This is not a temporary substring loop. It is the first, least capable version
+of the final system. Every later increment broadens or accelerates this running
+system while preserving end-to-end tests. At no planned point should the
+project contain several sophisticated horizontal layers that have never been
+executed together.
+
 ### Definition of success
 
 `rustmatch` is ready for a first stable release only when all of the following
@@ -181,17 +204,19 @@ We need a Rust-native library that:
    established by shared fixtures and differential tests.
 2. **Correctness precedes timing.** A fast run with the wrong match count is a
    rejected run.
-3. **Rust-native does not mean Rust-different.** Internal design should be
+3. **Build the executable spine first.** The earliest matcher is narrow but
+   uses the intended compiler, database, engine, event, and test boundaries.
+4. **Rust-native does not mean Rust-different.** Internal design should be
    idiomatic Rust, while observable matching behavior remains compatible.
-4. **Pay for what is used.** Assertions, Unicode handling, prefilters, and
+5. **Pay for what is used.** Assertions, Unicode handling, prefilters, and
    parallel execution must not impose their full cost on patterns that do not
    need them.
-5. **Immutable after build.** Compilation and scanning are separate phases.
-6. **No accidental public architecture.** Dense state tables, compiler stages,
+6. **Immutable after build.** Compilation and scanning are separate phases.
+7. **No accidental public architecture.** Dense state tables, compiler stages,
    caches, and diagnostics stay private unless users have a demonstrated need.
-7. **Receipts over adjectives.** Performance descriptions must be backed by
+8. **Receipts over adjectives.** Performance descriptions must be backed by
    versioned, reproducible evidence.
-8. **Safe Rust first.** Any `unsafe` block requires a measured benefit, a
+9. **Safe Rust first.** Any `unsafe` block requires a measured benefit, a
    documented invariant, focused tests, and independent review.
 
 ### Goals
@@ -296,6 +321,7 @@ clear rules for when an optimization is acceptable.
 | FR-016 | Expose a custom read-only input trait | External implementations can provide indexed symbols safely |
 | FR-017 | Materialize ordinary Rust strings conveniently | The common path requires no custom trait implementation |
 | FR-018 | Emit benchmark-runner JSON | Output can be archived as a standard benchmark receipt |
+| FR-019 | Keep every implementation increment executable end to end | Each merged capability is exercised from public builder through match event |
 
 ### Supported syntax baseline
 
@@ -414,6 +440,7 @@ It should not expose:
 | NFR-012 | Portability | Linux and macOS first; no architecture-specific correctness |
 | NFR-013 | Dependency hygiene | Small dependency set, audited before releases |
 | NFR-014 | Performance safety | Material regressions block optimization merges |
+| NFR-015 | Architectural continuity | Early narrow implementations use final-shaped boundaries rather than throwaway matching paths |
 
 ### Performance requirements
 
@@ -541,6 +568,39 @@ The architecture has four hard boundaries:
 
 The unoptimized semantic path remains available in tests as an oracle. Every
 optimization must be bypassable so its output can be compared with that path.
+
+### Executable spine
+
+The implementation begins with a thin vertical slice through every important
+boundary. Its first language is intentionally tiny:
+
+- pattern text is a non-empty sequence of 7-bit ASCII literal characters;
+- input contains only 7-bit ASCII;
+- no groups, alternation, classes, repetition, flags, or assertions;
+- several patterns may be registered and share one synthetic NFA start;
+- all eligible start positions and distinct pattern IDs are reported;
+- spans use the final typed UTF-16 coordinate API, for which ASCII positions
+  are numerically identical to byte positions.
+
+Despite those restrictions, the spine must use:
+
+- the intended `MatcherBuilder`, `Matcher`, `PatternId`, input, span, and sink
+  concepts;
+- a minimal AST/HIR that can grow without changing the public API;
+- Thompson-style NFA fragments represented by dense IDs and contiguous tables;
+- an immutable pattern database;
+- the real forward scan loop and reusable per-scan scratch ownership;
+- normalized match events compared with Java rmatch;
+- the same benchmark runner protocol planned for later releases.
+
+The spine deliberately omits lazy determinization, prefiltering, clever state
+sets, parallelism, broad syntax, and non-ASCII handling. Those are improvements
+to a working engine, not prerequisites for discovering whether the pieces fit.
+
+This creates an early integration ratchet: after the spine lands, no feature is
+complete when only its parser or compiler unit tests pass. It must be
+demonstrable through the public API, differential fixture, and, when relevant,
+the benchmark adapter.
 
 ### System context
 
@@ -1347,13 +1407,29 @@ Cockburn's levels are used informally:
 
 ### Delivery strategy
 
-Every increment must be vertically testable. Do not build every parser feature,
-then every compiler feature, then discover late that the event model is wrong.
-Each increment ends with a working path from pattern text to normalized events.
+Every increment must be vertically executable. Do not build every parser
+feature, then every compiler feature, then discover late that the event model
+is wrong. Each increment starts with an end-to-end failing example and ends
+with a working path from public pattern registration to normalized events.
 
-### Increment 0: Freeze the semantic charter
+The governing sequence is:
 
-**Purpose:** Remove ambiguity before performance code exists.
+| Slice | Added capability | System that remains running |
+|---|---|---|
+| 1 | ASCII literals | Builder, HIR, shared NFA, database, engine, sink, oracle, benchmark smoke |
+| 2 | ASCII predicates | The same path plus `.`, classes, ranges, and shorthands |
+| 3 | Composition | The same path plus alternation and grouping |
+| 4 | Repetition | The same path plus longest-match tracking for ambiguous lengths |
+| 5 | Full compatibility characters and assertions | The same path plus UTF-16, flags, anchors, and boundaries |
+| 6+ | Optimization and scale | The same answers through faster representations and parallel execution |
+
+Internal modules may of course have focused unit tests. They do not count as an
+integrated increment until the executable spine uses them.
+
+### Increment 0: Time-box the semantic charter
+
+**Purpose:** Remove enough ambiguity to build the spine without turning
+specification work into a long horizontal phase.
 
 **Deliverables**
 
@@ -1362,7 +1438,10 @@ Each increment ends with a working path from pattern text to normalized events.
 - ADR-0002 for match event selection.
 - Machine-readable fixture schema.
 - Java oracle CLI emitting sorted JSONL events and structured rejection data.
-- Initial fixture families for overlap, longest match, anchors, boundaries,
+- A tiny first fixture family for several ASCII literals, overlapping starts,
+  duplicate text with distinct pattern IDs, rejection of unsupported syntax,
+  and empty input.
+- A backlog for later fixtures covering longest match, anchors, boundaries,
   flags, escapes, invalid syntax, and supplementary Unicode code points.
 
 **Tests**
@@ -1372,100 +1451,132 @@ Each increment ends with a working path from pattern text to normalized events.
 
 **Exit criteria**
 
-- A human can answer exactly what `a+` over `aaa` emits.
-- A human can answer what offset an emoji occupies.
-- Every deliberate exclusion has a negative fixture.
+- A human can answer exactly what literal patterns `a` and `aa` report over
+  `aaa`.
+- ASCII offset and event identity are unambiguous.
+- Work can begin on the executable spine without an unresolved public API
+  boundary.
 
-### Increment 1: Rust workspace and walking skeleton
+### Increment 1: Executable ASCII-literal spine
 
-**Purpose:** Establish build, quality, and end-to-end boundaries.
+**Purpose:** Establish the real end-to-end architecture with the smallest useful
+language.
 
 **Deliverables**
 
 - Cargo workspace with resolver and workspace lints.
 - `rustmatch`, `rustmatch-core`, `rustmatch-compat`, and benchmark-adapter
-  placeholders.
+  crates.
 - CI for format, Clippy, tests, rustdoc, MSRV candidate, and license checks.
-- Public builder that accepts literal patterns.
+- Public builder that accepts non-empty 7-bit ASCII literal patterns and
+  rejects every unsupported construct explicitly.
 - `Utf16Text`, typed spans, pattern IDs, and a collecting sink.
-- Naive but correct literal scan producing normalized events.
+- Minimal AST/HIR with a literal node and source span.
+- Real Thompson literal fragments joined under a shared synthetic start.
+- Dense state IDs, contiguous edge/terminal storage, and an immutable pattern
+  database.
+- Production-shaped forward scan loop with reusable scratch state and a match
+  event sink. No substring-search shortcut is permitted.
+- Java-oracle adapter and benchmark-runner smoke lane using literal fixtures.
 
 **Tests**
 
 - Prepare / Test / Assert structure in focused tests.
-- Literal overlap and duplicate-ID policy.
-- Empty input and non-BMP text.
+- Several patterns in one database, literal overlap, and duplicate-ID policy.
+- Empty input, pattern-not-present, input shorter than pattern, and a match at
+  the final input position.
+- Unsupported metacharacters and non-ASCII pattern/input fail clearly while
+  those restrictions remain.
+- Internal NFA/database invariants: valid dense IDs, reachable terminals, and
+  no dangling edge ranges.
+- Rust output equals the Java oracle's normalized event multiset.
+- Benchmark runner validates match counts before retaining a smoke timing.
 - Public rustdoc example compiled as a test.
 
 **Exit criteria**
 
 - One command runs the complete workspace gate.
-- A literal fixture agrees with Java oracle.
+- The public API compiles several literal patterns into shared NFA machinery,
+  scans an input, and emits Java-compatible events.
+- The same packaged runner can enter the benchmark harness, even though its
+  performance is not yet interesting.
+- Deleting any one of parser, HIR, compiler, database, engine, or sink breaks an
+  end-to-end test. None is a disconnected placeholder.
 - No benchmark performance claim is made.
 
-### Increment 2: Parser and HIR
+### Increment 2: ASCII predicates through the spine
 
-**Purpose:** Implement the language independently of automata.
+**Purpose:** Prove that the spine can grow beyond literal strings without
+changing its boundaries.
 
 **Deliverables**
 
-- Source-spanned lexer/parser.
-- Typed AST and normalized HIR.
-- Static properties: nullable, minimum consumed length, assertion presence,
-  and candidate necessary literals.
-- Specific unsupported-syntax errors.
-- Exact repetition cap behavior.
+- Extend parser and HIR with `.`, positive and negated character classes,
+  ranges, and ASCII `\d`, `\w`, `\s` plus complements.
+- Interned ASCII character predicates compiled into consuming NFA edges.
+- Direct ASCII predicate representation suitable for later indexed
+  transitions.
+- Keep alternation, grouping, repetition, flags, assertions, and non-ASCII
+  explicitly rejected.
 
 **Tests**
 
-- Table-driven positive and negative syntax matrix.
-- Quantifier-binding regressions such as `ab?`.
-- Character-class and escape boundaries.
-- Exhaustive prefix-flag placement cases.
+- Table-driven positive and negative predicate syntax matrix.
+- Exhaustive 128-value checks for every ASCII shorthand and complement.
+- Character-class range, negation, escape, and malformed-class boundaries.
 - Parser fuzz target that may return success or typed error but never panic.
+- Every predicate fixture runs through public builder, NFA compiler, engine,
+  sink, and Java differential comparator.
 
 **Exit criteria**
 
-- Parser acceptance agrees with Java on the shared syntax suite.
-- HIR snapshots are stable enough for compiler tests but not public API.
+- Predicate acceptance and match events agree with Java for the new slice.
+- Literal behavior and benchmark smoke remain unchanged.
 
-### Increment 3: Thompson NFA compiler
+### Increment 3: Alternation and grouping through the spine
 
-**Purpose:** Produce an obviously correct shared finite automaton.
+**Purpose:** Add branching composition while retaining the same compiler and
+engine model.
 
 **Deliverables**
 
-- Dense state IDs and compact edge storage.
-- Fragment builders for every consuming HIR node.
-- Epsilon closure.
-- Terminal pattern-ID sets.
-- Shared start per partition.
-- Invariant checker available in tests/debug builds.
+- Extend parser and HIR with alternation, capturing-syntax grouping without
+  capture semantics, and `(?:...)`.
+- Add epsilon edges and closure to the existing NFA representation.
+- Flatten safe nested concatenations/alternations during normalization.
+- Compute nullable and minimum consumed length, while continuing to reject
+  pure zero-width patterns.
 
 **Tests**
 
-- Unit tests per HIR node.
-- Graph invariants: valid IDs, reachable terminals, no dangling slices.
-- Multiple patterns sharing literal prefixes.
-- Property test comparing NFA language acceptance to a tiny HIR interpreter
-  for bounded generated inputs.
+- Alternation at pattern edges and inside nested groups.
+- Empty alternatives according to the Java contract.
+- Multiple patterns sharing literal prefixes but diverging through branches.
+- Graph and epsilon-closure invariants.
+- Property test comparing the NFA with a tiny HIR interpreter for bounded
+  generated ASCII patterns and inputs.
+- Public end-to-end differential fixtures for every new composition shape.
 
 **Exit criteria**
 
-- All non-assertion semantic fixtures pass through the NFA baseline.
+- All literal, predicate, alternation, and grouping fixtures pass through the
+  same NFA baseline.
 - Compiler has no public node types.
 
-### Increment 4: Longest-match execution
+### Increment 4: Repetition and general longest-match execution
 
-**Purpose:** Implement rmatch's distinguishing reporting semantics.
+**Purpose:** Add variable-length paths and fully exercise rmatch's
+distinguishing reporting semantics.
 
 **Deliverables**
 
-- Per-scan candidate frontier.
-- Longest terminal tracking by pattern and start.
-- Safe commit when candidates cannot extend.
-- Event sink and collecting convenience API.
-- Reusable scratch buffers.
+- Extend parser, HIR, and fragment compiler with `?`, `*`, `+`, `{m}`,
+  `{m,n}`, and `{m,}`.
+- Bind every quantifier to the preceding atom.
+- Enforce the 1,000-repetition compatibility cap.
+- Generalize the spine's candidate frontier and terminal tracking to retain the
+  longest end for each pattern and start.
+- Commit only when a candidate cannot extend, then reuse its storage.
 
 **Tests**
 
@@ -1473,6 +1584,8 @@ Each increment ends with a working path from pattern text to normalized events.
 - Same-start independent patterns.
 - Nested and overlapping matches.
 - Ambiguous alternation with different accepting lengths.
+- Quantifier-binding regressions such as `ab?`.
+- Bounded generated-pattern differential tests.
 - Repeated scans and sink failure recovery.
 
 **Performance checks**
@@ -1482,7 +1595,8 @@ Each increment ends with a working path from pattern text to normalized events.
 
 **Exit criteria**
 
-- Event multisets agree with Java for all non-assertion fixtures.
+- Event multisets agree with Java for the complete ASCII consuming-language
+  slice.
 
 ### Increment 5: Assertions and exact character behavior
 
@@ -1490,6 +1604,11 @@ Each increment ends with a working path from pattern text to normalized events.
 
 **Deliverables**
 
+- Lift the temporary ASCII-only pattern and input restriction to canonical
+  UTF-16 code units without changing public span types.
+- Extend escapes and character predicates to the complete documented
+  compatibility surface.
+- Add prefix `(?i)` and `(?s)` handling plus the typed case-insensitive flag.
 - Assertion edges for beginning/end of line and word/non-word boundary.
 - Context classification using adjacent UTF-16 code units.
 - Context-sensitive epsilon closure only where required.
@@ -1691,6 +1810,9 @@ touches the hot path must include performance evidence.
 ### Definition of done for an implementation task
 
 - Public behavior is documented.
+- At least one test exercises the capability through the public builder,
+  compiled database, scan engine, and observable match/error result. A unit
+  test of one horizontal layer is not sufficient by itself.
 - Focused tests use explicit Prepare / Test / Assert comments where that makes
   multi-stage intent easier to review.
 - Differential fixtures exist when Java compatibility is relevant.
@@ -1704,12 +1826,16 @@ touches the hot path must include performance evidence.
 ### Immediate next actions
 
 1. Review and approve the UTF-16 compatibility model.
-2. Convert the Java syntax/semantics document into a versioned shared fixture
-   schema.
-3. Specify the Java oracle JSONL protocol.
-4. Create the Cargo workspace and walking-skeleton API.
-5. Implement literals end to end before broadening syntax.
-6. Add a placeholder rustmatch engine adapter to the benchmark repository.
+2. Define the versioned fixture schema and Java-oracle JSONL protocol for the
+   tiny ASCII-literal slice.
+3. Create the Cargo workspace and public spine API.
+4. Implement ASCII literals through the real HIR, shared dense NFA, immutable
+   database, scan loop, and match sink.
+5. Put the packaged executable spine through the benchmark harness's
+   correctness gate and retain a smoke receipt without making a performance
+   claim.
+6. Grow one vertical syntax slice at a time while keeping all earlier
+   end-to-end fixtures green.
 
 ---
 
