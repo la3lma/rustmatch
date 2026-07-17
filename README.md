@@ -1015,21 +1015,73 @@ Cockburn's levels are used informally:
 - **Sea:** user-goal interactions.
 - **Fish:** subfunctions used by sea-level cases.
 
-| ID | Level | Goal |
+| ID | Level | Goal | Minimum evidence classes |
+|---|---|---|---|
+| UC-0 | Cloud | Apply a large reusable rule set to large text efficiently | E1, E2, E4, E5, E6 |
+| UC-1 | Sea | Build a matcher from many patterns | E1, E3, E4, E5, E6 |
+| UC-2 | Sea | Scan an input and consume matches | E1, E2, E3, E4, E6 |
+| UC-3 | Sea | Prove compatibility with Java rmatch | E1, E2, E3, E6 |
+| UC-4 | Sea | Run a reproducible cross-engine benchmark | E1, E3, E4, E6 |
+| UC-5 | Sea | Configure and run parallel matching | E1, E2, E3, E4, E6 |
+| UC-6 | Sea | Supply a custom input implementation | E1, E3, E5, E6 |
+| UC-7 | Sea | Diagnose a rejected pattern | E1, E2, E3, E5, E6 |
+| UC-8 | Fish | Parse and normalize one pattern | E3 plus UC-1/UC-7 integration |
+| UC-9 | Fish | Compile shared automata | E3 plus UC-1/UC-2 integration |
+| UC-10 | Fish | Evaluate assertions at a position | E3 plus UC-2/UC-3 integration |
+| UC-11 | Fish | Prefilter safe candidate starts | E3 plus UC-2/UC-4 integration |
+| UC-12 | Fish | Track and commit longest matches | E3 plus UC-2/UC-3 integration |
+
+### Use-case evidence contract
+
+A use case is not implemented because the relevant types exist or because a
+reviewer can follow the intended control flow. It is implemented when another
+person can run a stable command against a named revision and inspect durable
+evidence that the main success scenario and important extensions work through
+the system boundary.
+
+Evidence is classified as follows:
+
+| Class | Evidence | What it proves |
 |---|---|---|
-| UC-0 | Cloud | Apply a large reusable rule set to large text efficiently |
-| UC-1 | Sea | Build a matcher from many patterns |
-| UC-2 | Sea | Scan an input and consume matches |
-| UC-3 | Sea | Prove compatibility with Java rmatch |
-| UC-4 | Sea | Run a reproducible cross-engine benchmark |
-| UC-5 | Sea | Configure and run parallel matching |
-| UC-6 | Sea | Supply a custom input implementation |
-| UC-7 | Sea | Diagnose a rejected pattern |
-| UC-8 | Fish | Parse and normalize one pattern |
-| UC-9 | Fish | Compile shared automata |
-| UC-10 | Fish | Evaluate assertions at a position |
-| UC-11 | Fish | Prefilter safe candidate starts |
-| UC-12 | Fish | Track and commit longest matches |
+| E1 | Public end-to-end test | The actor can achieve the goal through supported API or executable boundaries |
+| E2 | Differential fixture and normalized result | Rustmatch agrees with the Java semantic reference |
+| E3 | Invariant, property, fuzz, or model test | Internal representations preserve the assumptions on which public behavior depends |
+| E4 | Benchmark or resource receipt | A non-functional claim is measured with versions, inputs, hashes, and machine settings |
+| E5 | Compiled documentation example | The documented user path is complete and current |
+| E6 | Negative-path test | A named extension fails safely and with the promised observable result |
+
+Each evidence item must identify:
+
+- the UC ID and scenario or extension it covers;
+- the exact command that reproduces it;
+- the fixture and expected result, preferably in a machine-readable form;
+- the rustmatch revision and, for differential evidence, Java rmatch version;
+- pass/fail criteria that do not require interpreting a debug log;
+- the retained output when the claim is non-deterministic or non-functional.
+
+Evidence placement follows three rules:
+
+1. Deterministic fixtures, assertions, and reproduction commands live in this
+   repository beside the code they constrain.
+2. Large performance artifacts and machine-specific receipts live in the
+   benchmark repository and link back to the exact rustmatch revision.
+3. A CI run is a convenient execution record, not the only evidence. The test,
+   fixture, expected result, and command must survive after the CI log expires.
+
+The planned naming convention is:
+
+```text
+crates/rustmatch/tests/uc_XX_<goal>.rs
+crates/rustmatch-compat/tests/uc_XX_<goal>.rs
+fixtures/use-cases/uc-XX/<scenario>.json
+```
+
+The workspace should eventually provide one summary command, such as
+`cargo xtask evidence`, that prints every UC, the evidence items executed, and
+their status. Until that command exists, `cargo test --workspace uc_XX` is the
+minimum reproducible entry point. Command names may be finalized during the
+executable-spine bootstrap, but every UC must have one before it can be marked
+implemented.
 
 ### UC-0: Apply a large reusable rule set to large text efficiently
 
@@ -1083,6 +1135,28 @@ Cockburn's levels are used informally:
   return the sink error.
 - 4b. A resource budget is exhausted: use an exact fallback or return a
   documented build/scan error; never return partial success as complete.
+
+**Required evidence**
+
+- **E1:** `uc_00_reusable_rule_set` builds one matcher through the public API,
+  scans at least two different inputs, and asserts the complete event multiset
+  for both scans.
+- **E2:** the same patterns and inputs have Java and Rust normalized JSONL
+  outputs with equal hashes after sorting.
+- **E4:** a retained benchmark receipt demonstrates at least 10,000 patterns
+  over a 50 MiB corpus, or a later release plan's explicitly named replacement
+  scale, with preparation and scanning measured separately and the expected
+  match count validated.
+- **E6:** one rejected pattern and one sink failure are followed by the
+  documented recovery behavior, proving that neither leaves hidden corrupt
+  state.
+- **E5:** a compiled README or rustdoc example performs the complete
+  build-scan-consume lifecycle.
+
+**Pass condition:** UC-0 is fully demonstrated only when all five evidence
+items exist for the same released capability level. Before the large-scenario
+receipt exists, the executable spine may mark UC-0 as partially demonstrated,
+not complete.
 
 ### UC-1: Build a matcher from many patterns
 
@@ -1144,6 +1218,28 @@ Cockburn's levels are used informally:
 
 **Frequency:** once per rule-set revision, reused for many scans.
 
+**Required evidence**
+
+- **E1:** `uc_01_build_many_patterns` registers at least three patterns,
+  including a shared prefix and equal pattern text under distinct IDs, calls
+  `build`, scans one input, and proves from emitted pattern IDs that every and
+  only accepted registration reached the immutable matcher.
+- **E3:** an invariant test validates dense state IDs, edge ranges, reachable
+  terminals, partition ownership, and intern-table references for the built
+  database.
+- **E6:** table-driven cases cover malformed syntax, excessive repetition,
+  pure zero-width patterns, state/resource limits, and an unsafe or unavailable
+  prefilter hint. Each case asserts the public error variant and builder state
+  afterward.
+- **E4:** the benchmark adapter records preparation time separately from scan
+  time and identifies pattern count and matcher revision.
+- **E5:** a compiled example shows registering more than one pattern and
+  consuming the builder exactly once.
+
+**Pass condition:** the UC passes when the public test and invariant test run
+from a clean checkout, every named extension has a machine-checked result, and
+no benchmark receipt folds preparation into scan timing.
+
 ### UC-2: Scan an input and consume matches
 
 **Scope:** rustmatch library  
@@ -1201,6 +1297,25 @@ Cockburn's levels are used informally:
 
 **Frequency:** potentially millions of scans per compiled matcher.
 
+**Required evidence**
+
+- **E1:** `uc_02_scan_and_consume` asserts exact typed spans, pattern IDs, and
+  decoded text for literals, overlap, nesting, longest-per-start selection,
+  end-of-input acceptance, and repeated scans.
+- **E2:** shared fixtures produce byte-for-byte equivalent normalized Java and
+  Rust event files after sorting.
+- **E3:** property tests compare the semantic NFA baseline and every enabled
+  optimized engine over bounded generated pattern/input sets.
+- **E6:** custom-input failure, sink failure, disabled/bypassed prefilter, and
+  end-of-input assertion paths each have focused tests. A second scan proves
+  scratch state was reset after success and after recoverable failure.
+- **E4:** an allocation receipt or profiler assertion demonstrates zero
+  per-symbol heap allocation in steady state once that performance requirement
+  becomes active.
+
+**Pass condition:** all expected event multisets and negative-path results are
+machine asserted. Merely observing callbacks in a log is not evidence.
+
 ### UC-3: Prove compatibility with Java rmatch
 
 **Scope:** compatibility tooling  
@@ -1252,6 +1367,41 @@ Cockburn's levels are used informally:
 
 **Frequency:** every pull request touching parser, compiler, or engine.
 
+**Required evidence**
+
+- **E2:** every compatibility run retains a manifest containing fixture ID,
+  fixture SHA-256, Java rmatch version, rustmatch revision, coordinate mode,
+  parser outcome, event count, sorted-event SHA-256, and comparison status.
+- **E1:** `uc_03_compare_with_java` launches both adapters from one command and
+  exits zero only when acceptance/rejection and event multisets agree.
+- **E6:** a deliberately altered expected result proves the comparator fails
+  closed; a process crash or malformed adapter output must also produce
+  `inconclusive/fail`, never `pass`.
+- **E3:** generated compatible pattern/input cases are compared continuously,
+  and every discovered discrepancy is minimized into a deterministic fixture
+  before the fix is accepted.
+
+An acceptable retained manifest should be inspectable without either engine's
+debug output, for example:
+
+```json
+{
+  "use_case": "UC-3",
+  "fixture": "overlap-a-plus",
+  "fixture_sha256": "...",
+  "java_rmatch": "2.0.0",
+  "rustmatch_revision": "...",
+  "coordinate_mode": "utf16-code-units",
+  "java_event_sha256": "...",
+  "rust_event_sha256": "...",
+  "comparison": "pass"
+}
+```
+
+**Pass condition:** all fixtures in the declared compatibility tier have
+passing manifests. Missing, crashed, skipped, or unparsable runs count as
+absent evidence, not agreement.
+
 ### UC-4: Run a reproducible cross-engine benchmark
 
 **Scope:** rustmatch adapter plus benchmark repository  
@@ -1299,6 +1449,24 @@ Cockburn's levels are used informally:
 
 **Frequency:** every performance-sensitive change and release candidate.
 
+**Required evidence**
+
+- **E4:** a benchmark receipt conforming to the shared receipt schema records
+  scenario/generator version, input hashes, engine revision, container image,
+  host CPU, worker count, warm-ups, repetitions, preparation time, every scan
+  duration, median throughput, expected count, observed count, and validation
+  status.
+- **E1:** `uc_04_benchmark_adapter` runs a tiny deterministic scenario through
+  the packaged adapter and validates its JSON against the schema.
+- **E6:** fixtures with a wrong expected count, unsupported syntax, and an
+  adapter failure are rejected and cannot be archived as chartable results.
+- **E3:** a receipt-round-trip test proves that archive and plotting tools read
+  the emitted values without engine-specific manual editing.
+
+**Pass condition:** the benchmark repository can run and archive the exact
+packaged rustmatch revision using its ordinary engine interface. A console
+throughput number without a validated receipt is not evidence for UC-4.
+
 ### UC-5: Configure and run parallel matching
 
 **Scope:** rustmatch library  
@@ -1345,6 +1513,27 @@ Cockburn's levels are used informally:
 
 **Frequency:** common in throughput-oriented deployments.
 
+**Required evidence**
+
+- **E1:** `uc_05_parallel_equivalence` runs the same fixture with worker counts
+  1, 2, 3, available parallelism, and at least one oversubscribed value, then
+  asserts identical normalized event hashes.
+- **E2:** at least one parallel fixture also agrees with the Java reference;
+  the single-thread Rust result alone is not used as the only oracle.
+- **E6:** injected worker-start, worker-scan, and sink failures prove that the
+  call returns, all started workers are joined, no success is reported, and the
+  documented error is preserved. The test has a hard timeout to expose
+  deadlocks.
+- **E3:** repeated build/scan/drop cycles prove that workers and scratch state
+  are reclaimed; sanitizer or model-concurrency evidence supplements this when
+  available.
+- **E4:** a retained thread sweep records throughput and memory for every
+  tested count rather than retaining only the winner.
+
+**Pass condition:** correctness evidence is identical across configured worker
+counts, every injected failure terminates within the test timeout, and the
+calibrated performance claim links to the complete sweep.
+
 ### UC-6: Supply a custom input implementation
 
 **Scope:** rustmatch public API  
@@ -1379,6 +1568,24 @@ Cockburn's levels are used informally:
 - 4a. Requested text fell outside a bounded lookback window: decoding fails
   explicitly while span reporting remains meaningful.
 
+**Required evidence**
+
+- **E1:** `uc_06_custom_input_conformance` runs a reusable conformance suite
+  against both `Utf16Text` and a deliberately different test input
+  implementation, asserting identical event multisets and decoded text where
+  retention permits it.
+- **E3:** generated chunk boundaries and positional access orders exercise the
+  custom implementation without changing results. A concurrent-read test is
+  required before the input can be used by parallel matching.
+- **E6:** fetch failure and expired-lookback decoding produce the documented
+  typed errors and never an out-of-bounds panic or silently altered text.
+- **E5:** rustdoc contains a complete minimal custom `Input` implementation and
+  compiles it as a doctest.
+
+**Pass condition:** an implementation written outside `rustmatch-core` passes
+the public conformance suite without privileged access to engine internals.
+Testing only the built-in `Utf16Text` does not demonstrate UC-6.
+
 ### UC-7: Diagnose a rejected pattern
 
 **Scope:** parser and public error API  
@@ -1404,6 +1611,40 @@ Cockburn's levels are used informally:
 - `(?i:a)`: scoped flags are unsupported.
 - `a{1001}`: expansion exceeds the compatibility cap.
 - `^$`: pure zero-width match reporting is unsupported.
+
+**Required evidence**
+
+- **E1:** `uc_07_diagnose_rejected_pattern` submits a table of malformed and
+  unsupported patterns through the public builder and asserts pattern ID,
+  typed category, canonical UTF-16 span, mapped UTF-8 display span, and concise
+  rendered message.
+- **E2:** compatibility fixtures compare rejection acceptance/class with Java
+  rmatch where the shared contract defines one. Exact prose need not match.
+- **E6:** after every rejected registration, the same builder accepts a valid
+  pattern, builds, and scans successfully.
+- **E5:** documentation shows one real diagnostic and the corrected pattern.
+- **E3:** parser fuzzing treats success or a typed diagnostic as valid outcomes
+  and treats panic, hang, or unbounded allocation as failure.
+
+**Pass condition:** every documented rejection family has at least one golden
+diagnostic fixture, all spans select the intended source fragment, and builder
+recovery is asserted rather than inferred.
+
+### Fish-level evidence matrix
+
+Fish-level use cases are implementation mechanisms, so their evidence combines
+focused invariants with at least one sea-level path that consumes the result.
+
+| UC | Required focused evidence | Required integration evidence |
+|---|---|---|
+| UC-8: Parse and normalize | Golden AST/HIR cases, rejection tables, parser fuzz corpus, source-span checks | At least one UC-1/UC-7 public-builder fixture for every supported construct |
+| UC-9: Compile shared automata | Dense-ID and edge-range invariant checker; bounded HIR-versus-NFA property test | UC-1 builds several patterns and UC-2 scans the resulting database |
+| UC-10: Evaluate assertions | Exhaustive context truth tables and assertion-adversary fixtures | UC-2/UC-3 event equality for anchors and boundaries at input and line edges |
+| UC-11: Prefilter candidates | Proof metadata tests and prefilter-on/off event-hash equality | UC-2 preserves events while UC-4 records candidate reduction and scan cost |
+| UC-12: Commit longest matches | Exact overlap/ambiguity fixtures and baseline-versus-optimized property tests | UC-2/UC-3 agree on the normalized longest-per-pattern/start event multiset |
+
+A fish-level UC is not complete if only its data structure has unit tests. Its
+integration-evidence column must also be satisfied by the named sea-level UC.
 
 ### Delivery strategy
 
@@ -1813,6 +2054,9 @@ touches the hot path must include performance evidence.
 - At least one test exercises the capability through the public builder,
   compiled database, scan engine, and observable match/error result. A unit
   test of one horizontal layer is not sufficient by itself.
+- Every affected UC's evidence bundle is updated with the fixture, reproduction
+  command, and machine-checked pass condition; new evidence is not left only in
+  a pull-request description or CI log.
 - Focused tests use explicit Prepare / Test / Assert comments where that makes
   multi-stage intent easier to review.
 - Differential fixtures exist when Java compatibility is relevant.
