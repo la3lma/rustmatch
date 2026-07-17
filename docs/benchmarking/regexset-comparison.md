@@ -2,7 +2,7 @@
 
 - **Roadmap task:** B0
 - **Initial pinned competitor:** `regex` 1.13.1
-- **Status:** Planned; executable after the I1 literal contract is complete
+- **Status:** Active; harness smoke passes, retained stable-machine campaign pending
 
 ## Why this belongs early
 
@@ -80,3 +80,30 @@ cargo xtask bench-smoke
 The smoke uses a small deterministic generated fixture and prints one JSON
 receipt. It is included in `cargo xtask ci`, but it is not a stable-machine
 performance campaign and its timing fields must not be quoted as a result.
+
+## CI smoke alarm versus stable-machine evidence
+
+The C1 runner and comparator validate exact generated literal events before
+timing and compare seven-scan medians. The pull-request lane uses isolated base
+and candidate Cargo targets on one GitHub runner and reruns in reverse order
+before failing. Its deliberately broad threshold requires both more than 50
+percent slowdown and at least 100 ms of absolute regression. Receipts are
+retained for 30 days.
+
+C1 does not time `RegexSet` and cannot admit an optimization. It is only a
+smoke alarm for catastrophic rustmatch regressions. RegexSet scaling results
+and performance-sensitive rustmatch changes require correctness-gated,
+base/candidate measurements on the designated stable machine, currently
+`agogo.local`, with the complete provenance described above.
+
+The runner and comparator are ordinary release-profile commands so the same
+receipt contract can be exercised locally:
+
+```sh
+RUSTMATCH_BENCH_REVISION="$(git rev-parse HEAD)" \
+RUSTMATCH_BENCH_RUNNER=local \
+  cargo run --locked --release --package rustmatch-bench -- literal-tripwire \
+  > candidate.json
+
+target/release/rustmatch-bench compare-tripwire base.json candidate.json
+```
