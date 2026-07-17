@@ -85,7 +85,7 @@ fn one_matcher_can_scan_empty_and_nonempty_inputs_repeatedly() -> Result<(), Err
 fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
-    let unsupported = ['^', '$', '?', '*', '+', '{'];
+    let unsupported = ['^', '$'];
     let malformed = ['\\', '['];
 
     // Test
@@ -213,6 +213,139 @@ fn malformed_groups_are_rejected_without_poisoning_the_builder() -> Result<(), E
     assert!(matches!(unopened, Err(Error::InvalidPattern { .. })));
     assert!(matches!(unsupported, Err(Error::InvalidPattern { .. })));
     assert_eq!(recovered, vec![(433, 0, 2)]);
+    Ok(())
+}
+
+#[test]
+fn unary_repetition_binds_one_atom_and_keeps_every_overlapping_start() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(500), "a+")?;
+    builder.add(PatternId::new(501), "ab?")?;
+    builder.add(PatternId::new(502), "(ab)+")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "ababab aaa")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![
+            (500, 0, 1),
+            (500, 2, 3),
+            (500, 4, 5),
+            (500, 7, 10),
+            (500, 8, 10),
+            (500, 9, 10),
+            (501, 0, 2),
+            (501, 2, 4),
+            (501, 4, 6),
+            (501, 7, 8),
+            (501, 8, 9),
+            (501, 9, 10),
+            (502, 0, 6),
+            (502, 2, 6),
+            (502, 4, 6),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn star_can_be_absent_or_extend_to_the_longest_end() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(510), "ab*")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let events = collect(&matcher, "a abbb")?;
+
+    // Assert
+    assert_eq!(events, vec![(510, 0, 1), (510, 2, 6)]);
+    Ok(())
+}
+
+#[test]
+fn counted_repetition_composes_with_atoms_groups_and_following_text() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(520), "a{2,3}")?;
+    builder.add(PatternId::new(521), "(ab){2,3}")?;
+    builder.add(PatternId::new(522), "a{0,2}b")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "aaaa ababab aab")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![
+            (520, 0, 3),
+            (520, 1, 4),
+            (520, 2, 4),
+            (520, 12, 14),
+            (521, 5, 11),
+            (521, 7, 11),
+            (522, 5, 7),
+            (522, 6, 7),
+            (522, 7, 9),
+            (522, 8, 9),
+            (522, 9, 11),
+            (522, 10, 11),
+            (522, 12, 15),
+            (522, 13, 15),
+            (522, 14, 15),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn malformed_and_excessive_repetition_leave_the_builder_usable() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    let malformed_patterns = [
+        "?a", "*a", "+a", "{2}a", "a{0}", "a{2,1}", "a{x}", "a{1001}",
+    ];
+
+    // Test
+    let errors = malformed_patterns
+        .into_iter()
+        .zip(530_u32..)
+        .map(|(pattern, id)| builder.add(PatternId::new(id), pattern))
+        .collect::<Vec<_>>();
+    builder.add(PatternId::new(550), "a{2}")?;
+    let matcher = builder.build()?;
+    let recovered = collect(&matcher, "aaa")?;
+
+    // Assert
+    assert!(
+        errors
+            .iter()
+            .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
+    );
+    assert_eq!(recovered, vec![(550, 0, 2), (550, 1, 3)]);
+    Ok(())
+}
+
+#[test]
+fn maximum_counted_repetition_runs_through_the_complete_spine() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(560), "a{1000}")?;
+    let matcher = builder.build()?;
+    let input = "a".repeat(1_000);
+
+    // Test
+    let events = collect(&matcher, &input)?;
+
+    // Assert
+    assert_eq!(events, vec![(560, 0, 1_000)]);
     Ok(())
 }
 
