@@ -13,6 +13,8 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   evidence-driven implementation roadmap.
 - Contribution, conduct, security, support, and governance policies.
 - Repository templates for bug, feature, performance, and pull-request work.
+- Rust 2024 Cargo workspace, pinned primary and MSRV toolchains, GitHub Actions
+  quality workflow, and a root `cargo xtask ci` command.
 
 ### Changed
 
