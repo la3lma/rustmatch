@@ -34,10 +34,11 @@ application only needs set membership; it does not define semantic parity.
 ### RS-EVENTS: complete rustmatch event semantics
 
 `RegexSet` first identifies candidate patterns. Individually compiled
-`regex::Regex` values then recover matches for those candidates at every ASCII
-start position, retaining the longest match beginning exactly there. The
-normalized `(pattern_id, start, end)` multiset must equal rustmatch before a
-timing is retained.
+`regex::Regex` values then recover matches for those candidates with repeated
+`find_at` searches. Each search resumes one byte after the previous match's
+start, rather than after its end, so overlapping literal starts are preserved.
+The normalized `(pattern_id, start, end)` multiset must equal rustmatch before
+a timing is retained.
 
 This lane answers the actual rustmatch workload. It is necessarily less native
 to `RegexSet`, and the result must not be presented as a general indictment of

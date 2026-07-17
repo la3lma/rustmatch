@@ -91,10 +91,10 @@ fn literal_smoke() -> Result<SmokeReceipt, String> {
     let regex_set_compile = started.elapsed();
 
     let started = Instant::now();
-    let anchored_regexes = fixture
+    let event_regexes = fixture
         .patterns
         .iter()
-        .map(|pattern| Regex::new(&format!(r"\A(?:{})", regex::escape(pattern))))
+        .map(|pattern| Regex::new(&regex::escape(pattern)))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|error| format!("event-lane Regex compilation failed: {error}"))?;
     let regex_event_compile = started.elapsed();
@@ -108,7 +108,7 @@ fn literal_smoke() -> Result<SmokeReceipt, String> {
     }
 
     let mut rust_event_set = rust_events(&rust_matcher, &utf16_input)?;
-    let mut regex_event_set = regex_events(&regex_set, &anchored_regexes, &fixture.corpus)?;
+    let mut regex_event_set = regex_events(&regex_set, &event_regexes, &fixture.corpus)?;
     rust_event_set.sort_unstable();
     regex_event_set.sort_unstable();
     if rust_event_set != regex_event_set {
@@ -123,11 +123,7 @@ fn literal_smoke() -> Result<SmokeReceipt, String> {
         black_box(rust_native_ids(&rust_matcher, &utf16_input)?);
         black_box(regex_set_ids(&regex_set, &fixture.corpus)?);
         black_box(rust_events(&rust_matcher, &utf16_input)?);
-        black_box(regex_events(
-            &regex_set,
-            &anchored_regexes,
-            &fixture.corpus,
-        )?);
+        black_box(regex_events(&regex_set, &event_regexes, &fixture.corpus)?);
     }
 
     let rust_native_ns = measure(SMOKE_MEASURED_ITERATIONS, || {
@@ -140,7 +136,7 @@ fn literal_smoke() -> Result<SmokeReceipt, String> {
         rust_events(&rust_matcher, &utf16_input)
     })?;
     let regex_events_ns = measure(SMOKE_MEASURED_ITERATIONS, || {
-        regex_events(&regex_set, &anchored_regexes, &fixture.corpus)
+        regex_events(&regex_set, &event_regexes, &fixture.corpus)
     })?;
 
     Ok(SmokeReceipt {
@@ -358,18 +354,21 @@ fn regex_events(
         let regex = regexes
             .get(index)
             .ok_or_else(|| "RegexSet returned an out-of-range pattern index".to_owned())?;
-        for start in 0..corpus.len() {
-            if let Some(matched) = regex.find(&corpus[start..]) {
-                let end = start
-                    .checked_add(matched.end())
-                    .ok_or_else(|| "smoke event end overflowed usize".to_owned())?;
-                events.push(Event {
-                    pattern_id,
-                    start: u64::try_from(start)
-                        .map_err(|_| "smoke corpus position exceeds u64".to_owned())?,
-                    end: u64::try_from(end)
-                        .map_err(|_| "smoke corpus position exceeds u64".to_owned())?,
-                });
+        let mut search_start = 0;
+        while let Some(matched) = regex.find_at(corpus, search_start) {
+            events.push(Event {
+                pattern_id,
+                start: u64::try_from(matched.start())
+                    .map_err(|_| "smoke corpus position exceeds u64".to_owned())?,
+                end: u64::try_from(matched.end())
+                    .map_err(|_| "smoke corpus position exceeds u64".to_owned())?,
+            });
+            search_start = matched
+                .start()
+                .checked_add(1)
+                .ok_or_else(|| "smoke event start overflowed usize".to_owned())?;
+            if search_start > corpus.len() {
+                break;
             }
         }
     }
@@ -577,9 +576,10 @@ struct ComparisonReceipt {
 #[cfg(test)]
 mod tests {
     use super::{
-        LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, TripwireReceipt,
-        compare_tripwire,
+        Event, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, TripwireReceipt,
+        compare_tripwire, regex_events,
     };
+    use regex::{Regex, RegexSet};
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {
@@ -643,6 +643,35 @@ mod tests {
 
         // Assert
         assert!(matches!(result, Err(message) if message.contains("fixture identities differ")));
+    }
+
+    #[test]
+    fn regex_event_lane_preserves_overlapping_literal_starts() -> Result<(), String> {
+        // Prepare
+        let patterns = ["aa"];
+        let regex_set = RegexSet::new(patterns).map_err(|error| error.to_string())?;
+        let regexes = [Regex::new("aa").map_err(|error| error.to_string())?];
+
+        // Test
+        let events = regex_events(&regex_set, &regexes, "aaa")?;
+
+        // Assert
+        assert_eq!(
+            events,
+            vec![
+                Event {
+                    pattern_id: 1,
+                    start: 0,
+                    end: 2,
+                },
+                Event {
+                    pattern_id: 1,
+                    start: 1,
+                    end: 3,
+                },
+            ]
+        );
+        Ok(())
     }
 
     fn tripwire_receipt(median_scan_ns: u128) -> TripwireReceipt {
