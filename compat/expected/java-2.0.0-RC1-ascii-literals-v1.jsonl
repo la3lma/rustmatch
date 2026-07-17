@@ -3,5 +3,5 @@
 {"schema_version":1,"case_id":"overlapping-literal-starts","rust_expectation":"matched","status":"matched","events":[{"pattern_id":11,"start_utf16":0,"end_utf16":3},{"pattern_id":11,"start_utf16":2,"end_utf16":5}]}
 {"schema_version":1,"case_id":"empty-input","rust_expectation":"matched","status":"matched","events":[]}
 {"schema_version":1,"case_id":"whitespace-and-newline","rust_expectation":"matched","status":"matched","events":[{"pattern_id":17,"start_utf16":1,"end_utf16":3}]}
-{"schema_version":1,"case_id":"operator-outside-first-slice","rust_expectation":"rejected-unsupported","status":"matched","events":[{"pattern_id":19,"start_utf16":0,"end_utf16":3},{"pattern_id":19,"start_utf16":1,"end_utf16":3},{"pattern_id":19,"start_utf16":2,"end_utf16":3}]}
+{"schema_version":1,"case_id":"operator-outside-current-slice","rust_expectation":"rejected-unsupported","status":"matched","events":[]}
 {"schema_version":1,"case_id":"malformed-reference-syntax","rust_expectation":"rejected-invalid","status":"rejected","rejection":{"stage":"registration","pattern_id":23,"exception_class":"no.rmz.rmatch.RegexpParserException","message":"Unterminated character class, missing ']'"}}

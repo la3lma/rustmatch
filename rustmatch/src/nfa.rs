@@ -217,8 +217,108 @@ fn compile_expression(
                 )?;
             }
         }
+        Hir::Repeat {
+            expression,
+            min,
+            max,
+        } => compile_repetition(
+            expression,
+            *min,
+            *max,
+            start,
+            end,
+            edges,
+            terminals,
+            predicates,
+            predicate_ids,
+        )?,
     }
     Ok(())
+}
+
+// Keeping the complete mutable compilation context explicit here avoids hidden
+// aliases while the compiler is still small; an arena context can replace it
+// once additional edge families make that simplification worthwhile.
+#[allow(clippy::too_many_arguments)]
+fn compile_repetition(
+    expression: &Hir,
+    min: u16,
+    max: Option<u16>,
+    start: StateId,
+    end: StateId,
+    edges: &mut Vec<Vec<Edge>>,
+    terminals: &mut Vec<Vec<usize>>,
+    predicates: &mut Vec<AsciiPredicate>,
+    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
+) -> Result<(), Error> {
+    let mut current = start;
+    for required in 0..min {
+        let next = if required + 1 == min && max == Some(min) {
+            end
+        } else {
+            add_state(edges, terminals)?
+        };
+        compile_expression(
+            expression,
+            current,
+            next,
+            edges,
+            terminals,
+            predicates,
+            predicate_ids,
+        )?;
+        current = next;
+    }
+
+    match max {
+        Some(limit) if limit == min => {
+            if min == 0 {
+                add_epsilon(edges, start, end);
+            }
+        }
+        Some(limit) => {
+            for optional in min..limit {
+                add_epsilon(edges, current, end);
+                let next = if optional + 1 == limit {
+                    end
+                } else {
+                    add_state(edges, terminals)?
+                };
+                compile_expression(
+                    expression,
+                    current,
+                    next,
+                    edges,
+                    terminals,
+                    predicates,
+                    predicate_ids,
+                )?;
+                current = next;
+            }
+        }
+        None => {
+            add_epsilon(edges, current, end);
+            let loop_end = add_state(edges, terminals)?;
+            compile_expression(
+                expression,
+                current,
+                loop_end,
+                edges,
+                terminals,
+                predicates,
+                predicate_ids,
+            )?;
+            add_epsilon(edges, loop_end, current);
+        }
+    }
+    Ok(())
+}
+
+fn add_epsilon(edges: &mut [Vec<Edge>], start: StateId, end: StateId) {
+    edges[start.index()].push(Edge {
+        kind: EdgeKind::Epsilon,
+        target: end,
+    });
 }
 
 fn intern_predicate(
@@ -348,6 +448,38 @@ mod tests {
                 .map(|&state| database.terminals_at(state).len())
                 .sum::<usize>(),
             1
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn open_repetition_compiles_a_reachable_consuming_cycle() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [parse(PatternId::new(1), "(ab)+")?];
+
+        // Test
+        let database = compile(&patterns)?;
+        let has_epsilon_back_edge = (0..database.state_count()).any(|source| {
+            let state = super::StateId::for_index(source).expect("bounded test database");
+            database
+                .edges_from(state)
+                .iter()
+                .any(|edge| matches!(edge.kind, EdgeKind::Epsilon) && edge.target.index() <= source)
+        });
+
+        // Assert
+        assert!(has_epsilon_back_edge);
+        assert!(
+            database
+                .edges
+                .iter()
+                .any(|edge| edge.kind == EdgeKind::Symbol(u16::from(b'a')))
+        );
+        assert!(
+            database
+                .edges
+                .iter()
+                .any(|edge| edge.kind == EdgeKind::Symbol(u16::from(b'b')))
         );
         Ok(())
     }

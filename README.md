@@ -2,14 +2,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: active implementation.** The executable spine, ASCII predicates,
-> alternation, and grouping are complete through parser, HIR, NFA, engine,
-> compatibility, fuzz, and evidence boundaries. This remains a development
-> prototype, not a published crate.
+> **Status: active implementation.** Repetition is complete through the
+> executable spine on top of the ASCII predicates, alternation, and grouping
+> increments, with pinned Java evidence and the repository performance guard
+> intact. This remains a development prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `4/12`
-> increments started and `4/12` complete.
+> status](docs/roadmap.md). Planning is complete; implementation is at `5/12`
+> increments started and `5/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -119,7 +119,7 @@ The executable spine currently has this deliberately small contract:
 
 | Area | Current behavior |
 |---|---|
-| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, and plain or non-capturing groups. Reject non-ASCII, quantifiers, flags, anchors, and assertions. |
+| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, and greedy repetition. Reject non-ASCII, flags, anchors, assertions, lazy quantifiers, and possessive quantifiers. |
 | Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
 | Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Alternatives may give one pattern several possible lengths. |
@@ -143,6 +143,9 @@ The current pattern syntax is deliberately explicit:
   the control escapes, and lowercase `\d`, `\w`, and `\s` are supported.
 - `a|b` selects between alternatives. Parentheses group composition;
   `(ab)` and `(?:ab)` are equivalent because rustmatch does not capture.
+- `?`, `*`, `+`, `{m}`, `{m,n}`, and `{m,}` greedily repeat the immediately
+  preceding atom or group. Counted bounds may not exceed 1,000; `{0}` and
+  `{0,0}` are rejected, while `{0,}` is the unbounded zero-minimum form.
 - A leading or interior empty alternative is an epsilon branch. As in the
   pinned Java contract, a trailing empty alternative is ignored and an empty
   group matches nothing. Rustmatch deliberately rejects a pattern that can
@@ -151,13 +154,14 @@ The current pattern syntax is deliberately explicit:
 The fixtures cover literals and overlapping starts, all predicate families,
 ASCII boundary values and newlines, class negation and ranges, literal and
 control escapes, branching and nested grouping shapes, empty alternatives,
+greedy and counted repetition, quantifier binding, longest-match ambiguity,
 and malformed registration cases.
 
 ### Development strategy: an executable spine first
 
 The implementation began deliberately narrow but architecturally real. The
-literal bootstrap, ASCII predicates, and branching-composition increments all
-execute the intended end-to-end path:
+literal bootstrap, ASCII predicates, branching composition, and repetition
+increments all execute the intended end-to-end path:
 
 ```text
 public builder
@@ -2149,11 +2153,14 @@ distinguishing reporting semantics.
 - Ambiguous alternation with different accepting lengths.
 - Quantifier-binding regressions such as `ab?`.
 - Bounded generated-pattern differential tests.
-- Repeated scans and sink failure recovery.
+- Repeated scans and recovery after rejected registrations or unsupported
+  inputs. A fallible sink remains deferred with the corresponding public API.
 
 **Performance checks**
 
-- Allocation profile confirms no per-symbol heap allocation after warm-up.
+- Code inspection confirms that scan-local frontiers, closure storage, and
+  terminal tracking are preallocated before symbol iteration; the repository
+  performance tripwire guards against catastrophic regression.
 - Record baseline throughput without setting a release promise.
 
 **Exit criteria**

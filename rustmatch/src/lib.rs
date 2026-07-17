@@ -3,9 +3,11 @@
 //! rustmatch builds an immutable matcher from caller-identified patterns and
 //! can reuse it across inputs. The current executable slice accepts non-empty
 //! patterns composed of 7-bit ASCII literals, dot, character classes, ranges,
-//! escapes, ASCII shorthand classes, alternation, and grouping without capture
-//! semantics. This deliberately bounded language runs through the final-shaped
-//! parser, HIR, shared NFA, database, scan engine, and callback boundaries.
+//! escapes, ASCII shorthand classes, alternation, grouping without capture
+//! semantics, and greedy repetition. Unary and counted quantifiers bind to the
+//! immediately preceding atom or group, and counted bounds are capped at 1,000.
+//! This deliberately bounded language runs through the final-shaped parser,
+//! HIR, shared NFA, database, scan engine, and callback boundaries.
 //!
 //! # Example
 //!

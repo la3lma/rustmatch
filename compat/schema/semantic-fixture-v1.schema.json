@@ -21,7 +21,12 @@
       "pattern": "^[a-z0-9][a-z0-9-]*$"
     },
     "compatibility_tier": {
-      "enum": ["ascii-literal-v1", "ascii-predicate-v1", "ascii-composition-v1"]
+      "enum": [
+        "ascii-literal-v1",
+        "ascii-predicate-v1",
+        "ascii-composition-v1",
+        "ascii-repetition-v1"
+      ]
     },
     "rust_expectation": {
       "enum": ["matched", "rejected-invalid", "rejected-unsupported"]
