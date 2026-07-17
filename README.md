@@ -7,6 +7,10 @@
 > before `rustmatch` can honestly claim compatibility with
 > [Java rmatch](https://github.com/la3lma/rmatch).
 
+> **Roadmap:** [See the implementation dependency graph and current
+> status](docs/roadmap.md). Planning is complete; implementation is currently
+> not started (`0/12` implementation increments started, `0/12` complete).
+
 `rustmatch` is intended to be a native Rust implementation of the rmatch idea:
 register many regular expressions once, compile them into shared matching
 machinery, and scan large text inputs without running an independent full
