@@ -1,0 +1,4 @@
+{"schema_version":1,"case_id":"dot-matches-ascii-boundaries","compatibility_tier":"ascii-predicate-v1","rust_expectation":"matched","patterns":[{"pattern_id":30,"utf16":[46]}],"input_utf16":[0,10,65,127]}
+{"schema_version":1,"case_id":"dot-between-literals","compatibility_tier":"ascii-predicate-v1","rust_expectation":"matched","patterns":[{"pattern_id":31,"utf16":[97,46]},{"pattern_id":32,"utf16":[46,98]}],"input_utf16":[97,10,98]}
+{"schema_version":1,"case_id":"overlapping-dot-concatenation","compatibility_tier":"ascii-predicate-v1","rust_expectation":"matched","patterns":[{"pattern_id":33,"utf16":[97,46,97]}],"input_utf16":[97,10,97,10,97]}
+

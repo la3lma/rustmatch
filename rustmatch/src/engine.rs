@@ -26,7 +26,7 @@ pub(crate) fn scan(
             scratch.reset_next();
             for &state in &scratch.active {
                 for edge in database.edges_from(state) {
-                    if edge.kind == EdgeKind::Symbol(symbol) {
+                    if database.edge_matches(edge.kind, symbol) {
                         extend_epsilon_closure(
                             database,
                             edge.target,

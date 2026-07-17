@@ -1,6 +1,9 @@
 //! Dense Thompson-style NFA compilation and immutable pattern database.
 
-use crate::hir::{Hir, HirPattern};
+use std::collections::HashMap;
+
+use crate::hir::{Hir, HirAtom, HirPattern};
+use crate::predicate::AsciiPredicate;
 use crate::{Error, PatternId};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -19,9 +22,25 @@ impl StateId {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct PredicateId(u32);
+
+impl PredicateId {
+    fn for_index(index: usize) -> Result<Self, Error> {
+        u32::try_from(index)
+            .map(Self)
+            .map_err(|_| Error::PatternSetTooLarge)
+    }
+
+    const fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum EdgeKind {
     Epsilon,
     Symbol(u16),
+    Predicate(PredicateId),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -43,6 +62,7 @@ pub(crate) struct PatternDatabase {
     root: StateId,
     states: Box<[State]>,
     edges: Box<[Edge]>,
+    predicates: Box<[AsciiPredicate]>,
     terminal_ordinals: Box<[usize]>,
     pattern_ids: Box<[PatternId]>,
 }
@@ -73,6 +93,14 @@ impl PatternDatabase {
     pub(crate) fn pattern_id(&self, ordinal: usize) -> PatternId {
         self.pattern_ids[ordinal]
     }
+
+    pub(crate) fn edge_matches(&self, kind: EdgeKind, symbol: u16) -> bool {
+        match kind {
+            EdgeKind::Epsilon => false,
+            EdgeKind::Symbol(expected) => expected == symbol,
+            EdgeKind::Predicate(predicate) => self.predicates[predicate.index()].matches(symbol),
+        }
+    }
 }
 
 pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error> {
@@ -80,6 +108,8 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
     let mut pending_terminals: Vec<Vec<usize>> = vec![Vec::new()];
     let root = StateId::for_index(0)?;
     let mut pattern_ids = Vec::with_capacity(patterns.len());
+    let mut predicates = Vec::new();
+    let mut predicate_ids = HashMap::new();
 
     for (ordinal, pattern) in patterns.iter().enumerate() {
         let first = add_state(&mut pending_edges, &mut pending_terminals)?;
@@ -88,15 +118,18 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
             target: first,
         });
         let mut current = first;
-        let Hir::Literal(symbols) = pattern.expression();
-        debug_assert_eq!(
-            usize::try_from(pattern.source_span().len()),
-            Ok(symbols.len())
-        );
-        for &symbol in symbols {
+        let Hir::Sequence(atoms) = pattern.expression();
+        for &atom in atoms {
             let next = add_state(&mut pending_edges, &mut pending_terminals)?;
             pending_edges[current.index()].push(Edge {
-                kind: EdgeKind::Symbol(symbol),
+                kind: match atom {
+                    HirAtom::Symbol(symbol) => EdgeKind::Symbol(symbol),
+                    HirAtom::Predicate(predicate) => EdgeKind::Predicate(intern_predicate(
+                        &mut predicates,
+                        &mut predicate_ids,
+                        predicate,
+                    )?),
+                },
                 target: next,
             });
             current = next;
@@ -129,9 +162,25 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
         root,
         states: states.into_boxed_slice(),
         edges: edges.into_boxed_slice(),
+        predicates: predicates.into_boxed_slice(),
         terminal_ordinals: terminal_ordinals.into_boxed_slice(),
         pattern_ids: pattern_ids.into_boxed_slice(),
     })
+}
+
+fn intern_predicate(
+    predicates: &mut Vec<AsciiPredicate>,
+    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
+    predicate: AsciiPredicate,
+) -> Result<PredicateId, Error> {
+    if let Some(&id) = predicate_ids.get(&predicate) {
+        Ok(id)
+    } else {
+        let id = PredicateId::for_index(predicates.len())?;
+        predicates.push(predicate);
+        predicate_ids.insert(predicate, id);
+        Ok(id)
+    }
 }
 
 fn add_state(
@@ -183,6 +232,32 @@ mod tests {
             .map(|&state| database.terminals_at(state).len())
             .sum::<usize>();
         assert_eq!(terminal_count, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn equal_dot_predicates_are_interned_once() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [
+            parse(PatternId::new(1), ".")?,
+            parse(PatternId::new(2), "a.")?,
+        ];
+
+        // Test
+        let database = compile(&patterns)?;
+        let predicate_edges: Vec<_> = database
+            .edges
+            .iter()
+            .filter_map(|edge| match edge.kind {
+                EdgeKind::Predicate(id) => Some(id),
+                EdgeKind::Epsilon | EdgeKind::Symbol(_) => None,
+            })
+            .collect();
+
+        // Assert
+        assert_eq!(database.predicates.len(), 1);
+        assert_eq!(predicate_edges.len(), 2);
+        assert!(predicate_edges.windows(2).all(|ids| ids[0] == ids[1]));
         Ok(())
     }
 }

@@ -1,6 +1,7 @@
-//! First-slice parser that admits only non-empty 7-bit ASCII literals.
+//! Parser for the currently supported 7-bit ASCII syntax.
 
-use crate::hir::{Hir, HirPattern};
+use crate::hir::{Hir, HirAtom, HirPattern};
+use crate::predicate::AsciiPredicate;
 use crate::{Error, PatternId, Utf16Span};
 
 pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, Error> {
@@ -9,8 +10,9 @@ pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, E
         return Err(Error::EmptyPattern { pattern_id });
     }
 
+    let mut atoms = Vec::with_capacity(units.len());
     for (index, &unit) in units.iter().enumerate() {
-        if unit > 0x7f || is_regex_operator(unit) {
+        if unit > 0x7f || is_unsupported_regex_operator(unit) {
             let start = position(pattern_id, index)?;
             return Err(Error::UnsupportedPattern {
                 pattern_id,
@@ -18,13 +20,16 @@ pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, E
                 code_unit: unit,
             });
         }
+        atoms.push(if unit == u16::from(b'.') {
+            HirAtom::Predicate(AsciiPredicate::any())
+        } else {
+            HirAtom::Symbol(unit)
+        });
     }
 
-    let end = position(pattern_id, units.len())?;
     Ok(HirPattern::new(
         pattern_id,
-        Hir::Literal(units.into_boxed_slice()),
-        Utf16Span::from_bounds(0, end),
+        Hir::Sequence(atoms.into_boxed_slice()),
     ))
 }
 
@@ -32,28 +37,18 @@ fn position(pattern_id: PatternId, index: usize) -> Result<u64, Error> {
     u64::try_from(index).map_err(|_| Error::PatternTooLarge { pattern_id })
 }
 
-const fn is_regex_operator(unit: u16) -> bool {
+const fn is_unsupported_regex_operator(unit: u16) -> bool {
     matches!(
         unit,
-        0x5c | 0x2e
-            | 0x5e
-            | 0x24
-            | 0x7c
-            | 0x3f
-            | 0x2a
-            | 0x2b
-            | 0x28
-            | 0x29
-            | 0x5b
-            | 0x5d
-            | 0x7b
-            | 0x7d
+        0x5c | 0x5e | 0x24 | 0x7c | 0x3f | 0x2a | 0x2b | 0x28 | 0x29 | 0x5b | 0x5d | 0x7b | 0x7d
     )
 }
 
 #[cfg(test)]
 mod tests {
     use super::parse;
+    use crate::hir::{Hir, HirAtom};
+    use crate::predicate::AsciiPredicate;
     use crate::{Error, PatternId, Utf16Span};
 
     #[test]
@@ -75,5 +70,26 @@ mod tests {
                 && span == Utf16Span::from_bounds(2, 3)
                 && code_unit == u16::from(b'+')
         ));
+    }
+
+    #[test]
+    fn parser_preserves_literals_and_lowers_dot_to_a_predicate() -> Result<(), Error> {
+        // Prepare
+        let pattern_id = PatternId::new(42);
+
+        // Test
+        let pattern = parse(pattern_id, "a.b")?;
+
+        // Assert
+        let Hir::Sequence(atoms) = pattern.expression();
+        assert_eq!(
+            atoms.as_ref(),
+            [
+                HirAtom::Symbol(u16::from(b'a')),
+                HirAtom::Predicate(AsciiPredicate::any()),
+                HirAtom::Symbol(u16::from(b'b')),
+            ]
+        );
+        Ok(())
     }
 }

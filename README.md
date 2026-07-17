@@ -2,14 +2,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: design and compatibility planning.** There is no usable Rust
-> matcher in this repository yet. The document below defines what must be true
-> before `rustmatch` can honestly claim compatibility with
-> [Java rmatch](https://github.com/la3lma/rmatch).
+> **Status: active implementation.** The end-to-end ASCII-literal spine is
+> complete, and ASCII predicate syntax is now being added vertically through
+> the same parser, HIR, NFA, engine, compatibility, and evidence boundaries.
+> This remains a development prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation remains at
-> `0/12` increments started and `0/12` complete.
+> status](docs/roadmap.md). Planning is complete; implementation is at `3/12`
+> increments started and `2/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -113,13 +113,13 @@ register patterns -> build immutable matcher -> scan one or more inputs
 No pattern mutation occurs while a compiled matcher is in use. A changed rule
 set produces a new matcher.
 
-### First-slice support contract
+### Current support contract
 
-The executable spine starts with this deliberately small contract:
+The executable spine currently has this deliberately small contract:
 
 | Area | First-slice behavior |
 |---|---|
-| Patterns | Accept one or more non-empty 7-bit ASCII literals. Reject non-ASCII, escapes, and regex operators such as anchors, alternation, quantifiers, groups, classes, and dot. |
+| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals and dot. Dot matches one ASCII code unit, including a newline. Reject non-ASCII, escapes, anchors, alternation, quantifiers, groups, and classes. |
 | Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
 | Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. A literal has only one possible length. |
@@ -129,15 +129,15 @@ The executable spine starts with this deliberately small contract:
 | Failure boundary | Reject an invalid pattern during registration or build. Return an error for unsupported input before reporting matches. Expected user errors do not panic. |
 | Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
 
-The first fixtures include `a` and `aa` over `aaa`, overlapping `aa` over
-`aaaa`, duplicate literal text under distinct IDs, no match, empty input, a
-match at the final position, and every rejection category above.
+The fixtures include `a` and `aa` over `aaa`, duplicate literal text under
+distinct IDs, overlapping starts, empty input, dot over ASCII boundary values
+and newlines, literal-dot concatenation, and the current rejection categories.
 
 ### Development strategy: an executable spine first
 
-The first implementation will be deliberately narrow but architecturally real.
-It may accept only non-empty 7-bit ASCII literal patterns and ASCII inputs, but
-it must already execute the intended end-to-end path:
+The implementation began deliberately narrow but architecturally real. The
+literal bootstrap and the current dot-predicate slice both execute the intended
+end-to-end path:
 
 ```text
 public builder

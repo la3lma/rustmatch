@@ -14,6 +14,9 @@ rustmatch.
   SHA-256, uses a single matcher, and sorts events before writing JSONL.
 - `rust_expectation` distinguishes behavior in the currently implemented Rust
   syntax slice from behavior already supported by the Java reference.
+- `ascii-literal-v1` preserves the bootstrap literal contract, while
+  `ascii-predicate-v1` grows independently as ASCII predicate syntax is carried
+  through the same executable spine.
 - Files under `expected/` are generated evidence. Change them only together
   with a reviewed fixture, oracle, or pinned-reference change.
 
@@ -21,6 +24,15 @@ Run the compatibility gate from the repository root:
 
 ```sh
 cargo xtask oracle
+```
+
+The oracle command regenerates both fixture families twice, proves deterministic
+output, and compares both results and manifests byte-for-byte with the committed
+evidence. The Rust adapters can also be run separately:
+
+```sh
+cargo run -p rustmatch-compat -- verify-literals
+cargo run -p rustmatch-compat -- verify-predicates
 ```
 
 The command requires Java 21 and Maven. On macOS it selects an installed Java
