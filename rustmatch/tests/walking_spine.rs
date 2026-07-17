@@ -82,30 +82,40 @@ fn one_matcher_can_scan_empty_and_nonempty_inputs_repeatedly() -> Result<(), Err
 }
 
 #[test]
-fn every_reserved_operator_is_rejected_without_poisoning_the_builder() -> Result<(), Error> {
+fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
-    let operators = [
-        '\\', '^', '$', '|', '?', '*', '+', '(', ')', '[', ']', '{', '}',
-    ];
+    let unsupported = ['^', '$', '|', '?', '*', '+', '(', ')', '{'];
+    let malformed = ['\\', '['];
 
     // Test
-    let errors: Vec<_> = operators
+    let unsupported_errors: Vec<_> = unsupported
         .into_iter()
         .zip(0_u32..)
         .map(|(operator, id)| builder.add(PatternId::new(id), &format!("a{operator}")))
         .collect();
+    let malformed_errors: Vec<_> = malformed
+        .into_iter()
+        .zip(50_u32..)
+        .map(|(operator, id)| builder.add(PatternId::new(id), &format!("a{operator}")))
+        .collect();
+    builder.add(PatternId::new(99), "]}")?;
     builder.add(PatternId::new(100), "valid")?;
     let matcher = builder.build()?;
-    let recovered_events = collect(&matcher, "valid")?;
+    let recovered_events = collect(&matcher, "]} valid")?;
 
     // Assert
     assert!(
-        errors
+        unsupported_errors
             .iter()
             .all(|result| matches!(result, Err(Error::UnsupportedPattern { .. })))
     );
-    assert_eq!(recovered_events, vec![(100, 0, 5)]);
+    assert!(
+        malformed_errors
+            .iter()
+            .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
+    );
+    assert_eq!(recovered_events, vec![(99, 0, 2), (100, 3, 8)]);
     Ok(())
 }
 
@@ -143,6 +153,85 @@ fn dot_composes_with_literals_through_the_complete_spine() -> Result<(), Error> 
 
     // Assert
     assert_eq!(events, vec![(201, 0, 2), (202, 1, 3)]);
+    Ok(())
+}
+
+#[test]
+fn ascii_classes_and_shorthands_match_their_complete_truth_tables() -> Result<(), Error> {
+    // Prepare
+    let patterns = [
+        (300, r"\d"),
+        (301, r"\D"),
+        (302, r"\w"),
+        (303, r"\W"),
+        (304, r"\s"),
+        (305, r"\S"),
+        (306, "[a-cx]"),
+        (307, "[^a]"),
+        (308, r"[\d_]"),
+        (309, r"[\t ]"),
+    ];
+    let mut builder = MatcherBuilder::new();
+    for (id, pattern) in patterns {
+        builder.add(PatternId::new(id), pattern)?;
+    }
+    let matcher = builder.build()?;
+    let input: String = (0_u8..=127).map(char::from).collect();
+
+    // Test
+    let events = collect(&matcher, &input)?;
+    let starts_for = |pattern_id| {
+        events
+            .iter()
+            .filter(|(id, start, end)| *id == pattern_id && *end == *start + 1)
+            .map(|(_, start, _)| *start)
+            .collect::<Vec<_>>()
+    };
+
+    // Assert
+    let digits: Vec<_> = (u64::from(b'0')..=u64::from(b'9')).collect();
+    let word: Vec<_> = (0_u8..=127)
+        .filter(|unit| unit.is_ascii_alphanumeric() || *unit == b'_')
+        .map(u64::from)
+        .collect();
+    let whitespace = vec![9, 10, 11, 12, 13, 32];
+    let complement = |members: &[u64]| {
+        (0_u64..128)
+            .filter(|unit| !members.contains(unit))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(starts_for(300), digits);
+    assert_eq!(starts_for(301), complement(&digits));
+    assert_eq!(starts_for(302), word);
+    assert_eq!(starts_for(303), complement(&word));
+    assert_eq!(starts_for(304), whitespace);
+    assert_eq!(starts_for(305), complement(&whitespace));
+    assert_eq!(starts_for(306), vec![97, 98, 99, 120]);
+    assert_eq!(starts_for(307), complement(&[97]));
+    assert_eq!(starts_for(308), [digits, vec![95]].concat());
+    assert_eq!(starts_for(309), vec![9, 32]);
+    Ok(())
+}
+
+#[test]
+fn literal_and_control_escapes_compose_with_plain_literals() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(320), r"a\.b")?;
+    builder.add(PatternId::new(321), r"\\")?;
+    builder.add(PatternId::new(322), r"\n\t\r\f")?;
+    builder.add(PatternId::new(323), r"\]}")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "axb a.b\\\n\t\r\x0c]}")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![(320, 4, 7), (321, 7, 8), (322, 8, 12), (323, 12, 14)]
+    );
     Ok(())
 }
 

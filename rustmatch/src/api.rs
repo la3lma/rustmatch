@@ -27,15 +27,17 @@ impl MatcherBuilder {
 
     /// Registers one caller-identified pattern.
     ///
-    /// The current executable slice accepts non-empty 7-bit ASCII literals and
-    /// dot, which matches any ASCII code unit including a newline. Other regex
-    /// operators, escapes, and non-ASCII code units return an error without
+    /// The current executable slice accepts non-empty patterns composed of
+    /// 7-bit ASCII literals, dot, character classes, ranges, supported escapes,
+    /// and the ASCII shorthands `\d`, `\w`, and `\s` with their complements.
+    /// Other regex operators and non-ASCII code units return an error without
     /// modifying the builder.
     ///
     /// # Errors
     ///
     /// Returns [`Error::DuplicatePatternId`] if `pattern_id` is already used,
-    /// or a pattern error if `pattern` is empty or outside the current syntax.
+    /// [`Error::InvalidPattern`] for malformed syntax, or another pattern error
+    /// if `pattern` is empty or outside the current syntax.
     pub fn add(&mut self, pattern_id: PatternId, pattern: &str) -> Result<(), Error> {
         if self.pattern_ids.contains(&pattern_id) {
             return Err(Error::DuplicatePatternId { pattern_id });

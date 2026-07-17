@@ -21,8 +21,10 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   published `no.rmz:rmatch:2.0.0-RC1` artifact and JAR checksum.
 - A first public builder and literal matcher running through private HIR, dense
   shared NFA, immutable database, forward scan engine, and callback layers.
-- ASCII dot syntax, backed by interned 128-bit predicates and differential
+- ASCII dot, positive and negated classes, ranges, literal and control escapes,
+  and shorthand classes, backed by interned 128-bit predicates and differential
   evidence against the pinned Java reference.
+- A parser fuzz target compiled and linted by the ordinary quality gate.
 
 ### Changed
 

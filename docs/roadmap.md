@@ -4,11 +4,11 @@
 
 **Implementation increments started:** **3/12**
 
-**Implementation increments complete:** **2/12**
+**Implementation increments complete:** **3/12**
 
-**Active:** **I2 - ASCII predicates**
+**Active:** none
 
-**Available for execution:** none while the selected I2 increment is active
+**Available for execution:** **I3 - alternation and grouping**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -162,11 +162,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,C0,C1,B0,E0 complete;
-    class I2 active;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,C0,C1,B0,E0 complete;
+    class I3 available;
     class X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
-    class I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
+    class I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -234,8 +234,8 @@ and use-case evidence bundle pass from a clean checkout.
 | B0 | RegexSet-aware benchmark smoke | Complete | Correctness-gated RS-NATIVE set-membership and overlap-preserving RS-EVENTS lanes pass against pinned `regex` 1.13.1; systematic stable-machine scaling is deferred to X0/B1 |
 | C1 | Coarse CI performance tripwire | Complete | Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner base/head comparator, catastrophic-slowdown tests, one automatic reverse-order retry, retained artifacts, and three green hosted-runner calibration attempts |
 | E0 | UC evidence summary command | Complete | `cargo xtask evidence` runs the oracle, differential adapter, and benchmark smoke, then reports all UC-0 through UC-12 as partial or not started with named evidence |
-| I2 | ASCII predicates | Active | Dot now runs through a private 128-bit predicate representation, interned NFA predicates, exhaustive ASCII tests, and a separate Java differential fixture family; classes, ranges, negation, escapes, and shorthands remain |
-| I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
+| I2 | ASCII predicates | Complete | Dot, classes, ranges, negation, escapes, and six ASCII shorthands run through interned 128-bit predicates; exhaustive truth tables, bounded parser totality, a fuzz target, and 12 Java differential fixtures pass as `I2-E1` |
+| I3 | Alternation and grouping | Available | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
 | I4 | Repetition and longest match | Planned | Exact overlap/ambiguity fixtures, quantifier binding, repetition limits, and Java event equality |
 | I5 | UTF-16, flags, and assertions | Planned | Full documented syntax tier, exhaustive character/context evidence, and semantic parity manifests |
 | I6 | Lazy deterministic-state cache | Planned | Rust optimized/baseline event equality, cache-budget fallback evidence, and positive improvement beyond the predeclared noise gate; Java results only motivate candidates |

@@ -2,14 +2,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: active implementation.** The end-to-end ASCII-literal spine is
-> complete, and ASCII predicate syntax is now being added vertically through
-> the same parser, HIR, NFA, engine, compatibility, and evidence boundaries.
-> This remains a development prototype, not a published crate.
+> **Status: active implementation.** The executable spine and its ASCII
+> predicate increment are complete through parser, HIR, NFA, engine,
+> compatibility, fuzz, and evidence boundaries. This remains a development
+> prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `3/12`
-> increments started and `2/12` complete.
+> increments started and `3/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -117,27 +117,40 @@ set produces a new matcher.
 
 The executable spine currently has this deliberately small contract:
 
-| Area | First-slice behavior |
+| Area | Current behavior |
 |---|---|
-| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals and dot. Dot matches one ASCII code unit, including a newline. Reject non-ASCII, escapes, anchors, alternation, quantifiers, groups, and classes. |
+| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, and ASCII shorthand classes. Reject non-ASCII, anchors, alternation, quantifiers, groups, flags, and assertions. |
 | Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
-| Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. A literal has only one possible length. |
+| Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Every pattern in the current non-repeating slice has one possible length. |
 | Event identity | A match consists of its `PatternId` and span. Equal text registered under different IDs produces distinct events. |
 | Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. For the ASCII slice these values also equal byte positions. |
 | Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
 | Failure boundary | Reject an invalid pattern during registration or build. Return an error for unsupported input before reporting matches. Expected user errors do not panic. |
 | Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
 
-The fixtures include `a` and `aa` over `aaa`, duplicate literal text under
-distinct IDs, overlapping starts, empty input, dot over ASCII boundary values
-and newlines, literal-dot concatenation, and the current rejection categories.
+The current pattern syntax is deliberately explicit:
+
+- `.` matches one ASCII code unit, including newline.
+- `[abc]`, `[a-z]`, `[^abc]`, and unions of literals, ranges, and supported
+  class escapes compile to one ASCII predicate. Empty `[]` matches nothing;
+  `[^]` matches every ASCII code unit.
+- `\d` is `0-9`; `\w` is `A-Z`, `a-z`, `0-9`, and `_`; `\s` is space, tab,
+  newline, vertical tab, form feed, and carriage return. `\D`, `\W`, and `\S`
+  are their ASCII complements.
+- Escaped metacharacters are literals. `\n`, `\t`, `\r`, and `\f` are the
+  supported control escapes. Inside a class, `\\`, `\]`, `\[`, `\-`, `\^`,
+  the control escapes, and lowercase `\d`, `\w`, and `\s` are supported.
+
+The fixtures cover literals and overlapping starts, all predicate families,
+ASCII boundary values and newlines, class negation and ranges, literal and
+control escapes, and malformed registration cases.
 
 ### Development strategy: an executable spine first
 
 The implementation began deliberately narrow but architecturally real. The
-literal bootstrap and the current dot-predicate slice both execute the intended
-end-to-end path:
+literal bootstrap and the complete ASCII-predicate increment both execute the
+intended end-to-end path:
 
 ```text
 public builder

@@ -24,7 +24,7 @@ const ORACLE_FIXTURE_SETS: &[OracleFixtureSet] = &[
         expected_manifest: "compat/expected/java-2.0.0-RC1-ascii-predicates-v1.manifest.json",
     },
 ];
-const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","I2-DOT-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-DOT-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-DOT-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-DOT-E1"]}]}"#;
+const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","I2-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-E1"]}]}"#;
 
 struct OracleFixtureSet {
     label: &'static str,
@@ -55,6 +55,26 @@ const QUALITY_STEPS: &[QualityStep] = &[
             "--workspace",
             "--all-targets",
             "--all-features",
+            "--",
+            "-D",
+            "warnings",
+        ],
+        rustdoc_flags: None,
+        toolchain: None,
+    },
+    QualityStep {
+        label: "parser fuzz format",
+        args: &["fmt", "--manifest-path", "fuzz/Cargo.toml", "--", "--check"],
+        rustdoc_flags: None,
+        toolchain: None,
+    },
+    QualityStep {
+        label: "parser fuzz target",
+        args: &[
+            "clippy",
+            "--manifest-path",
+            "fuzz/Cargo.toml",
+            "--all-targets",
             "--",
             "-D",
             "warnings",
@@ -157,7 +177,7 @@ fn run_evidence_summary() -> Result<(), String> {
 }
 
 fn run_predicate_evidence() -> Result<(), String> {
-    eprintln!("==> I2 dot-predicate differential evidence");
+    eprintln!("==> I2 ASCII-predicate differential evidence");
     let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
     let status = Command::new(cargo)
         .args([

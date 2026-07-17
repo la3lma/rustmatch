@@ -32,6 +32,13 @@ pub enum Error {
         /// Rejected UTF-16 code unit.
         code_unit: u16,
     },
+    /// A pattern contained malformed syntax.
+    InvalidPattern {
+        /// ID supplied with the malformed pattern.
+        pattern_id: PatternId,
+        /// Smallest useful UTF-16 span containing the malformed syntax.
+        span: Utf16Span,
+    },
     /// No patterns were registered before building.
     NoPatterns,
     /// The compiled automaton would exceed its dense state-ID range.
@@ -68,6 +75,12 @@ impl fmt::Display for Error {
             } => write!(
                 formatter,
                 "pattern {pattern_id} contains unsupported UTF-16 code unit U+{code_unit:04X} at [{}..{})",
+                span.start(),
+                span.end()
+            ),
+            Self::InvalidPattern { pattern_id, span } => write!(
+                formatter,
+                "pattern {pattern_id} contains malformed syntax at [{}..{})",
                 span.start(),
                 span.end()
             ),

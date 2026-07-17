@@ -62,7 +62,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
             PREDICATE_JAVA_RESULTS,
             "ascii-predicate-v1",
             "ascii-predicates-v1",
-            "I2-DOT-E1",
+            "I2-E1",
         ),
         _ => Err("usage: rustmatch-compat <verify-literals|verify-predicates>".to_owned()),
     }
@@ -341,10 +341,10 @@ mod tests {
             summary,
             EvidenceSummary {
                 schema_version: 1,
-                evidence_id: "I2-DOT-E1",
+                evidence_id: "I2-E1",
                 fixture_set: "ascii-predicates-v1",
-                matched_cases: 3,
-                rejected_cases: 0,
+                matched_cases: 9,
+                rejected_cases: 3,
                 status: "pass",
             }
         );
@@ -362,7 +362,7 @@ mod tests {
             PREDICATE_JAVA_RESULTS,
             "ascii-predicate-v1",
             "ascii-predicates-v1",
-            "I2-DOT-E1",
+            "I2-E1",
         );
 
         // Assert
