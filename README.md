@@ -2,14 +2,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: active implementation.** The executable spine and its ASCII
-> predicate increment are complete through parser, HIR, NFA, engine,
+> **Status: active implementation.** The executable spine, ASCII predicates,
+> alternation, and grouping are complete through parser, HIR, NFA, engine,
 > compatibility, fuzz, and evidence boundaries. This remains a development
 > prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `3/12`
-> increments started and `3/12` complete.
+> status](docs/roadmap.md). Planning is complete; implementation is at `4/12`
+> increments started and `4/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -119,10 +119,10 @@ The executable spine currently has this deliberately small contract:
 
 | Area | Current behavior |
 |---|---|
-| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, and ASCII shorthand classes. Reject non-ASCII, anchors, alternation, quantifiers, groups, flags, and assertions. |
+| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, and plain or non-capturing groups. Reject non-ASCII, quantifiers, flags, anchors, and assertions. |
 | Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
-| Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Every pattern in the current non-repeating slice has one possible length. |
+| Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Alternatives may give one pattern several possible lengths. |
 | Event identity | A match consists of its `PatternId` and span. Equal text registered under different IDs produces distinct events. |
 | Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. For the ASCII slice these values also equal byte positions. |
 | Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
@@ -141,16 +141,23 @@ The current pattern syntax is deliberately explicit:
 - Escaped metacharacters are literals. `\n`, `\t`, `\r`, and `\f` are the
   supported control escapes. Inside a class, `\\`, `\]`, `\[`, `\-`, `\^`,
   the control escapes, and lowercase `\d`, `\w`, and `\s` are supported.
+- `a|b` selects between alternatives. Parentheses group composition;
+  `(ab)` and `(?:ab)` are equivalent because rustmatch does not capture.
+- A leading or interior empty alternative is an epsilon branch. As in the
+  pinned Java contract, a trailing empty alternative is ignored and an empty
+  group matches nothing. Rustmatch deliberately rejects a pattern that can
+  only produce a zero-width match.
 
 The fixtures cover literals and overlapping starts, all predicate families,
 ASCII boundary values and newlines, class negation and ranges, literal and
-control escapes, and malformed registration cases.
+control escapes, branching and nested grouping shapes, empty alternatives,
+and malformed registration cases.
 
 ### Development strategy: an executable spine first
 
 The implementation began deliberately narrow but architecturally real. The
-literal bootstrap and the complete ASCII-predicate increment both execute the
-intended end-to-end path:
+literal bootstrap, ASCII predicates, and branching-composition increments all
+execute the intended end-to-end path:
 
 ```text
 public builder

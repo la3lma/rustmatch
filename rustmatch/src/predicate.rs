@@ -60,6 +60,10 @@ impl AsciiPredicate {
         symbol < 128 && self.0 & (1_u128 << symbol) != 0
     }
 
+    pub(crate) const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
     fn from_ranges(ranges: &[(u8, u8)]) -> Self {
         let mut predicate = Self::empty();
         for &(start, end) in ranges {

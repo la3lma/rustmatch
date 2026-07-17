@@ -24,6 +24,14 @@ const PREDICATE_JAVA_RESULTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../compat/expected/java-2.0.0-RC1-ascii-predicates-v1.jsonl"
 ));
+const COMPOSITION_FIXTURES: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/fixtures/ascii-composition-v1.jsonl"
+));
+const COMPOSITION_JAVA_RESULTS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/expected/java-2.0.0-RC1-ascii-composition-v1.jsonl"
+));
 
 fn main() -> ExitCode {
     match run(env::args().skip(1)) {
@@ -47,7 +55,10 @@ fn main() -> ExitCode {
 fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, String> {
     let command = arguments.next();
     if arguments.next().is_some() {
-        return Err("usage: rustmatch-compat <verify-literals|verify-predicates>".to_owned());
+        return Err(
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition>"
+                .to_owned(),
+        );
     }
     match command.as_deref() {
         Some("verify-literals") => verify_fixture_set(
@@ -64,7 +75,17 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
             "ascii-predicates-v1",
             "I2-E1",
         ),
-        _ => Err("usage: rustmatch-compat <verify-literals|verify-predicates>".to_owned()),
+        Some("verify-composition") => verify_fixture_set(
+            COMPOSITION_FIXTURES,
+            COMPOSITION_JAVA_RESULTS,
+            "ascii-composition-v1",
+            "ascii-composition-v1",
+            "I3-E1",
+        ),
+        _ => Err(
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition>"
+                .to_owned(),
+        ),
     }
 }
 
@@ -283,8 +304,8 @@ struct EvidenceSummary {
 #[cfg(test)]
 mod tests {
     use super::{
-        EvidenceSummary, LITERAL_FIXTURES, LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES,
-        PREDICATE_JAVA_RESULTS, run, verify_fixture_set,
+        COMPOSITION_FIXTURES, COMPOSITION_JAVA_RESULTS, EvidenceSummary, LITERAL_FIXTURES,
+        LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES, PREDICATE_JAVA_RESULTS, run, verify_fixture_set,
     };
 
     #[test]
@@ -367,5 +388,44 @@ mod tests {
 
         // Assert
         assert!(matches!(result, Err(message) if message.contains("unsupported schema or tier")));
+    }
+
+    #[test]
+    fn composition_evidence_agrees_with_the_pinned_java_results() -> Result<(), String> {
+        // Prepare
+        let arguments = ["verify-composition".to_owned()];
+
+        // Test
+        let summary = run(arguments.into_iter())?;
+
+        // Assert
+        assert_eq!(
+            summary,
+            EvidenceSummary {
+                schema_version: 1,
+                evidence_id: "I3-E1",
+                fixture_set: "ascii-composition-v1",
+                matched_cases: 12,
+                rejected_cases: 5,
+                status: "pass",
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn pure_zero_width_divergence_is_explicit_in_java_evidence() {
+        // Prepare / Test
+        let java_result = COMPOSITION_JAVA_RESULTS
+            .lines()
+            .find(|line| line.contains("\"case_id\":\"pure-zero-width-alternation\""));
+
+        // Assert
+        assert!(matches!(
+            java_result,
+            Some(line) if line.contains("\"rust_expectation\":\"rejected-invalid\"")
+                && line.contains("\"status\":\"matched\"")
+        ));
+        assert!(COMPOSITION_FIXTURES.contains("pure-zero-width-alternation"));
     }
 }

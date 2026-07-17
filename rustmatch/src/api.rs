@@ -29,9 +29,10 @@ impl MatcherBuilder {
     ///
     /// The current executable slice accepts non-empty patterns composed of
     /// 7-bit ASCII literals, dot, character classes, ranges, supported escapes,
-    /// and the ASCII shorthands `\d`, `\w`, and `\s` with their complements.
-    /// Other regex operators and non-ASCII code units return an error without
-    /// modifying the builder.
+    /// the ASCII shorthands `\d`, `\w`, and `\s` with their complements,
+    /// alternation, and plain or non-capturing groups. Groups do not capture.
+    /// Quantifiers, assertions, flags, and non-ASCII code units return an error
+    /// without modifying the builder.
     ///
     /// # Errors
     ///

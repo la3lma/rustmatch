@@ -16,7 +16,12 @@ rustmatch.
   syntax slice from behavior already supported by the Java reference.
 - `ascii-literal-v1` preserves the bootstrap literal contract, while
   `ascii-predicate-v1` grows independently as ASCII predicate syntax is carried
-  through the same executable spine.
+  through the same executable spine. `ascii-composition-v1` adds alternation,
+  grouping, empty-branch behavior, longest-branch selection, and malformed
+  group cases.
+- A pure zero-width alternation records one intentional difference explicitly:
+  Java accepts it and emits no events, while the Rust product contract rejects
+  patterns that can only produce a zero-width match.
 - Files under `expected/` are generated evidence. Change them only together
   with a reviewed fixture, oracle, or pinned-reference change.
 
@@ -26,13 +31,14 @@ Run the compatibility gate from the repository root:
 cargo xtask oracle
 ```
 
-The oracle command regenerates both fixture families twice, proves deterministic
+The oracle command regenerates all fixture families twice, proves deterministic
 output, and compares both results and manifests byte-for-byte with the committed
 evidence. The Rust adapters can also be run separately:
 
 ```sh
 cargo run -p rustmatch-compat -- verify-literals
 cargo run -p rustmatch-compat -- verify-predicates
+cargo run -p rustmatch-compat -- verify-composition
 ```
 
 The command requires Java 21 and Maven. On macOS it selects an installed Java

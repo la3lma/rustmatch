@@ -45,7 +45,7 @@ public final class JavaOracle {
   private static final int SCHEMA_VERSION = 1;
   private static final int REQUIRED_JAVA_FEATURE = 21;
   private static final Set<String> FIXTURE_TIERS =
-      Set.of("ascii-literal-v1", "ascii-predicate-v1");
+      Set.of("ascii-literal-v1", "ascii-predicate-v1", "ascii-composition-v1");
   private static final String ORACLE_GROUP = "no.rmz";
   private static final String ORACLE_ARTIFACT = "rmatch";
   private static final String ORACLE_VERSION = "2.0.0-RC1";

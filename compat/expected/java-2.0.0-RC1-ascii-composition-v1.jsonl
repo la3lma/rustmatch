@@ -1,0 +1,17 @@
+{"schema_version":1,"case_id":"simple-alternation","rust_expectation":"matched","status":"matched","events":[{"pattern_id":70,"start_utf16":0,"end_utf16":3},{"pattern_id":70,"start_utf16":4,"end_utf16":7}]}
+{"schema_version":1,"case_id":"alternation-longest-per-start","rust_expectation":"matched","status":"matched","events":[{"pattern_id":71,"start_utf16":0,"end_utf16":3}]}
+{"schema_version":1,"case_id":"shared-prefix-alternation","rust_expectation":"matched","status":"matched","events":[{"pattern_id":72,"start_utf16":0,"end_utf16":2},{"pattern_id":72,"start_utf16":3,"end_utf16":5}]}
+{"schema_version":1,"case_id":"plain-group-concatenation","rust_expectation":"matched","status":"matched","events":[{"pattern_id":73,"start_utf16":0,"end_utf16":3}]}
+{"schema_version":1,"case_id":"nested-group-alternation","rust_expectation":"matched","status":"matched","events":[{"pattern_id":74,"start_utf16":0,"end_utf16":3},{"pattern_id":74,"start_utf16":4,"end_utf16":7}]}
+{"schema_version":1,"case_id":"non-capturing-group","rust_expectation":"matched","status":"matched","events":[{"pattern_id":75,"start_utf16":0,"end_utf16":3}]}
+{"schema_version":1,"case_id":"alternation-of-groups","rust_expectation":"matched","status":"matched","events":[{"pattern_id":76,"start_utf16":0,"end_utf16":2},{"pattern_id":76,"start_utf16":3,"end_utf16":5}]}
+{"schema_version":1,"case_id":"leading-empty-alternative","rust_expectation":"matched","status":"matched","events":[{"pattern_id":77,"start_utf16":0,"end_utf16":2}]}
+{"schema_version":1,"case_id":"middle-empty-alternative","rust_expectation":"matched","status":"matched","events":[{"pattern_id":78,"start_utf16":0,"end_utf16":1},{"pattern_id":78,"start_utf16":1,"end_utf16":2}]}
+{"schema_version":1,"case_id":"leading-empty-alternative-in-group","rust_expectation":"matched","status":"matched","events":[{"pattern_id":79,"start_utf16":0,"end_utf16":2},{"pattern_id":79,"start_utf16":3,"end_utf16":6}]}
+{"schema_version":1,"case_id":"trailing-empty-alternative-is-ignored","rust_expectation":"matched","status":"matched","events":[{"pattern_id":80,"start_utf16":3,"end_utf16":6}]}
+{"schema_version":1,"case_id":"empty-group-matches-nothing","rust_expectation":"matched","status":"matched","events":[]}
+{"schema_version":1,"case_id":"unbalanced-open-group","rust_expectation":"rejected-invalid","status":"rejected","rejection":{"stage":"registration","pattern_id":82,"exception_class":"no.rmz.rmatch.RegexpParserException","message":"Unbalanced group: missing ')'"}}
+{"schema_version":1,"case_id":"unbalanced-close-group","rust_expectation":"rejected-invalid","status":"rejected","rejection":{"stage":"registration","pattern_id":83,"exception_class":"no.rmz.rmatch.RegexpParserException","message":"')' without matching '('"}}
+{"schema_version":1,"case_id":"unsupported-special-group","rust_expectation":"rejected-invalid","status":"rejected","rejection":{"stage":"registration","pattern_id":84,"exception_class":"no.rmz.rmatch.RegexpParserException","message":"Unsupported group construct '(?='"}}
+{"schema_version":1,"case_id":"pure-zero-width-alternation","rust_expectation":"rejected-invalid","status":"matched","events":[]}
+{"schema_version":1,"case_id":"pure-zero-width-with-empty-class","rust_expectation":"rejected-invalid","status":"matched","events":[]}
