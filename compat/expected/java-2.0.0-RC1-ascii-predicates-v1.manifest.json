@@ -1,8 +1,8 @@
 {
   "schema_version" : 1,
   "fixture_file" : "ascii-predicates-v1.jsonl",
-  "fixture_sha256" : "101e86bf3824ba392580ab78f8efd34033e3bf1b2c05c1b15a85bda6d48dc98c",
-  "case_count" : 3,
+  "fixture_sha256" : "c61c8bf6847d9aee938524a38f85a3d9062cb5040c7a769bcaa46e74ae4a5367",
+  "case_count" : 12,
   "oracle" : {
     "group_id" : "no.rmz",
     "artifact_id" : "rmatch",
@@ -10,5 +10,5 @@
     "jar_sha256" : "05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a",
     "required_java_feature" : 21
   },
-  "result_sha256" : "a796dfede965d83aa9f0b0995f12cf89024e4bdb3d7f433a7d6b6acb5c9c1761"
+  "result_sha256" : "cf5a123a24623058ba4cfb2e97f18c41eec6d3cc2eb181d8570a90aedfba6bcd"
 }

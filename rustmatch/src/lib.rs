@@ -2,10 +2,10 @@
 //!
 //! rustmatch builds an immutable matcher from caller-identified patterns and
 //! can reuse it across inputs. The current executable slice accepts non-empty
-//! patterns composed of 7-bit ASCII literals and dot; dot matches every ASCII
-//! code unit, including a newline. This narrow language runs through the
-//! final-shaped parser, HIR, shared NFA, database, scan engine, and callback
-//! boundaries.
+//! patterns composed of 7-bit ASCII literals, dot, character classes, ranges,
+//! escapes, and ASCII shorthand classes. This deliberately bounded language
+//! runs through the final-shaped parser, HIR, shared NFA, database, scan engine,
+//! and callback boundaries.
 //!
 //! # Example
 //!

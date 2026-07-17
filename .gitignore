@@ -1,4 +1,5 @@
 /target/
+/fuzz/target/
 /compat/java-oracle/target/
 /build/
 **/*.rs.bk
