@@ -1168,6 +1168,8 @@ match semantics.
 rustmatch/
   Cargo.toml
   Cargo.lock
+  rust-toolchain.toml
+  xtask/                        # Repository quality and evidence commands
   crates/
     rustmatch/                 # Small stable library API
     rustmatch-core/            # Private semantic compiler and engine
@@ -1190,6 +1192,21 @@ rustmatch/
 Use a Cargo workspace so members share a lockfile, target directory, metadata,
 and lint policy. Keep `rustmatch-core` unpublished or private until there is a
 real reason to make it an extension surface.
+
+Bootstrap begins with the independently useful `xtask` member rather than
+empty production-crate shells. Run the complete local quality gate from the
+repository root:
+
+```sh
+cargo xtask ci
+```
+
+Production crates enter the workspace only when the walking spine uses them.
+The live roadmap SVG is regenerated at its stable local path with:
+
+```sh
+cargo xtask roadmap
+```
 
 ### Required architecture decision records
 
