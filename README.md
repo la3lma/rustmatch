@@ -72,28 +72,36 @@ must not quietly relabel byte offsets as Java-compatible offsets.
 
 ### Intended API shape
 
+The first public surface should be smaller than the eventual convenience API.
 This sketch communicates direction, not a frozen API:
 
 ```rust,ignore
 use rustmatch::{MatcherBuilder, PatternId, Utf16Text};
 
 let mut builder = MatcherBuilder::new();
-builder.add(PatternId::new(1), "ERROR|WARN")?;
-builder.add(PatternId::new(2), "user:[a-z]+")?;
+builder.add(PatternId::new(1), "cat")?;
+builder.add(PatternId::new(2), "dog")?;
 
 let matcher = builder.build()?;
-let input = Utf16Text::from_str("INFO user:alice WARN disk nearly full");
+let input = Utf16Text::from("cat and dog");
 
 matcher.scan(&input, |hit| {
     println!(
-        "pattern={} span={:?} text={}",
+        "pattern={} span={:?}",
         hit.pattern_id(),
         hit.span(),
-        input.decode(hit.span())?,
     );
-    Ok(())
 })?;
 ```
+
+The initial public types are only `MatcherBuilder`, `Matcher`, `PatternId`,
+`Utf16Text`, `Match`, `Utf16Span`, and one non-exhaustive `Error` type. The
+initial methods are construction, pattern registration, build, scan, and
+read-only accessors for IDs and spans. `PatternId` is a `u32`-backed domain
+type; positions remain `u64` UTF-16 coordinates. Parser, HIR, NFA, state,
+cache, worker, and sink implementation types stay private. Custom inputs,
+iterators, async APIs, fallible callbacks, runtime pattern mutation, and tuning
+knobs are deferred until a concrete use case earns them.
 
 The lifecycle is explicit:
 
@@ -103,6 +111,26 @@ register patterns -> build immutable matcher -> scan one or more inputs
 
 No pattern mutation occurs while a compiled matcher is in use. A changed rule
 set produces a new matcher.
+
+### First-slice support contract
+
+The executable spine starts with this deliberately small contract:
+
+| Area | First-slice behavior |
+|---|---|
+| Patterns | Accept one or more non-empty 7-bit ASCII literals. Reject non-ASCII, escapes, and regex operators such as anchors, alternation, quantifiers, groups, classes, and dot. |
+| Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
+| Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
+| Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. A literal has only one possible length. |
+| Event identity | A match consists of its `PatternId` and span. Equal text registered under different IDs produces distinct events. |
+| Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. For the ASCII slice these values also equal byte positions. |
+| Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
+| Failure boundary | Reject an invalid pattern during registration or build. Return an error for unsupported input before reporting matches. Expected user errors do not panic. |
+| Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
+
+The first fixtures include `a` and `aa` over `aaa`, overlapping `aa` over
+`aaaa`, duplicate literal text under distinct IDs, no match, empty input, a
+match at the final position, and every rejection category above.
 
 ### Development strategy: an executable spine first
 
@@ -402,8 +430,8 @@ The proposed canonical model is:
   parsing. A lower-level UTF-16 pattern entry point may admit isolated surrogate
   units for exhaustive compatibility testing.
 - `Utf16Text` owns or borrows a stable sequence of `u16` symbols.
-- `Utf16Text::from_str` encodes a Rust `&str` to UTF-16 once, outside the scan
-  timing boundary.
+- `Utf16Text::from` implements `From<&str>` and encodes a Rust string to UTF-16
+  once, outside the scan timing boundary.
 - Match spans are UTF-16 spans and can always be decoded through the input.
 - ASCII corpora have identical byte and UTF-16 offsets, which keeps the current
   benchmark scenarios straightforward.
@@ -1043,8 +1071,8 @@ semantics and duplicate suppression are proven.
 
 ### Input architecture
 
-The compatibility input trait should express randomly addressable UTF-16 code
-units without requiring a total length:
+Internally, the compatibility input trait should express randomly addressable
+UTF-16 code units without requiring a total length:
 
 ```rust,ignore
 pub trait Input: Sync {
@@ -1062,19 +1090,30 @@ This sketch leaves room for:
 - memory-mapped or file-backed content;
 - bounded-window inputs with a documented decode retention window.
 
+The trait remains private or sealed during the first slice. `Utf16Text` is the
+only initial public input. A public custom-input trait is added only after its
+object-safety, retention, error, concurrency, and compatibility contracts are
+proven by a real implementation outside the core.
+
 It does not claim that an infinite stream can support arbitrary lookback or
 substring recovery. A maximum-lookback stream adapter is a separate product
 decision.
 
 ### Error architecture
 
-Use typed, non-panicking errors for expected failure:
+Use typed, non-panicking internal errors for expected failure:
 
 - `ParseError` with span and reason;
 - `BuildError` for limits and resource constraints;
 - `InputError` for unavailable or invalid ranges;
-- `ScanError<E>` preserving a sink's error;
+- a scan error preserving input and engine failures; and
 - `ConfigurationError` for invalid parallelism or budgets.
+
+The first public API wraps these details in one non-exhaustive `Error` enum
+whose variants retain pattern IDs, source spans, coordinates, and causes. Split
+public error types or a generic sink error are added only when callers need
+meaningfully different recovery paths. The initial infallible callback does
+not require a generic error parameter.
 
 Internal invariants may use debug assertions. Public input must not cause an
 uncontrolled panic.
@@ -1855,6 +1894,33 @@ The governing sequence is:
 
 Internal modules may of course have focused unit tests. They do not count as an
 integrated increment until the executable spine uses them.
+
+Roadmap IDs are evidence-bearing milestones, not mandatory pull-request units.
+A milestone may need several coherent PRs, and one vertical PR may advance
+several tightly coupled IDs. Splitting work is useful only when every merged
+change leaves a runnable, tested capability or independently useful executable
+tooling. An unused parser, HIR, compiler, or engine skeleton is not an
+integration milestone.
+
+The recommended bootstrap PR sequence is:
+
+1. **Workspace gate:** `W0` and the first part of `C0` establish the Cargo
+   workspace, pinned toolchain, formatting, Clippy, tests, rustdoc, and one
+   root command. This is independently executable infrastructure.
+2. **Compatibility gate:** `I0` and `F0` establish the semantic decisions,
+   fixture schema, pinned Java oracle, and literal fixtures. The oracle and
+   schema checks run end to end.
+3. **Walking-spine gate:** the minimum of `A0` and `I1` lands together: one
+   public builder, literal registration, real HIR, shared NFA, immutable
+   database, scan loop, and observable match callback. One literal over one
+   input works through every intended layer.
+4. **Literal-contract gate:** complete `I1`, `B0`, `E0`, `C0`, and `C1` by
+   adding multiple patterns, overlap and rejection fixtures, benchmark smoke,
+   evidence summary, and the coarse performance tripwire.
+
+This sequence deliberately favors integration over one-PR-per-roadmap-box.
+Completeness grows from the running spine; components become merge candidates
+when that spine uses them, not merely when their local unit tests pass.
 
 ### Increment 0: Time-box the semantic charter
 

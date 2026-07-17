@@ -18,6 +18,8 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
 
 - Pinned the initial Java compatibility oracle to the Maven Central artifact
   `no.rmz:rmatch:2.0.0-RC1`.
+- Reduced the proposed bootstrap API and made the ASCII-literal contract and
+  integration-first PR sequence explicit.
 
 ### Deprecated
 

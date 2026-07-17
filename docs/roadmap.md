@@ -9,6 +9,9 @@ This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the [main README](../README.md).
 This graph shows dependency and status; it does not replace those definitions.
+Roadmap IDs identify evidence-bearing milestones, not required one-to-one pull
+request boundaries. The README's bootstrap sequence favors small vertical PRs
+that keep the system executable.
 
 > **Hard optimization rule:** Java rmatch results can nominate an idea for a
 > Rust experiment, but cannot advance an optimization milestone. Every
