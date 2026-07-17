@@ -1,14 +1,14 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-07-17
+**Last reviewed:** 2026-07-18
 
 **Implementation increments started:** **7/12**
 
-**Implementation increments complete:** **6/12**
+**Implementation increments complete:** **7/12**
 
-**Active:** **I6 - Lazy deterministic-state cache**
+**Active:** **C2 - Wuthering Heights CI performance tripwire**
 
-**Available for execution:** none while I6 is active
+**Available for execution:** none until C2 passes on the I6 pull request
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -61,6 +61,7 @@ flowchart TB
         I1["I1 Executable ASCII-literal spine<br/>HIR -> shared NFA -> database -> scan -> events"]
         C0["C0 Mandatory functional PR CI"]
         C1["C1 Coarse CI performance tripwire"]
+        C2["C2 Wuthering Heights CI performance tripwire"]
         B0["B0 RegexSet-aware benchmark adapter<br/>and correctness smoke"]
         E0["E0 UC evidence summary command"]
     end
@@ -126,7 +127,7 @@ flowchart TB
 
     B0 --> X0
     C1 -. severe-anomaly signal only .-> X0
-    S0 --> I6 --> G6 --> I7 --> G7 --> I8 --> G8 --> I9 --> B1
+    S0 --> I6 --> G6 --> C2 --> I7 --> G7 --> I8 --> G8 --> I9 --> B1
     X0 -. authoritative Rust performance evidence .-> G6
     X0 -. authoritative Rust performance evidence .-> G7
     X0 -. authoritative Rust performance evidence .-> G8
@@ -162,10 +163,10 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,S0,C0,C1,B0,E0 complete;
-    class I6 active;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,S0,C0,C1,B0,E0,G6 complete;
+    class C2 active;
     class X0,B1,H1,R1,R2 evidence;
-    class G6,G7,G8,I10,I11 gate;
+    class G7,G8,I10,I11 gate;
     class I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
@@ -180,6 +181,7 @@ flowchart TB
     click I1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open I1 description"
     click C0 "https://github.com/la3lma/rustmatch/blob/main/README.md#fast-functional-pr-ci" "Open functional CI policy"
     click C1 "https://github.com/la3lma/rustmatch/blob/main/README.md#coarse-ci-performance-tripwire" "Open CI performance policy"
+    click C2 "https://github.com/la3lma/rustmatch/blob/main/docs/benchmarking/wuthering-scale.md#coarse-ci-tripwire" "Open Wuthering CI tripwire"
     click B0 "https://github.com/la3lma/rustmatch/blob/main/docs/benchmarking/regexset-comparison.md" "Open RegexSet benchmark contract"
     click E0 "https://github.com/la3lma/rustmatch/blob/main/README.md#use-case-evidence-contract" "Open evidence command description"
     click I2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-2-ascii-predicates-through-the-spine" "Open I2 description"
@@ -239,7 +241,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I4 | Repetition and longest match | Complete | Unary and counted repetition run through normalized HIR and Thompson NFA loops; public overlap, ambiguity, nullable-loop, 1,000-bound, property, and recovery tests pass; 29 pinned Java cases pass as `I4-E1`; full repository and performance gates are green |
 | I5 | UTF-16, flags, and assertions | Complete | Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as `I5-E1`; NFA-native line anchors and ASCII word boundaries, exhaustive boundary classification, assertion adversaries, and 28 differential cases pass as `I5-E2`; assertion-free scans retain a separate hot path |
 | S0 | Documented rmatch 2.x semantic parity gate | Complete | The complete documented consuming-language suite passes through the public Rust API against the pinned Java `2.0.0-RC1` oracle; pure zero-width rejection remains the explicit documented product difference |
-| I6 | Lazy deterministic-state cache | Planned | Rust optimized/baseline event equality, cache-budget fallback evidence, and positive improvement beyond the predeclared noise gate; Java results only motivate candidates |
+| I6 | Lazy deterministic-state cache | Complete | Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as `I6-P1`/`I6-B1` |
+| C2 | Wuthering Heights CI performance tripwire | Active | Retained 5,000-pattern fixture, base/head event equality, broad 100% plus 50 ms severe-regression threshold, reverse-order retry, and receipt upload implemented; awaiting pull-request CI |
 | I7 | Safe prefilter | Planned | Rust prefilter on/off event equality, adversarial safety fixtures, and positive improvement in the measured activation region; Java thresholds do not count |
 | I8 | Parallel partitions | Planned | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
 | I9 | Benchmark integration | Planned | Packaged adapter accepted by the ordinary harness with validated, reproducible receipts |

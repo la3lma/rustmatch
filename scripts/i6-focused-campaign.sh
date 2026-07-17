@@ -10,6 +10,13 @@ candidate_revision=$(git -C "$repository_root" rev-parse "${candidate_ref}^{comm
 source_revision=$(git -C "$repository_root" rev-parse HEAD)
 runner_label=${RUSTMATCH_BENCH_RUNNER:-$(hostname) | $(uname -m)}
 run_root=${I6_RUN_ROOT:-$repository_root/target/i6-focused-campaign}
+rust_target=${I6_CARGO_TARGET:-}
+build_target_args=()
+binary_subdirectory=release
+if [[ -n $rust_target ]]; then
+  build_target_args=(--target "$rust_target")
+  binary_subdirectory="$rust_target/release"
+fi
 
 if [[ $candidate_revision != "$source_revision" ]]; then
   echo "CANDIDATE_SHA must identify the checked-out source revision" >&2
@@ -36,11 +43,13 @@ trap cleanup EXIT
 git -C "$repository_root" worktree add --detach "$base_source" "$base_revision"
 (
   cd "$base_source"
-  CARGO_TARGET_DIR="$base_target" cargo build --locked --release --package rustmatch-bench
+  CARGO_TARGET_DIR="$base_target" cargo build --locked --release \
+    --package rustmatch-bench "${build_target_args[@]}"
 )
 (
   cd "$repository_root"
-  CARGO_TARGET_DIR="$candidate_target" cargo build --locked --release --package rustmatch-bench
+  CARGO_TARGET_DIR="$candidate_target" cargo build --locked --release \
+    --package rustmatch-bench "${build_target_args[@]}"
 )
 
 scenarios=(
@@ -69,18 +78,18 @@ for scenario_specification in "${scenarios[@]}"; do
   candidate_receipt="$receipts/${stem}-candidate.json"
   comparison_receipt="$receipts/${stem}-comparison.json"
 
-  measure "$base_target/release/rustmatch-bench" "$base_revision" "$base_receipt" \
+  measure "$base_target/$binary_subdirectory/rustmatch-bench" "$base_revision" "$base_receipt" \
     "$scenario" "$pattern_count" "$corpus_bytes"
-  measure "$candidate_target/release/rustmatch-bench" "$candidate_revision" \
+  measure "$candidate_target/$binary_subdirectory/rustmatch-bench" "$candidate_revision" \
     "$candidate_receipt" "$scenario" "$pattern_count" "$corpus_bytes"
-  if ! "$candidate_target/release/rustmatch-bench" compare-i6 \
+  if ! "$candidate_target/$binary_subdirectory/rustmatch-bench" compare-i6 \
     "$base_receipt" "$candidate_receipt" > "$comparison_receipt"; then
     echo "I6 threshold crossed for $stem; repeating in reverse order" >&2
-    measure "$candidate_target/release/rustmatch-bench" "$candidate_revision" \
+    measure "$candidate_target/$binary_subdirectory/rustmatch-bench" "$candidate_revision" \
       "$candidate_receipt" "$scenario" "$pattern_count" "$corpus_bytes"
-    measure "$base_target/release/rustmatch-bench" "$base_revision" "$base_receipt" \
+    measure "$base_target/$binary_subdirectory/rustmatch-bench" "$base_revision" "$base_receipt" \
       "$scenario" "$pattern_count" "$corpus_bytes"
-    "$candidate_target/release/rustmatch-bench" compare-i6 \
+    "$candidate_target/$binary_subdirectory/rustmatch-bench" compare-i6 \
       "$base_receipt" "$candidate_receipt" > "$comparison_receipt"
   fi
   cat "$comparison_receipt"

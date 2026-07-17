@@ -1,6 +1,6 @@
 # ADR-0005: Scan-local lazy determinization with exact fallback
 
-- **Status:** Proposed pending the frozen I6 performance and resource gate
+- **Status:** Accepted by the frozen I6 performance and resource gate
 - **Date:** 2026-07-17
 - **Decision owners:** rustmatch maintainers
 
@@ -67,4 +67,4 @@ supported application API.
   record fallback pressure.
 - Assertion fixtures record an explicit cache bypass.
 - Focused base/candidate and Wuthering Heights scale receipts are retained by
-  the I6 experiment and must pass before this increment is complete.
+  the [I6 evidence package](../evidence/i6/406c1f5/README.md).

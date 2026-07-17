@@ -2,9 +2,10 @@
 
 ## Status
 
-Active. The benchmark foundation was merged before cache implementation. The
-exact baseline revision is frozen below; candidate code may not alter the
-fixtures or admission thresholds.
+Complete. The benchmark foundation was merged before cache implementation, and
+the exact baseline, fixtures, and admission thresholds remained frozen. The
+retained native ARM receipts and critical analysis are in the
+[`I6 evidence package`](../evidence/i6/406c1f5/README.md).
 
 ## Mechanism under test
 
@@ -22,7 +23,8 @@ experiment but supplies no admission evidence.
 ## Baseline and candidate
 
 - Baseline revision: **`9ef1b17cc6a865f44920c7c4f74f4a44b0b2c8f4`**.
-- Candidate revision: the final I6 implementation commit.
+- Candidate revision:
+  **`406c1f5294b8797fbc47eb0c37342244426c8a9f`**.
 - Build: `cargo build --locked --release --package rustmatch-bench` for both
   revisions.
 - Runner: the same identified physical runner and allocation for both builds.
@@ -81,6 +83,14 @@ Compilation time may not regress by more than 3% in a repeatable result. Peak
 memory and cache-state count must be retained during the stable-machine run;
 if they cannot yet be measured automatically, the gap blocks I6 completion,
 not the benchmark-foundation merge.
+
+## Analysis requirement
+
+Passing thresholds is necessary but not sufficient. The retained report must
+also explain absolute times, output volume, scaling shape, cache pressure,
+fallback, memory, profile hotspots, rejected or inferior variants, and limits
+on what the campaign proves. A green boolean without that analysis does not
+complete an optimization increment.
 
 ## Correctness evidence required
 

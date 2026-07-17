@@ -62,3 +62,32 @@ jobs:
           path: ${{ runner.temp }}/rustmatch-c1/receipts/*.json
           if-no-files-found: warn
           retention-days: 30
+
+  wuthering-tripwire:
+    name: Wuthering performance tripwire
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out candidate revision
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.97.0 --profile minimal
+      - name: Compare Wuthering base and candidate on the same runner
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+          C2_RUN_ROOT: ${{ runner.temp }}/rustmatch-c2
+          RUSTMATCH_BENCH_RUNNER: github-actions-${{ runner.os }}-${{ runner.arch }}
+        run: scripts/c2-wuthering-tripwire.sh
+      - name: Retain Wuthering tripwire receipts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: c2-wuthering-tripwire-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/rustmatch-c2/receipts/*.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -602,6 +602,14 @@ left disabled outside the production path. A local win accompanied by losses
 elsewhere may justify a narrowly activated path only when the activation
 criterion is explicit, safe, and independently measured.
 
+Pass/fail is not performance analysis. Every admitted optimization must also
+explain the absolute times, output volume, scaling shape, memory tradeoff,
+cache or fallback behavior, profile hotspots, and limits on generalization.
+Diagnostic controls should separate competing explanations where practical;
+for example, a no-match corpus distinguishes pattern-set search cost from
+result delivery. A green threshold without this critical interpretation is an
+incomplete experiment.
+
 This hard positive-improvement requirement does **not** apply to semantic
 extensions such as richer supported regex syntax. Those changes are admitted
 for functionality and compatibility. They must pass correctness evidence and,
@@ -661,6 +669,10 @@ fast, neutral, or worthy of publication.
 
 A CI tripwire failure blocks the PR pending investigation and a stable-machine
 rerun. A CI tripwire pass does not satisfy the optimization admission gate.
+The generated literal `C1` lane catches broad hot-loop mistakes; the retained
+Wuthering Heights `C2` lane adds a realistic 5,000-pattern regression line with
+exact source and event digests. Both use deliberately broad thresholds and
+retain base, candidate, and comparison receipts.
 
 #### Authoritative external regression testing
 

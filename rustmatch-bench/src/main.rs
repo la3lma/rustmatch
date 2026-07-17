@@ -23,6 +23,8 @@ const TRIPWIRE_WARMUP_ITERATIONS: u32 = 3;
 const TRIPWIRE_MEASURED_ITERATIONS: u32 = 7;
 const TRIPWIRE_RELATIVE_LIMIT_PERCENT: u128 = 50;
 const TRIPWIRE_ABSOLUTE_LIMIT_NS: u128 = 100_000_000;
+const WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT: u128 = 100;
+const WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS: u128 = 50_000_000;
 const I6_WARMUP_ITERATIONS: u32 = 3;
 const I6_MEASURED_ITERATIONS: u32 = 7;
 const I6_REQUIRED_IMPROVEMENT_BASIS_POINTS: u128 = 500;
@@ -119,6 +121,17 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             )
             .map(CommandOutput::ScaleScan)
         }
+        Some("compare-wuthering-tripwire") => {
+            let baseline = arguments.next();
+            let candidate = arguments.next();
+            if arguments.next().is_some() {
+                return Err(usage());
+            }
+            let baseline = baseline.ok_or_else(usage)?;
+            let candidate = candidate.ok_or_else(usage)?;
+            compare_wuthering_tripwire_files(Path::new(&baseline), Path::new(&candidate))
+                .map(CommandOutput::ScaleComparison)
+        }
         Some("render-table") => {
             let output = arguments.next().ok_or_else(usage)?;
             let receipts: Vec<_> = arguments.collect();
@@ -136,7 +149,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -804,6 +817,73 @@ fn compare_tripwire(
     })
 }
 
+fn compare_wuthering_tripwire_files(
+    baseline_path: &Path,
+    candidate_path: &Path,
+) -> Result<ScaleComparisonReceipt, String> {
+    let baseline: ScaleScanReceipt = read_receipt("Wuthering baseline", baseline_path)?;
+    let candidate: ScaleScanReceipt = read_receipt("Wuthering candidate", candidate_path)?;
+    compare_wuthering_tripwire(&baseline, &candidate)
+}
+
+fn compare_wuthering_tripwire(
+    baseline: &ScaleScanReceipt,
+    candidate: &ScaleScanReceipt,
+) -> Result<ScaleComparisonReceipt, String> {
+    baseline.validate()?;
+    candidate.validate()?;
+    if baseline.fixture_identity() != candidate.fixture_identity() {
+        return Err("C2 baseline and candidate fixture identities differ".to_owned());
+    }
+    if baseline.runner != candidate.runner {
+        return Err("C2 baseline and candidate were not measured on the same runner".to_owned());
+    }
+
+    let regression_ns = candidate
+        .median_scan_ns
+        .saturating_sub(baseline.median_scan_ns);
+    let slowdown_basis_points = candidate
+        .median_scan_ns
+        .saturating_mul(10_000)
+        .checked_div(baseline.median_scan_ns)
+        .unwrap_or(u128::MAX)
+        .saturating_sub(10_000);
+    let relative_limit_exceeded =
+        slowdown_basis_points > WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT.saturating_mul(100);
+    let absolute_limit_exceeded = regression_ns >= WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS;
+    if relative_limit_exceeded && absolute_limit_exceeded {
+        return Err(format!(
+            "C2 Wuthering severe-regression tripwire fired: baseline={}ns candidate={}ns regression={}ns slowdown={}.{:02}%",
+            baseline.median_scan_ns,
+            candidate.median_scan_ns,
+            regression_ns,
+            slowdown_basis_points / 100,
+            slowdown_basis_points % 100
+        ));
+    }
+
+    Ok(ScaleComparisonReceipt {
+        schema_version: 1,
+        evidence_id: "C2",
+        comparison: "wuthering-tripwire-v1",
+        claim: "coarse-severe-regression-signal-only",
+        baseline_revision: baseline.revision.clone(),
+        candidate_revision: candidate.revision.clone(),
+        runner: baseline.runner.clone(),
+        pattern_count: baseline.pattern_count,
+        corpus_bytes: baseline.corpus_bytes,
+        event_count: baseline.event_count,
+        event_digest: baseline.event_digest.clone(),
+        baseline_median_scan_ns: baseline.median_scan_ns,
+        candidate_median_scan_ns: candidate.median_scan_ns,
+        regression_ns,
+        slowdown_basis_points,
+        relative_limit_percent: WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT,
+        absolute_limit_ns: WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS,
+        status: "pass",
+    })
+}
+
 fn build_rustmatch(patterns: &[String]) -> Result<Matcher, String> {
     let mut builder = MatcherBuilder::new();
     if let Ok(source) = env::var("RUSTMATCH_BENCH_STATE_CACHE_BUDGET") {
@@ -1225,6 +1305,7 @@ enum CommandOutput {
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
     ScaleScan(ScaleScanReceipt),
+    ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
 }
 
@@ -1408,6 +1489,43 @@ impl ScaleScanReceipt {
         }
         Ok(())
     }
+
+    fn fixture_identity(&self) -> (usize, usize, usize, &str, &str, &str, usize, &str, u32, u32) {
+        (
+            self.pattern_count,
+            self.corpus_bytes,
+            self.cache_scrub_bytes,
+            &self.pattern_source_digest,
+            &self.corpus_source_digest,
+            &self.cache_scrub_digest,
+            self.event_count,
+            &self.event_digest,
+            self.warmup_iterations,
+            self.measured_iterations,
+        )
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct ScaleComparisonReceipt {
+    schema_version: u32,
+    evidence_id: &'static str,
+    comparison: &'static str,
+    claim: &'static str,
+    baseline_revision: String,
+    candidate_revision: String,
+    runner: String,
+    pattern_count: usize,
+    corpus_bytes: usize,
+    event_count: usize,
+    event_digest: String,
+    baseline_median_scan_ns: u128,
+    candidate_median_scan_ns: u128,
+    regression_ns: u128,
+    slowdown_basis_points: u128,
+    relative_limit_percent: u128,
+    absolute_limit_ns: u128,
+    status: &'static str,
 }
 
 #[derive(Debug, Serialize)]
@@ -1489,8 +1607,9 @@ struct ComparisonReceipt {
 mod tests {
     use super::{
         CacheScrubber, CampaignFixture, Event, I6ScanReceipt, LiteralFixture,
-        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, TripwireReceipt, compare_i6,
-        compare_tripwire, expand_corpus, regex_events, select_literal_patterns,
+        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
+        compare_i6, compare_tripwire, compare_wuthering_tripwire, expand_corpus, regex_events,
+        select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
 
@@ -1553,6 +1672,47 @@ mod tests {
 
         // Test
         let result = compare_tripwire(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("fixture identities differ")));
+    }
+
+    #[test]
+    fn wuthering_tripwire_accepts_small_absolute_noise() -> Result<(), String> {
+        // Prepare
+        let baseline = scale_receipt(40_000_000, "base");
+        let candidate = scale_receipt(85_000_000, "candidate");
+
+        // Test
+        let comparison = compare_wuthering_tripwire(&baseline, &candidate)?;
+
+        // Assert
+        assert_eq!(comparison.status, "pass");
+        Ok(())
+    }
+
+    #[test]
+    fn wuthering_tripwire_rejects_a_large_absolute_and_relative_regression() {
+        // Prepare
+        let baseline = scale_receipt(50_000_000, "base");
+        let candidate = scale_receipt(130_000_000, "candidate");
+
+        // Test
+        let result = compare_wuthering_tripwire(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("tripwire fired")));
+    }
+
+    #[test]
+    fn wuthering_tripwire_requires_identical_event_evidence() {
+        // Prepare
+        let baseline = scale_receipt(50_000_000, "base");
+        let mut candidate = scale_receipt(55_000_000, "candidate");
+        candidate.event_digest = "multiset64:different".to_owned();
+
+        // Test
+        let result = compare_wuthering_tripwire(&baseline, &candidate);
 
         // Assert
         assert!(matches!(result, Err(message) if message.contains("fixture identities differ")));
@@ -1736,6 +1896,34 @@ mod tests {
             warmup_iterations: 3,
             measured_iterations: 7,
             median_compile_ns: 1_000_000,
+            median_scan_ns,
+            cache_diagnostics: None,
+            correctness: "pass".to_owned(),
+        }
+    }
+
+    fn scale_receipt(median_scan_ns: u128, revision: &str) -> ScaleScanReceipt {
+        ScaleScanReceipt {
+            schema_version: 1,
+            evidence_id: "I6-B1".to_owned(),
+            benchmark: "wuthering-literal-scale-v1".to_owned(),
+            claim: "exploratory-scale-and-cache-pressure-evidence".to_owned(),
+            revision: revision.to_owned(),
+            runner: "runner".to_owned(),
+            profile: "release".to_owned(),
+            pattern_source: "patterns.txt".to_owned(),
+            pattern_source_digest: "fnv1a64:patterns".to_owned(),
+            corpus_source: "corpus.txt".to_owned(),
+            corpus_source_digest: "fnv1a64:corpus".to_owned(),
+            pattern_count: 5_000,
+            corpus_bytes: 675_259,
+            cache_scrub_bytes: 64 * 1024 * 1024,
+            cache_scrub_digest: "fnv1a64:scrub".to_owned(),
+            event_count: 74_604,
+            event_digest: "multiset64:receipt".to_owned(),
+            warmup_iterations: 1,
+            measured_iterations: 3,
+            median_compile_ns: 5_000_000,
             median_scan_ns,
             cache_diagnostics: None,
             correctness: "pass".to_owned(),
