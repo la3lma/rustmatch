@@ -8,8 +8,11 @@
 > [Java rmatch](https://github.com/la3lma/rmatch).
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is currently
-> not started (`0/12` implementation increments started, `0/12` complete).
+> status](docs/roadmap.md). Planning is complete; implementation remains at
+> `0/12` increments started and `0/12` complete.
+
+> **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
+> request expectations](CONTRIBUTING.md) are part of the product contract.
 
 `rustmatch` is intended to be a native Rust implementation of the rmatch idea:
 register many regular expressions once, compile them into shared matching
@@ -225,6 +228,9 @@ We need a Rust-native library that:
    versioned, reproducible evidence.
 10. **Safe Rust first.** Any `unsafe` block requires a measured benefit, a
    documented invariant, focused tests, and independent review.
+11. **Neat for comprehension.** Code, documentation, tests, fixtures, and
+    evidence should be easy for humans and machines to navigate and verify.
+    This favors clarity and explicitness, not ornamental abstraction or churn.
 
 ### Goals
 
@@ -448,6 +454,7 @@ It should not expose:
 | NFR-013 | Dependency hygiene | Small dependency set, audited before releases |
 | NFR-014 | Performance admission | Performance-motivated changes require a positive Rust result beyond predeclared noise; Java results alone and neutral outcomes fail the gate |
 | NFR-015 | Architectural continuity | Early narrow implementations use final-shaped boundaries rather than throwaway matching paths |
+| NFR-016 | Comprehensible engineering | Formatting, linting, rustdoc, visibility, errors, tests, task IDs, and evidence formats follow the enforced contribution standard |
 
 ### Performance requirements
 
@@ -512,6 +519,121 @@ extensions such as richer supported regex syntax. Those changes are admitted
 for functionality and compatibility. They must pass correctness evidence and,
 when they touch a hot path, a non-regression budget, but they do not have to
 make existing patterns faster.
+
+### Testing and regression policy
+
+Tests are part of the executable spine, not cleanup work after the engine is
+feature-complete. Every pull request must pass the required CI workflow before
+it can merge. Once the first workflow exists, `main` should be protected so a
+red or missing required check cannot be waived by habit.
+
+#### Fast functional PR CI
+
+The normal PR lane should be small, readable, and dependable enough to run on
+every change. It includes:
+
+- formatting and Clippy with warnings denied;
+- compilation of the workspace, examples, tests, and relevant feature sets;
+- focused unit tests for parser, HIR, compiler, state sets, and error types;
+- compact public end-to-end tests from builder through emitted match events;
+- Java/Rust differential smoke fixtures for the syntax tier implemented so
+  far;
+- negative-path tests for rejected syntax, sink/input failures, limits, and
+  lifecycle errors;
+- rustdoc examples and the UC evidence-summary test.
+
+Functional tests should be pleasant to review: one behavior per test, small
+fixtures, exact expected events or errors, descriptive names, and explicit
+`Prepare`, `Test`, and `Assert` comments where the three stages are not already
+obvious. A PR with failing functional tests is not mergeable.
+
+#### Coarse CI performance tripwire
+
+CI is not the authoritative performance laboratory. Hosted runners are noisy,
+and a broad scenario campaign would be too slow for every PR. CI should still
+run one or a few short, deterministic scans to catch catastrophic mistakes
+such as accidentally rebuilding per character, disabling a cache, allocating
+inside the hot loop, or falling onto an obviously wrong path.
+
+The tripwire should:
+
+- validate event count or event hash before considering timing;
+- build base and PR revisions in the same job and release configuration;
+- use the same generated fixture, container allocation, warm-up count, and
+  measurement boundary;
+- compare medians from several scans rather than one wall-clock sample;
+- use a deliberately broad, versioned failure threshold; and
+- rerun once before failing a PR for timing alone.
+
+An initial candidate policy is a 50% median slowdown with at least 100 ms of
+absolute regression on a fixture whose baseline scan is long enough to measure.
+That threshold must be calibrated from repeated CI baselines before it becomes
+required. It is intentionally a smoke alarm, not evidence that a change is
+fast, neutral, or worthy of publication.
+
+A CI tripwire failure blocks the PR pending investigation and a stable-machine
+rerun. A CI tripwire pass does not satisfy the optimization admission gate.
+
+#### Authoritative external regression testing
+
+Performance-sensitive work is tested outside hosted CI on a designated stable
+machine using the benchmark repository. Before such a change is accepted into
+`main`:
+
+1. Run the exact base and candidate revisions with correctness validation.
+2. Use the full applicable scenario set, not only the workload expected to
+   improve.
+3. Retain individual measurements, environment metadata, versions, hashes,
+   memory observations, and thread sweeps where relevant.
+4. Investigate any real regression, even when the coarse CI tripwire remained
+   green.
+5. Reject or redesign the change unless its semantic value justifies a
+   documented tradeoff, or its optimization claim passes the hard positive-
+   improvement gate.
+
+This external campaign is the authoritative regression-management path. The CI
+tripwire exists to catch severe and unusual anomalies that escape it; CI does
+not replace it.
+
+### Documentation and Rust code hygiene
+
+Rustmatch should be a *neat* project because comprehension is a correctness and
+maintenance feature. Neat does not mean maximizing the number of abstractions,
+reformatting working code for taste, or satisfying tools without judgment. It
+means that a person or an automated agent can identify the public contract,
+find the implementation, understand the invariants, run the evidence, and make
+a focused change without reconstructing hidden context.
+
+The binding details live in [CONTRIBUTING.md](CONTRIBUTING.md). The core rules
+are:
+
+- use stable Rust, canonical `rustfmt`, and Clippy with warnings denied;
+- keep visibility as narrow as possible and review every exported item as an
+  API commitment;
+- use domain types for pattern IDs, state IDs, positions, spans, flags, and
+  configuration instead of ambiguous primitives;
+- prefer explicit ownership and simple data flow over clever lifetime or trait
+  machinery that has no demonstrated need;
+- return typed, contextual errors for expected failures and reserve panics for
+  documented internal invariant violations;
+- forbid `unsafe` in the initial core and admit it later only through the
+  safety and performance gates;
+- document every public item, crate, and important module, including units,
+  lifecycle, concurrency, errors, panics, and examples where relevant;
+- comment invariants and reasons, not syntax that the code already states;
+- keep tests small, deterministic, behavior-named, and exact about expected
+  events or errors;
+- avoid dead code, broad lint suppression, anonymous TODOs, and speculative
+  extension points; and
+- keep generated artifacts reproducible and machine-readable evidence
+  versioned and schema-checked.
+
+The required PR workflow will enforce formatting, linting, compilation, tests,
+and rustdoc from the executable-spine increment onward. Dependency, license,
+security, unused-dependency, and semantic-version checks join the appropriate
+scheduled and release gates. A check may be suppressed only at the narrowest
+scope with a written reason; making CI green by globally weakening a rule is
+not acceptable.
 
 ### Benchmark interoperability requirements
 
@@ -1767,7 +1889,11 @@ language.
 - Cargo workspace with resolver and workspace lints.
 - `rustmatch`, `rustmatch-core`, `rustmatch-compat`, and benchmark-adapter
   crates.
-- CI for format, Clippy, tests, rustdoc, MSRV candidate, and license checks.
+- Required pull-request CI for formatting, Clippy, workspace compilation,
+  focused unit tests, public end-to-end tests, differential smoke fixtures,
+  rustdoc, MSRV candidate, and license checks.
+- A coarse same-runner base/PR performance tripwire calibrated to catch severe
+  anomalies without pretending to replace stable-machine measurements.
 - Public builder that accepts non-empty 7-bit ASCII literal patterns and
   rejects every unsupported construct explicitly.
 - `Utf16Text`, typed spans, pattern IDs, and a collecting sink.
@@ -1791,6 +1917,10 @@ language.
   no dangling edge ranges.
 - Rust output equals the Java oracle's normalized event multiset.
 - Benchmark runner validates match counts before retaining a smoke timing.
+- The required PR workflow is exercised on the branch and every functional job
+  is green; an intentionally failing fixture proves the workflow blocks.
+- The CI performance tripwire detects an intentionally catastrophic slow path
+  but tolerates ordinary hosted-runner noise under its calibrated policy.
 - Public rustdoc example compiled as a test.
 
 **Exit criteria**
@@ -2131,6 +2261,11 @@ a failed optimization result. Semantic work that touches the hot path must
 include non-regression evidence, but semantic value does not have to masquerade
 as a speed improvement.
 
+No pull request may merge with a failed or missing required functional CI job.
+The coarse CI performance tripwire may also block pending investigation, but a
+green tripwire is never substituted for the external receipts required from a
+performance-sensitive change.
+
 ### Definition of done for an implementation task
 
 - Public behavior is documented.
@@ -2148,7 +2283,11 @@ as a speed improvement.
 - No new dependency exists without rationale and license/MSRV review.
 - No `unsafe` exists without a local safety argument and benchmark receipt.
 - Full workspace gate passes.
+- Every required pull-request CI job is green for the final revision.
 - Performance-sensitive changes pass the agreed regression threshold.
+- Performance-sensitive changes carry the required external base/candidate
+  receipts from the designated stable machine; the CI tripwire is only
+  supplementary evidence.
 - A change proposed as an optimization has a retained Rust baseline/candidate
   comparison showing a positive improvement beyond noise. Java evidence alone,
   or merely avoiding a regression, does not satisfy this item.
