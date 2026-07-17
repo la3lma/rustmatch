@@ -4,11 +4,11 @@
 
 **Implementation increments started:** **6/12**
 
-**Implementation increments complete:** **5/12**
+**Implementation increments complete:** **6/12**
 
-**Active:** **I5 - UTF-16, flags, anchors, and boundaries**
+**Active:** none
 
-**Available for execution:** none while I5 is active
+**Available for execution:** **I6 - Lazy deterministic-state cache**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -162,11 +162,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,C0,C1,B0,E0 complete;
-    class I5 active;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,S0,C0,C1,B0,E0 complete;
+    class I6 available;
     class X0,B1,H1,R1,R2 evidence;
-    class S0,G6,G7,G8,I10,I11 gate;
-    class I6,I7,I8,I9,H2,H3,R3,REL planned;
+    class G6,G7,G8,I10,I11 gate;
+    class I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -237,7 +237,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I2 | ASCII predicates | Complete | Dot, classes, ranges, negation, escapes, and six ASCII shorthands run through interned 128-bit predicates; exhaustive truth tables, bounded parser totality, a fuzz target, and 12 Java differential fixtures pass as `I2-E1` |
 | I3 | Alternation and grouping | Complete | Normalized recursive HIR, Thompson branching, nullable/minimum-length analysis, public composition fixtures, epsilon-closure invariants, bounded HIR/NFA property comparison, and 17 pinned Java cases pass as `I3-E1` |
 | I4 | Repetition and longest match | Complete | Unary and counted repetition run through normalized HIR and Thompson NFA loops; public overlap, ambiguity, nullable-loop, 1,000-bound, property, and recovery tests pass; 29 pinned Java cases pass as `I4-E1`; full repository and performance gates are green |
-| I5 | UTF-16, flags, and assertions | Active | Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as `I5-E1`; assertions follow through the same public-to-oracle path |
+| I5 | UTF-16, flags, and assertions | Complete | Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as `I5-E1`; NFA-native line anchors and ASCII word boundaries, exhaustive boundary classification, assertion adversaries, and 28 differential cases pass as `I5-E2`; assertion-free scans retain a separate hot path |
+| S0 | Documented rmatch 2.x semantic parity gate | Complete | The complete documented consuming-language suite passes through the public Rust API against the pinned Java `2.0.0-RC1` oracle; pure zero-width rejection remains the explicit documented product difference |
 | I6 | Lazy deterministic-state cache | Planned | Rust optimized/baseline event equality, cache-budget fallback evidence, and positive improvement beyond the predeclared noise gate; Java results only motivate candidates |
 | I7 | Safe prefilter | Planned | Rust prefilter on/off event equality, adversarial safety fixtures, and positive improvement in the measured activation region; Java thresholds do not count |
 | I8 | Parallel partitions | Planned | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |

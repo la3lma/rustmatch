@@ -43,8 +43,14 @@ const ORACLE_FIXTURE_SETS: &[OracleFixtureSet] = &[
         expected_results: "compat/expected/java-2.0.0-RC1-utf16-flags-v1.jsonl",
         expected_manifest: "compat/expected/java-2.0.0-RC1-utf16-flags-v1.manifest.json",
     },
+    OracleFixtureSet {
+        label: "assertions-v1",
+        fixtures: "compat/fixtures/assertions-v1.jsonl",
+        expected_results: "compat/expected/java-2.0.0-RC1-assertions-v1.jsonl",
+        expected_manifest: "compat/expected/java-2.0.0-RC1-assertions-v1.manifest.json",
+    },
 ];
-const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","java-21-case-fold-v1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-E1","I3-E1","I4-E1","I5-E1","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2","I3-E1","I4-E1","I5-E1"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3","I3-E1","I4-E1","I5-E1"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1"]}]}"#;
+const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","java-21-case-fold-v1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2","I3-E1","I4-E1","I5-E1","I5-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3","I3-E1","I4-E1","I5-E1","I5-E2"]},{"use_case":"UC-10","status":"partial","evidence":["I5-E2"]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2","I2-E1","I3-E1","I4-E1","I5-E1","I5-E2"]}]}"#;
 
 struct OracleFixtureSet {
     label: &'static str,
@@ -193,10 +199,32 @@ fn run_evidence_summary() -> Result<(), String> {
     run_composition_evidence()?;
     run_repetition_evidence()?;
     run_utf16_flags_evidence()?;
+    run_assertion_evidence()?;
     run_benchmark_smoke()?;
     eprintln!("==> E0 use-case evidence summary");
     println!("{EVIDENCE_SUMMARY_JSON}");
     Ok(())
+}
+
+fn run_assertion_evidence() -> Result<(), String> {
+    eprintln!("==> I5 assertion differential evidence");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--package",
+            "rustmatch-compat",
+            "--",
+            "verify-assertions",
+        ])
+        .status()
+        .map_err(|error| format!("could not start assertion evidence adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("assertion evidence adapter failed with {status}"))
+    }
 }
 
 fn run_utf16_flags_evidence() -> Result<(), String> {

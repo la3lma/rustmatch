@@ -1,6 +1,6 @@
 //! Parser for the documented UTF-16 compatibility syntax.
 
-use crate::hir::{Hir, HirPattern};
+use crate::hir::{Assertion, Hir, HirPattern};
 use crate::predicate::SymbolPredicate;
 use crate::{Error, PatternFlags, PatternId, Utf16Span};
 
@@ -117,15 +117,17 @@ impl<'a> Parser<'a> {
             value if value == u16::from(b'\\') => self.parse_escape(),
             value if value == u16::from(b'[') => self.parse_character_class(),
             value if value == u16::from(b'(') => self.parse_group(),
+            value if value == u16::from(b'^') => {
+                self.index += 1;
+                Ok(Hir::Assertion(Assertion::LineStart))
+            }
+            value if value == u16::from(b'$') => {
+                self.index += 1;
+                Ok(Hir::Assertion(Assertion::LineEnd))
+            }
             value if is_repetition_operator(value) => {
                 Err(invalid(self.pattern_id, self.index, self.index + 1)?)
             }
-            value if is_unsupported_regex_operator(value) => Err(unsupported(
-                self.pattern_id,
-                self.index,
-                self.index + 1,
-                value,
-            )?),
             value => {
                 self.index += 1;
                 Ok(self.literal(value))
@@ -269,7 +271,8 @@ impl<'a> Parser<'a> {
             value if value == u16::from(b'r') => Ok(Hir::Symbol(u16::from(b'\r'))),
             value if value == u16::from(b'f') => Ok(Hir::Symbol(0x0c)),
             value if is_shorthand(value) => Ok(Hir::Predicate(shorthand(value))),
-            0x62 | 0x42 => Err(unsupported(self.pattern_id, start, self.index, escaped)?),
+            0x62 => Ok(Hir::Assertion(Assertion::WordBoundary)),
+            0x42 => Ok(Hir::Assertion(Assertion::NonWordBoundary)),
             _ => Err(invalid(self.pattern_id, start, self.index)?),
         }
     }
@@ -437,19 +440,6 @@ fn shorthand(unit: u16) -> SymbolPredicate {
     }
 }
 
-fn unsupported(
-    pattern_id: PatternId,
-    start: usize,
-    end: usize,
-    code_unit: u16,
-) -> Result<Error, Error> {
-    Ok(Error::UnsupportedPattern {
-        pattern_id,
-        span: span(pattern_id, start, end)?,
-        code_unit,
-    })
-}
-
 fn invalid(pattern_id: PatternId, start: usize, end: usize) -> Result<Error, Error> {
     Ok(Error::InvalidPattern {
         pattern_id,
@@ -466,10 +456,6 @@ fn span(pattern_id: PatternId, start: usize, end: usize) -> Result<Utf16Span, Er
 
 fn position(pattern_id: PatternId, index: usize) -> Result<u64, Error> {
     u64::try_from(index).map_err(|_| Error::PatternTooLarge { pattern_id })
-}
-
-const fn is_unsupported_regex_operator(unit: u16) -> bool {
-    matches!(unit, 0x5e | 0x24)
 }
 
 const fn is_repetition_operator(unit: u16) -> bool {
@@ -503,9 +489,9 @@ const fn is_shorthand(unit: u16) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{parse, parse_with_flags};
-    use crate::hir::Hir;
+    use crate::hir::{Assertion, Hir};
     use crate::predicate::SymbolPredicate;
-    use crate::{Error, PatternFlags, PatternId, Utf16Span};
+    use crate::{Error, PatternFlags, PatternId};
 
     #[test]
     fn prefix_and_typed_case_flags_lower_literals_to_java_predicates() -> Result<(), Error> {
@@ -533,24 +519,25 @@ mod tests {
     }
 
     #[test]
-    fn parser_rejects_unsupported_anchor_at_its_utf16_position() {
+    fn parser_lowers_anchors_and_boundaries_to_zero_width_assertions() -> Result<(), Error> {
         // Prepare
         let pattern_id = PatternId::new(41);
 
         // Test
-        let result = parse(pattern_id, "ab^");
+        let pattern = parse(pattern_id, r"^a\b\B$")?;
 
         // Assert
-        assert!(matches!(
-            result,
-            Err(Error::UnsupportedPattern {
-                pattern_id: actual_id,
-                span,
-                code_unit
-            }) if actual_id == pattern_id
-                && span == Utf16Span::from_bounds(2, 3)
-                && code_unit == u16::from(b'^')
-        ));
+        let Hir::Sequence(sequence) = pattern.expression() else {
+            panic!("assertions did not lower to a sequence");
+        };
+        assert_eq!(sequence[0], Hir::Assertion(Assertion::LineStart));
+        assert_eq!(sequence[1], Hir::Symbol(u16::from(b'a')));
+        assert_eq!(sequence[2], Hir::Assertion(Assertion::WordBoundary));
+        assert_eq!(sequence[3], Hir::Assertion(Assertion::NonWordBoundary));
+        assert_eq!(sequence[4], Hir::Assertion(Assertion::LineEnd));
+        assert!(!pattern.nullable());
+        assert_eq!(pattern.minimum_consumed(), Some(1));
+        Ok(())
     }
 
     #[test]
@@ -697,7 +684,8 @@ mod tests {
         let pattern_id = PatternId::new(45);
 
         // Test
-        let results = ["|", "||", "(|)", "|[]"].map(|pattern| parse(pattern_id, pattern));
+        let results = ["|", "||", "(|)", "|[]", "^", "$", r"\b", r"\B", "^$"]
+            .map(|pattern| parse(pattern_id, pattern));
 
         // Assert
         assert!(

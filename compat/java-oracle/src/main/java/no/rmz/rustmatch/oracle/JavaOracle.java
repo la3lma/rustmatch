@@ -52,7 +52,8 @@ public final class JavaOracle {
           "ascii-predicate-v1",
           "ascii-composition-v1",
           "ascii-repetition-v1",
-          "utf16-flags-v1");
+          "utf16-flags-v1",
+          "assertions-v1");
   private static final String ORACLE_GROUP = "no.rmz";
   private static final String ORACLE_ARTIFACT = "rmatch";
   private static final String ORACLE_VERSION = "2.0.0-RC1";

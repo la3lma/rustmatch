@@ -3,6 +3,14 @@
 use crate::PatternId;
 use crate::predicate::SymbolPredicate;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum Assertion {
+    LineStart,
+    LineEnd,
+    WordBoundary,
+    NonWordBoundary,
+}
+
 #[derive(Debug)]
 pub(crate) struct HirPattern {
     pattern_id: PatternId,
@@ -44,6 +52,7 @@ impl HirPattern {
 pub(crate) enum Hir {
     Never,
     Epsilon,
+    Assertion(Assertion),
     Symbol(u16),
     Predicate(SymbolPredicate),
     Sequence(Box<[Self]>),
@@ -106,7 +115,7 @@ impl Hir {
     pub(crate) fn nullable(&self) -> bool {
         match self {
             Self::Never | Self::Symbol(_) | Self::Predicate(_) => false,
-            Self::Epsilon => true,
+            Self::Epsilon | Self::Assertion(_) => true,
             Self::Sequence(expressions) => expressions.iter().all(Self::nullable),
             Self::Alternation(expressions) => expressions.iter().any(Self::nullable),
             Self::Repeat {
@@ -118,7 +127,7 @@ impl Hir {
     pub(crate) fn minimum_consumed(&self) -> Option<usize> {
         match self {
             Self::Never => None,
-            Self::Epsilon => Some(0),
+            Self::Epsilon | Self::Assertion(_) => Some(0),
             Self::Symbol(_) => Some(1),
             Self::Predicate(predicate) => (!predicate.is_empty()).then_some(1),
             Self::Sequence(expressions) => expressions.iter().try_fold(0_usize, |total, item| {
@@ -144,7 +153,7 @@ impl Hir {
 
     pub(crate) fn can_consume(&self) -> bool {
         match self {
-            Self::Never | Self::Epsilon => false,
+            Self::Never | Self::Epsilon | Self::Assertion(_) => false,
             Self::Symbol(_) => true,
             Self::Predicate(predicate) => !predicate.is_empty(),
             Self::Sequence(expressions) => {
@@ -154,6 +163,17 @@ impl Hir {
             Self::Repeat {
                 expression, max, ..
             } => *max != Some(0) && expression.can_consume(),
+        }
+    }
+
+    pub(crate) fn uses_assertions(&self) -> bool {
+        match self {
+            Self::Assertion(_) => true,
+            Self::Sequence(expressions) | Self::Alternation(expressions) => {
+                expressions.iter().any(Self::uses_assertions)
+            }
+            Self::Repeat { expression, .. } => expression.uses_assertions(),
+            Self::Never | Self::Epsilon | Self::Symbol(_) | Self::Predicate(_) => false,
         }
     }
 }

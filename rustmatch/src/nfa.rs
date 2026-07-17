@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::hir::{Hir, HirPattern};
+use crate::hir::{Assertion, Hir, HirPattern};
 use crate::predicate::SymbolPredicate;
 use crate::{Error, PatternId};
 
@@ -39,6 +39,7 @@ impl PredicateId {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum EdgeKind {
     Epsilon,
+    Assertion(Assertion),
     Symbol(u16),
     Predicate(PredicateId),
 }
@@ -65,6 +66,7 @@ pub(crate) struct PatternDatabase {
     predicates: Box<[SymbolPredicate]>,
     terminal_ordinals: Box<[usize]>,
     pattern_ids: Box<[PatternId]>,
+    uses_assertions: bool,
 }
 
 impl PatternDatabase {
@@ -78,6 +80,10 @@ impl PatternDatabase {
 
     pub(crate) const fn pattern_count(&self) -> usize {
         self.pattern_ids.len()
+    }
+
+    pub(crate) const fn uses_assertions(&self) -> bool {
+        self.uses_assertions
     }
 
     pub(crate) fn edges_from(&self, state: StateId) -> &[Edge] {
@@ -97,7 +103,7 @@ impl PatternDatabase {
     #[inline]
     pub(crate) fn edge_matches(&self, kind: EdgeKind, symbol: u16) -> bool {
         match kind {
-            EdgeKind::Epsilon => false,
+            EdgeKind::Epsilon | EdgeKind::Assertion(_) => false,
             EdgeKind::Symbol(expected) => expected == symbol,
             EdgeKind::Predicate(predicate) => {
                 matches_predicate(&self.predicates[predicate.index()], symbol)
@@ -118,6 +124,7 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
     let mut pattern_ids = Vec::with_capacity(patterns.len());
     let mut predicates = Vec::new();
     let mut predicate_ids = HashMap::new();
+    let mut uses_assertions = false;
 
     for (ordinal, pattern) in patterns.iter().enumerate() {
         let first = add_state(&mut pending_edges, &mut pending_terminals)?;
@@ -137,6 +144,7 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
         )?;
         pending_terminals[terminal.index()].push(ordinal);
         pattern_ids.push(pattern.pattern_id());
+        uses_assertions |= pattern.expression().uses_assertions();
     }
 
     let mut states = Vec::with_capacity(pending_edges.len());
@@ -166,6 +174,7 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
         predicates: predicates.into_boxed_slice(),
         terminal_ordinals: terminal_ordinals.into_boxed_slice(),
         pattern_ids: pattern_ids.into_boxed_slice(),
+        uses_assertions,
     })
 }
 
@@ -182,6 +191,10 @@ fn compile_expression(
         Hir::Never => {}
         Hir::Epsilon => edges[start.index()].push(Edge {
             kind: EdgeKind::Epsilon,
+            target: end,
+        }),
+        Hir::Assertion(assertion) => edges[start.index()].push(Edge {
+            kind: EdgeKind::Assertion(*assertion),
             target: end,
         }),
         Hir::Symbol(symbol) => edges[start.index()].push(Edge {
@@ -415,7 +428,7 @@ mod tests {
             .iter()
             .filter_map(|edge| match edge.kind {
                 EdgeKind::Predicate(id) => Some(id),
-                EdgeKind::Epsilon | EdgeKind::Symbol(_) => None,
+                EdgeKind::Epsilon | EdgeKind::Assertion(_) | EdgeKind::Symbol(_) => None,
             })
             .collect();
 
@@ -423,6 +436,29 @@ mod tests {
         assert_eq!(database.predicates.len(), 1);
         assert_eq!(predicate_edges.len(), 2);
         assert!(predicate_edges.windows(2).all(|ids| ids[0] == ids[1]));
+        Ok(())
+    }
+
+    #[test]
+    fn assertion_metadata_selects_the_contextual_scan_only_when_needed() -> Result<(), crate::Error>
+    {
+        // Prepare
+        let literal = [parse(PatternId::new(1), "a")?];
+        let anchored = [parse(PatternId::new(2), "^a")?];
+
+        // Test
+        let literal_database = compile(&literal)?;
+        let anchored_database = compile(&anchored)?;
+
+        // Assert
+        assert!(!literal_database.uses_assertions());
+        assert!(anchored_database.uses_assertions());
+        assert!(
+            anchored_database
+                .edges
+                .iter()
+                .any(|edge| matches!(edge.kind, EdgeKind::Assertion(_)))
+        );
         Ok(())
     }
 

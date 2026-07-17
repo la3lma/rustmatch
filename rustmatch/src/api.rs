@@ -27,12 +27,13 @@ impl MatcherBuilder {
 
     /// Registers one caller-identified pattern.
     ///
-    /// The current executable slice accepts non-empty patterns composed of
+    /// The current executable spine accepts non-empty patterns composed of
     /// UTF-16 literals, dot, character classes, ranges, supported escapes,
     /// the ASCII shorthands `\d`, `\w`, and `\s` with their complements,
-    /// alternation, and plain or non-capturing groups. Groups do not capture.
-    /// greedy quantifiers, and plain or non-capturing groups. Assertions and
-    /// flags return an error without modifying the builder.
+    /// alternation, plain or non-capturing groups, greedy quantifiers, prefix
+    /// flags, line anchors, and ASCII word boundaries. Groups do not capture.
+    /// Pure zero-width patterns, scoped flags, and lazy or possessive
+    /// quantifiers return an error without modifying the builder.
     ///
     /// # Errors
     ///
