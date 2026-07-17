@@ -208,19 +208,22 @@ We need a Rust-native library that:
    established by shared fixtures and differential tests.
 2. **Correctness precedes timing.** A fast run with the wrong match count is a
    rejected run.
-3. **Build the executable spine first.** The earliest matcher is narrow but
+3. **Java optimizations are hypotheses, not evidence.** We will try ideas that
+   worked in Java rmatch, but each one must prove a positive performance effect
+   in the Rust implementation before it is admitted as an optimization.
+4. **Build the executable spine first.** The earliest matcher is narrow but
    uses the intended compiler, database, engine, event, and test boundaries.
-4. **Rust-native does not mean Rust-different.** Internal design should be
+5. **Rust-native does not mean Rust-different.** Internal design should be
    idiomatic Rust, while observable matching behavior remains compatible.
-5. **Pay for what is used.** Assertions, Unicode handling, prefilters, and
+6. **Pay for what is used.** Assertions, Unicode handling, prefilters, and
    parallel execution must not impose their full cost on patterns that do not
    need them.
-6. **Immutable after build.** Compilation and scanning are separate phases.
-7. **No accidental public architecture.** Dense state tables, compiler stages,
+7. **Immutable after build.** Compilation and scanning are separate phases.
+8. **No accidental public architecture.** Dense state tables, compiler stages,
    caches, and diagnostics stay private unless users have a demonstrated need.
-8. **Receipts over adjectives.** Performance descriptions must be backed by
+9. **Receipts over adjectives.** Performance descriptions must be backed by
    versioned, reproducible evidence.
-9. **Safe Rust first.** Any `unsafe` block requires a measured benefit, a
+10. **Safe Rust first.** Any `unsafe` block requires a measured benefit, a
    documented invariant, focused tests, and independent review.
 
 ### Goals
@@ -443,7 +446,7 @@ It should not expose:
 | NFR-011 | Reproducibility | Published benchmark points have archived receipts |
 | NFR-012 | Portability | Linux and macOS first; no architecture-specific correctness |
 | NFR-013 | Dependency hygiene | Small dependency set, audited before releases |
-| NFR-014 | Performance safety | Material regressions block optimization merges |
+| NFR-014 | Performance admission | Performance-motivated changes require a positive Rust result beyond predeclared noise; Java results alone and neutral outcomes fail the gate |
 | NFR-015 | Architectural continuity | Early narrow implementations use final-shaped boundaries rather than throwaway matching paths |
 
 ### Performance requirements
@@ -465,6 +468,50 @@ specified as progressively stronger gates:
 
 Hyperscan remains a native reference ceiling, not a promise that rustmatch will
 match its specialized implementation or execution model.
+
+### Optimization admission gate
+
+An optimization is any change proposed primarily to make compilation,
+scanning, allocation, memory use, or parallel throughput better. Lazy
+determinization, state-set representations, caches, prefilters, specialized
+collections, SIMD, `unsafe`, allocation strategies, and automatic parallelism
+all pass through this gate.
+
+Java rmatch is valuable prior art. If an optimization worked there, that is a
+good reason to test it in Rust. It is not evidence that the optimization works
+in Rust. Different layouts, ownership, compiler optimizations, standard
+libraries, allocators, and runtime costs can reverse the result.
+
+Before implementing a performance idea, record:
+
+1. the mechanism and why it may help Rust;
+2. the workloads and metric it is intended to improve;
+3. the exact baseline revision and modes being compared;
+4. the campaign's noise model and minimum meaningful improvement;
+5. the regressions in build time, memory, latency, or other scenarios that
+   would make the trade unacceptable.
+
+The implementation passes only when:
+
+- optimized and baseline event results are identical;
+- baseline and candidate use the same inputs, machine allocation, build mode,
+  warm-up policy, and measurement boundaries;
+- retained receipts show a positive improvement beyond the predeclared noise
+  threshold for the intended workload;
+- the complete scenario set reveals no unaccepted material regression; and
+- any selective activation rule is itself measured and reproducible.
+
+A neutral, inconclusive, or slower result fails the optimization gate. The
+experiment may be retained as a useful lab note, but the code is removed or
+left disabled outside the production path. A local win accompanied by losses
+elsewhere may justify a narrowly activated path only when the activation
+criterion is explicit, safe, and independently measured.
+
+This hard positive-improvement requirement does **not** apply to semantic
+extensions such as richer supported regex syntax. Those changes are admitted
+for functionality and compatibility. They must pass correctness evidence and,
+when they touch a hot path, a non-regression budget, but they do not have to
+make existing patterns faster.
 
 ### Benchmark interoperability requirements
 
@@ -502,7 +549,8 @@ hashes agree and expected and observed match counts agree.
 #### `0.3.0`: engine architecture
 
 - Dense state representation and reusable scratch buffers.
-- Lazy deterministic-state cache or measured equivalent.
+- Lazy deterministic-state cache or another candidate only if Rust receipts
+  pass the hard positive-improvement gate.
 - Single-thread benchmark adapter accepted by the harness.
 
 #### `0.4.0`: optimized and parallel
@@ -510,7 +558,9 @@ hashes agree and expected and observed match counts agree.
 - Safe literal prefilter.
 - Explicit pattern partitioning.
 - Correctness parity across worker counts.
-- Thread calibration receipts.
+- Rust prefilter and parallelism receipts pass their predeclared positive-
+  improvement gates; Java results are not release evidence.
+- Complete thread calibration receipts.
 
 #### `1.0.0`: stable compatibility release
 
@@ -527,6 +577,7 @@ hashes agree and expected and observed match counts agree.
 | Match semantics misunderstood | Plausible but wrong output | Golden fixtures plus differential event-multiset tests |
 | Object model copied from Java | Poor locality and unidiomatic API | Architecture around dense IDs and arrays before porting behavior |
 | Premature optimization | Complex wrong engine | Walking skeleton, reference interpreter, then measured optimization |
+| Java optimization copied on reputation | Rust complexity without a Rust benefit | Treat Java results as hypotheses; require correctness-gated Rust baseline/candidate receipts and a positive result beyond noise |
 | Unsafe prefilter skips matches | Silent false negatives | Prefilter must prove necessity; differential bypass tests |
 | Parallel callbacks differ | Nondeterminism or races | Normalize events in tests; explicit `Send`/`Sync` sink contracts |
 | DFA state explosion | Unbounded memory | Lazy construction, budgets, metrics, and NFA fallback policy |
@@ -572,6 +623,10 @@ The architecture has four hard boundaries:
 
 The unoptimized semantic path remains available in tests as an oracle. Every
 optimization must be bypassable so its output can be compared with that path.
+An optimization copied or adapted from Java remains outside the production
+path until rustmatch's own correctness-gated receipts pass the optimization
+admission gate. Architectural resemblance and Java benchmark history do not
+waive that requirement.
 
 ### Executable spine
 
@@ -1902,8 +1957,14 @@ distinguishing reporting semantics.
 
 **Performance gate**
 
-- Merge only a representation that improves representative scans without a
-  material regression in build time or memory.
+- Treat Java's successful state-cache representations only as candidates.
+  Predeclare Rust workloads, baseline, metric, noise threshold, and acceptable
+  build-time/memory trade before selecting a representation.
+- Merge only a representation whose Rust receipts show a positive scan
+  improvement beyond noise without an unaccepted material regression in build
+  time, memory, or another representative scenario.
+- If every prototype is neutral or slower, keep the semantic NFA engine and
+  record the failed experiment rather than merging optimization-shaped code.
 
 ### Increment 7: Safe start acceleration and literal prefilter
 
@@ -1927,9 +1988,15 @@ distinguishing reporting semantics.
 
 **Performance gate**
 
-- Activation threshold is measured across pattern counts and corpus sizes.
+- Java prefilter behavior provides hypotheses, not an activation threshold for
+  Rust. Measure Rust activation thresholds across pattern counts, expression
+  families, match densities, and corpus sizes.
 - A prefilter that helps 10,000 literals but harms mixed 1,000-pattern cases is
   activated selectively, not universally.
+- Prefiltering enters the production path only when on/off receipts show a
+  positive improvement beyond noise in its declared activation region and no
+  correctness difference. Otherwise the prototype is removed or remains a
+  non-production experiment.
 
 ### Increment 8: Parallel pattern partitions
 
@@ -1956,6 +2023,11 @@ distinguishing reporting semantics.
 - Run scenario-specific thread sweeps; never assume core count or 1.5 times
   core count is universally optimal.
 - Record memory bandwidth saturation and compile-memory cost.
+- Complete this increment only when at least one declared throughput workload
+  improves beyond noise over the single-worker Rust baseline and no worker
+  count changes the event multiset.
+- Derive any default heuristic from Rust receipts. Java's heuristic may be a
+  sweep candidate, but cannot satisfy this gate.
 
 ### Increment 9: Benchmark harness integration
 
@@ -2039,18 +2111,25 @@ distinguishing reporting semantics.
 
 Every behavior or performance change should follow this sequence:
 
-1. **Prepare:** add or identify a failing fixture, property, or benchmark.
-2. **Test:** run the smallest focused test, then the full semantic suite.
-3. **Assert:** state the expected event multiset or performance gate explicitly.
-4. Implement the smallest coherent change.
-5. Run format, Clippy, tests, rustdoc, and fuzz smoke lanes.
-6. For hot-path changes, run the benchmark regression campaign on the
+1. **Classify:** identify the change as semantic functionality, performance
+   optimization, or a mixture of both.
+2. **Prepare:** add or identify a failing fixture, property, or benchmark.
+3. **Predeclare:** state the expected event multiset; for an optimization also
+   state the Rust baseline, target workloads, metric, noise threshold, and
+   unacceptable regressions before implementation.
+4. **Test:** run the smallest focused test, then the full semantic suite.
+5. Implement the smallest coherent change.
+6. Run format, Clippy, tests, rustdoc, and fuzz smoke lanes.
+7. For hot-path changes, run the benchmark regression campaign on the
    designated machine.
-7. Compare receipts, not console impressions.
-8. Update ADRs and this plan when architecture changes.
+8. Compare complete receipts, not console impressions or selected fast runs.
+9. Update ADRs and this plan when architecture changes.
 
-Performance work must include correctness evidence. Correctness work that
-touches the hot path must include performance evidence.
+Performance work must include correctness evidence and a positive Rust result
+beyond the predeclared noise threshold. Neutral or inconclusive performance is
+a failed optimization result. Semantic work that touches the hot path must
+include non-regression evidence, but semantic value does not have to masquerade
+as a speed improvement.
 
 ### Definition of done for an implementation task
 
@@ -2070,6 +2149,9 @@ touches the hot path must include performance evidence.
 - No `unsafe` exists without a local safety argument and benchmark receipt.
 - Full workspace gate passes.
 - Performance-sensitive changes pass the agreed regression threshold.
+- A change proposed as an optimization has a retained Rust baseline/candidate
+  comparison showing a positive improvement beyond noise. Java evidence alone,
+  or merely avoiding a regression, does not satisfy this item.
 
 ### Immediate next actions
 
