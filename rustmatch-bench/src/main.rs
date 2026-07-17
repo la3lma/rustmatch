@@ -10,7 +10,7 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
 use regex::{Regex, RegexSet};
-use rustmatch::{Matcher, MatcherBuilder, PatternId, Utf16Text};
+use rustmatch::{Matcher, MatcherBuilder, PatternId, ScanDiagnostics, Utf16Text};
 use serde::{Deserialize, Serialize};
 
 const SMOKE_PATTERN_COUNT: usize = 32;
@@ -23,10 +23,13 @@ const TRIPWIRE_WARMUP_ITERATIONS: u32 = 3;
 const TRIPWIRE_MEASURED_ITERATIONS: u32 = 7;
 const TRIPWIRE_RELATIVE_LIMIT_PERCENT: u128 = 50;
 const TRIPWIRE_ABSOLUTE_LIMIT_NS: u128 = 100_000_000;
+const WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT: u128 = 100;
+const WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS: u128 = 50_000_000;
 const I6_WARMUP_ITERATIONS: u32 = 3;
 const I6_MEASURED_ITERATIONS: u32 = 7;
 const I6_REQUIRED_IMPROVEMENT_BASIS_POINTS: u128 = 500;
 const I6_MAXIMUM_REGRESSION_BASIS_POINTS: u128 = 300;
+const I6_MAXIMUM_COMPILE_REGRESSION_BASIS_POINTS: u128 = 300;
 const SCALE_WARMUP_ITERATIONS: u32 = 1;
 const SCALE_MEASURED_ITERATIONS: u32 = 3;
 
@@ -118,6 +121,17 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             )
             .map(CommandOutput::ScaleScan)
         }
+        Some("compare-wuthering-tripwire") => {
+            let baseline = arguments.next();
+            let candidate = arguments.next();
+            if arguments.next().is_some() {
+                return Err(usage());
+            }
+            let baseline = baseline.ok_or_else(usage)?;
+            let candidate = candidate.ok_or_else(usage)?;
+            compare_wuthering_tripwire_files(Path::new(&baseline), Path::new(&candidate))
+                .map(CommandOutput::ScaleComparison)
+        }
         Some("render-table") => {
             let output = arguments.next().ok_or_else(usage)?;
             let receipts: Vec<_> = arguments.collect();
@@ -135,7 +149,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -308,7 +322,7 @@ fn i6_scan(
     })?;
     let matcher = build_rustmatch(&fixture.patterns)?;
 
-    let mut actual = rust_events(&matcher, &input)?;
+    let (mut actual, diagnostics) = rust_events_with_diagnostics(&matcher, &input)?;
     actual.sort_unstable();
     if actual != expected {
         return Err(format!(
@@ -358,6 +372,7 @@ fn i6_scan(
         measured_iterations: I6_MEASURED_ITERATIONS,
         median_compile_ns,
         median_scan_ns,
+        cache_diagnostics: Some(diagnostics.into()),
         correctness: "pass".to_owned(),
     })
 }
@@ -385,9 +400,21 @@ fn compare_i6(
     }
 
     let improvement_basis_points =
-        relative_difference_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+        relative_decrease_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
     let slowdown_basis_points =
-        relative_difference_basis_points(candidate.median_scan_ns, baseline.median_scan_ns);
+        relative_increase_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+    let compile_slowdown_basis_points =
+        relative_increase_basis_points(baseline.median_compile_ns, candidate.median_compile_ns);
+    if compile_slowdown_basis_points > I6_MAXIMUM_COMPILE_REGRESSION_BASIS_POINTS {
+        return Err(format!(
+            "I6 compile regression gate failed for {}: baseline={}ns candidate={}ns slowdown={}.{:02}%",
+            baseline.scenario,
+            baseline.median_compile_ns,
+            candidate.median_compile_ns,
+            compile_slowdown_basis_points / 100,
+            compile_slowdown_basis_points % 100
+        ));
+    }
     match baseline.gate.as_str() {
         "improvement-5-percent"
             if improvement_basis_points < I6_REQUIRED_IMPROVEMENT_BASIS_POINTS =>
@@ -432,15 +459,26 @@ fn compare_i6(
         candidate_median_scan_ns: candidate.median_scan_ns,
         improvement_basis_points,
         slowdown_basis_points,
+        compile_slowdown_basis_points,
+        baseline_cache_diagnostics: baseline.cache_diagnostics.clone(),
+        candidate_cache_diagnostics: candidate.cache_diagnostics.clone(),
         status: "pass",
     })
 }
 
-fn relative_difference_basis_points(larger: u128, smaller: u128) -> u128 {
-    larger
-        .saturating_sub(smaller)
+fn relative_decrease_basis_points(baseline: u128, candidate: u128) -> u128 {
+    baseline
+        .saturating_sub(candidate)
         .saturating_mul(10_000)
-        .checked_div(larger)
+        .checked_div(baseline)
+        .unwrap_or(u128::MAX)
+}
+
+fn relative_increase_basis_points(baseline: u128, candidate: u128) -> u128 {
+    candidate
+        .saturating_sub(baseline)
+        .saturating_mul(10_000)
+        .checked_div(baseline)
         .unwrap_or(u128::MAX)
 }
 
@@ -474,7 +512,7 @@ fn wuthering_scan(
     black_box(build_rustmatch(&patterns)?);
     let median_compile_ns = measure(SCALE_MEASURED_ITERATIONS, || build_rustmatch(&patterns))?;
     let matcher = build_rustmatch(&patterns)?;
-    let expected = rust_event_summary(&matcher, &input)?;
+    let (expected, diagnostics) = rust_event_summary_with_diagnostics(&matcher, &input)?;
     let mut scrubber = CacheScrubber::new(cache_scrub_bytes)?;
 
     for _ in 0..SCALE_WARMUP_ITERATIONS {
@@ -519,6 +557,7 @@ fn wuthering_scan(
         measured_iterations: SCALE_MEASURED_ITERATIONS,
         median_compile_ns,
         median_scan_ns: median(&mut samples),
+        cache_diagnostics: Some(diagnostics.into()),
         correctness: "pass".to_owned(),
     })
 }
@@ -577,6 +616,23 @@ fn rust_event_summary(matcher: &Matcher, input: &Utf16Text) -> Result<EventSumma
     Ok(summary)
 }
 
+fn rust_event_summary_with_diagnostics(
+    matcher: &Matcher,
+    input: &Utf16Text,
+) -> Result<(EventSummary, ScanDiagnostics), String> {
+    let mut summary = EventSummary::default();
+    let diagnostics = matcher
+        .scan_with_diagnostics(input, |event| {
+            summary.add(&Event {
+                pattern_id: event.pattern_id().get(),
+                start: event.span().start(),
+                end: event.span().end(),
+            });
+        })
+        .map_err(|error| format!("rustmatch diagnostic scale scan failed: {error}"))?;
+    Ok((summary, diagnostics))
+}
+
 fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportReceipt, String> {
     let mut receipts = receipt_paths
         .iter()
@@ -601,11 +657,19 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         let throughput = format_hundredths(throughput_hundredths);
         write!(
             rows,
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
             html_escape(&receipt.revision),
             html_escape(&receipt.runner),
             receipt.pattern_count,
             receipt.event_count,
+            receipt
+                .cache_diagnostics
+                .as_ref()
+                .map_or_else(|| "n/a".to_owned(), |value| value.cache_states.to_string()),
+            receipt
+                .cache_diagnostics
+                .as_ref()
+                .map_or_else(|| "n/a".to_owned(), |value| value.fallback_transitions.to_string()),
         )
         .map_err(|error| format!("could not render report row: {error}"))?;
     }
@@ -619,7 +683,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1500px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1080px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Protocol: one warm-up and three measured scans; medians shown. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1500px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1180px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Protocol: one warm-up and three measured scans; medians shown. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -753,8 +817,81 @@ fn compare_tripwire(
     })
 }
 
+fn compare_wuthering_tripwire_files(
+    baseline_path: &Path,
+    candidate_path: &Path,
+) -> Result<ScaleComparisonReceipt, String> {
+    let baseline: ScaleScanReceipt = read_receipt("Wuthering baseline", baseline_path)?;
+    let candidate: ScaleScanReceipt = read_receipt("Wuthering candidate", candidate_path)?;
+    compare_wuthering_tripwire(&baseline, &candidate)
+}
+
+fn compare_wuthering_tripwire(
+    baseline: &ScaleScanReceipt,
+    candidate: &ScaleScanReceipt,
+) -> Result<ScaleComparisonReceipt, String> {
+    baseline.validate()?;
+    candidate.validate()?;
+    if baseline.fixture_identity() != candidate.fixture_identity() {
+        return Err("C2 baseline and candidate fixture identities differ".to_owned());
+    }
+    if baseline.runner != candidate.runner {
+        return Err("C2 baseline and candidate were not measured on the same runner".to_owned());
+    }
+
+    let regression_ns = candidate
+        .median_scan_ns
+        .saturating_sub(baseline.median_scan_ns);
+    let slowdown_basis_points = candidate
+        .median_scan_ns
+        .saturating_mul(10_000)
+        .checked_div(baseline.median_scan_ns)
+        .unwrap_or(u128::MAX)
+        .saturating_sub(10_000);
+    let relative_limit_exceeded =
+        slowdown_basis_points > WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT.saturating_mul(100);
+    let absolute_limit_exceeded = regression_ns >= WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS;
+    if relative_limit_exceeded && absolute_limit_exceeded {
+        return Err(format!(
+            "C2 Wuthering severe-regression tripwire fired: baseline={}ns candidate={}ns regression={}ns slowdown={}.{:02}%",
+            baseline.median_scan_ns,
+            candidate.median_scan_ns,
+            regression_ns,
+            slowdown_basis_points / 100,
+            slowdown_basis_points % 100
+        ));
+    }
+
+    Ok(ScaleComparisonReceipt {
+        schema_version: 1,
+        evidence_id: "C2",
+        comparison: "wuthering-tripwire-v1",
+        claim: "coarse-severe-regression-signal-only",
+        baseline_revision: baseline.revision.clone(),
+        candidate_revision: candidate.revision.clone(),
+        runner: baseline.runner.clone(),
+        pattern_count: baseline.pattern_count,
+        corpus_bytes: baseline.corpus_bytes,
+        event_count: baseline.event_count,
+        event_digest: baseline.event_digest.clone(),
+        baseline_median_scan_ns: baseline.median_scan_ns,
+        candidate_median_scan_ns: candidate.median_scan_ns,
+        regression_ns,
+        slowdown_basis_points,
+        relative_limit_percent: WUTHERING_TRIPWIRE_RELATIVE_LIMIT_PERCENT,
+        absolute_limit_ns: WUTHERING_TRIPWIRE_ABSOLUTE_LIMIT_NS,
+        status: "pass",
+    })
+}
+
 fn build_rustmatch(patterns: &[String]) -> Result<Matcher, String> {
     let mut builder = MatcherBuilder::new();
+    if let Ok(source) = env::var("RUSTMATCH_BENCH_STATE_CACHE_BUDGET") {
+        let budget = source
+            .parse::<usize>()
+            .map_err(|error| format!("invalid state-cache budget {source:?}: {error}"))?;
+        builder.state_cache_budget(budget);
+    }
     for (index, pattern) in patterns.iter().enumerate() {
         let pattern_id = u32::try_from(index + 1)
             .map(PatternId::new)
@@ -798,6 +935,23 @@ fn rust_events(matcher: &Matcher, input: &Utf16Text) -> Result<Vec<Event>, Strin
         })
         .map_err(|error| format!("rustmatch event scan failed: {error}"))?;
     Ok(events)
+}
+
+fn rust_events_with_diagnostics(
+    matcher: &Matcher,
+    input: &Utf16Text,
+) -> Result<(Vec<Event>, ScanDiagnostics), String> {
+    let mut events = Vec::new();
+    let diagnostics = matcher
+        .scan_with_diagnostics(input, |event| {
+            events.push(Event {
+                pattern_id: event.pattern_id().get(),
+                start: event.span().start(),
+                end: event.span().end(),
+            });
+        })
+        .map_err(|error| format!("rustmatch diagnostic event scan failed: {error}"))?;
+    Ok((events, diagnostics))
 }
 
 fn regex_events(
@@ -1151,6 +1305,7 @@ enum CommandOutput {
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
     ScaleScan(ScaleScanReceipt),
+    ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
 }
 
@@ -1198,6 +1353,8 @@ struct I6ScanReceipt {
     measured_iterations: u32,
     median_compile_ns: u128,
     median_scan_ns: u128,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    cache_diagnostics: Option<CacheDiagnosticsReceipt>,
     correctness: String,
 }
 
@@ -1249,6 +1406,11 @@ struct I6ComparisonReceipt {
     candidate_median_scan_ns: u128,
     improvement_basis_points: u128,
     slowdown_basis_points: u128,
+    compile_slowdown_basis_points: u128,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    baseline_cache_diagnostics: Option<CacheDiagnosticsReceipt>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    candidate_cache_diagnostics: Option<CacheDiagnosticsReceipt>,
     status: &'static str,
 }
 
@@ -1276,7 +1438,35 @@ struct ScaleScanReceipt {
     measured_iterations: u32,
     median_compile_ns: u128,
     median_scan_ns: u128,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    cache_diagnostics: Option<CacheDiagnosticsReceipt>,
     correctness: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CacheDiagnosticsReceipt {
+    cache_budget: usize,
+    cache_states: usize,
+    cache_hits: u64,
+    cache_misses: u64,
+    fallback_transitions: u64,
+    cache_table_bytes: usize,
+    assertion_bypasses: u64,
+}
+
+impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
+    fn from(value: ScanDiagnostics) -> Self {
+        Self {
+            cache_budget: value.cache_budget(),
+            cache_states: value.cache_states(),
+            cache_hits: value.cache_hits(),
+            cache_misses: value.cache_misses(),
+            fallback_transitions: value.fallback_transitions(),
+            cache_table_bytes: value.cache_table_bytes(),
+            assertion_bypasses: value.assertion_bypasses(),
+        }
+    }
 }
 
 impl ScaleScanReceipt {
@@ -1299,6 +1489,43 @@ impl ScaleScanReceipt {
         }
         Ok(())
     }
+
+    fn fixture_identity(&self) -> (usize, usize, usize, &str, &str, &str, usize, &str, u32, u32) {
+        (
+            self.pattern_count,
+            self.corpus_bytes,
+            self.cache_scrub_bytes,
+            &self.pattern_source_digest,
+            &self.corpus_source_digest,
+            &self.cache_scrub_digest,
+            self.event_count,
+            &self.event_digest,
+            self.warmup_iterations,
+            self.measured_iterations,
+        )
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct ScaleComparisonReceipt {
+    schema_version: u32,
+    evidence_id: &'static str,
+    comparison: &'static str,
+    claim: &'static str,
+    baseline_revision: String,
+    candidate_revision: String,
+    runner: String,
+    pattern_count: usize,
+    corpus_bytes: usize,
+    event_count: usize,
+    event_digest: String,
+    baseline_median_scan_ns: u128,
+    candidate_median_scan_ns: u128,
+    regression_ns: u128,
+    slowdown_basis_points: u128,
+    relative_limit_percent: u128,
+    absolute_limit_ns: u128,
+    status: &'static str,
 }
 
 #[derive(Debug, Serialize)]
@@ -1380,8 +1607,9 @@ struct ComparisonReceipt {
 mod tests {
     use super::{
         CacheScrubber, CampaignFixture, Event, I6ScanReceipt, LiteralFixture,
-        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, TripwireReceipt, compare_i6,
-        compare_tripwire, expand_corpus, regex_events, select_literal_patterns,
+        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
+        compare_i6, compare_tripwire, compare_wuthering_tripwire, expand_corpus, regex_events,
+        select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
 
@@ -1444,6 +1672,47 @@ mod tests {
 
         // Test
         let result = compare_tripwire(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("fixture identities differ")));
+    }
+
+    #[test]
+    fn wuthering_tripwire_accepts_small_absolute_noise() -> Result<(), String> {
+        // Prepare
+        let baseline = scale_receipt(40_000_000, "base");
+        let candidate = scale_receipt(85_000_000, "candidate");
+
+        // Test
+        let comparison = compare_wuthering_tripwire(&baseline, &candidate)?;
+
+        // Assert
+        assert_eq!(comparison.status, "pass");
+        Ok(())
+    }
+
+    #[test]
+    fn wuthering_tripwire_rejects_a_large_absolute_and_relative_regression() {
+        // Prepare
+        let baseline = scale_receipt(50_000_000, "base");
+        let candidate = scale_receipt(130_000_000, "candidate");
+
+        // Test
+        let result = compare_wuthering_tripwire(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("tripwire fired")));
+    }
+
+    #[test]
+    fn wuthering_tripwire_requires_identical_event_evidence() {
+        // Prepare
+        let baseline = scale_receipt(50_000_000, "base");
+        let mut candidate = scale_receipt(55_000_000, "candidate");
+        candidate.event_digest = "multiset64:different".to_owned();
+
+        // Test
+        let result = compare_wuthering_tripwire(&baseline, &candidate);
 
         // Assert
         assert!(matches!(result, Err(message) if message.contains("fixture identities differ")));
@@ -1573,6 +1842,22 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn i6_comparison_rejects_a_repeatable_compile_regression() {
+        // Prepare
+        let baseline = i6_receipt(100_000_000, "base");
+        let mut candidate = i6_receipt(90_000_000, "candidate");
+        candidate.median_compile_ns = 1_040_000;
+
+        // Test
+        let result = compare_i6(&baseline, &candidate);
+
+        // Assert
+        assert!(
+            matches!(result, Err(message) if message.contains("compile regression gate failed"))
+        );
+    }
+
     fn tripwire_receipt(median_scan_ns: u128) -> TripwireReceipt {
         TripwireReceipt {
             schema_version: 1,
@@ -1612,6 +1897,35 @@ mod tests {
             measured_iterations: 7,
             median_compile_ns: 1_000_000,
             median_scan_ns,
+            cache_diagnostics: None,
+            correctness: "pass".to_owned(),
+        }
+    }
+
+    fn scale_receipt(median_scan_ns: u128, revision: &str) -> ScaleScanReceipt {
+        ScaleScanReceipt {
+            schema_version: 1,
+            evidence_id: "I6-B1".to_owned(),
+            benchmark: "wuthering-literal-scale-v1".to_owned(),
+            claim: "exploratory-scale-and-cache-pressure-evidence".to_owned(),
+            revision: revision.to_owned(),
+            runner: "runner".to_owned(),
+            profile: "release".to_owned(),
+            pattern_source: "patterns.txt".to_owned(),
+            pattern_source_digest: "fnv1a64:patterns".to_owned(),
+            corpus_source: "corpus.txt".to_owned(),
+            corpus_source_digest: "fnv1a64:corpus".to_owned(),
+            pattern_count: 5_000,
+            corpus_bytes: 675_259,
+            cache_scrub_bytes: 64 * 1024 * 1024,
+            cache_scrub_digest: "fnv1a64:scrub".to_owned(),
+            event_count: 74_604,
+            event_digest: "multiset64:receipt".to_owned(),
+            warmup_iterations: 1,
+            measured_iterations: 3,
+            median_compile_ns: 5_000_000,
+            median_scan_ns,
+            cache_diagnostics: None,
             correctness: "pass".to_owned(),
         }
     }

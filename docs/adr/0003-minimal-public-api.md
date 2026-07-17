@@ -68,6 +68,16 @@ partial result. Expected user errors do not panic.
   lookback inputs remain possible future adapters, not implied behavior.
 - Public API growth must be justified by a working use case and evidence.
 
+## I6 amendment
+
+The measured lazy-determinization increment adds one resource control without
+exposing cache machinery: `MatcherBuilder::state_cache_budget`. The default is
+8,192 scan-local deterministic states; zero selects the exact NFA path and a
+full nonzero cache falls back to that path. This method earned its public place
+because callers may need to bound scan-local cache growth. Cache state,
+transition, and diagnostic types remain private. Repository benchmark
+diagnostics exist only behind a non-default, unsupported feature.
+
 ## Evidence
 
 - The crate-level doctest compiles the complete build-scan-consume lifecycle.
@@ -75,4 +85,3 @@ partial result. Expected user errors do not panic.
   layer through the public API.
 - The NFA invariant test proves dense state IDs, valid edge ranges, reachable
   terminals, and the shared synthetic start for that walking spine.
-

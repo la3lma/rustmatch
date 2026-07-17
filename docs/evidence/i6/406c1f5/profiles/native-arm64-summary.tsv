@@ -1,0 +1,4 @@
+patterns	total_sample_ms	deduplicated_scan_loop_self_ms	cache_transition_self_ms	reset_start_self_ms	compute_transition_self_ms	record_terminal_self_ms	cache_lookup_self_ms
+1000	1764	805	623	268	2	6	1
+5000	4512	2767	1082	266	215	58	16
+10000	9324	4659	1789	266	2108	116	110

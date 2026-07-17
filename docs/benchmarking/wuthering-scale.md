@@ -20,6 +20,15 @@ performance-measurements repository.
 The scale lane intentionally complements rather than replaces the focused I6
 fixtures. Wuthering Heights reveals pattern-count scaling and cache sensitivity;
 small generated fixtures isolate the mechanism and retain exact event lists.
+It remains the stable development and regression corpus while the engine is
+still gaining large improvements. Once its runs become too short or too narrow
+to guide tuning, larger and more diverse corpora must supplement it rather than
+erase the historical line.
+
+A same-sized no-match control is useful when interpreting pattern scaling.
+Wuthering's event count grows with the selected word set; a no-match input
+separates result-delivery and fallback growth from the cost of scanning one
+additional input unit.
 
 ## Cache pressure
 
@@ -45,7 +54,20 @@ Override `RMATCH_REPOSITORY`, `PATTERN_SOURCE`, or `CORPUS_SOURCE` when the
 source checkout is elsewhere. `CORPUS_BYTES`, `CACHE_SCRUB_BYTES`, and
 `PATTERN_COUNTS` control an explicitly identified exploratory variant. The
 script refuses a dirty tree unless `I6_ALLOW_DIRTY=1` is deliberately set.
+`I6_CARGO_TARGET` selects and records a native target path when the host
+toolchain would otherwise produce an emulated binary. Always verify the output
+of `file` before making an architecture claim.
 
 The generated HTML table includes revision, runner, dimensions, event count,
-compilation median, scan median, throughput, source paths, and source digests.
-Raw JSON receipts remain authoritative; the table is only a view.
+cache-state and fallback counts when available, compilation median, scan
+median, throughput, source paths, and source digests. Raw JSON receipts remain
+authoritative; the table is only a view.
+
+## Coarse CI tripwire
+
+`scripts/c2-wuthering-tripwire.sh` runs the retained 5,000-pattern fixture on
+both PR base and candidate in one GitHub Actions job. It requires identical
+source hashes and event evidence, retries once in reverse order, and fails only
+when slowdown exceeds both 100% and 50 ms. This broad `C2` threshold is a smoke
+alarm for severe regressions. It is not an optimization admission result and
+does not replace the native stable-machine campaign or its critical analysis.

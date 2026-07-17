@@ -12,10 +12,21 @@ use crate::{Error, Match, PatternFlags, PatternId, Utf16Text};
 ///
 /// A rejected registration leaves the builder usable. Pattern IDs must be
 /// unique, while equal pattern text may use different IDs.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct MatcherBuilder {
     pattern_ids: HashSet<PatternId>,
     patterns: Vec<HirPattern>,
+    state_cache_budget: usize,
+}
+
+impl Default for MatcherBuilder {
+    fn default() -> Self {
+        Self {
+            pattern_ids: HashSet::new(),
+            patterns: Vec::new(),
+            state_cache_budget: engine::DEFAULT_STATE_CACHE_BUDGET,
+        }
+    }
 }
 
 impl MatcherBuilder {
@@ -23,6 +34,19 @@ impl MatcherBuilder {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Sets the maximum number of lazy deterministic states used by one scan.
+    ///
+    /// The default is 8,192 states. A budget of zero disables the cache and
+    /// uses the exact NFA interpreter. If a nonzero budget fills, scanning
+    /// continues through that same NFA path for states that could not be
+    /// cached; the budget changes resource use, never matching semantics.
+    /// Assertion-bearing pattern sets currently bypass the cache because their
+    /// transitions depend on surrounding input context.
+    pub fn state_cache_budget(&mut self, state_budget: usize) -> &mut Self {
+        self.state_cache_budget = state_budget;
+        self
     }
 
     /// Registers one caller-identified pattern.
@@ -81,6 +105,7 @@ impl MatcherBuilder {
         }
         Ok(Matcher {
             database: nfa::compile(&self.patterns)?,
+            state_cache_budget: self.state_cache_budget,
         })
     }
 }
@@ -93,6 +118,70 @@ impl MatcherBuilder {
 #[derive(Debug)]
 pub struct Matcher {
     database: PatternDatabase,
+    state_cache_budget: usize,
+}
+
+/// Scan-local cache counters intended only for the repository benchmark lane.
+///
+/// This type exists only with the `benchmark-internals` feature and is not part
+/// of rustmatch's supported application API.
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ScanDiagnostics {
+    cache_budget: usize,
+    cache_states: usize,
+    cache_hits: u64,
+    cache_misses: u64,
+    fallback_transitions: u64,
+    cache_table_bytes: usize,
+    assertion_bypasses: u64,
+}
+
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+impl ScanDiagnostics {
+    /// Configured deterministic-state budget for this scan.
+    #[must_use]
+    pub const fn cache_budget(self) -> usize {
+        self.cache_budget
+    }
+
+    /// Number of deterministic states materialized by this scan.
+    #[must_use]
+    pub const fn cache_states(self) -> usize {
+        self.cache_states
+    }
+
+    /// Number of transitions served by a materialized cache slot.
+    #[must_use]
+    pub const fn cache_hits(self) -> u64 {
+        self.cache_hits
+    }
+
+    /// Number of transitions materialized for the first time.
+    #[must_use]
+    pub const fn cache_misses(self) -> u64 {
+        self.cache_misses
+    }
+
+    /// Number of transitions interpreted after cache-budget pressure.
+    #[must_use]
+    pub const fn fallback_transitions(self) -> u64 {
+        self.fallback_transitions
+    }
+
+    /// Bytes occupied by direct ASCII transition tables.
+    #[must_use]
+    pub const fn cache_table_bytes(self) -> usize {
+        self.cache_table_bytes
+    }
+
+    /// Number of scans routed around the cache because assertions were present.
+    #[must_use]
+    pub const fn assertion_bypasses(self) -> u64 {
+        self.assertion_bypasses
+    }
 }
 
 impl Matcher {
@@ -112,6 +201,29 @@ impl Matcher {
     /// A panic from `sink` propagates to the caller; rustmatch does not catch
     /// application panics.
     pub fn scan(&self, input: &Utf16Text, sink: impl FnMut(Match)) -> Result<(), Error> {
-        engine::scan(&self.database, input, sink)
+        engine::scan(&self.database, input, self.state_cache_budget, sink)
+    }
+
+    /// Runs one scan and returns scan-local cache counters to benchmark tooling.
+    ///
+    /// This method exists only with the `benchmark-internals` feature and is
+    /// not part of rustmatch's supported application API.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn scan_with_diagnostics(
+        &self,
+        input: &Utf16Text,
+        sink: impl FnMut(Match),
+    ) -> Result<ScanDiagnostics, Error> {
+        let stats = engine::scan_with_stats(&self.database, input, self.state_cache_budget, sink)?;
+        Ok(ScanDiagnostics {
+            cache_budget: self.state_cache_budget,
+            cache_states: stats.cache_states,
+            cache_hits: stats.cache_hits,
+            cache_misses: stats.cache_misses,
+            fallback_transitions: stats.fallback_transitions,
+            cache_table_bytes: stats.cache_table_bytes,
+            assertion_bypasses: stats.assertion_bypasses,
+        })
     }
 }

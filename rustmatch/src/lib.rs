@@ -10,6 +10,9 @@
 //! bind to the immediately preceding atom or group, and counted bounds are
 //! capped at 1,000. This language runs through the parser, HIR, shared NFA,
 //! immutable database, scan engine, and callback boundaries.
+//! Assertion-free scans lazily cache deterministic state sets within a bounded,
+//! scan-local budget; callers can lower that budget or set it to zero to use
+//! the exact NFA path. Cache pressure never changes matching semantics.
 //!
 //! # Example
 //!
@@ -41,6 +44,9 @@ mod parser;
 mod predicate;
 mod types;
 
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+pub use api::ScanDiagnostics;
 pub use api::{Matcher, MatcherBuilder};
 pub use error::Error;
 pub use types::{Match, PatternFlags, PatternId, Utf16Span, Utf16Text};

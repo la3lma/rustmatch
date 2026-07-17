@@ -82,6 +82,30 @@ fn one_matcher_can_scan_empty_and_nonempty_inputs_repeatedly() -> Result<(), Err
 }
 
 #[test]
+fn callers_can_disable_the_state_cache_without_changing_results() -> Result<(), Error> {
+    // Prepare
+    let mut cached_builder = MatcherBuilder::new();
+    cached_builder.add(PatternId::new(1), "a+")?;
+    cached_builder.add(PatternId::new(2), "ab|ba")?;
+    let cached = cached_builder.build()?;
+    let mut nfa_builder = MatcherBuilder::new();
+    nfa_builder.state_cache_budget(0);
+    nfa_builder.add(PatternId::new(1), "a+")?;
+    nfa_builder.add(PatternId::new(2), "ab|ba")?;
+    let nfa = nfa_builder.build()?;
+
+    // Test
+    let mut cached_events = collect(&cached, "aabaaba")?;
+    let mut nfa_events = collect(&nfa, "aabaaba")?;
+    cached_events.sort_unstable();
+    nfa_events.sort_unstable();
+
+    // Assert
+    assert_eq!(cached_events, nfa_events);
+    Ok(())
+}
+
+#[test]
 fn zero_width_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
