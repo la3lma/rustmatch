@@ -230,7 +230,10 @@ and use-case evidence bundle pass from a clean checkout.
 | W0 | Cargo workspace and quality tooling | Complete | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run |
 | A0 | Minimal public API | Complete | Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine |
 | I1 | Executable ASCII-literal spine | Active | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
-| B0 | RegexSet-aware benchmark smoke | Planned | Correctness-gated RS-NATIVE set-membership and RS-EVENTS full-event lanes against pinned `regex` 1.13.1, with compile/scan separation and a reproducible smoke receipt |
+| C0 | Mandatory functional PR CI | Complete | Required GitHub quality gate runs formatting, Clippy, tests, Rustdoc, MSRV, the pinned Java oracle, literal differential evidence, and benchmark smoke |
+| B0 | RegexSet-aware benchmark smoke | Active | Correctness-gated RS-NATIVE set-membership and RS-EVENTS full-event lanes against pinned `regex` 1.13.1 pass locally; retained stable-machine receipts remain open |
+| C1 | Coarse CI performance tripwire | Active | Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner comparator, catastrophic-slowdown tests, base/head CI activation, and repeated hosted-runner calibration |
+| E0 | UC evidence summary command | Planned | One command reports the implemented use-case evidence and exact pass/fail state without relying on prose claims |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
 | I4 | Repetition and longest match | Planned | Exact overlap/ambiguity fixtures, quantifier binding, repetition limits, and Java event equality |
