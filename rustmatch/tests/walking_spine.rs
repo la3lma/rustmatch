@@ -1,6 +1,6 @@
 //! Public end-to-end evidence for the first executable matcher spine.
 
-use rustmatch::{Error, Matcher, MatcherBuilder, PatternId, Utf16Text};
+use rustmatch::{Error, Matcher, MatcherBuilder, PatternFlags, PatternId, Utf16Text};
 
 #[test]
 fn one_literal_runs_through_the_complete_spine() -> Result<(), rustmatch::Error> {
@@ -466,16 +466,14 @@ fn literal_and_control_escapes_compose_with_plain_literals() -> Result<(), Error
 }
 
 #[test]
-fn empty_non_ascii_and_duplicate_patterns_have_typed_errors() -> Result<(), Error> {
+fn empty_and_duplicate_patterns_have_typed_errors() -> Result<(), Error> {
     // Prepare
     let empty_id = PatternId::new(1);
-    let unicode_id = PatternId::new(2);
     let duplicate_id = PatternId::new(3);
     let mut builder = MatcherBuilder::new();
 
     // Test
     let empty = builder.add(empty_id, "");
-    let non_ascii = builder.add(unicode_id, "snø");
     builder.add(duplicate_id, "first")?;
     let duplicate = builder.add(duplicate_id, "second");
 
@@ -486,14 +484,6 @@ fn empty_non_ascii_and_duplicate_patterns_have_typed_errors() -> Result<(), Erro
             pattern_id: empty_id
         })
     );
-    assert!(matches!(
-        non_ascii,
-        Err(Error::UnsupportedPattern {
-            pattern_id,
-            span,
-            code_unit: 0x00f8,
-        }) if pattern_id == unicode_id && span.start() == 2 && span.end() == 3
-    ));
     assert_eq!(
         duplicate,
         Err(Error::DuplicatePatternId {
@@ -516,28 +506,84 @@ fn building_without_patterns_is_rejected() {
 }
 
 #[test]
-fn unsupported_input_is_rejected_before_any_callback_and_matcher_recovers() -> Result<(), Error> {
+fn utf16_literals_ranges_and_raw_surrogates_run_through_the_spine() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
-    builder.add(PatternId::new(5), "a")?;
+    builder.add(PatternId::new(5), "snø")?;
+    builder.add(PatternId::new(6), "[α-γ]")?;
+    builder.add(PatternId::new(7), ".")?;
     let matcher = builder.build()?;
-    let invalid_input = Utf16Text::from("aøa");
-    let mut callback_count = 0;
+    let input = Utf16Text::from_units(vec![0x0073, 0x006e, 0x00f8, 0x03b2, 0xd800]);
+    let mut events = Vec::new();
 
     // Test
-    let invalid_result = matcher.scan(&invalid_input, |_| callback_count += 1);
-    let recovered_events = collect(&matcher, "a")?;
+    matcher.scan(&input, |event| {
+        events.push((
+            event.pattern_id().get(),
+            event.span().start(),
+            event.span().end(),
+        ));
+    })?;
+    events.sort_unstable();
 
     // Assert
-    assert!(matches!(
-        invalid_result,
-        Err(Error::UnsupportedInput {
-            position_utf16: 1,
-            code_unit: 0x00f8,
-        })
-    ));
-    assert_eq!(callback_count, 0);
-    assert_eq!(recovered_events, vec![(5, 0, 1)]);
+    assert_eq!(
+        events,
+        vec![
+            (5, 0, 3),
+            (6, 3, 4),
+            (7, 0, 1),
+            (7, 1, 2),
+            (7, 2, 3),
+            (7, 3, 4),
+            (7, 4, 5),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn inline_and_typed_case_flags_compose_through_the_complete_spine() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(600), "(?i)cat")?;
+    builder.add_with_flags(PatternId::new(601), "ω+", PatternFlags::CASE_INSENSITIVE)?;
+    builder.add(PatternId::new(602), "(?i)[a-c]z")?;
+    builder.add(PatternId::new(603), "(?s)a.b")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "CAT cAt Ωω Az bZ a\nb")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![
+            (600, 0, 3),
+            (600, 4, 7),
+            (601, 8, 10),
+            (601, 9, 10),
+            (602, 11, 13),
+            (602, 14, 16),
+            (603, 17, 20),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn supplementary_character_keeps_java_utf16_coordinates() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(610), "😀")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let events = collect(&matcher, "x😀y")?;
+
+    // Assert
+    assert_eq!(events, vec![(610, 1, 3)]);
     Ok(())
 }
 

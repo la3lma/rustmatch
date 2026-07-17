@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use crate::hir::{Hir, HirPattern};
-use crate::predicate::AsciiPredicate;
+use crate::predicate::SymbolPredicate;
 use crate::{Error, PatternId};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -62,7 +62,7 @@ pub(crate) struct PatternDatabase {
     root: StateId,
     states: Box<[State]>,
     edges: Box<[Edge]>,
-    predicates: Box<[AsciiPredicate]>,
+    predicates: Box<[SymbolPredicate]>,
     terminal_ordinals: Box<[usize]>,
     pattern_ids: Box<[PatternId]>,
 }
@@ -94,13 +94,21 @@ impl PatternDatabase {
         self.pattern_ids[ordinal]
     }
 
+    #[inline]
     pub(crate) fn edge_matches(&self, kind: EdgeKind, symbol: u16) -> bool {
         match kind {
             EdgeKind::Epsilon => false,
             EdgeKind::Symbol(expected) => expected == symbol,
-            EdgeKind::Predicate(predicate) => self.predicates[predicate.index()].matches(symbol),
+            EdgeKind::Predicate(predicate) => {
+                matches_predicate(&self.predicates[predicate.index()], symbol)
+            }
         }
     }
+}
+
+#[inline(never)]
+fn matches_predicate(predicate: &SymbolPredicate, symbol: u16) -> bool {
+    predicate.matches(symbol)
 }
 
 pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error> {
@@ -167,8 +175,8 @@ fn compile_expression(
     end: StateId,
     edges: &mut Vec<Vec<Edge>>,
     terminals: &mut Vec<Vec<usize>>,
-    predicates: &mut Vec<AsciiPredicate>,
-    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
+    predicates: &mut Vec<SymbolPredicate>,
+    predicate_ids: &mut HashMap<SymbolPredicate, PredicateId>,
 ) -> Result<(), Error> {
     match expression {
         Hir::Never => {}
@@ -181,7 +189,11 @@ fn compile_expression(
             target: end,
         }),
         Hir::Predicate(predicate) => edges[start.index()].push(Edge {
-            kind: EdgeKind::Predicate(intern_predicate(predicates, predicate_ids, *predicate)?),
+            kind: EdgeKind::Predicate(intern_predicate(
+                predicates,
+                predicate_ids,
+                predicate.clone(),
+            )?),
             target: end,
         }),
         Hir::Sequence(expressions) => {
@@ -248,8 +260,8 @@ fn compile_repetition(
     end: StateId,
     edges: &mut Vec<Vec<Edge>>,
     terminals: &mut Vec<Vec<usize>>,
-    predicates: &mut Vec<AsciiPredicate>,
-    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
+    predicates: &mut Vec<SymbolPredicate>,
+    predicate_ids: &mut HashMap<SymbolPredicate, PredicateId>,
 ) -> Result<(), Error> {
     let mut current = start;
     for required in 0..min {
@@ -322,16 +334,16 @@ fn add_epsilon(edges: &mut [Vec<Edge>], start: StateId, end: StateId) {
 }
 
 fn intern_predicate(
-    predicates: &mut Vec<AsciiPredicate>,
-    predicate_ids: &mut HashMap<AsciiPredicate, PredicateId>,
-    predicate: AsciiPredicate,
+    predicates: &mut Vec<SymbolPredicate>,
+    predicate_ids: &mut HashMap<SymbolPredicate, PredicateId>,
+    predicate: SymbolPredicate,
 ) -> Result<PredicateId, Error> {
     if let Some(&id) = predicate_ids.get(&predicate) {
         Ok(id)
     } else {
         let id = PredicateId::for_index(predicates.len())?;
+        predicate_ids.insert(predicate.clone(), id);
         predicates.push(predicate);
-        predicate_ids.insert(predicate, id);
         Ok(id)
     }
 }

@@ -1,7 +1,7 @@
 //! Normalized high-level representation shared by parser and NFA compiler.
 
 use crate::PatternId;
-use crate::predicate::AsciiPredicate;
+use crate::predicate::SymbolPredicate;
 
 #[derive(Debug)]
 pub(crate) struct HirPattern {
@@ -45,7 +45,7 @@ pub(crate) enum Hir {
     Never,
     Epsilon,
     Symbol(u16),
-    Predicate(AsciiPredicate),
+    Predicate(SymbolPredicate),
     Sequence(Box<[Self]>),
     Alternation(Box<[Self]>),
     Repeat {

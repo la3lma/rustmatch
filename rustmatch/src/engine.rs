@@ -8,7 +8,6 @@ pub(crate) fn scan(
     input: &Utf16Text,
     mut sink: impl FnMut(Match),
 ) -> Result<(), Error> {
-    validate_input(input)?;
     let units = input.units();
     let mut scratch = Scratch::new(database);
 
@@ -62,18 +61,6 @@ pub(crate) fn scan(
                     Utf16Span::from_bounds(start_utf16, end_utf16),
                 ));
             }
-        }
-    }
-    Ok(())
-}
-
-fn validate_input(input: &Utf16Text) -> Result<(), Error> {
-    for (index, &unit) in input.units().iter().enumerate() {
-        if unit > 0x7f {
-            return Err(Error::UnsupportedInput {
-                position_utf16: position_utf16(index)?,
-                code_unit: unit,
-            });
         }
     }
     Ok(())

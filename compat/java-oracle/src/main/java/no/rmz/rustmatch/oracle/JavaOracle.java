@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
@@ -49,7 +51,8 @@ public final class JavaOracle {
           "ascii-literal-v1",
           "ascii-predicate-v1",
           "ascii-composition-v1",
-          "ascii-repetition-v1");
+          "ascii-repetition-v1",
+          "utf16-flags-v1");
   private static final String ORACLE_GROUP = "no.rmz";
   private static final String ORACLE_ARTIFACT = "rmatch";
   private static final String ORACLE_VERSION = "2.0.0-RC1";
@@ -69,6 +72,18 @@ public final class JavaOracle {
    * @throws Exception if the environment, fixture, reference, or output is invalid
    */
   public static void main(final String[] args) throws Exception {
+    if (args.length == 3 && "--case-fold".equals(args[0])) {
+      requirePinnedRuntime();
+      verifyReferenceArtifact();
+      final Path tablePath = Path.of(args[1]);
+      final Path manifestPath = Path.of(args[2]);
+      writeCaseFoldTable(tablePath);
+      writeCaseFoldManifest(manifestPath, tablePath);
+      System.err.printf(
+          "Java case-fold oracle wrote %,d UTF-16 entries with Java %s%n",
+          Character.MAX_VALUE + 1, Runtime.version());
+      return;
+    }
     if (args.length != 3) {
       throw new IllegalArgumentException(
           "usage: JavaOracle <fixtures.jsonl> <results.jsonl> <manifest.json>");
@@ -96,6 +111,44 @@ public final class JavaOracle {
     System.err.printf(
         "Java oracle %s processed %d fixtures with Java %s%n",
         ORACLE_VERSION, results.size(), Runtime.version());
+  }
+
+  private static void writeCaseFoldTable(final Path path) throws IOException {
+    createParent(path);
+    try (DataOutputStream output =
+        new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
+      output.writeBytes("RMF1");
+      output.writeInt(Character.MAX_VALUE + 1);
+      for (int value = Character.MIN_VALUE; value <= Character.MAX_VALUE; value++) {
+        final char symbol = (char) value;
+        output.writeChar(Character.toLowerCase(symbol));
+        output.writeChar(Character.toUpperCase(symbol));
+      }
+    }
+  }
+
+  private static void writeCaseFoldManifest(final Path path, final Path tablePath)
+      throws IOException, NoSuchAlgorithmException {
+    createParent(path);
+    final StringWriter document = new StringWriter();
+    try (JsonGenerator json = JSON.createGenerator(document)) {
+      json.useDefaultPrettyPrinter();
+      json.writeStartObject();
+      json.writeNumberField("schema_version", SCHEMA_VERSION);
+      json.writeStringField("table", "java-char-case-fold-v1");
+      json.writeNumberField("entry_count", Character.MAX_VALUE + 1);
+      json.writeStringField("encoding", "RMF1 plus big-endian lower/upper u16 pairs");
+      json.writeObjectFieldStart("oracle");
+      json.writeStringField("group_id", ORACLE_GROUP);
+      json.writeStringField("artifact_id", ORACLE_ARTIFACT);
+      json.writeStringField("version", ORACLE_VERSION);
+      json.writeStringField("jar_sha256", ORACLE_SHA256);
+      json.writeNumberField("required_java_feature", REQUIRED_JAVA_FEATURE);
+      json.writeEndObject();
+      json.writeStringField("table_sha256", sha256(tablePath));
+      json.writeEndObject();
+    }
+    Files.writeString(path, document + "\n", StandardCharsets.UTF_8);
   }
 
   private static void requirePinnedRuntime() {

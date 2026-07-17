@@ -30,6 +30,10 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
 - Greedy `?`, `*`, `+`, `{m}`, `{m,n}`, and `{m,}` repetition through parser,
   HIR, Thompson NFA compilation, longest-match scanning, and 29 pinned Java
   differential cases, including malformed counts and the 1,000-count limit.
+- Complete UTF-16 code-unit input and predicates, raw-surrogate construction,
+  prefix `(?i)`/`(?s)` flags, typed `PatternFlags::CASE_INSENSITIVE`, a
+  reproducible 65,536-entry Java 21 case table, and 23 pinned differential
+  flag/character fixtures.
 
 ### Changed
 

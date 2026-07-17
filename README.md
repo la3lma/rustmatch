@@ -2,13 +2,13 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: active implementation.** Repetition is complete through the
-> executable spine on top of the ASCII predicates, alternation, and grouping
-> increments, with pinned Java evidence and the repository performance guard
-> intact. This remains a development prototype, not a published crate.
+> **Status: active implementation.** I5 is active: complete UTF-16 input,
+> non-ASCII predicates, prefix and typed case-insensitive flags now run through
+> the executable spine with pinned Java evidence. Anchors and boundaries remain
+> before semantic parity. This is a development prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `5/12`
+> status](docs/roadmap.md). Planning is complete; implementation is at `6/12`
 > increments started and `5/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
@@ -94,12 +94,12 @@ matcher.scan(&input, |hit| {
 })?;
 ```
 
-The initial public types are only `MatcherBuilder`, `Matcher`, `PatternId`,
+The public types are `MatcherBuilder`, `Matcher`, `PatternId`, `PatternFlags`,
 `Utf16Text`, `Match`, `Utf16Span`, and one non-exhaustive `Error` type. The
-initial methods are construction, pattern registration, build, scan, and
-read-only accessors for IDs and spans. `PatternId` is a `u32`-backed domain
-type; positions remain `u64` UTF-16 coordinates; and `Utf16Text` initially owns
-its encoded `Vec<u16>`. Parser, HIR, NFA, state, cache, worker, and sink
+methods cover construction, plain or flagged pattern registration, build,
+scan, and read-only accessors. `PatternId` is a `u32`-backed domain type;
+positions remain `u64` UTF-16 coordinates; and `Utf16Text` owns its exact
+`Vec<u16>`. Parser, HIR, NFA, state, cache, worker, and sink
 implementation types stay private. Borrowed or custom inputs, iterators, async
 APIs, fallible callbacks, runtime pattern mutation, and tuning knobs are
 deferred until a concrete use case earns them.
@@ -119,12 +119,12 @@ The executable spine currently has this deliberately small contract:
 
 | Area | Current behavior |
 |---|---|
-| Patterns | Accept one or more non-empty patterns made from 7-bit ASCII literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, and greedy repetition. Reject non-ASCII, flags, anchors, assertions, lazy quantifiers, and possessive quantifiers. |
-| Input | Accept any 7-bit ASCII text, including empty input, spaces, tabs, and newlines. Reject non-ASCII input until the UTF-16 increment. |
+| Patterns | Accept one or more non-empty patterns made from UTF-16 literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, greedy repetition, and prefix `i`/`s` flags. Reject anchors, assertions, scoped flags, lazy quantifiers, and possessive quantifiers. |
+| Input | Accept any finite sequence of UTF-16 code units, including empty input and isolated surrogates. Rust strings are encoded once; `Utf16Text::from_units` preserves raw units. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
 | Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Alternatives may give one pattern several possible lengths. |
 | Event identity | A match consists of its `PatternId` and span. Equal text registered under different IDs produces distinct events. |
-| Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. For the ASCII slice these values also equal byte positions. |
+| Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. A supplementary Unicode scalar therefore occupies two engine positions. |
 | Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
 | Failure boundary | Reject an invalid pattern during registration or build. Return an error for unsupported input before reporting matches. Expected user errors do not panic. |
 | Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
@@ -146,6 +146,10 @@ The current pattern syntax is deliberately explicit:
 - `?`, `*`, `+`, `{m}`, `{m,n}`, and `{m,}` greedily repeat the immediately
   preceding atom or group. Counted bounds may not exceed 1,000; `{0}` and
   `{0,0}` are rejected, while `{0,}` is the unbounded zero-minimum form.
+- A leading `(?i)` enables Java-compatible, single-UTF-16-unit case folding;
+  `(?s)` is accepted as a no-op because dot always includes newline. `(?is)`
+  and `(?si)` combine them. `PatternFlags::CASE_INSENSITIVE` provides the same
+  compile-time behavior without rewriting programmatically assembled text.
 - A leading or interior empty alternative is an epsilon branch. As in the
   pinned Java contract, a trailing empty alternative is ignored and an empty
   group matches nothing. Rustmatch deliberately rejects a pattern that can
@@ -155,7 +159,8 @@ The fixtures cover literals and overlapping starts, all predicate families,
 ASCII boundary values and newlines, class negation and ranges, literal and
 control escapes, branching and nested grouping shapes, empty alternatives,
 greedy and counted repetition, quantifier binding, longest-match ambiguity,
-and malformed registration cases.
+raw and supplementary UTF-16, non-ASCII classes, exhaustive Java 21 case-map
+provenance, prefix and typed flags, and malformed registration cases.
 
 ### Development strategy: an executable spine first
 

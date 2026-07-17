@@ -48,13 +48,6 @@ pub enum Error {
         /// ID supplied with the oversized pattern.
         pattern_id: PatternId,
     },
-    /// An input contained a code unit outside 7-bit ASCII.
-    UnsupportedInput {
-        /// Position of the rejected code unit.
-        position_utf16: u64,
-        /// Rejected UTF-16 code unit.
-        code_unit: u16,
-    },
     /// An input position could not be represented as a public UTF-16 offset.
     InputTooLarge,
 }
@@ -91,13 +84,6 @@ impl fmt::Display for Error {
             Self::PatternTooLarge { pattern_id } => {
                 write!(formatter, "pattern {pattern_id} is too large")
             }
-            Self::UnsupportedInput {
-                position_utf16,
-                code_unit,
-            } => write!(
-                formatter,
-                "input contains unsupported UTF-16 code unit U+{code_unit:04X} at position {position_utf16}"
-            ),
             Self::InputTooLarge => formatter.write_str("input is too large"),
         }
     }

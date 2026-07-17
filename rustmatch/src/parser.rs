@@ -1,23 +1,27 @@
-//! Parser for the currently supported 7-bit ASCII syntax.
+//! Parser for the documented UTF-16 compatibility syntax.
 
 use crate::hir::{Hir, HirPattern};
-use crate::predicate::AsciiPredicate;
-use crate::{Error, PatternId, Utf16Span};
+use crate::predicate::SymbolPredicate;
+use crate::{Error, PatternFlags, PatternId, Utf16Span};
 
 const MAX_COUNTED_REPETITION: u16 = 1_000;
 
+#[cfg(test)]
 pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, Error> {
+    parse_with_flags(pattern_id, source, PatternFlags::NONE)
+}
+
+pub(crate) fn parse_with_flags(
+    pattern_id: PatternId,
+    source: &str,
+    flags: PatternFlags,
+) -> Result<HirPattern, Error> {
     let units: Vec<u16> = source.encode_utf16().collect();
     if units.is_empty() {
         return Err(Error::EmptyPattern { pattern_id });
     }
-    for (index, &unit) in units.iter().enumerate() {
-        if unit > 0x7f {
-            return Err(unsupported(pattern_id, index, index + 1, unit)?);
-        }
-    }
-
-    let mut parser = Parser::new(pattern_id, &units);
+    let mut parser = Parser::new(pattern_id, &units, flags.is_case_insensitive());
+    parser.consume_flag_prefix();
     let expression = parser.parse_alternation(false)?;
     if parser.index != units.len() {
         return Err(invalid(pattern_id, parser.index, parser.index + 1)?);
@@ -36,14 +40,43 @@ struct Parser<'a> {
     pattern_id: PatternId,
     units: &'a [u16],
     index: usize,
+    case_insensitive: bool,
 }
 
 impl<'a> Parser<'a> {
-    const fn new(pattern_id: PatternId, units: &'a [u16]) -> Self {
+    const fn new(pattern_id: PatternId, units: &'a [u16], case_insensitive: bool) -> Self {
         Self {
             pattern_id,
             units,
             index: 0,
+            case_insensitive,
+        }
+    }
+
+    fn consume_flag_prefix(&mut self) {
+        if self.units.get(0..2) != Some(&[u16::from(b'('), u16::from(b'?')]) {
+            return;
+        }
+        let mut cursor = 2;
+        let mut saw_flag = false;
+        let mut saw_case_insensitive = false;
+        while let Some(&unit) = self.units.get(cursor) {
+            match unit {
+                value if value == u16::from(b'i') => {
+                    saw_flag = true;
+                    saw_case_insensitive = true;
+                    cursor += 1;
+                }
+                value if value == u16::from(b's') => {
+                    saw_flag = true;
+                    cursor += 1;
+                }
+                _ => break,
+            }
+        }
+        if saw_flag && self.units.get(cursor) == Some(&u16::from(b')')) {
+            self.case_insensitive |= saw_case_insensitive;
+            self.index = cursor + 1;
         }
     }
 
@@ -79,7 +112,7 @@ impl<'a> Parser<'a> {
         match unit {
             value if value == u16::from(b'.') => {
                 self.index += 1;
-                Ok(Hir::Predicate(AsciiPredicate::any()))
+                Ok(Hir::Predicate(SymbolPredicate::any()))
             }
             value if value == u16::from(b'\\') => self.parse_escape(),
             value if value == u16::from(b'[') => self.parse_character_class(),
@@ -95,7 +128,7 @@ impl<'a> Parser<'a> {
             )?),
             value => {
                 self.index += 1;
-                Ok(Hir::Symbol(value))
+                Ok(self.literal(value))
             }
         }
     }
@@ -230,7 +263,7 @@ impl<'a> Parser<'a> {
         self.index += 1;
 
         match escaped {
-            value if is_escaped_literal(value) => Ok(Hir::Symbol(value)),
+            value if is_escaped_literal(value) => Ok(self.literal(value)),
             value if value == u16::from(b'n') => Ok(Hir::Symbol(u16::from(b'\n'))),
             value if value == u16::from(b't') => Ok(Hir::Symbol(u16::from(b'\t'))),
             value if value == u16::from(b'r') => Ok(Hir::Symbol(u16::from(b'\r'))),
@@ -249,7 +282,7 @@ impl<'a> Parser<'a> {
             self.index += 1;
         }
 
-        let mut predicate = AsciiPredicate::empty();
+        let mut predicate = SymbolPredicate::empty();
         let mut pending_literal: Option<(u16, usize)> = None;
         let mut range_start: Option<(u16, usize)> = None;
 
@@ -262,7 +295,7 @@ impl<'a> Parser<'a> {
                     return Err(invalid(self.pattern_id, class_start, self.index + 1)?);
                 }
                 if let Some((literal, _)) = pending_literal {
-                    predicate.insert(literal);
+                    self.insert_class_literal(&mut predicate, literal);
                 }
                 self.index += 1;
                 if inverted {
@@ -274,12 +307,12 @@ impl<'a> Parser<'a> {
             match self.parse_class_token()? {
                 ClassToken::Literal(literal, position) => {
                     if let Some((start, range_position)) = range_start.take() {
-                        if !predicate.insert_range(start, literal) {
+                        if !self.insert_class_range(&mut predicate, start, literal) {
                             return Err(invalid(self.pattern_id, range_position, self.index)?);
                         }
                     } else if let Some((previous, _)) = pending_literal.replace((literal, position))
                     {
-                        predicate.insert(previous);
+                        self.insert_class_literal(&mut predicate, previous);
                     }
                 }
                 ClassToken::Predicate(class) => {
@@ -287,7 +320,7 @@ impl<'a> Parser<'a> {
                         return Err(invalid(self.pattern_id, class_start, self.index)?);
                     }
                     if let Some((literal, _)) = pending_literal.take() {
-                        predicate.insert(literal);
+                        self.insert_class_literal(&mut predicate, literal);
                     }
                     predicate = predicate.union(class);
                 }
@@ -332,22 +365,69 @@ impl<'a> Parser<'a> {
     fn current_is(&self, expected: u8) -> bool {
         self.units.get(self.index) == Some(&u16::from(expected))
     }
+
+    fn literal(&self, symbol: u16) -> Hir {
+        if !self.case_insensitive {
+            return Hir::Symbol(symbol);
+        }
+        let (lower, upper) = crate::case_fold::lower_upper(symbol);
+        if lower == upper {
+            Hir::Symbol(symbol)
+        } else {
+            let mut predicate = SymbolPredicate::empty();
+            predicate.insert(lower);
+            predicate.insert(upper);
+            Hir::Predicate(predicate)
+        }
+    }
+
+    fn insert_class_literal(&self, predicate: &mut SymbolPredicate, symbol: u16) {
+        predicate.insert(symbol);
+        if self.case_insensitive {
+            let (lower, upper) = crate::case_fold::lower_upper(symbol);
+            predicate.insert(lower);
+            predicate.insert(upper);
+        }
+    }
+
+    fn insert_class_range(&self, predicate: &mut SymbolPredicate, start: u16, end: u16) -> bool {
+        if !predicate.insert_range(start, end) {
+            return false;
+        }
+        if self.case_insensitive {
+            let (start_lower, start_upper) = crate::case_fold::lower_upper(start);
+            let (end_lower, end_upper) = crate::case_fold::lower_upper(end);
+            if start_lower != start_upper && end_lower != end_upper {
+                if (start, end) != (start_lower, end_lower)
+                    && !predicate.insert_range(start_lower, end_lower)
+                {
+                    return false;
+                }
+                if (start, end) != (start_upper, end_upper)
+                    && !predicate.insert_range(start_upper, end_upper)
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 }
 
 enum ClassToken {
     Literal(u16, usize),
-    Predicate(AsciiPredicate),
+    Predicate(SymbolPredicate),
     RangeMarker(usize),
 }
 
-fn shorthand(unit: u16) -> AsciiPredicate {
+fn shorthand(unit: u16) -> SymbolPredicate {
     let (predicate, inverted) = match unit {
-        0x64 => (AsciiPredicate::digit(), false),
-        0x44 => (AsciiPredicate::digit(), true),
-        0x77 => (AsciiPredicate::word(), false),
-        0x57 => (AsciiPredicate::word(), true),
-        0x73 => (AsciiPredicate::whitespace(), false),
-        0x53 => (AsciiPredicate::whitespace(), true),
+        0x64 => (SymbolPredicate::digit(), false),
+        0x44 => (SymbolPredicate::digit(), true),
+        0x77 => (SymbolPredicate::word(), false),
+        0x57 => (SymbolPredicate::word(), true),
+        0x73 => (SymbolPredicate::whitespace(), false),
+        0x53 => (SymbolPredicate::whitespace(), true),
         _ => unreachable!("caller admits only shorthand escapes"),
     };
     if inverted {
@@ -422,10 +502,35 @@ const fn is_shorthand(unit: u16) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::parse;
+    use super::{parse, parse_with_flags};
     use crate::hir::Hir;
-    use crate::predicate::AsciiPredicate;
-    use crate::{Error, PatternId, Utf16Span};
+    use crate::predicate::SymbolPredicate;
+    use crate::{Error, PatternFlags, PatternId, Utf16Span};
+
+    #[test]
+    fn prefix_and_typed_case_flags_lower_literals_to_java_predicates() -> Result<(), Error> {
+        // Prepare
+        let pattern_id = PatternId::new(49);
+
+        // Test
+        let inline = parse(pattern_id, "(?is)aΩ")?;
+        let typed = parse_with_flags(pattern_id, "aΩ", PatternFlags::CASE_INSENSITIVE)?;
+        let misplaced = parse(pattern_id, "a(?i)Ω");
+
+        // Assert
+        assert_eq!(inline.expression(), typed.expression());
+        let Hir::Sequence(expressions) = inline.expression() else {
+            panic!("folded literals did not lower to a sequence");
+        };
+        assert_eq!(expressions.len(), 2);
+        assert!(
+            expressions
+                .iter()
+                .all(|item| matches!(item, Hir::Predicate(_)))
+        );
+        assert!(matches!(misplaced, Err(Error::InvalidPattern { .. })));
+        Ok(())
+    }
 
     #[test]
     fn parser_rejects_unsupported_anchor_at_its_utf16_position() {
@@ -527,8 +632,8 @@ mod tests {
         };
         assert_eq!(expressions.len(), 4);
         assert_eq!(expressions[0], Hir::Symbol(u16::from(b'a')));
-        assert_eq!(expressions[1], Hir::Predicate(AsciiPredicate::any()));
-        let Hir::Predicate(class) = expressions[2] else {
+        assert_eq!(expressions[1], Hir::Predicate(SymbolPredicate::any()));
+        let Hir::Predicate(class) = &expressions[2] else {
             panic!("character class did not lower to a predicate");
         };
         assert!(class.matches(u16::from(b'b')));
