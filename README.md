@@ -2296,7 +2296,12 @@ performance-sensitive change.
   comparison showing a positive improvement beyond noise. Java evidence alone,
   or merely avoiding a regression, does not satisfy this item.
 
-### Immediate next actions
+### Bootstrap execution sequence
+
+This sequence records dependencies and intended progression, not a permanent
+priority queue. The roadmap marks every dependency-unblocked task yellow. When
+more than one task is yellow, the task to start is chosen separately from that
+available set based on current value, risk, evidence needs, and capacity.
 
 1. Review and approve the UTF-16 compatibility model.
 2. Define the versioned fixture schema and Java-oracle JSONL protocol for the

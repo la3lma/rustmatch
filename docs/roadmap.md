@@ -3,7 +3,7 @@
 **Last reviewed:** 2026-07-17  
 **Implementation increments started:** **0/12**  
 **Implementation increments complete:** **0/12**  
-**Next gate:** **I0 - time-boxed semantic charter**
+**Available for execution:** **I0 - time-boxed semantic charter**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -30,7 +30,7 @@ flowchart TB
     subgraph LEGEND[Color legend]
         L0["Planned"]
         L1["Complete"]
-        L2["Next"]
+        L2["Available for execution"]
         L3["Active"]
         L4["Evidence and testing"]
         L5["Gate or review"]
@@ -141,7 +141,7 @@ flowchart TB
 
     classDef planned fill:#e5e7eb,stroke:#6b7280,color:#111827,stroke-width:1px;
     classDef complete fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;
-    classDef next fill:#fef9c3,stroke:#ca8a04,color:#422006,stroke-width:3px;
+    classDef available fill:#fef9c3,stroke:#ca8a04,color:#422006,stroke-width:3px;
     classDef active fill:#ffedd5,stroke:#ea580c,color:#431407,stroke-width:3px;
     classDef evidence fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:2px;
     classDef gate fill:#f3e8ff,stroke:#9333ea,color:#3b0764,stroke-width:3px;
@@ -149,14 +149,14 @@ flowchart TB
 
     class L0 planned;
     class L1 complete;
-    class L2 next;
+    class L2 available;
     class L3 active;
     class L4 evidence;
     class L5 gate;
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1 complete;
-    class I0 next;
+    class I0 available;
     class F0,B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
     class W0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
@@ -218,7 +218,7 @@ and use-case evidence bundle pass from a clean checkout.
 | P2 | Use-case evidence contracts | Complete | Evidence classes plus UC-0 through UC-12 proof requirements in README |
 | Q0 | Documentation and Rust hygiene policy | Complete | Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks |
 | Q1 | Community health and repository governance | Complete | Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked |
-| I0 | Time-boxed semantic charter | Next | UTF-16 and event ADRs, fixture schema, pinned Java oracle protocol, first ASCII fixture set |
+| I0 | Time-boxed semantic charter | Available | UTF-16 and event ADRs, fixture schema, pinned Java oracle protocol, first ASCII fixture set |
 | I1 | Executable ASCII-literal spine | Planned | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
@@ -234,11 +234,18 @@ and use-case evidence bundle pass from a clean checkout.
 
 ## Status update protocol
 
+Yellow means that a task's declared prerequisites are satisfied and the task
+can be started. It does not mean that the roadmap has selected that task as the
+next or most important work. When several tasks are yellow, the next task is a
+separate decision based on current value, risk reduction, evidence needs,
+available capacity, and explicit maintainer direction. Starting the selected
+task changes it to orange; the remaining executable candidates stay yellow.
+
 When work begins or a gate is completed:
 
 1. Keep the node's symbolic short name stable. New tasks and gates must receive
    a unique short name before they are added.
-2. Change the node's Mermaid class to `next`, `active`, `complete`, or
+2. Change the node's Mermaid class to `available`, `active`, `complete`, or
    `blocked` as appropriate; node labels remain free of repeated status prose.
 3. Update the milestone ledger with a link to the durable evidence.
 4. Update the summary counts at the top of this page and in the README link.
