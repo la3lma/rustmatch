@@ -6,7 +6,7 @@ use crate::hir::{Assertion, Hir, HirPattern};
 use crate::predicate::SymbolPredicate;
 use crate::{Error, PatternId};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct StateId(u32);
 
 impl StateId {

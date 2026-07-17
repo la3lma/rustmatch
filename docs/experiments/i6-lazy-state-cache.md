@@ -8,11 +8,13 @@ fixtures or admission thresholds.
 
 ## Mechanism under test
 
-The first Rust prototype will intern epsilon-closed NFA state sets as sorted
-`Vec<StateId>` keys. Transitions will be materialized on demand. Materialized
-states will have a direct 128-entry ASCII transition table and a compact
-non-ASCII path. A state-count budget will bound cache growth. When the budget
-cannot admit a new state, scanning must continue through the exact NFA path.
+The candidate prototype interns epsilon-closed NFA state sets as sorted boxed
+state-ID slices, using a hash bucket followed by complete equality. Transitions
+are materialized on demand. Materialized states have a direct 128-entry `u32`
+ASCII transition table and a sparse non-ASCII path. A state-count budget bounds
+cache growth. When the budget cannot admit a new state, scanning continues
+through the exact NFA path. Assertion-bearing sets bypass this context-free
+cache.
 
 This is a Rust hypothesis, not a porting entitlement. Java rmatch motivates the
 experiment but supplies no admission evidence.
@@ -69,9 +71,12 @@ output differs, or the bounded-cache fallback cannot be proved exact.
 ## Resource tradeoffs
 
 The first production candidate may use at most 4 MiB of scan-local cache table
-storage at its default budget, excluding the NFA state-set payload itself. It
-must allocate lazily, expose internal hit/miss/state/fallback counters to tests
-and receipts, and avoid changing the public API merely to expose diagnostics.
+storage at its default budget, excluding the NFA state-set payload itself. The
+8,192-state default uses exactly that table allowance; in a preliminary
+10,000-pattern Wuthering run, a 4,096-state variant used 2 MiB but scanned
+14.7% slower. The cache allocates lazily and exposes internal
+hit/miss/state/fallback counters to tests and receipts through a non-default
+benchmark feature, not the supported application API.
 Compilation time may not regress by more than 3% in a repeatable result. Peak
 memory and cache-state count must be retained during the stable-machine run;
 if they cannot yet be measured automatically, the gap blocks I6 completion,

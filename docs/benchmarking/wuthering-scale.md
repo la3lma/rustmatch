@@ -47,5 +47,6 @@ source checkout is elsewhere. `CORPUS_BYTES`, `CACHE_SCRUB_BYTES`, and
 script refuses a dirty tree unless `I6_ALLOW_DIRTY=1` is deliberately set.
 
 The generated HTML table includes revision, runner, dimensions, event count,
-compilation median, scan median, throughput, source paths, and source digests.
-Raw JSON receipts remain authoritative; the table is only a view.
+cache-state and fallback counts when available, compilation median, scan
+median, throughput, source paths, and source digests. Raw JSON receipts remain
+authoritative; the table is only a view.

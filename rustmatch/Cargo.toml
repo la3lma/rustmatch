@@ -8,6 +8,8 @@ repository.workspace = true
 description = "A Rust-native many-pattern regular-expression matcher"
 publish = false
 
+[features]
+benchmark-internals = []
+
 [lints]
 workspace = true
-

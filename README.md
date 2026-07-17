@@ -97,12 +97,18 @@ matcher.scan(&input, |hit| {
 The public types are `MatcherBuilder`, `Matcher`, `PatternId`, `PatternFlags`,
 `Utf16Text`, `Match`, `Utf16Span`, and one non-exhaustive `Error` type. The
 methods cover construction, plain or flagged pattern registration, build,
-scan, and read-only accessors. `PatternId` is a `u32`-backed domain type;
+scan, bounded state-cache configuration, and read-only accessors. The cache
+defaults to 8,192 scan-local deterministic states; setting
+`MatcherBuilder::state_cache_budget(0)` selects the exact NFA path. Filling a
+nonzero budget also falls back to that path rather than dropping work.
+`PatternId` is a `u32`-backed domain type;
 positions remain `u64` UTF-16 coordinates; and `Utf16Text` owns its exact
 `Vec<u16>`. Parser, HIR, NFA, state, cache, worker, and sink
 implementation types stay private. Borrowed or custom inputs, iterators, async
-APIs, fallible callbacks, runtime pattern mutation, and tuning knobs are
-deferred until a concrete use case earns them.
+APIs, fallible callbacks, runtime pattern mutation, and other tuning knobs are
+deferred until a concrete use case earns them. Cache counters remain available
+only to repository tooling behind the non-default `benchmark-internals`
+feature and are not part of the supported application API.
 
 The lifecycle is explicit:
 
@@ -1263,7 +1269,7 @@ cargo xtask roadmap
 | [ADR-0002](docs/adr/0002-match-event-semantics.md) | Normative match-event selection and ordering exclusions |
 | [ADR-0003](docs/adr/0003-minimal-public-api.md) | Public builder, input, and callback API |
 | ADR-0004 | AST/HIR and Thompson NFA representation |
-| ADR-0005 | Lazy determinization and cache budget |
+| [ADR-0005](docs/adr/0005-lazy-determinization.md) | Lazy determinization and cache budget |
 | ADR-0006 | Assertion context and pay-for-use strategy |
 | ADR-0007 | Literal prefilter safety contract |
 | ADR-0008 | Pattern partitioning and failure propagation |
