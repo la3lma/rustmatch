@@ -61,7 +61,7 @@ flowchart TB
         I1["I1 Executable ASCII-literal spine<br/>HIR -> shared NFA -> database -> scan -> events"]
         C0["C0 Mandatory functional PR CI"]
         C1["C1 Coarse CI performance tripwire"]
-        B0["B0 Benchmark-adapter correctness smoke"]
+        B0["B0 RegexSet-aware benchmark adapter<br/>and correctness smoke"]
         E0["E0 UC evidence summary command"]
     end
 
@@ -180,7 +180,7 @@ flowchart TB
     click I1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open I1 description"
     click C0 "https://github.com/la3lma/rustmatch/blob/main/README.md#fast-functional-pr-ci" "Open functional CI policy"
     click C1 "https://github.com/la3lma/rustmatch/blob/main/README.md#coarse-ci-performance-tripwire" "Open CI performance policy"
-    click B0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open benchmark smoke description"
+    click B0 "https://github.com/la3lma/rustmatch/blob/main/docs/benchmarking/regexset-comparison.md" "Open RegexSet benchmark contract"
     click E0 "https://github.com/la3lma/rustmatch/blob/main/README.md#use-case-evidence-contract" "Open evidence command description"
     click I2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-2-ascii-predicates-through-the-spine" "Open I2 description"
     click I3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-3-alternation-and-grouping-through-the-spine" "Open I3 description"
@@ -230,6 +230,7 @@ and use-case evidence bundle pass from a clean checkout.
 | W0 | Cargo workspace and quality tooling | Complete | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run |
 | A0 | Minimal public API | Complete | Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine |
 | I1 | Executable ASCII-literal spine | Active | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
+| B0 | RegexSet-aware benchmark smoke | Planned | Correctness-gated RS-NATIVE set-membership and RS-EVENTS full-event lanes against pinned `regex` 1.13.1, with compile/scan separation and a reproducible smoke receipt |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
 | I4 | Repetition and longest match | Planned | Exact overlap/ambiguity fixtures, quantifier binding, repetition limits, and Java event equality |

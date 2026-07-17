@@ -85,7 +85,9 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
             print_usage();
             Ok(())
         }
+        Some("bench-smoke") => run_benchmark_smoke(),
         Some("ci") => run_quality_gate(),
+        Some("evidence") => run_literal_evidence(),
         Some("oracle") => run_java_oracle(),
         Some("roadmap") => render_roadmap(),
         Some(other) => Err(format!("unknown command `{other}`; run `cargo xtask help`")),
@@ -94,7 +96,7 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
 
 fn print_usage() {
     println!(
-        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask ci\n    cargo xtask oracle\n    cargo xtask roadmap"
+        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask oracle\n    cargo xtask roadmap"
     );
 }
 
@@ -123,7 +125,52 @@ fn run_quality_gate() -> Result<(), String> {
         }
     }
 
-    run_java_oracle()
+    run_java_oracle()?;
+    run_literal_evidence()?;
+    run_benchmark_smoke()
+}
+
+fn run_benchmark_smoke() -> Result<(), String> {
+    eprintln!("==> B0 RegexSet-aware benchmark smoke");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--release",
+            "--package",
+            "rustmatch-bench",
+            "--",
+            "literal-smoke",
+        ])
+        .status()
+        .map_err(|error| format!("could not start benchmark smoke adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("benchmark smoke adapter failed with {status}"))
+    }
+}
+
+fn run_literal_evidence() -> Result<(), String> {
+    eprintln!("==> I1 literal differential evidence");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--package",
+            "rustmatch-compat",
+            "--",
+            "verify-literals",
+        ])
+        .status()
+        .map_err(|error| format!("could not start literal evidence adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("literal evidence adapter failed with {status}"))
+    }
 }
 
 fn run_java_oracle() -> Result<(), String> {

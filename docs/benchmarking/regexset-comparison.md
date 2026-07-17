@@ -1,0 +1,82 @@
+# Early comparison with Rust `RegexSet`
+
+- **Roadmap task:** B0
+- **Initial pinned competitor:** `regex` 1.13.1
+- **Status:** Planned; executable after the I1 literal contract is complete
+
+## Why this belongs early
+
+[`regex::RegexSet`](https://docs.rs/regex/1.13.1/regex/struct.RegexSet.html)
+is the established, highly optimized pure-Rust API for searching many regular
+expressions in one pass. A Rust many-pattern matcher that ignores it would not
+understand its most relevant existing alternative.
+
+The APIs do not return the same information. `RegexSet` answers whether any
+pattern matched and which pattern indices matched somewhere. It deliberately
+does not return match locations. rustmatch reports a longest match for every
+pattern and every matching start position, including overlaps. A single number
+that silently compares those different jobs would be advertising, not
+evidence.
+
+## Two correctness-gated lanes
+
+### RS-NATIVE: native set membership
+
+Both engines compile the same accepted pattern set and scan the same input.
+The rustmatch events are reduced to the set of pattern IDs that matched at
+least once and compared with `RegexSet::matches`.
+
+This is `RegexSet`'s native workload and likely its strongest result. rustmatch
+still computes its richer event stream, so the receipt must say that the work
+is asymmetric. This lane answers whether rustmatch remains usable when an
+application only needs set membership; it does not define semantic parity.
+
+### RS-EVENTS: complete rustmatch event semantics
+
+`RegexSet` first identifies candidate patterns. Individually compiled
+`regex::Regex` values then recover matches for those candidates at every ASCII
+start position, retaining the longest match beginning exactly there. The
+normalized `(pattern_id, start, end)` multiset must equal rustmatch before a
+timing is retained.
+
+This lane answers the actual rustmatch workload. It is necessarily less native
+to `RegexSet`, and the result must not be presented as a general indictment of
+the `regex` crate.
+
+## Receipt requirements
+
+Every retained point records:
+
+- rustmatch revision and package hash;
+- exact `regex` version and Cargo lockfile hash;
+- pattern and corpus generator versions, seeds, sizes, and hashes;
+- accepted/rejected pattern counts;
+- compile time separately from scan time;
+- warm-up and measured iteration counts;
+- event count and normalized event hash for RS-EVENTS;
+- matching-pattern count and normalized ID-set hash for RS-NATIVE;
+- process, CPU, operating-system, compiler, profile, and thread settings;
+- raw samples, summary statistics, and the predeclared noise rule.
+
+Both engines run single-threaded first. Later throughput campaigns may run
+several independent `RegexSet` scans in parallel, just as every other engine is
+allowed to use the available machine. The thread sweep and optimum remain part
+of the receipt rather than becoming an unexplained winner-only setting.
+
+## Admission rule
+
+B0 is a harness and honesty milestone, not a promise that the unoptimized I1
+engine wins. It passes when both lanes are reproducible, results are validated,
+and a smoke receipt survives. Performance work may then use RegexSet results to
+prioritize experiments, but an optimization enters rustmatch only after its own
+baseline/candidate gate shows a positive Rust improvement beyond noise.
+
+Run the first correctness-gated release-profile smoke locally with:
+
+```sh
+cargo xtask bench-smoke
+```
+
+The smoke uses a small deterministic generated fixture and prints one JSON
+receipt. It is included in `cargo xtask ci`, but it is not a stable-machine
+performance campaign and its timing fields must not be quoted as a result.

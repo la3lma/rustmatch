@@ -511,6 +511,15 @@ specified as progressively stronger gates:
 Hyperscan remains a native reference ceiling, not a promise that rustmatch will
 match its specialized implementation or execution model.
 
+Within the Rust ecosystem, the first direct performance reference is
+[`regex::RegexSet`](https://docs.rs/regex/1.13.1/regex/struct.RegexSet.html).
+It is an optimized one-pass many-pattern matcher, but its native result is the
+set of patterns that matched somewhere, not match locations. The early
+[B0 comparison contract](docs/benchmarking/regexset-comparison.md) therefore
+defines one native set-membership lane and one complete-event lane. Both lanes
+validate results before retaining timings, separate compilation from scanning,
+and state plainly when one engine performs richer work.
+
 ### Optimization admission gate
 
 An optimization is any change proposed primarily to make compilation,

@@ -39,3 +39,12 @@ The oracle has two runtime dependencies:
 
 Neither dependency enters the Rust library or its runtime dependency graph.
 
+The unpublished `rustmatch-compat` adapter uses Serde and Serde JSON to consume
+the same JSONL without maintaining a second handwritten parser. It runs the
+fixtures through the public Rust API and compares every supported event with
+the pinned Java result. These dependencies likewise remain outside the
+`rustmatch` library. Run that evidence directly with:
+
+```sh
+cargo xtask evidence
+```
