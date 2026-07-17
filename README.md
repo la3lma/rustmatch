@@ -2,14 +2,14 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: active implementation.** I5 is active: complete UTF-16 input,
-> non-ASCII predicates, prefix and typed case-insensitive flags now run through
-> the executable spine with pinned Java evidence. Anchors and boundaries remain
-> before semantic parity. This is a development prototype, not a published crate.
+> **Status: active implementation.** The vertically integrated semantic spine
+> now covers the documented rmatch 2.x consuming language, including UTF-16,
+> flags, anchors, and boundaries, with pinned Java evidence. Optimization and
+> scale work begins at I6. This is a development prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `6/12`
-> increments started and `5/12` complete.
+> increments started and `6/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -119,25 +119,25 @@ The executable spine currently has this deliberately small contract:
 
 | Area | Current behavior |
 |---|---|
-| Patterns | Accept one or more non-empty patterns made from UTF-16 literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, greedy repetition, and prefix `i`/`s` flags. Reject anchors, assertions, scoped flags, lazy quantifiers, and possessive quantifiers. |
+| Patterns | Accept one or more non-empty patterns made from UTF-16 literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, greedy repetition, prefix `i`/`s` flags, line anchors, and ASCII word boundaries. Reject scoped flags, lazy quantifiers, possessive quantifiers, and patterns that can only match zero width. |
 | Input | Accept any finite sequence of UTF-16 code units, including empty input and isolated surrogates. Rust strings are encoded once; `Utf16Text::from_units` preserves raw units. |
 | Pattern identity | Require a unique caller-supplied `PatternId`. The same literal may be registered under different IDs; a duplicate ID is an error. |
 | Matches | For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Alternatives may give one pattern several possible lengths. |
 | Event identity | A match consists of its `PatternId` and span. Equal text registered under different IDs produces distinct events. |
 | Coordinates | Report zero-based, half-open UTF-16 spans `[start, end)`. A supplementary Unicode scalar therefore occupies two engine positions. |
 | Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
-| Failure boundary | Reject an invalid pattern during registration or build. Return an error for unsupported input before reporting matches. Expected user errors do not panic. |
+| Failure boundary | Reject an invalid pattern during registration or build. Return an error if an input position cannot fit the public coordinate type. Expected user errors do not panic. |
 | Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
 
 The current pattern syntax is deliberately explicit:
 
-- `.` matches one ASCII code unit, including newline.
+- `.` matches one UTF-16 code unit, including newline and isolated surrogates.
 - `[abc]`, `[a-z]`, `[^abc]`, and unions of literals, ranges, and supported
-  class escapes compile to one ASCII predicate. Empty `[]` matches nothing;
-  `[^]` matches every ASCII code unit.
+  class escapes compile to one UTF-16 predicate. Empty `[]` matches nothing;
+  `[^]` matches every UTF-16 code unit.
 - `\d` is `0-9`; `\w` is `A-Z`, `a-z`, `0-9`, and `_`; `\s` is space, tab,
   newline, vertical tab, form feed, and carriage return. `\D`, `\W`, and `\S`
-  are their ASCII complements.
+  complement those ASCII member sets over the complete UTF-16 domain.
 - Escaped metacharacters are literals. `\n`, `\t`, `\r`, and `\f` are the
   supported control escapes. Inside a class, `\\`, `\]`, `\[`, `\-`, `\^`,
   the control escapes, and lowercase `\d`, `\w`, and `\s` are supported.
@@ -150,6 +150,10 @@ The current pattern syntax is deliberately explicit:
   `(?s)` is accepted as a no-op because dot always includes newline. `(?is)`
   and `(?si)` combine them. `PatternFlags::CASE_INSENSITIVE` provides the same
   compile-time behavior without rewriting programmatically assembled text.
+- `^` constrains a consuming path to input or line start, and `$` constrains it
+  to input or line end. `\b` and `\B` test boundaries using the same ASCII
+  word-character definition as `\w`. Assertions are NFA edges, not post-hoc
+  filters; assertion-free pattern sets use a separate scan specialization.
 - A leading or interior empty alternative is an epsilon branch. As in the
   pinned Java contract, a trailing empty alternative is ignored and an empty
   group matches nothing. Rustmatch deliberately rejects a pattern that can
@@ -161,6 +165,9 @@ control escapes, branching and nested grouping shapes, empty alternatives,
 greedy and counted repetition, quantifier binding, longest-match ambiguity,
 raw and supplementary UTF-16, non-ASCII classes, exhaustive Java 21 case-map
 provenance, prefix and typed flags, and malformed registration cases.
+The assertion tier adds input and line edges, groups, alternatives, flags,
+ASCII/non-ASCII boundaries, raw surrogates, phase adversaries, and explicit
+pure-zero-width rejection.
 
 ### Development strategy: an executable spine first
 
@@ -438,7 +445,9 @@ For every pattern and every input start position:
 4. Do not suppress events merely because another event overlaps or contains
    them.
 
-Pure zero-width patterns emit no events. Assertions may constrain a consuming
+Rustmatch rejects patterns that can only match zero width. The Java reference
+accepts those patterns but emits no events; the fixture suite records this as
+the one explicit product difference. Assertions may constrain a consuming
 match.
 
 The event multiset is normative. Delivery order is not.

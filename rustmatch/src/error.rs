@@ -23,13 +23,13 @@ pub enum Error {
         /// ID supplied with the empty pattern.
         pattern_id: PatternId,
     },
-    /// A pattern used syntax or a code unit outside the current slice.
+    /// A pattern used a recognized construct that this implementation does not support.
     UnsupportedPattern {
         /// ID supplied with the rejected pattern.
         pattern_id: PatternId,
         /// Location of the rejected UTF-16 code unit.
         span: Utf16Span,
-        /// Rejected UTF-16 code unit.
+        /// First UTF-16 code unit of the unsupported construct.
         code_unit: u16,
     },
     /// A pattern contained malformed syntax.
@@ -67,7 +67,7 @@ impl fmt::Display for Error {
                 code_unit,
             } => write!(
                 formatter,
-                "pattern {pattern_id} contains unsupported UTF-16 code unit U+{code_unit:04X} at [{}..{})",
+                "pattern {pattern_id} contains an unsupported construct beginning with UTF-16 code unit U+{code_unit:04X} at [{}..{})",
                 span.start(),
                 span.end()
             ),

@@ -24,6 +24,10 @@ rustmatch.
 - `utf16-flags-v1` covers non-ASCII literals and ranges, supplementary and raw
   surrogate inputs, prefix flags, Java single-`char` folding, titlecase edge
   behavior, and malformed flag placement.
+- `assertions-v1` covers line anchors and ASCII word boundaries at input and
+  line edges, inside groups and alternatives, alongside flags, and around
+  non-ASCII and raw-surrogate code units. It also pins the Java asymmetry that
+  `$` needs a consumed character while `^` can follow a consumed newline.
 - `expected/java-21-case-fold-v1.bin` records all 65,536 Java 21 lower/upper
   `char` pairs in a fixed binary format. The oracle regenerates it twice and
   compares its manifest and bytes before Rust differential evidence runs.
@@ -49,6 +53,7 @@ cargo run -p rustmatch-compat -- verify-predicates
 cargo run -p rustmatch-compat -- verify-composition
 cargo run -p rustmatch-compat -- verify-repetition
 cargo run -p rustmatch-compat -- verify-utf16-flags
+cargo run -p rustmatch-compat -- verify-assertions
 ```
 
 The command requires Java 21 and Maven. On macOS it selects an installed Java

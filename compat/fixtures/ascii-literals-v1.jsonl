@@ -3,5 +3,5 @@
 {"schema_version":1,"case_id":"overlapping-literal-starts","compatibility_tier":"ascii-literal-v1","rust_expectation":"matched","patterns":[{"pattern_id":11,"utf16":[97,98,97]}],"input_utf16":[97,98,97,98,97]}
 {"schema_version":1,"case_id":"empty-input","compatibility_tier":"ascii-literal-v1","rust_expectation":"matched","patterns":[{"pattern_id":13,"utf16":[97]}],"input_utf16":[]}
 {"schema_version":1,"case_id":"whitespace-and-newline","compatibility_tier":"ascii-literal-v1","rust_expectation":"matched","patterns":[{"pattern_id":17,"utf16":[9,10]}],"input_utf16":[120,9,10,121]}
-{"schema_version":1,"case_id":"operator-outside-current-slice","compatibility_tier":"ascii-literal-v1","rust_expectation":"rejected-unsupported","patterns":[{"pattern_id":19,"utf16":[97,94]}],"input_utf16":[97,97,97]}
+{"schema_version":1,"case_id":"line-start-after-ordinary-char","compatibility_tier":"ascii-literal-v1","rust_expectation":"matched","patterns":[{"pattern_id":19,"utf16":[97,94]}],"input_utf16":[97,97,97]}
 {"schema_version":1,"case_id":"malformed-reference-syntax","compatibility_tier":"ascii-literal-v1","rust_expectation":"rejected-invalid","patterns":[{"pattern_id":23,"utf16":[91]}],"input_utf16":[97]}

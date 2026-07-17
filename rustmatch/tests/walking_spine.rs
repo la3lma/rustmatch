@@ -82,23 +82,24 @@ fn one_matcher_can_scan_empty_and_nonempty_inputs_repeatedly() -> Result<(), Err
 }
 
 #[test]
-fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
+fn zero_width_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Error> {
     // Prepare
     let mut builder = MatcherBuilder::new();
-    let unsupported = ['^', '$'];
+    let zero_width = ["^", "$", r"\b", r"\B", "^$"];
     let malformed = ['\\', '['];
 
     // Test
-    let unsupported_errors: Vec<_> = unsupported
+    let zero_width_errors: Vec<_> = zero_width
         .into_iter()
         .zip(0_u32..)
-        .map(|(operator, id)| builder.add(PatternId::new(id), &format!("a{operator}")))
+        .map(|(pattern, id)| builder.add(PatternId::new(id), pattern))
         .collect();
     let malformed_errors: Vec<_> = malformed
         .into_iter()
         .zip(50_u32..)
         .map(|(operator, id)| builder.add(PatternId::new(id), &format!("a{operator}")))
         .collect();
+    builder.add(PatternId::new(98), "^]}")?;
     builder.add(PatternId::new(99), "]}")?;
     builder.add(PatternId::new(100), "valid")?;
     let matcher = builder.build()?;
@@ -106,16 +107,16 @@ fn unsupported_and_malformed_syntax_do_not_poison_the_builder() -> Result<(), Er
 
     // Assert
     assert!(
-        unsupported_errors
+        zero_width_errors
             .iter()
-            .all(|result| matches!(result, Err(Error::UnsupportedPattern { .. })))
+            .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
     );
     assert!(
         malformed_errors
             .iter()
             .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
     );
-    assert_eq!(recovered_events, vec![(99, 0, 2), (100, 3, 8)]);
+    assert_eq!(recovered_events, vec![(98, 0, 2), (99, 0, 2), (100, 3, 8)]);
     Ok(())
 }
 
@@ -587,6 +588,102 @@ fn supplementary_character_keeps_java_utf16_coordinates() -> Result<(), Error> {
     Ok(())
 }
 
+#[test]
+fn line_assertions_follow_the_pinned_java_phase_contract() -> Result<(), Error> {
+    // Prepare
+    let cases = [
+        (620, "^a", "x\na ba\nabc", vec![(620, 2, 3), (620, 7, 8)]),
+        (621, "a$", "ba\nca ", vec![(621, 1, 2)]),
+        (
+            622,
+            "^ab$",
+            "ab\nxab\nabx\nab",
+            vec![(622, 0, 2), (622, 11, 13)],
+        ),
+        (623, "a^", "a\nab", vec![]),
+        (624, "$a", "a\n", vec![]),
+        (
+            625,
+            "foo$|foobar",
+            "foobar foo\nfoo",
+            vec![(625, 0, 6), (625, 7, 10), (625, 11, 14)],
+        ),
+        (626, "\n^a", "\na", vec![(626, 0, 2)]),
+    ];
+
+    // Test / Assert
+    for (id, pattern, input, expected) in cases {
+        assert_eq!(
+            collect_pattern(id, pattern, input)?,
+            expected,
+            "{pattern:?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn word_boundaries_are_ascii_and_compose_with_raw_utf16() -> Result<(), Error> {
+    // Prepare
+    let ordinary_cases = [
+        (
+            630,
+            r"\bcat\b",
+            "cat category bobcat cat!",
+            vec![(630, 0, 3), (630, 20, 23)],
+        ),
+        (631, r"\Bcat\B", "xcaty cat catz xcat", vec![(631, 1, 4)]),
+        (632, r"\bcat\b", "_cat cat_ cat2 cat", vec![(632, 15, 18)]),
+        (633, r"\bΩ\b", " Ω ", vec![]),
+        (634, r"\BΩ\B", " Ω ", vec![(634, 1, 2)]),
+    ];
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(635), r"\B.\B")?;
+    let matcher = builder.build()?;
+    let raw = Utf16Text::from_units(vec![u16::from(b' '), 0xd800, u16::from(b' ')]);
+    let mut raw_events = Vec::new();
+
+    // Test
+    for (id, pattern, input, expected) in ordinary_cases {
+        assert_eq!(
+            collect_pattern(id, pattern, input)?,
+            expected,
+            "{pattern:?}"
+        );
+    }
+    matcher.scan(&raw, |event| {
+        raw_events.push((
+            event.pattern_id().get(),
+            event.span().start(),
+            event.span().end(),
+        ));
+    })?;
+
+    // Assert
+    assert_eq!(raw_events, vec![(635, 0, 1), (635, 1, 2), (635, 2, 3)]);
+    Ok(())
+}
+
+#[test]
+fn assertions_compose_with_groups_repetition_and_flags() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(640), "(?i)^a+$")?;
+    builder.add(PatternId::new(641), "(^ab|cd$)")?;
+    let matcher = builder.build()?;
+
+    // Test
+    let mut events = collect(&matcher, "ab\nAa\nxcd\ncd")?;
+    events.sort_unstable();
+
+    // Assert
+    assert_eq!(
+        events,
+        vec![(640, 3, 5), (641, 0, 2), (641, 7, 9), (641, 10, 12)]
+    );
+    Ok(())
+}
+
 fn collect(matcher: &Matcher, text: &str) -> Result<Vec<(u32, u64, u64)>, Error> {
     let input = Utf16Text::from(text);
     let mut events = Vec::new();
@@ -598,4 +695,14 @@ fn collect(matcher: &Matcher, text: &str) -> Result<Vec<(u32, u64, u64)>, Error>
         ));
     })?;
     Ok(events)
+}
+
+fn collect_pattern(
+    pattern_id: u32,
+    pattern: &str,
+    text: &str,
+) -> Result<Vec<(u32, u64, u64)>, Error> {
+    let mut builder = MatcherBuilder::new();
+    builder.add(PatternId::new(pattern_id), pattern)?;
+    collect(&builder.build()?, text)
 }

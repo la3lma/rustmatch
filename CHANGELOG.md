@@ -34,6 +34,10 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   prefix `(?i)`/`(?s)` flags, typed `PatternFlags::CASE_INSENSITIVE`, a
   reproducible 65,536-entry Java 21 case table, and 23 pinned differential
   flag/character fixtures.
+- NFA-native `^`, `$`, `\b`, and `\B` assertions with pay-for-use scan
+  specialization, exhaustive ASCII boundary classification, and 28 pinned
+  Java differential fixtures spanning line edges, composition, flags,
+  non-ASCII input, and raw surrogates.
 
 ### Changed
 
