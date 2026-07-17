@@ -27,6 +27,9 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
 - A parser fuzz target compiled and linted by the ordinary quality gate.
 - Alternation, plain and non-capturing groups, normalized recursive HIR,
   Thompson NFA branching, and pinned Java differential composition evidence.
+- Greedy `?`, `*`, `+`, `{m}`, `{m,n}`, and `{m,}` repetition through parser,
+  HIR, Thompson NFA compilation, longest-match scanning, and 29 pinned Java
+  differential cases, including malformed counts and the 1,000-count limit.
 
 ### Changed
 

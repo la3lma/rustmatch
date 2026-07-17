@@ -245,7 +245,47 @@ mod tests {
                 .iter()
                 .flat_map(|branch| interpret(branch, input, start))
                 .collect(),
+            Hir::Repeat {
+                expression,
+                min,
+                max,
+            } => interpret_repetition(expression, *min, *max, input, start),
         }
+    }
+
+    fn interpret_repetition(
+        expression: &Hir,
+        min: u16,
+        max: Option<u16>,
+        input: &[u16],
+        start: usize,
+    ) -> BTreeSet<usize> {
+        let mut accepted = BTreeSet::new();
+        let mut positions = BTreeSet::from([start]);
+        if min == 0 {
+            accepted.insert(start);
+        }
+        let limit = max.map_or_else(
+            || {
+                usize::from(min)
+                    .saturating_add(input.len())
+                    .saturating_add(1)
+            },
+            usize::from,
+        );
+        for count in 1..=limit {
+            positions = positions
+                .into_iter()
+                .flat_map(|position| interpret(expression, input, position))
+                .collect();
+            if positions.is_empty() {
+                break;
+            }
+            if count >= usize::from(min) {
+                accepted.extend(&positions);
+            }
+        }
+        accepted
     }
 
     fn generated_patterns() -> Vec<String> {
@@ -257,6 +297,9 @@ mod tests {
                 patterns.push(format!("{left}|{right}"));
                 patterns.push(format!("x({left}|{right})"));
                 patterns.push(format!("x(|{left}){right}"));
+                patterns.push(format!("{left}?{right}"));
+                patterns.push(format!("{left}+"));
+                patterns.push(format!("({left}|{right}){{1,2}}"));
             }
         }
         patterns

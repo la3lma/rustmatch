@@ -18,7 +18,9 @@ rustmatch.
   `ascii-predicate-v1` grows independently as ASCII predicate syntax is carried
   through the same executable spine. `ascii-composition-v1` adds alternation,
   grouping, empty-branch behavior, longest-branch selection, and malformed
-  group cases.
+  group cases. `ascii-repetition-v1` adds greedy unary and counted repetition,
+  quantifier binding, overlapping starts, longest-match ambiguity, the 1,000
+  expansion limit, and malformed counts.
 - A pure zero-width alternation records one intentional difference explicitly:
   Java accepts it and emits no events, while the Rust product contract rejects
   patterns that can only produce a zero-width match.
@@ -39,6 +41,7 @@ evidence. The Rust adapters can also be run separately:
 cargo run -p rustmatch-compat -- verify-literals
 cargo run -p rustmatch-compat -- verify-predicates
 cargo run -p rustmatch-compat -- verify-composition
+cargo run -p rustmatch-compat -- verify-repetition
 ```
 
 The command requires Java 21 and Maven. On macOS it selects an installed Java

@@ -4,6 +4,8 @@ use crate::hir::{Hir, HirPattern};
 use crate::predicate::AsciiPredicate;
 use crate::{Error, PatternId, Utf16Span};
 
+const MAX_COUNTED_REPETITION: u16 = 1_000;
+
 pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, Error> {
     let units: Vec<u16> = source.encode_utf16().collect();
     if units.is_empty() {
@@ -66,7 +68,8 @@ impl<'a> Parser<'a> {
             if unit == u16::from(b')') {
                 return Err(invalid(self.pattern_id, self.index, self.index + 1)?);
             }
-            expressions.push(self.parse_atom()?);
+            let atom = self.parse_atom()?;
+            expressions.push(self.parse_repetition(atom)?);
         }
         Ok(Hir::sequence(expressions))
     }
@@ -81,6 +84,9 @@ impl<'a> Parser<'a> {
             value if value == u16::from(b'\\') => self.parse_escape(),
             value if value == u16::from(b'[') => self.parse_character_class(),
             value if value == u16::from(b'(') => self.parse_group(),
+            value if is_repetition_operator(value) => {
+                Err(invalid(self.pattern_id, self.index, self.index + 1)?)
+            }
             value if is_unsupported_regex_operator(value) => Err(unsupported(
                 self.pattern_id,
                 self.index,
@@ -120,6 +126,99 @@ impl<'a> Parser<'a> {
         }
         self.index += 1;
         Ok(expression)
+    }
+
+    fn parse_repetition(&mut self, expression: Hir) -> Result<Hir, Error> {
+        let start = self.index;
+        let repeated = if self.current_is(b'?') {
+            self.index += 1;
+            Hir::repeat(expression, 0, Some(1))
+        } else if self.current_is(b'*') {
+            self.index += 1;
+            Hir::repeat(expression, 0, None)
+        } else if self.current_is(b'+') {
+            self.index += 1;
+            Hir::repeat(expression, 1, None)
+        } else if self.current_is(b'{') {
+            self.parse_counted_repetition(expression)?
+        } else {
+            return Ok(expression);
+        };
+
+        if self
+            .units
+            .get(self.index)
+            .is_some_and(|&unit| is_repetition_operator(unit))
+        {
+            return Err(invalid(self.pattern_id, start, self.index + 1)?);
+        }
+        Ok(repeated)
+    }
+
+    fn parse_counted_repetition(&mut self, expression: Hir) -> Result<Hir, Error> {
+        let start = self.index;
+        self.index += 1;
+        let min = self.parse_count(start)?;
+        let max = if self.current_is(b'}') {
+            self.index += 1;
+            Some(min)
+        } else if self.current_is(b',') {
+            self.index += 1;
+            if self.current_is(b'}') {
+                self.index += 1;
+                None
+            } else {
+                let max = self.parse_count(start)?;
+                if !self.current_is(b'}') {
+                    return Err(invalid(
+                        self.pattern_id,
+                        start,
+                        self.index.min(self.units.len()),
+                    )?);
+                }
+                self.index += 1;
+                Some(max)
+            }
+        } else {
+            return Err(invalid(
+                self.pattern_id,
+                start,
+                self.index.min(self.units.len()),
+            )?);
+        };
+
+        if max.is_some_and(|limit| limit < min)
+            || max == Some(0)
+            || min > MAX_COUNTED_REPETITION
+            || max.is_some_and(|limit| limit > MAX_COUNTED_REPETITION)
+        {
+            return Err(invalid(self.pattern_id, start, self.index)?);
+        }
+        Ok(Hir::repeat(expression, min, max))
+    }
+
+    fn parse_count(&mut self, quantifier_start: usize) -> Result<u16, Error> {
+        let number_start = self.index;
+        let mut value = 0_u32;
+        while let Some(&unit) = self.units.get(self.index) {
+            if !(u16::from(b'0')..=u16::from(b'9')).contains(&unit) {
+                break;
+            }
+            let digit = u32::from(unit - u16::from(b'0'));
+            value = value
+                .saturating_mul(10)
+                .saturating_add(digit)
+                .min(u32::from(MAX_COUNTED_REPETITION) + 1);
+            self.index += 1;
+        }
+        if self.index == number_start || value > u32::from(MAX_COUNTED_REPETITION) {
+            return Err(invalid(
+                self.pattern_id,
+                quantifier_start,
+                self.index.max(number_start + 1).min(self.units.len()),
+            )?);
+        }
+        Ok(u16::try_from(value).expect("accepted repetition count fits in u16"))
     }
 
     fn parse_escape(&mut self) -> Result<Hir, Error> {
@@ -290,7 +389,11 @@ fn position(pattern_id: PatternId, index: usize) -> Result<u64, Error> {
 }
 
 const fn is_unsupported_regex_operator(unit: u16) -> bool {
-    matches!(unit, 0x5e | 0x24 | 0x3f | 0x2a | 0x2b | 0x7b)
+    matches!(unit, 0x5e | 0x24)
+}
+
+const fn is_repetition_operator(unit: u16) -> bool {
+    matches!(unit, 0x3f | 0x2a | 0x2b | 0x7b)
 }
 
 const fn is_escaped_literal(unit: u16) -> bool {
@@ -325,12 +428,12 @@ mod tests {
     use crate::{Error, PatternId, Utf16Span};
 
     #[test]
-    fn parser_rejects_operator_at_its_utf16_position() {
+    fn parser_rejects_unsupported_anchor_at_its_utf16_position() {
         // Prepare
         let pattern_id = PatternId::new(41);
 
         // Test
-        let result = parse(pattern_id, "ab+");
+        let result = parse(pattern_id, "ab^");
 
         // Assert
         assert!(matches!(
@@ -341,8 +444,73 @@ mod tests {
                 code_unit
             }) if actual_id == pattern_id
                 && span == Utf16Span::from_bounds(2, 3)
-                && code_unit == u16::from(b'+')
+                && code_unit == u16::from(b'^')
         ));
+    }
+
+    #[test]
+    fn parser_binds_repetition_to_one_preceding_expression() -> Result<(), Error> {
+        // Prepare
+        let pattern_id = PatternId::new(47);
+
+        // Test
+        let pattern = parse(pattern_id, "ab?(cd){2,3}e+")?;
+
+        // Assert
+        let Hir::Sequence(sequence) = pattern.expression() else {
+            panic!("repeated pattern did not lower to a sequence");
+        };
+        assert_eq!(sequence.len(), 4);
+        assert_eq!(sequence[0], Hir::Symbol(u16::from(b'a')));
+        assert!(matches!(
+            sequence[1],
+            Hir::Repeat {
+                min: 0,
+                max: Some(1),
+                ..
+            }
+        ));
+        assert!(matches!(
+            sequence[2],
+            Hir::Repeat {
+                min: 2,
+                max: Some(3),
+                ..
+            }
+        ));
+        assert!(matches!(
+            sequence[3],
+            Hir::Repeat {
+                min: 1,
+                max: None,
+                ..
+            }
+        ));
+        assert_eq!(pattern.minimum_consumed(), Some(6));
+        Ok(())
+    }
+
+    #[test]
+    fn parser_enforces_counted_repetition_boundaries() {
+        // Prepare
+        let pattern_id = PatternId::new(48);
+        let invalid = [
+            "{2}a", "a{0}", "a{0,0}", "a{2,1}", "a{,2}", "a{2", "a{x}", "a{1001}", "a**", "a+?",
+        ];
+
+        // Test
+        let invalid_results = invalid.map(|pattern| parse(pattern_id, pattern));
+        let exact_limit = parse(pattern_id, "a{1000}");
+        let open_zero = parse(pattern_id, "a{0,}");
+
+        // Assert
+        assert!(
+            invalid_results
+                .iter()
+                .all(|result| matches!(result, Err(Error::InvalidPattern { .. })))
+        );
+        assert!(exact_limit.is_ok());
+        assert!(open_zero.is_ok());
     }
 
     #[test]

@@ -32,6 +32,14 @@ const COMPOSITION_JAVA_RESULTS: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../compat/expected/java-2.0.0-RC1-ascii-composition-v1.jsonl"
 ));
+const REPETITION_FIXTURES: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/fixtures/ascii-repetition-v1.jsonl"
+));
+const REPETITION_JAVA_RESULTS: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../compat/expected/java-2.0.0-RC1-ascii-repetition-v1.jsonl"
+));
 
 fn main() -> ExitCode {
     match run(env::args().skip(1)) {
@@ -56,7 +64,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
     let command = arguments.next();
     if arguments.next().is_some() {
         return Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition>"
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition>"
                 .to_owned(),
         );
     }
@@ -82,8 +90,15 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
             "ascii-composition-v1",
             "I3-E1",
         ),
+        Some("verify-repetition") => verify_fixture_set(
+            REPETITION_FIXTURES,
+            REPETITION_JAVA_RESULTS,
+            "ascii-repetition-v1",
+            "ascii-repetition-v1",
+            "I4-E1",
+        ),
         _ => Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition>"
+            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition>"
                 .to_owned(),
         ),
     }
@@ -305,7 +320,8 @@ struct EvidenceSummary {
 mod tests {
     use super::{
         COMPOSITION_FIXTURES, COMPOSITION_JAVA_RESULTS, EvidenceSummary, LITERAL_FIXTURES,
-        LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES, PREDICATE_JAVA_RESULTS, run, verify_fixture_set,
+        LITERAL_JAVA_RESULTS, PREDICATE_FIXTURES, PREDICATE_JAVA_RESULTS, REPETITION_FIXTURES,
+        REPETITION_JAVA_RESULTS, run, verify_fixture_set,
     };
 
     #[test]
@@ -427,5 +443,44 @@ mod tests {
                 && line.contains("\"status\":\"matched\"")
         ));
         assert!(COMPOSITION_FIXTURES.contains("pure-zero-width-alternation"));
+    }
+
+    #[test]
+    fn repetition_evidence_agrees_with_the_pinned_java_results() -> Result<(), String> {
+        // Prepare
+        let arguments = ["verify-repetition".to_owned()];
+
+        // Test
+        let summary = run(arguments.into_iter())?;
+
+        // Assert
+        assert_eq!(
+            summary,
+            EvidenceSummary {
+                schema_version: 1,
+                evidence_id: "I4-E1",
+                fixture_set: "ascii-repetition-v1",
+                matched_cases: 20,
+                rejected_cases: 9,
+                status: "pass",
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn zero_width_repetition_divergence_is_explicit_in_java_evidence() {
+        // Prepare / Test
+        let java_result = REPETITION_JAVA_RESULTS
+            .lines()
+            .find(|line| line.contains("\"case_id\":\"pure-zero-width-repetition\""));
+
+        // Assert
+        assert!(matches!(
+            java_result,
+            Some(line) if line.contains("\"rust_expectation\":\"rejected-invalid\"")
+                && line.contains("\"status\":\"matched\"")
+        ));
+        assert!(REPETITION_FIXTURES.contains("pure-zero-width-repetition"));
     }
 }

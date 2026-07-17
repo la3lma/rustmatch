@@ -48,6 +48,11 @@ pub(crate) enum Hir {
     Predicate(AsciiPredicate),
     Sequence(Box<[Self]>),
     Alternation(Box<[Self]>),
+    Repeat {
+        expression: Box<Self>,
+        min: u16,
+        max: Option<u16>,
+    },
 }
 
 impl Hir {
@@ -84,12 +89,29 @@ impl Hir {
         }
     }
 
+    pub(crate) fn repeat(expression: Self, min: u16, max: Option<u16>) -> Self {
+        debug_assert!(max.is_none_or(|limit| min <= limit));
+        match (expression, min, max) {
+            (_, _, Some(0)) | (Self::Epsilon, _, _) | (Self::Never, 0, _) => Self::Epsilon,
+            (Self::Never, _, _) => Self::Never,
+            (expression, 1, Some(1)) => expression,
+            (expression, min, max) => Self::Repeat {
+                expression: Box::new(expression),
+                min,
+                max,
+            },
+        }
+    }
+
     pub(crate) fn nullable(&self) -> bool {
         match self {
             Self::Never | Self::Symbol(_) | Self::Predicate(_) => false,
             Self::Epsilon => true,
             Self::Sequence(expressions) => expressions.iter().all(Self::nullable),
             Self::Alternation(expressions) => expressions.iter().any(Self::nullable),
+            Self::Repeat {
+                expression, min, ..
+            } => *min == 0 || expression.nullable(),
         }
     }
 
@@ -106,6 +128,17 @@ impl Hir {
             Self::Alternation(expressions) => {
                 expressions.iter().filter_map(Self::minimum_consumed).min()
             }
+            Self::Repeat {
+                expression, min, ..
+            } => {
+                if *min == 0 {
+                    Some(0)
+                } else {
+                    expression
+                        .minimum_consumed()
+                        .map(|length| length.saturating_mul(usize::from(*min)))
+                }
+            }
         }
     }
 
@@ -118,6 +151,9 @@ impl Hir {
                 self.minimum_consumed().is_some() && expressions.iter().any(Self::can_consume)
             }
             Self::Alternation(expressions) => expressions.iter().any(Self::can_consume),
+            Self::Repeat {
+                expression, max, ..
+            } => *max != Some(0) && expression.can_consume(),
         }
     }
 }
@@ -166,5 +202,22 @@ mod tests {
         // Test / Assert
         assert_eq!(impossible_sequence, Hir::Never);
         assert_eq!(useful_alternation, Hir::Symbol(u16::from(b'b')));
+    }
+
+    #[test]
+    fn repetition_metadata_distinguishes_nullable_and_consuming_paths() {
+        // Prepare
+        let star = Hir::repeat(Hir::Symbol(u16::from(b'a')), 0, None);
+        let bounded = Hir::repeat(Hir::Symbol(u16::from(b'b')), 2, Some(4));
+        let impossible = Hir::repeat(Hir::Never, 1, None);
+
+        // Test / Assert
+        assert!(star.nullable());
+        assert_eq!(star.minimum_consumed(), Some(0));
+        assert!(star.can_consume());
+        assert!(!bounded.nullable());
+        assert_eq!(bounded.minimum_consumed(), Some(2));
+        assert!(bounded.can_consume());
+        assert_eq!(impossible, Hir::Never);
     }
 }
