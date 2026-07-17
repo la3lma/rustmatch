@@ -3,8 +3,6 @@
 **Last reviewed:** 2026-07-17  
 **Implementation increments started:** **0/12**  
 **Implementation increments complete:** **0/12**  
-**Active:** **W0 - Cargo workspace and quality tooling**
-
 **Available for execution:** **I0 - semantic charter**
 
 This page is the at-a-glance map from the completed product planning to a
@@ -159,9 +157,8 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1 complete;
+    class P0,P1,P2,Q0,Q1,W0 complete;
     class I0 available;
-    class W0 active;
     class F0,B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
     class A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
@@ -224,7 +221,7 @@ and use-case evidence bundle pass from a clean checkout.
 | Q0 | Documentation and Rust hygiene policy | Complete | Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks |
 | Q1 | Community health and repository governance | Complete | Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked |
 | I0 | Time-boxed semantic charter | Available | UTF-16 and event ADRs, fixture schema, Maven Central `no.rmz:rmatch:2.0.0-RC1` oracle protocol, first ASCII fixture set |
-| W0 | Cargo workspace and quality tooling | Active | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, and root quality command |
+| W0 | Cargo workspace and quality tooling | Complete | Rust 2024 workspace, pinned `1.97.0` toolchain, `1.85.0` MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run |
 | I1 | Executable ASCII-literal spine | Planned | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
