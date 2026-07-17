@@ -14,6 +14,7 @@ const ORACLE_FIXTURES: &str = "compat/fixtures/ascii-literals-v1.jsonl";
 const ORACLE_EXPECTED_RESULTS: &str = "compat/expected/java-2.0.0-RC1-ascii-literals-v1.jsonl";
 const ORACLE_EXPECTED_MANIFEST: &str =
     "compat/expected/java-2.0.0-RC1-ascii-literals-v1.manifest.json";
+const EVIDENCE_SUMMARY_JSON: &str = r#"{"schema_version":1,"evidence_id":"E0","scope":"implemented-slice","status":"pass","executed":["java-2.0.0-RC1-oracle","I1-E2","B0"],"use_cases":[{"use_case":"UC-0","status":"partial","evidence":["I1-E1","I1-E2","B0","A0-E5","I1-E6"]},{"use_case":"UC-1","status":"partial","evidence":["I1-E1","I1-E3","B0","I1-E6"]},{"use_case":"UC-2","status":"partial","evidence":["I1-E1","I1-E2","I1-E6"]},{"use_case":"UC-3","status":"partial","evidence":["I1-E2"]},{"use_case":"UC-4","status":"partial","evidence":["B0"]},{"use_case":"UC-5","status":"not-started","evidence":[]},{"use_case":"UC-6","status":"not-started","evidence":[]},{"use_case":"UC-7","status":"partial","evidence":["I1-E6"]},{"use_case":"UC-8","status":"partial","evidence":["I1-E2","I1-E6"]},{"use_case":"UC-9","status":"partial","evidence":["I1-E3"]},{"use_case":"UC-10","status":"not-started","evidence":[]},{"use_case":"UC-11","status":"not-started","evidence":[]},{"use_case":"UC-12","status":"partial","evidence":["I1-E1","I1-E2"]}]}"#;
 
 #[derive(Debug, Eq, PartialEq)]
 struct QualityStep {
@@ -87,7 +88,7 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
         }
         Some("bench-smoke") => run_benchmark_smoke(),
         Some("ci") => run_quality_gate(),
-        Some("evidence") => run_literal_evidence(),
+        Some("evidence") => run_evidence_summary(),
         Some("oracle") => run_java_oracle(),
         Some("roadmap") => render_roadmap(),
         Some(other) => Err(format!("unknown command `{other}`; run `cargo xtask help`")),
@@ -125,9 +126,16 @@ fn run_quality_gate() -> Result<(), String> {
         }
     }
 
+    run_evidence_summary()
+}
+
+fn run_evidence_summary() -> Result<(), String> {
     run_java_oracle()?;
     run_literal_evidence()?;
-    run_benchmark_smoke()
+    run_benchmark_smoke()?;
+    eprintln!("==> E0 use-case evidence summary");
+    println!("{EVIDENCE_SUMMARY_JSON}");
+    Ok(())
 }
 
 fn run_benchmark_smoke() -> Result<(), String> {
@@ -366,7 +374,9 @@ fn extract_mermaid(markdown: &str) -> Result<&str, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{QUALITY_STEPS, QualityStep, extract_mermaid, parse_java_feature};
+    use super::{
+        EVIDENCE_SUMMARY_JSON, QUALITY_STEPS, QualityStep, extract_mermaid, parse_java_feature,
+    };
 
     #[test]
     fn quality_plan_contains_the_declared_msrv_check() {
@@ -446,5 +456,24 @@ mod tests {
 
         // Assert
         assert_eq!(feature, None);
+    }
+
+    #[test]
+    fn evidence_summary_reports_every_declared_use_case_once() {
+        // Prepare
+        let expected_use_cases = 0..=12;
+
+        // Test
+        let occurrence_counts: Vec<_> = expected_use_cases
+            .map(|number| {
+                let identifier = format!(r#""use_case":"UC-{number}""#);
+                EVIDENCE_SUMMARY_JSON.matches(&identifier).count()
+            })
+            .collect();
+
+        // Assert
+        assert_eq!(occurrence_counts, vec![1; 13]);
+        assert!(EVIDENCE_SUMMARY_JSON.contains(r#""evidence_id":"E0""#));
+        assert!(EVIDENCE_SUMMARY_JSON.contains(r#""status":"not-started""#));
     }
 }
