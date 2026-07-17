@@ -47,7 +47,7 @@ flowchart TB
 
     subgraph BOOT[Bootstrap and first executable system]
         I0["I0 Semantic charter and ADRs"]
-        F0["F0 Fixture schema and Java oracle JSONL"]
+        F0["F0 Fixture schema and Java 2.0.0-RC1 oracle JSONL"]
         W0["W0 Cargo workspace and quality tooling"]
         A0["A0 Public builder, input, span, and sink API"]
         I1["I1 Executable ASCII-literal spine<br/>HIR -> shared NFA -> database -> scan -> events"]
@@ -218,7 +218,7 @@ and use-case evidence bundle pass from a clean checkout.
 | P2 | Use-case evidence contracts | Complete | Evidence classes plus UC-0 through UC-12 proof requirements in README |
 | Q0 | Documentation and Rust hygiene policy | Complete | Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks |
 | Q1 | Community health and repository governance | Complete | Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked |
-| I0 | Time-boxed semantic charter | Available | UTF-16 and event ADRs, fixture schema, pinned Java oracle protocol, first ASCII fixture set |
+| I0 | Time-boxed semantic charter | Available | UTF-16 and event ADRs, fixture schema, Maven Central `no.rmz:rmatch:2.0.0-RC1` oracle protocol, first ASCII fixture set |
 | I1 | Executable ASCII-literal spine | Planned | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |

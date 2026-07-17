@@ -16,7 +16,8 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Nothing yet.
+- Pinned the initial Java compatibility oracle to the Maven Central artifact
+  `no.rmz:rmatch:2.0.0-RC1`.
 
 ### Deprecated
 

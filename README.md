@@ -167,7 +167,7 @@ are true:
 | Product | `rustmatch` |
 | Status | Proposed |
 | License | Apache License 2.0 |
-| Behavioral reference | Java rmatch 2.x |
+| Behavioral reference | Maven Central `no.rmz:rmatch:2.0.0-RC1` |
 | Primary implementation language | Stable Rust |
 | Primary workload | Many patterns reused over large text buffers |
 | Primary quality order | Correctness, semantic parity, predictability, performance |
@@ -1515,7 +1515,10 @@ machine asserted. Merely observing callbacks in a log is not evidence.
 
 **Preconditions**
 
-- Named Java rmatch and rustmatch versions are available.
+- The Java reference is the Maven Central artifact
+  `no.rmz:rmatch:2.0.0-RC1`, with JAR SHA-256
+  `05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a`.
+- The exact rustmatch revision is available.
 - A shared fixture has patterns, input, expected acceptance, and coordinate
   mode.
 
@@ -1536,7 +1539,8 @@ machine asserted. Merely observing callbacks in a log is not evidence.
 **Main success scenario**
 
 1. Materialize canonical UTF-16 fixture inputs.
-2. Run the Java oracle in a pinned container/JDK.
+2. Resolve `no.rmz:rmatch:2.0.0-RC1` from Maven Central and run the Java
+   compatibility oracle in a pinned container/JDK.
 3. Run rustmatch in a pinned container/toolchain.
 4. Normalize outputs to `(pattern_id, start, end)`.
 5. Sort and compare event multisets.
@@ -1864,6 +1868,9 @@ specification work into a long horizontal phase.
 - ADR-0002 for match event selection.
 - Machine-readable fixture schema.
 - Java oracle CLI emitting sorted JSONL events and structured rejection data.
+- The oracle resolves the exact Maven Central artifact
+  `no.rmz:rmatch:2.0.0-RC1`; it never follows `latest` or a moving source
+  branch.
 - A tiny first fixture family for several ASCII literals, overlapping starts,
   duplicate text with distinct pattern IDs, rejection of unsupported syntax,
   and empty input.
@@ -2331,6 +2338,22 @@ When the written contract, Java behavior, and a sensible Rust design disagree,
 the disagreement must become an explicit specification decision and regression
 fixture. Compatibility is a maintained relationship, not a one-time porting
 milestone.
+
+### Pinned initial Java reference
+
+The initial compatibility oracle is locked to the published Maven Central
+artifact
+[`no.rmz:rmatch:2.0.0-RC1`](https://central.sonatype.com/artifact/no.rmz/rmatch/2.0.0-RC1),
+whose JAR SHA-256 is
+`05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a`.
+Project discussion may shorten this to "2.0-RC1", but manifests and commands
+must use the exact Maven version `2.0.0-RC1`.
+
+This is a reproducibility lock, not a claim that the artifact is eternally
+normative. Changing the reference requires an explicit reviewed change,
+retained old-version evidence where it remains relevant, and regeneration of
+affected differential fixtures. The oracle must not silently track Maven
+Central's `latest` version or a source branch.
 
 ## License
 
