@@ -120,3 +120,19 @@ reproduced before a branch is pushed. The driver resolves both revisions to
 commit SHAs and refuses to label a dirty working tree as a reproducible result;
 `C1_ALLOW_DIRTY=1` exists only for harness development and its output must not
 be retained as evidence.
+
+### Initial hosted-runner calibration
+
+The activation PR ran the same base and candidate three times on 2026-07-17.
+All attempts passed without invoking the retry path:
+
+| Attempt | Base median | Candidate median | Candidate change |
+|---|---:|---:|---:|
+| 1 | 439.9 ms | 432.5 ms | -1.68% |
+| 2 | 566.0 ms | 569.4 ms | +0.60% |
+| 3 | 563.8 ms | 566.1 ms | +0.40% |
+
+The large shift in absolute time between hosted runners is expected noise and
+is evidence for the same-runner design, not a rustmatch performance result.
+The retained receipts belong to [GitHub Actions run
+29596635864](https://github.com/la3lma/rustmatch/actions/runs/29596635864).

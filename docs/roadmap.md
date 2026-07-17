@@ -162,9 +162,9 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0 complete;
-    class I1 active;
-    class B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,C0,C1 complete;
+    class I1,B0 active;
+    class E0,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
     class I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
 
@@ -232,7 +232,7 @@ and use-case evidence bundle pass from a clean checkout.
 | I1 | Executable ASCII-literal spine | Active | Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, and benchmark smoke |
 | C0 | Mandatory functional PR CI | Complete | Required GitHub quality gate runs formatting, Clippy, tests, Rustdoc, MSRV, the pinned Java oracle, literal differential evidence, and benchmark smoke |
 | B0 | RegexSet-aware benchmark smoke | Active | Correctness-gated RS-NATIVE set-membership and RS-EVENTS full-event lanes against pinned `regex` 1.13.1 pass locally; retained stable-machine receipts remain open |
-| C1 | Coarse CI performance tripwire | Active | Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner comparator, catastrophic-slowdown tests, base/head CI activation, and repeated hosted-runner calibration |
+| C1 | Coarse CI performance tripwire | Complete | Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner base/head comparator, catastrophic-slowdown tests, one automatic reverse-order retry, retained artifacts, and three green hosted-runner calibration attempts |
 | E0 | UC evidence summary command | Planned | One command reports the implemented use-case evidence and exact pass/fail state without relying on prose claims |
 | I2 | ASCII predicates | Planned | Public differential fixtures and exhaustive ASCII predicate tests through the same spine |
 | I3 | Alternation and grouping | Planned | Public composition fixtures, epsilon-closure invariants, and bounded HIR/NFA property comparison |
