@@ -98,10 +98,11 @@ The initial public types are only `MatcherBuilder`, `Matcher`, `PatternId`,
 `Utf16Text`, `Match`, `Utf16Span`, and one non-exhaustive `Error` type. The
 initial methods are construction, pattern registration, build, scan, and
 read-only accessors for IDs and spans. `PatternId` is a `u32`-backed domain
-type; positions remain `u64` UTF-16 coordinates. Parser, HIR, NFA, state,
-cache, worker, and sink implementation types stay private. Custom inputs,
-iterators, async APIs, fallible callbacks, runtime pattern mutation, and tuning
-knobs are deferred until a concrete use case earns them.
+type; positions remain `u64` UTF-16 coordinates; and `Utf16Text` initially owns
+its encoded `Vec<u16>`. Parser, HIR, NFA, state, cache, worker, and sink
+implementation types stay private. Borrowed or custom inputs, iterators, async
+APIs, fallible callbacks, runtime pattern mutation, and tuning knobs are
+deferred until a concrete use case earns them.
 
 The lifecycle is explicit:
 
@@ -196,7 +197,9 @@ are true:
 | Status | Proposed |
 | License | Apache License 2.0 |
 | Behavioral reference | Maven Central `no.rmz:rmatch:2.0.0-RC1` |
-| Primary implementation language | Stable Rust |
+| Primary implementation language | Rust 2024 edition |
+| Bootstrap toolchain | Rust `1.97.0`, pinned for development and primary CI |
+| Minimum supported Rust version | Rust `1.85.0`, the first Rust 2024 release |
 | Primary workload | Many patterns reused over large text buffers |
 | Primary quality order | Correctness, semantic parity, predictability, performance |
 
@@ -480,7 +483,7 @@ It should not expose:
 | NFR-007 | Error quality | Parse errors include source span and actionable reason |
 | NFR-008 | Observability | Optional aggregate diagnostics without hot-path logging |
 | NFR-009 | Documentation | Every public item has rustdoc and at least one end-to-end example |
-| NFR-010 | Toolchain | Stable Rust with an explicit MSRV policy before 1.0 |
+| NFR-010 | Toolchain | Rust 2024; primary CI on pinned `1.97.0`; MSRV lane on `1.85.0` |
 | NFR-011 | Reproducibility | Published benchmark points have archived receipts |
 | NFR-012 | Portability | Linux and macOS first; no architecture-specific correctness |
 | NFR-013 | Dependency hygiene | Small dependency set, audited before releases |
@@ -742,19 +745,18 @@ hashes agree and expected and observed match counts agree.
 
 ### Open product decisions
 
-These require ADRs before their associated implementation lands:
+These require ADRs before their associated implementation lands. The initial
+API has already selected an owned `Utf16Text` and callback-based scan; borrowed
+inputs and iterators remain possible later additions rather than bootstrap
+requirements.
 
-1. Should the canonical `Utf16Text` always own `Vec<u16>`, or may it borrow a
-   caller-owned UTF-16 slice?
-2. Should the primary scan API invoke a sink during scanning, return an
-   iterator, or offer both with different memory and ordering contracts?
-3. Should parallel scanning invoke a shared concurrent sink or collect
+1. Should a later convenience API add borrowed inputs or a match iterator?
+2. Should parallel scanning invoke a shared concurrent sink or collect
    partition-local events and merge afterward?
-4. What is the maximum supported explicit worker count, if any?
-5. What state-cache budget and fallback behavior prevent pathological DFA
+3. What is the maximum supported explicit worker count, if any?
+4. What state-cache budget and fallback behavior prevent pathological DFA
    growth?
-6. Is compiled pattern database serialization worth stabilizing after 1.0?
-7. What MSRV balances modern Rust facilities against adoption?
+5. Is compiled pattern database serialization worth stabilizing after 1.0?
 
 ---
 
@@ -1902,7 +1904,7 @@ change leaves a runnable, tested capability or independently useful executable
 tooling. An unused parser, HIR, compiler, or engine skeleton is not an
 integration milestone.
 
-The recommended bootstrap PR sequence is:
+The recommended bootstrap PR sequence is a starting shape, not a cadence rule:
 
 1. **Workspace gate:** `W0` and the first part of `C0` establish the Cargo
    workspace, pinned toolchain, formatting, Clippy, tests, rustdoc, and one
@@ -1921,6 +1923,13 @@ The recommended bootstrap PR sequence is:
 This sequence deliberately favors integration over one-PR-per-roadmap-box.
 Completeness grows from the running spine; components become merge candidates
 when that spine uses them, not merely when their local unit tests pass.
+
+PR cadence is chosen by coherence and integration, not line count or elapsed
+time. Split a change when parts have independent behavior, evidence, review,
+or rollback paths. Keep tightly coupled work together when splitting it would
+merge unused machinery, temporary public API, or a system that does not yet run
+end to end. Draft PRs may expose a larger walking-spine change early for review
+without pretending that every intermediate commit is mergeable.
 
 ### Increment 0: Time-box the semantic charter
 
@@ -1968,7 +1977,8 @@ language.
   crates.
 - Required pull-request CI for formatting, Clippy, workspace compilation,
   focused unit tests, public end-to-end tests, differential smoke fixtures,
-  rustdoc, MSRV candidate, and license checks.
+  rustdoc, Rust `1.85.0` MSRV, and license checks. Primary checks use the pinned
+  Rust `1.97.0` bootstrap toolchain.
 - A coarse same-runner base/PR performance tripwire calibrated to catch severe
   anomalies without pretending to replace stable-machine measurements.
 - Public builder that accepts non-empty 7-bit ASCII literal patterns and

@@ -20,6 +20,8 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   `no.rmz:rmatch:2.0.0-RC1`.
 - Reduced the proposed bootstrap API and made the ASCII-literal contract and
   integration-first PR sequence explicit.
+- Selected Rust 2024 edition, bootstrap toolchain `1.97.0`, MSRV `1.85.0`, and
+  an integration-driven PR cadence without arbitrary size limits.
 
 ### Deprecated
 

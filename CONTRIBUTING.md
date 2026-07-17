@@ -46,6 +46,18 @@ Every pull request must:
    optimization.
 8. Leave no unexplained generated files, lint suppressions, or TODO markers.
 
+### Pull-request cadence
+
+There is no required line count, duration, commit count, or one-task-per-PR
+rule. A PR should have one explainable purpose, remain reviewable, and leave a
+runnable integrated capability or independently useful executable tooling.
+
+Split work when parts have independent behavior, evidence, reviewers, or
+rollback paths. Keep work together when splitting it would merge unused
+components, temporary public API, or a disconnected horizontal layer. Use a
+draft PR to expose a larger walking-spine change early without claiming that
+every intermediate commit is ready to merge.
+
 A green CI performance tripwire is supplementary. It does not replace the
 external performance receipts required by the
 [testing and regression policy](README.md#testing-and-regression-policy).
@@ -54,7 +66,12 @@ external performance receipts required by the
 
 ### Formatting and linting
 
-- Use the repository's pinned stable Rust toolchain and canonical `rustfmt`.
+- Use Rust 2024 edition. Bootstrap development and primary CI use pinned Rust
+  `1.97.0`; the library also has to build in the Rust `1.85.0` MSRV lane.
+- A newer primary toolchain may be adopted routinely when all checks pass. An
+  MSRV increase requires a concrete benefit, compatibility review, and release
+  note.
+- Use the repository's pinned toolchain and canonical `rustfmt`.
 - Run Clippy for the whole workspace, all targets, and relevant features with
   warnings denied.
 - Do not add broad crate-level `allow` attributes to silence actionable

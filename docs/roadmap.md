@@ -3,7 +3,8 @@
 **Last reviewed:** 2026-07-17  
 **Implementation increments started:** **0/12**  
 **Implementation increments complete:** **0/12**  
-**Available for execution:** **I0 - time-boxed semantic charter**
+**Available for execution:** **I0 - semantic charter** and
+**W0 - Cargo workspace and quality tooling**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -102,7 +103,6 @@ flowchart TB
     Q1 --> W0
 
     I0 --> F0
-    I0 --> W0
     I0 --> A0
     F0 --> I1
     W0 --> I1
@@ -159,10 +159,10 @@ flowchart TB
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1 complete;
-    class I0 available;
+    class I0,W0 available;
     class F0,B0,E0,C0,C1,X0,B1,H1,R1,R2 evidence;
     class S0,G6,G7,G8,I10,I11 gate;
-    class W0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
+    class A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
