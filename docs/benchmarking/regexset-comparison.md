@@ -107,3 +107,16 @@ RUSTMATCH_BENCH_RUNNER=local \
 
 target/release/rustmatch-bench compare-tripwire base.json candidate.json
 ```
+
+Repository contributors normally use the complete same-runner driver instead:
+
+```sh
+BASE_SHA=origin/main scripts/c1-tripwire.sh
+```
+
+The pull-request workflow invokes that same script and retains its three JSON
+receipts. This keeps CI orchestration thin and lets the comparison path be
+reproduced before a branch is pushed. The driver resolves both revisions to
+commit SHAs and refuses to label a dirty working tree as a reproducible result;
+`C1_ALLOW_DIRTY=1` exists only for harness development and its output must not
+be retained as evidence.
