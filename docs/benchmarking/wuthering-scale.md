@@ -1,0 +1,51 @@
+# Wuthering Heights scale campaign
+
+The `I6-B1` campaign makes optimization work visible before it is admitted. It
+uses the original rmatch development corpus and word list, but reports only
+Rust-on-Rust engineering evidence. Cross-engine claims belong in the separate
+performance-measurements repository.
+
+## Workload
+
+- The corpus is the approximately 675 KiB Wuthering Heights fixture retained by
+  the Java rmatch repository.
+- The pattern source is that repository's list of words found in the book.
+- Each run selects 1,000, 5,000, and 10,000 distinct non-empty lines in stable
+  lexical order and escapes them as literal regular expressions.
+- The complete corpus is scanned after every cache scrub. Compilation and scan
+  medians are recorded separately.
+- One warm-up and three measured scans keep the unoptimized baseline tractable.
+  The focused I6 admission campaign uses three warm-ups and seven measurements.
+
+The scale lane intentionally complements rather than replaces the focused I6
+fixtures. Wuthering Heights reveals pattern-count scaling and cache sensitivity;
+small generated fixtures isolate the mechanism and retain exact event lists.
+
+## Cache pressure
+
+Before each warm-up and measured scan, the runner writes one word per nominal
+64-byte line across a dedicated scrub buffer. The default buffer is 256 MiB,
+large enough to exceed ordinary workstation caches and the 128 MiB last-level
+cache of the current high-throughput runner. The receipt records the actual
+size and a digest proving that the scrub pass executed. This is controlled
+cache pressure, not a claim that software can portably flush every hardware
+cache.
+
+## Run and inspect
+
+The corpus remains outside this repository. With sibling `rustmatch` and
+`rmatch` checkouts:
+
+```console
+scripts/i6-campaign.sh
+open target/benchmark-results/index.html
+```
+
+Override `RMATCH_REPOSITORY`, `PATTERN_SOURCE`, or `CORPUS_SOURCE` when the
+source checkout is elsewhere. `CORPUS_BYTES`, `CACHE_SCRUB_BYTES`, and
+`PATTERN_COUNTS` control an explicitly identified exploratory variant. The
+script refuses a dirty tree unless `I6_ALLOW_DIRTY=1` is deliberately set.
+
+The generated HTML table includes revision, runner, dimensions, event count,
+compilation median, scan median, throughput, source paths, and source digests.
+Raw JSON receipts remain authoritative; the table is only a view.

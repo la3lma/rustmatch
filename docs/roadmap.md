@@ -2,13 +2,13 @@
 
 **Last reviewed:** 2026-07-17
 
-**Implementation increments started:** **6/12**
+**Implementation increments started:** **7/12**
 
 **Implementation increments complete:** **6/12**
 
-**Active:** none
+**Active:** **I6 - Lazy deterministic-state cache**
 
-**Available for execution:** **I6 - Lazy deterministic-state cache**
+**Available for execution:** none while I6 is active
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -163,7 +163,7 @@ flowchart TB
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,S0,C0,C1,B0,E0 complete;
-    class I6 available;
+    class I6 active;
     class X0,B1,H1,R1,R2 evidence;
     class G6,G7,G8,I10,I11 gate;
     class I7,I8,I9,H2,H3,R3,REL planned;
