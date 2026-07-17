@@ -1,5 +1,5 @@
 [workspace]
-members = ["xtask"]
+members = ["rustmatch", "xtask"]
 resolver = "3"
 
 [workspace.package]
@@ -21,4 +21,3 @@ pedantic = { level = "warn", priority = -1 }
 dbg_macro = "warn"
 todo = "warn"
 unimplemented = "warn"
-
