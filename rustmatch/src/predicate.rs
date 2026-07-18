@@ -1,5 +1,8 @@
 //! Predicates over the complete UTF-16 code-unit domain.
 
+#[cfg(feature = "benchmark-internals")]
+use std::mem::size_of;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub(crate) struct SymbolPredicate {
     ascii: u128,
@@ -106,6 +109,15 @@ impl SymbolPredicate {
 
     pub(crate) fn is_empty(&self) -> bool {
         self.ascii == 0 && self.non_ascii_ranges.is_empty()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) fn retained_bytes(&self) -> usize {
+        size_of::<Self>().saturating_add(
+            self.non_ascii_ranges
+                .capacity()
+                .saturating_mul(size_of::<(u16, u16)>()),
+        )
     }
 
     fn from_ranges(ranges: &[(u16, u16)]) -> Self {

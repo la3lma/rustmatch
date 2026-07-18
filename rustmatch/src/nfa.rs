@@ -1,6 +1,8 @@
 //! Dense Thompson-style NFA compilation and immutable pattern database.
 
 use std::collections::HashMap;
+#[cfg(feature = "benchmark-internals")]
+use std::mem::size_of;
 
 use crate::hir::{Assertion, Hir, HirPattern};
 use crate::predicate::SymbolPredicate;
@@ -98,6 +100,29 @@ impl PatternDatabase {
 
     pub(crate) fn pattern_id(&self, ordinal: usize) -> PatternId {
         self.pattern_ids[ordinal]
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) fn retained_bytes(&self) -> usize {
+        size_of::<Self>()
+            .saturating_add(self.states.len().saturating_mul(size_of::<State>()))
+            .saturating_add(self.edges.len().saturating_mul(size_of::<Edge>()))
+            .saturating_add(
+                self.predicates
+                    .iter()
+                    .map(SymbolPredicate::retained_bytes)
+                    .sum::<usize>(),
+            )
+            .saturating_add(
+                self.terminal_ordinals
+                    .len()
+                    .saturating_mul(size_of::<usize>()),
+            )
+            .saturating_add(
+                self.pattern_ids
+                    .len()
+                    .saturating_mul(size_of::<PatternId>()),
+            )
     }
 
     #[inline]
@@ -436,6 +461,25 @@ mod tests {
         assert_eq!(database.predicates.len(), 1);
         assert_eq!(predicate_edges.len(), 2);
         assert!(predicate_edges.windows(2).all(|ids| ids[0] == ids[1]));
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn retained_byte_accounting_includes_database_storage() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [
+            parse(PatternId::new(1), "cat")?,
+            parse(PatternId::new(2), "[a-z]+")?,
+        ];
+
+        // Test
+        let database = compile(&patterns)?;
+        let retained_bytes = database.retained_bytes();
+
+        // Assert
+        assert!(retained_bytes >= std::mem::size_of_val(&database));
+        assert!(retained_bytes > database.state_count() * std::mem::size_of::<super::State>());
         Ok(())
     }
 

@@ -947,13 +947,14 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
             || "n/a".to_owned(),
             |value| value.spawned_workers.to_string(),
         );
-        let buffered_mib = receipt.cache_diagnostics.as_ref().map_or_else(
-            || "n/a".to_owned(),
-            |value| format_tenths(value.buffered_event_bytes as u128 * 10 / (1024 * 1024)),
-        );
+        let database_mib = diagnostic_mib(receipt, |value| value.database_retained_bytes);
+        let prefilter_mib = diagnostic_mib(receipt, |value| value.prefilter_retained_bytes);
+        let candidate_mib = diagnostic_mib(receipt, |value| value.prefilter_candidate_bytes);
+        let cache_table_mib = diagnostic_mib(receipt, |value| value.cache_table_bytes);
+        let buffered_mib = diagnostic_mib(receipt, |value| value.buffered_event_bytes);
         write!(
             rows,
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{partition_count}</td><td>{spawned_workers}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{buffered_mib} MiB</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{partition_count}</td><td>{spawned_workers}</td><td>{database_mib} MiB</td><td>{prefilter_mib} MiB</td><td>{candidate_mib} MiB</td><td>{cache_table_mib} MiB</td><td>{buffered_mib} MiB</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
             html_escape(&receipt.revision),
             html_escape(&receipt.runner),
             receipt.pattern_count,
@@ -988,7 +989,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1700px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1700px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Buffered events</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:2100px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:2100px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Database</th><th>Prefilter</th><th>Candidate bitmap</th><th>Cache tables</th><th>Buffered events</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation. Memory columns report explicitly accounted bytes, not allocator overhead.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -1010,6 +1011,20 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
 
 fn format_tenths(value: u128) -> String {
     format!("{}.{:01}", value / 10, value % 10)
+}
+
+fn diagnostic_mib(
+    receipt: &ScaleScanReceipt,
+    bytes: impl FnOnce(&CacheDiagnosticsReceipt) -> usize,
+) -> String {
+    receipt
+        .cache_diagnostics
+        .as_ref()
+        .map_or_else(|| "n/a".to_owned(), |value| format_mib_tenths(bytes(value)))
+}
+
+fn format_mib_tenths(bytes: usize) -> String {
+    format_tenths(bytes as u128 * 10 / (1024 * 1024))
 }
 
 fn format_hundredths(value: u128) -> String {
@@ -2176,6 +2191,7 @@ struct CacheDiagnosticsReceipt {
     requested_worker_count: usize,
     partition_count: usize,
     spawned_workers: usize,
+    database_retained_bytes: usize,
     cache_budget: usize,
     cache_states: usize,
     cache_hits: u64,
@@ -2201,6 +2217,7 @@ impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
             requested_worker_count: value.requested_worker_count(),
             partition_count: value.partition_count(),
             spawned_workers: value.spawned_workers(),
+            database_retained_bytes: value.database_retained_bytes(),
             cache_budget: value.cache_budget(),
             cache_states: value.cache_states(),
             cache_hits: value.cache_hits(),

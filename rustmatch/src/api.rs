@@ -238,6 +238,7 @@ pub struct ScanDiagnostics {
     requested_worker_count: usize,
     partition_count: usize,
     spawned_workers: usize,
+    database_retained_bytes: usize,
     total_cache_budget: usize,
     cache_states: usize,
     cache_hits: u64,
@@ -276,6 +277,12 @@ impl ScanDiagnostics {
     #[must_use]
     pub const fn spawned_workers(self) -> usize {
         self.spawned_workers
+    }
+
+    /// Explicitly accounted bytes retained by compiled pattern databases.
+    #[must_use]
+    pub const fn database_retained_bytes(self) -> usize {
+        self.database_retained_bytes
     }
 
     /// Configured total deterministic-state budget for this scan.
@@ -559,6 +566,11 @@ impl Matcher {
             requested_worker_count: self.requested_worker_count,
             partition_count: self.partitions.len(),
             spawned_workers: self.partitions.len().saturating_sub(1),
+            database_retained_bytes: self
+                .partitions
+                .iter()
+                .map(|partition| partition.database.retained_bytes())
+                .sum(),
             total_cache_budget: self
                 .partitions
                 .iter()
