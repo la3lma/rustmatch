@@ -115,7 +115,7 @@ Together with the 44 ordinary generated scenarios and two 256 MiB checkpoints,
 these controls produce 49 frozen scenarios. The preregistered initial worker
 sweeps contain 1,891 runs before adaptive winner confirmation and profiling.
 The executable campaign is frozen in the private benchmark repository at commit
-`d4ae950`.
+`3ba3f2f`.
 
 The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
 separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
@@ -164,6 +164,10 @@ answer. This exception was declared before B1 results.
 - Scenario/engine/worker execution order is deterministically shuffled from a
   recorded campaign seed. Failed or interrupted points resume without changing
   the original order.
+- Every executor invocation requires a passing host receipt no more than 15
+  minutes old and an independent live host check. Resumed invocations create a
+  new host session in campaign state, and every run records its session ID;
+  stale idle-host observations cannot authorize later work.
 - The host must be otherwise idle. CPU affinity, frequency policy, thermal
   state, and co-located load are recorded; unexplained interference invalidates
   the affected block.
