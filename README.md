@@ -806,7 +806,7 @@ hashes agree and expected and observed match counts agree.
 - Explicit pattern partitioning.
 - Correctness parity across worker counts.
 - Rust prefilter and parallelism receipts pass their predeclared positive-
-  improvement gates; Java results are not release evidence.
+  improvement gates; competitor results are not release evidence.
 - Complete thread calibration receipts.
 
 #### `1.0.0`: stable compatibility release
