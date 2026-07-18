@@ -2,9 +2,16 @@
 
 ## Status
 
-Protocol frozen before the external adapter and runner command are implemented.
-Input semantics, timing boundaries, modes, receipt fields, and acceptance rules
-below may not be weakened after results are known.
+Complete. The protocol was frozen before the external adapter and runner
+command were implemented. Input semantics, timing boundaries, modes, receipt
+fields, and acceptance rules below were not weakened after results were known.
+
+The implementation merged into the private performance harness as PR #1 at
+commit `04eb7ae`. Six retained receipts cover diverse literals and mixed regex
+in NFA, optimized single-worker, and explicit eight-partition modes. Every
+receipt passed strict outer validation, and all modes produced the same event
+digest within each scenario. The durable interpretation and links are in the
+[`I9 evidence package`](../evidence/i9/fdd5efa/README.md).
 
 ## Repositories and source identity
 
@@ -119,7 +126,7 @@ The performance repository receives:
 4. Confirm that archived receipts can be plotted by the ordinary pipeline.
 5. Merge I9 only after both repositories' checks and the smoke receipts pass.
 
-I9 integration is complete at that point. The broader B1 campaign then runs
+I9 integration is complete. The broader B1 campaign now runs
 1,000/2,500/5,000/7,500/10,000 patterns over 8 MiB and 50 MiB, zero/sparse/dense
 variants where available, diverse literals and the validated mixed-regex
 intersection, NFA and optimized one-worker baselines, and complete declared

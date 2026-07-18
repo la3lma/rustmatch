@@ -11,7 +11,8 @@
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `10/12`
-> increments started and `9/12` complete.
+> increments started and `10/12` complete. The B1 cross-engine campaign is
+> active.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -2386,6 +2387,13 @@ distinguishing reporting semantics.
 - Exact worker counts and engine version are available in the campaign record.
 - The frozen integration and receipt contract is in
   [`docs/experiments/i9-benchmark-harness.md`](docs/experiments/i9-benchmark-harness.md).
+- The exact-commit container, strict outer validation, six correctness-clean
+  smoke receipts, ordinary generated plot, and critical interpretation are
+  retained in the [`I9 evidence package`](docs/evidence/i9/fdd5efa/README.md).
+
+I9 proves that rustmatch is a first-class harness lane. The broader pattern,
+corpus, density, engine, and worker sweep above is the separate B1 evidence
+campaign; completing I9 does not claim those comparative results in advance.
 
 ### Increment 10: Hardening
 
