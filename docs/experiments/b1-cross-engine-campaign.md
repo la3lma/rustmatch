@@ -31,10 +31,11 @@ B1 must answer, without collapsing unlike execution models:
 
 ## Exact engine identities
 
-- Rust rustmatch starts from commit
-  `65453779f2560014fba020161b262ca660aeb58b`, built with the committed lockfile
-  and Rust `1.97.0`. Any later candidate receives a separate exact identity and
-  base/candidate receipts.
+- Rust rustmatch uses commit
+  `da755b0069c94d4da9db74a8778dd9932fc64671`, built with the committed lockfile
+  and Rust `1.97.0`. This is the frozen B1 candidate whose runner accounts for
+  every requested warm-up and measurement scan. Any later candidate receives a
+  separate exact identity and base/candidate receipts.
 - Java rmatch uses the published Maven Central artifact
   `no.rmz:rmatch:2.0.0-RC1`, including its recorded artifact checksum.
 - RE2/J uses `1.8`.
