@@ -128,6 +128,15 @@ runners prove that two requested warm-ups plus three measurements execute
 exactly five full scans. The frozen scenario dimensions and other engine inputs
 are unchanged.
 
+The initial timing window remains attributed to harness revision
+`91466be8fbc0f117433bf7ba6d9168aef477538e`. Before the separate profile window,
+benchmark revision `6ffa184c33a7ea82f9c092d0304b11423a046bf2` strengthened the
+profile and report path without changing any of the 1,891 initial timing runs.
+It validates and independently re-parses raw hardware counters, reports IPC,
+miss rates, scheduler activity, counter running time, and process RSS, and
+expands the core profile line described below. The final report retains both
+window revisions rather than attributing earlier timings to the later profiler.
+
 The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
 separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
 engine-neutral fixture was locally checked against Rust rustmatch at all three
@@ -213,11 +222,16 @@ worker optima, oversubscription, compile/prepare cost, memory and callback work,
 outliers, crossovers, and discontinuities such as the historical 1,000-to-10,000
 throughput drop.
 
-At minimum, Linux `perf stat` and sampled profiles are retained for Rust
-rustmatch at 1,000 and 10,000 patterns in single-worker and confirmed-winner
-modes for both families. Any unexplained cliff or engine-order reversal adds a
-profile point before a claim is accepted. Profiles record symbols, exact image,
-kernel restrictions, command, counters, and raw output.
+Linux `perf stat` and sampled profiles are retained for Rust rustmatch at 1,000,
+2,500, 5,000, 7,500, and 10,000 patterns in single-worker and
+confirmed-winner modes for both 50 MiB core families. These 20 evidence roles
+exceed the original endpoint minimum and locate a scaling discontinuity rather
+than asking endpoint profiles to explain an unknown transition. Identical
+single-worker and winner commands collapse into one physical point with both
+roles. Any unexplained cliff or engine-order reversal outside this complete
+core line adds a profile point before a claim is accepted. Profiles record
+symbols, exact image, kernel restrictions, command, validated counters, raw
+output, and whole-process resource use.
 
 ## CI boundary
 
