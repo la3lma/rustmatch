@@ -73,6 +73,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
         Some("literal-tripwire") if arguments.next().is_none() => {
             literal_tripwire().map(CommandOutput::Tripwire)
         }
+        Some("harness-run") => harness_run_command(&mut arguments).map(CommandOutput::HarnessRun),
         Some("compare-tripwire") => {
             comparison_paths(&mut arguments, compare_tripwire_files).map(CommandOutput::Comparison)
         }
@@ -153,6 +154,26 @@ fn i7_scan_command(arguments: &mut impl Iterator<Item = String>) -> Result<I7Sca
     i7_scan(&scenario, pattern_count, corpus_bytes, cache_scrub_bytes)
 }
 
+fn harness_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<HarnessRunReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let repeats = parse_positive_usize("repeat count", arguments.next())?;
+    let warmups = parse_positive_usize("warm-up count", arguments.next())?;
+    let mode = HarnessMode::parse(&arguments.next().ok_or_else(usage)?)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    harness_run(
+        Path::new(&patterns),
+        Path::new(&corpus),
+        repeats,
+        warmups,
+        mode,
+    )
+}
+
 fn comparison_paths<T>(
     arguments: &mut impl Iterator<Item = String>,
     compare: impl FnOnce(&Path, &Path) -> Result<T, String>,
@@ -166,7 +187,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -178,6 +199,241 @@ fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usiz
         Err(format!("{description} must be greater than zero"))
     } else {
         Ok(parsed)
+    }
+}
+
+fn harness_run(
+    pattern_path: &Path,
+    corpus_path: &Path,
+    repeats: usize,
+    warmups: usize,
+    mode: HarnessMode,
+) -> Result<HarnessRunReceipt, String> {
+    let input_started = Instant::now();
+    let pattern_bytes = fs::read(pattern_path).map_err(|error| {
+        format!(
+            "could not read harness patterns {}: {error}",
+            pattern_path.display()
+        )
+    })?;
+    let corpus_bytes = fs::read(corpus_path).map_err(|error| {
+        format!(
+            "could not read harness corpus {}: {error}",
+            corpus_path.display()
+        )
+    })?;
+    let fixture = HarnessFixture::from_bytes(&pattern_bytes, &corpus_bytes)?;
+    let input_prepare_ns = nanos(input_started.elapsed());
+
+    let prepare_started = Instant::now();
+    let matcher = build_harness_matcher(&fixture.patterns, mode)?;
+    let prepare_ns = nanos(prepare_started.elapsed());
+
+    let (expected, diagnostics) = rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+    let expected_count = expected.count;
+    let event_digest = expected.digest();
+
+    let mut warmup_ns = Vec::with_capacity(warmups);
+    for _ in 0..warmups {
+        let started = Instant::now();
+        let count = harness_event_count(&matcher, &fixture.input)?;
+        warmup_ns.push(nanos(started.elapsed()));
+        if count != expected_count {
+            return Err(format!(
+                "harness warm-up produced {count} events; expected {expected_count}"
+            ));
+        }
+    }
+
+    let mut scan_ns = Vec::with_capacity(repeats);
+    for _ in 0..repeats {
+        let started = Instant::now();
+        let count = harness_event_count(&matcher, &fixture.input)?;
+        scan_ns.push(nanos(started.elapsed()));
+        if count != expected_count {
+            return Err(format!(
+                "harness measurement produced {count} events; expected {expected_count}"
+            ));
+        }
+    }
+    let median_scan_ns = median(&mut scan_ns.clone());
+    if median_scan_ns == 0 {
+        return Err("harness median scan time must be positive".to_owned());
+    }
+    let throughput_bytes = u32::try_from(fixture.corpus_bytes)
+        .map_err(|_| "harness corpus exceeds the 4 GiB throughput-reporting limit".to_owned())?;
+    let throughput_nanos = u64::try_from(median_scan_ns)
+        .map_err(|_| "harness scan duration exceeds the u64 nanosecond range".to_owned())?;
+    let throughput_mbit_per_second = f64::from(throughput_bytes) * 8.0
+        / Duration::from_nanos(throughput_nanos).as_secs_f64()
+        / 1_000_000.0;
+
+    Ok(HarnessRunReceipt {
+        schema_version: 1,
+        runner_version: "rustmatch-harness-v1",
+        engine: "rustmatch-rust",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        mode: mode.label(),
+        requested_worker_count: diagnostics.requested_worker_count(),
+        partition_count: diagnostics.partition_count(),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_units: fixture.input.as_units().len(),
+        input_prepare_ns,
+        prepare_ns,
+        warmup_ns,
+        scan_ns,
+        median_scan_ns,
+        throughput_mbit_per_second,
+        matches_per_iteration: expected_count,
+        event_digest,
+        diagnostics: diagnostics.into(),
+        correctness: "pass",
+    })
+}
+
+fn build_harness_matcher(
+    patterns: &[HarnessPattern],
+    mode: HarnessMode,
+) -> Result<Matcher, String> {
+    let mut builder = MatcherBuilder::new();
+    match mode {
+        HarnessMode::Nfa => {
+            builder
+                .state_cache_budget(0)
+                .prefilter_enabled(false)
+                .literal_prefilter_enabled(false);
+        }
+        HarnessMode::Single => {}
+        HarnessMode::Parallel(worker_count) => {
+            builder.worker_count(worker_count);
+        }
+    }
+    for pattern in patterns {
+        builder
+            .add(pattern.id, &pattern.expression)
+            .map_err(|error| format!("harness pattern {} was rejected: {error}", pattern.id))?;
+    }
+    builder
+        .build()
+        .map_err(|error| format!("harness matcher build failed: {error}"))
+}
+
+fn harness_event_count(matcher: &Matcher, input: &Utf16Text) -> Result<usize, String> {
+    let mut count = 0_usize;
+    matcher
+        .scan(input, |_| count += 1)
+        .map_err(|error| format!("harness scan failed: {error}"))?;
+    Ok(count)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum HarnessMode {
+    Nfa,
+    Single,
+    Parallel(usize),
+}
+
+impl HarnessMode {
+    fn parse(source: &str) -> Result<Self, String> {
+        match source {
+            "nfa" => Ok(Self::Nfa),
+            "single" => Ok(Self::Single),
+            _ => {
+                let worker_count = source.parse::<usize>().map_err(|error| {
+                    format!(
+                        "invalid harness mode {source:?}; expected nfa, single, or a positive worker count: {error}"
+                    )
+                })?;
+                if worker_count == 0 {
+                    Err("harness worker count must be greater than zero".to_owned())
+                } else {
+                    Ok(Self::Parallel(worker_count))
+                }
+            }
+        }
+    }
+
+    fn label(self) -> String {
+        match self {
+            Self::Nfa => "nfa".to_owned(),
+            Self::Single => "single".to_owned(),
+            Self::Parallel(worker_count) => worker_count.to_string(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct HarnessPattern {
+    id: PatternId,
+    expression: String,
+}
+
+#[derive(Debug)]
+struct HarnessFixture {
+    patterns: Vec<HarnessPattern>,
+    input: Utf16Text,
+    corpus_bytes: usize,
+}
+
+impl HarnessFixture {
+    fn from_bytes(pattern_bytes: &[u8], corpus_bytes: &[u8]) -> Result<Self, String> {
+        if !pattern_bytes.is_ascii() {
+            return Err("harness pattern file must contain only ASCII bytes".to_owned());
+        }
+        if !corpus_bytes.is_ascii() {
+            return Err("harness corpus must contain only ASCII bytes".to_owned());
+        }
+        let pattern_text = std::str::from_utf8(pattern_bytes)
+            .map_err(|error| format!("harness pattern file is not valid ASCII: {error}"))?;
+        let mut ids = BTreeSet::new();
+        let mut patterns = Vec::new();
+        for (line_index, source_line) in pattern_text.lines().enumerate() {
+            let line = source_line.strip_suffix('\r').unwrap_or(source_line);
+            let (id_source, expression) = line.split_once('\t').ok_or_else(|| {
+                format!(
+                    "harness pattern row {} has no tab separator",
+                    line_index + 1
+                )
+            })?;
+            if expression.is_empty() || expression.contains('\t') {
+                return Err(format!(
+                    "harness pattern row {} must contain one non-empty expression",
+                    line_index + 1
+                ));
+            }
+            let id_value = id_source.parse::<u32>().map_err(|error| {
+                format!(
+                    "invalid harness pattern ID {id_source:?} on row {}: {error}",
+                    line_index + 1
+                )
+            })?;
+            if id_value == 0 {
+                return Err(format!(
+                    "harness pattern ID on row {} must be positive",
+                    line_index + 1
+                ));
+            }
+            if !ids.insert(id_value) {
+                return Err(format!("duplicate harness pattern ID {id_value}"));
+            }
+            patterns.push(HarnessPattern {
+                id: PatternId::new(id_value),
+                expression: expression.to_owned(),
+            });
+        }
+        if patterns.is_empty() {
+            return Err("harness pattern file must contain at least one row".to_owned());
+        }
+        let corpus_text = std::str::from_utf8(corpus_bytes)
+            .map_err(|error| format!("harness corpus is not valid ASCII: {error}"))?;
+        Ok(Self {
+            patterns,
+            input: Utf16Text::from(corpus_text),
+            corpus_bytes: corpus_bytes.len(),
+        })
     }
 }
 
@@ -1862,6 +2118,7 @@ fn event_digest(events: &[Event]) -> String {
 enum CommandOutput {
     Smoke(SmokeReceipt),
     Tripwire(TripwireReceipt),
+    HarnessRun(HarnessRunReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
@@ -1871,6 +2128,31 @@ enum CommandOutput {
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
+}
+
+#[derive(Debug, Serialize)]
+struct HarnessRunReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    engine: &'static str,
+    revision: String,
+    rust_version: String,
+    mode: String,
+    requested_worker_count: usize,
+    partition_count: usize,
+    expression_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+    median_scan_ns: u128,
+    throughput_mbit_per_second: f64,
+    matches_per_iteration: usize,
+    event_digest: String,
+    diagnostics: CacheDiagnosticsReceipt,
+    correctness: &'static str,
 }
 
 #[derive(Debug, Serialize)]
@@ -2381,10 +2663,11 @@ struct ComparisonReceipt {
 #[cfg(test)]
 mod tests {
     use super::{
-        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, Event, I6ScanReceipt,
-        I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT,
-        ScaleScanReceipt, TripwireReceipt, compare_i6, compare_i7, compare_i7_wuthering,
-        compare_tripwire, compare_wuthering_tripwire, expand_corpus, regex_events,
+        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, Event, HarnessFixture,
+        HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES,
+        SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt, build_harness_matcher, compare_i6,
+        compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
+        expand_corpus, harness_event_count, regex_events, rust_event_summary_with_diagnostics,
         select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
@@ -2409,6 +2692,98 @@ mod tests {
                 .iter()
                 .all(|pattern| first.corpus.contains(pattern))
         );
+        Ok(())
+    }
+
+    #[test]
+    fn harness_fixture_maps_ascii_bytes_to_equal_utf16_units() -> Result<(), String> {
+        // Prepare
+        let patterns = b"1\tcat\n2\tc.t\n";
+        let corpus = b"cat cut";
+
+        // Test
+        let fixture = HarnessFixture::from_bytes(patterns, corpus)?;
+
+        // Assert
+        assert_eq!(fixture.patterns.len(), 2);
+        assert_eq!(fixture.patterns[0].id.get(), 1);
+        assert_eq!(fixture.patterns[1].expression, "c.t");
+        assert_eq!(fixture.corpus_bytes, corpus.len());
+        assert_eq!(fixture.input.as_units().len(), corpus.len());
+        assert_eq!(fixture.input.as_units(), &[99, 97, 116, 32, 99, 117, 116]);
+        Ok(())
+    }
+
+    #[test]
+    fn harness_fixture_rejects_ambiguous_or_non_ascii_input() {
+        // Prepare
+        let duplicate_ids = b"1\tcat\n1\tdog\n";
+        let zero_id = b"0\tcat\n";
+        let extra_tab = b"1\tca\tt\n";
+        let non_ascii_corpus = &[0xff];
+
+        // Test
+        let duplicate_result = HarnessFixture::from_bytes(duplicate_ids, b"cat dog");
+        let zero_result = HarnessFixture::from_bytes(zero_id, b"cat");
+        let tab_result = HarnessFixture::from_bytes(extra_tab, b"cat");
+        let corpus_result = HarnessFixture::from_bytes(b"1\tcat\n", non_ascii_corpus);
+
+        // Assert
+        assert!(matches!(duplicate_result, Err(message) if message.contains("duplicate")));
+        assert!(matches!(zero_result, Err(message) if message.contains("positive")));
+        assert!(matches!(tab_result, Err(message) if message.contains("one non-empty")));
+        assert!(matches!(corpus_result, Err(message) if message.contains("only ASCII")));
+    }
+
+    #[test]
+    fn harness_modes_preserve_events_and_report_actual_partitions() -> Result<(), String> {
+        // Prepare
+        let fixture = HarnessFixture::from_bytes(b"1\tcat\n2\tc.t\n", b"cat cut")?;
+        let modes = [
+            (HarnessMode::Nfa, 1),
+            (HarnessMode::Single, 1),
+            (HarnessMode::Parallel(2), 2),
+        ];
+        let mut reference = None;
+
+        // Test
+        for (mode, expected_partitions) in modes {
+            let matcher = build_harness_matcher(&fixture.patterns, mode)?;
+            let count = harness_event_count(&matcher, &fixture.input)?;
+            let (summary, diagnostics) =
+                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+            let evidence = (summary.count, summary.digest());
+
+            // Assert
+            assert_eq!(count, 3);
+            assert_eq!(diagnostics.partition_count(), expected_partitions);
+            if let Some(expected) = &reference {
+                assert_eq!(&evidence, expected);
+            } else {
+                reference = Some(evidence);
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn harness_mode_is_explicit_and_has_no_arbitrary_worker_cap() -> Result<(), String> {
+        // Prepare
+        let oversized_but_valid_count = "4096";
+
+        // Test
+        let nfa = HarnessMode::parse("nfa")?;
+        let single = HarnessMode::parse("single")?;
+        let parallel = HarnessMode::parse(oversized_but_valid_count)?;
+        let zero = HarnessMode::parse("0");
+        let unknown = HarnessMode::parse("automatic");
+
+        // Assert
+        assert_eq!(nfa, HarnessMode::Nfa);
+        assert_eq!(single, HarnessMode::Single);
+        assert_eq!(parallel, HarnessMode::Parallel(4096));
+        assert!(matches!(zero, Err(message) if message.contains("greater than zero")));
+        assert!(matches!(unknown, Err(message) if message.contains("expected nfa")));
         Ok(())
     }
 
