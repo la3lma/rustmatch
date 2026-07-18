@@ -42,6 +42,7 @@ mod hir;
 mod nfa;
 mod parser;
 mod predicate;
+mod prefilter;
 mod types;
 
 #[cfg(feature = "benchmark-internals")]

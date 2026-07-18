@@ -30,6 +30,15 @@ const I6_MEASURED_ITERATIONS: u32 = 7;
 const I6_REQUIRED_IMPROVEMENT_BASIS_POINTS: u128 = 500;
 const I6_MAXIMUM_REGRESSION_BASIS_POINTS: u128 = 300;
 const I6_MAXIMUM_COMPILE_REGRESSION_BASIS_POINTS: u128 = 300;
+const I7_WARMUP_ITERATIONS: u32 = 3;
+const I7_MEASURED_ITERATIONS: u32 = 7;
+const I7_REQUIRED_IMPROVEMENT_BASIS_POINTS: u128 = 1_000;
+const I7_REQUIRED_IMPROVEMENT_NS: u128 = 2_000_000;
+const I7_MAXIMUM_REGRESSION_BASIS_POINTS: u128 = 300;
+const I7_MAXIMUM_REGRESSION_NS: u128 = 1_000_000;
+const I7_MAXIMUM_COMPILE_REGRESSION_NS: u128 = 25_000_000;
+const I7_MAXIMUM_PREFILTER_BYTES: usize = 8 * 1024 * 1024;
+const I7_CANDIDATE_FIXED_ALLOWANCE_BYTES: usize = 64 * 1024;
 const SCALE_WARMUP_ITERATIONS: u32 = 1;
 const SCALE_MEASURED_ITERATIONS: u32 = 3;
 
@@ -65,15 +74,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             literal_tripwire().map(CommandOutput::Tripwire)
         }
         Some("compare-tripwire") => {
-            let baseline = arguments.next();
-            let candidate = arguments.next();
-            if arguments.next().is_some() {
-                return Err(usage());
-            }
-            let baseline = baseline.ok_or_else(usage)?;
-            let candidate = candidate.ok_or_else(usage)?;
-            compare_tripwire_files(Path::new(&baseline), Path::new(&candidate))
-                .map(CommandOutput::Comparison)
+            comparison_paths(&mut arguments, compare_tripwire_files).map(CommandOutput::Comparison)
         }
         Some("i6-scan") => {
             let scenario = arguments.next();
@@ -88,15 +89,11 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             i6_scan(&scenario, pattern_count, corpus_bytes).map(CommandOutput::I6Scan)
         }
         Some("compare-i6") => {
-            let baseline = arguments.next();
-            let candidate = arguments.next();
-            if arguments.next().is_some() {
-                return Err(usage());
-            }
-            let baseline = baseline.ok_or_else(usage)?;
-            let candidate = candidate.ok_or_else(usage)?;
-            compare_i6_files(Path::new(&baseline), Path::new(&candidate))
-                .map(CommandOutput::I6Comparison)
+            comparison_paths(&mut arguments, compare_i6_files).map(CommandOutput::I6Comparison)
+        }
+        Some("i7-scan") => i7_scan_command(&mut arguments).map(CommandOutput::I7Scan),
+        Some("compare-i7") => {
+            comparison_paths(&mut arguments, compare_i7_files).map(CommandOutput::I7Comparison)
         }
         Some("wuthering-scan") => {
             let patterns = arguments.next();
@@ -122,15 +119,12 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             .map(CommandOutput::ScaleScan)
         }
         Some("compare-wuthering-tripwire") => {
-            let baseline = arguments.next();
-            let candidate = arguments.next();
-            if arguments.next().is_some() {
-                return Err(usage());
-            }
-            let baseline = baseline.ok_or_else(usage)?;
-            let candidate = candidate.ok_or_else(usage)?;
-            compare_wuthering_tripwire_files(Path::new(&baseline), Path::new(&candidate))
+            comparison_paths(&mut arguments, compare_wuthering_tripwire_files)
                 .map(CommandOutput::ScaleComparison)
+        }
+        Some("compare-i7-wuthering") => {
+            comparison_paths(&mut arguments, compare_i7_wuthering_files)
+                .map(CommandOutput::I7ScaleComparison)
         }
         Some("render-table") => {
             let output = arguments.next().ok_or_else(usage)?;
@@ -148,8 +142,31 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
     }
 }
 
+fn i7_scan_command(arguments: &mut impl Iterator<Item = String>) -> Result<I7ScanReceipt, String> {
+    let scenario = arguments.next().ok_or_else(usage)?;
+    let pattern_count = parse_positive_usize("pattern count", arguments.next())?;
+    let corpus_bytes = parse_positive_usize("corpus bytes", arguments.next())?;
+    let cache_scrub_bytes = parse_positive_usize("cache scrub bytes", arguments.next())?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    i7_scan(&scenario, pattern_count, corpus_bytes, cache_scrub_bytes)
+}
+
+fn comparison_paths<T>(
+    arguments: &mut impl Iterator<Item = String>,
+    compare: impl FnOnce(&Path, &Path) -> Result<T, String>,
+) -> Result<T, String> {
+    let baseline = arguments.next().ok_or_else(usage)?;
+    let candidate = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    compare(Path::new(&baseline), Path::new(&candidate))
+}
+
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -466,6 +483,242 @@ fn compare_i6(
     })
 }
 
+fn i7_scan(
+    scenario: &str,
+    pattern_count: usize,
+    corpus_target_bytes: usize,
+    cache_scrub_bytes: usize,
+) -> Result<I7ScanReceipt, String> {
+    let fixture = CampaignFixture::new(scenario, pattern_count, corpus_target_bytes)?;
+    let contract = I7ScenarioContract::for_scenario(scenario)?;
+    let input = Utf16Text::from(fixture.corpus.as_str());
+    let mut expected = fixture.expected_events;
+    expected.sort_unstable();
+    let expected_summary = event_summary(&expected);
+
+    black_box(build_rustmatch(&fixture.patterns)?);
+    let median_compile_ns = measure(I7_MEASURED_ITERATIONS, || {
+        build_rustmatch(&fixture.patterns)
+    })?;
+    let matcher = build_rustmatch(&fixture.patterns)?;
+    let (mut actual, diagnostics) = rust_events_with_diagnostics(&matcher, &input)?;
+    actual.sort_unstable();
+    if actual != expected {
+        return Err(format!(
+            "I7 correctness mismatch for {scenario}: expected {} events, got {}",
+            expected.len(),
+            actual.len()
+        ));
+    }
+
+    let mut scrubber = CacheScrubber::new(cache_scrub_bytes)?;
+    for _ in 0..I7_WARMUP_ITERATIONS {
+        black_box(scrubber.scrub());
+        let actual = black_box(rust_event_summary(&matcher, &input)?);
+        if actual != expected_summary {
+            return Err(format!(
+                "I7 warm-up produced inconsistent events for {scenario}"
+            ));
+        }
+    }
+    let mut samples = Vec::with_capacity(I7_MEASURED_ITERATIONS as usize);
+    for _ in 0..I7_MEASURED_ITERATIONS {
+        black_box(scrubber.scrub());
+        let started = Instant::now();
+        let actual = black_box(rust_event_summary(&matcher, &input)?);
+        let elapsed = nanos(started.elapsed());
+        if actual != expected_summary {
+            return Err(format!(
+                "I7 measurement produced inconsistent events for {scenario}"
+            ));
+        }
+        samples.push(elapsed);
+    }
+
+    Ok(I7ScanReceipt {
+        schema_version: 1,
+        evidence_id: "I7-P1".to_owned(),
+        benchmark: "safe-prefilter-campaign-v1".to_owned(),
+        claim: "optimization-admission".to_owned(),
+        scenario: scenario.to_owned(),
+        gate: contract.gate.to_owned(),
+        expected_path: contract.expected_path.to_owned(),
+        prefilter_mode: benchmark_prefilter_mode()?.to_owned(),
+        revision: benchmark_revision(),
+        runner: benchmark_runner(),
+        profile: "release".to_owned(),
+        pattern_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus.len(),
+        input_units: input.as_units().len(),
+        cache_scrub_bytes: scrubber.bytes(),
+        cache_scrub_digest: format!("fnv1a64:{:016x}", scrubber.digest()),
+        event_count: expected.len(),
+        event_digest: event_digest(&expected),
+        warmup_iterations: I7_WARMUP_ITERATIONS,
+        measured_iterations: I7_MEASURED_ITERATIONS,
+        median_compile_ns,
+        median_scan_ns: median(&mut samples),
+        cache_diagnostics: diagnostics.into(),
+        correctness: "pass".to_owned(),
+    })
+}
+
+fn compare_i7_files(
+    baseline_path: &Path,
+    candidate_path: &Path,
+) -> Result<I7ComparisonReceipt, String> {
+    let baseline: I7ScanReceipt = read_receipt("I7 disabled", baseline_path)?;
+    let candidate: I7ScanReceipt = read_receipt("I7 enabled", candidate_path)?;
+    compare_i7(&baseline, &candidate)
+}
+
+fn compare_i7(
+    baseline: &I7ScanReceipt,
+    candidate: &I7ScanReceipt,
+) -> Result<I7ComparisonReceipt, String> {
+    baseline.validate("disabled")?;
+    candidate.validate("enabled")?;
+    if baseline.fixture_identity() != candidate.fixture_identity() {
+        return Err("I7 disabled and enabled fixture identities differ".to_owned());
+    }
+    if baseline.revision != candidate.revision || baseline.runner != candidate.runner {
+        return Err("I7 disabled and enabled runs must use one revision and runner".to_owned());
+    }
+    if baseline.prefilter_mode != "off" || candidate.prefilter_mode != "on" {
+        return Err("I7 comparison requires prefilter off followed by prefilter on".to_owned());
+    }
+    if baseline.cache_diagnostics.prefilter_path != "all-starts"
+        || baseline.cache_diagnostics.prefilter_bypass != "disabled"
+    {
+        return Err("I7 disabled receipt did not preserve the all-start baseline".to_owned());
+    }
+    candidate.validate_path()?;
+    validate_i7_resources(candidate)?;
+
+    let improvement_ns = baseline
+        .median_scan_ns
+        .saturating_sub(candidate.median_scan_ns);
+    let improvement_basis_points =
+        relative_decrease_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+    let regression_ns = candidate
+        .median_scan_ns
+        .saturating_sub(baseline.median_scan_ns);
+    let slowdown_basis_points =
+        relative_increase_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+    let compile_regression_ns = candidate
+        .median_compile_ns
+        .saturating_sub(baseline.median_compile_ns);
+
+    match baseline.gate.as_str() {
+        "positive-10-percent-and-2-ms"
+            if improvement_basis_points < I7_REQUIRED_IMPROVEMENT_BASIS_POINTS
+                || improvement_ns < I7_REQUIRED_IMPROVEMENT_NS =>
+        {
+            return Err(format!(
+                "I7 positive gate failed for {}: baseline={}ns candidate={}ns improvement={}ns ({}.{:02}%)",
+                baseline.scenario,
+                baseline.median_scan_ns,
+                candidate.median_scan_ns,
+                improvement_ns,
+                improvement_basis_points / 100,
+                improvement_basis_points % 100
+            ));
+        }
+        "guard-3-percent-and-1-ms"
+            if slowdown_basis_points > I7_MAXIMUM_REGRESSION_BASIS_POINTS
+                && regression_ns > I7_MAXIMUM_REGRESSION_NS =>
+        {
+            return Err(format!(
+                "I7 guard failed for {}: baseline={}ns candidate={}ns regression={}ns ({}.{:02}%)",
+                baseline.scenario,
+                baseline.median_scan_ns,
+                candidate.median_scan_ns,
+                regression_ns,
+                slowdown_basis_points / 100,
+                slowdown_basis_points % 100
+            ));
+        }
+        "positive-10-percent-and-2-ms" | "guard-3-percent-and-1-ms" => {}
+        gate => return Err(format!("unknown I7 gate {gate:?}")),
+    }
+    if compile_regression_ns > I7_MAXIMUM_COMPILE_REGRESSION_NS {
+        return Err(format!(
+            "I7 compile guard failed for {}: baseline={}ns candidate={}ns regression={}ns",
+            baseline.scenario,
+            baseline.median_compile_ns,
+            candidate.median_compile_ns,
+            compile_regression_ns
+        ));
+    }
+
+    Ok(I7ComparisonReceipt {
+        schema_version: 1,
+        evidence_id: "I7-P1",
+        comparison: "safe-prefilter-campaign-v1",
+        scenario: baseline.scenario.clone(),
+        gate: baseline.gate.clone(),
+        revision: baseline.revision.clone(),
+        runner: baseline.runner.clone(),
+        pattern_count: baseline.pattern_count,
+        corpus_bytes: baseline.corpus_bytes,
+        input_units: baseline.input_units,
+        event_count: baseline.event_count,
+        event_digest: baseline.event_digest.clone(),
+        baseline_median_compile_ns: baseline.median_compile_ns,
+        candidate_median_compile_ns: candidate.median_compile_ns,
+        baseline_median_scan_ns: baseline.median_scan_ns,
+        candidate_median_scan_ns: candidate.median_scan_ns,
+        improvement_ns,
+        improvement_basis_points,
+        regression_ns,
+        slowdown_basis_points,
+        compile_regression_ns,
+        baseline_diagnostics: baseline.cache_diagnostics.clone(),
+        candidate_diagnostics: candidate.cache_diagnostics.clone(),
+        status: "pass",
+    })
+}
+
+fn validate_i7_resources(candidate: &I7ScanReceipt) -> Result<(), String> {
+    let diagnostics = &candidate.cache_diagnostics;
+    if diagnostics.prefilter_retained_bytes > I7_MAXIMUM_PREFILTER_BYTES {
+        return Err(format!(
+            "I7 retained prefilter exceeds 8 MiB: {} bytes",
+            diagnostics.prefilter_retained_bytes
+        ));
+    }
+    let candidate_limit = candidate
+        .input_units
+        .div_ceil(8)
+        .saturating_add(I7_CANDIDATE_FIXED_ALLOWANCE_BYTES);
+    if diagnostics.prefilter_candidate_bytes > candidate_limit {
+        return Err(format!(
+            "I7 candidate storage exceeds one bit per corpus byte plus 64 KiB: {} > {}",
+            diagnostics.prefilter_candidate_bytes, candidate_limit
+        ));
+    }
+    if diagnostics.prefilter_path != "literal-prefilter"
+        && diagnostics.prefilter_candidate_bytes != 0
+    {
+        return Err("I7 non-literal path retained a full candidate bitmap".to_owned());
+    }
+    Ok(())
+}
+
+fn benchmark_prefilter_mode() -> Result<&'static str, String> {
+    match env::var("RUSTMATCH_BENCH_PREFILTER") {
+        Ok(value) => match value.as_str() {
+            "on" | "true" | "1" => Ok("on"),
+            "off" | "false" | "0" => Ok("off"),
+            _ => Err(format!(
+                "invalid prefilter control {value:?}; expected on or off"
+            )),
+        },
+        Err(env::VarError::NotPresent) => Ok("on"),
+        Err(error) => Err(format!("could not read prefilter control: {error}")),
+    }
+}
+
 fn relative_decrease_basis_points(baseline: u128, candidate: u128) -> u128 {
     baseline
         .saturating_sub(candidate)
@@ -489,6 +742,12 @@ fn wuthering_scan(
     corpus_target_bytes: usize,
     cache_scrub_bytes: usize,
 ) -> Result<ScaleScanReceipt, String> {
+    let warmup_iterations =
+        benchmark_iteration_count("RUSTMATCH_BENCH_WARMUP_ITERATIONS", SCALE_WARMUP_ITERATIONS)?;
+    let measured_iterations = benchmark_iteration_count(
+        "RUSTMATCH_BENCH_MEASURED_ITERATIONS",
+        SCALE_MEASURED_ITERATIONS,
+    )?;
     let pattern_bytes = fs::read(pattern_source).map_err(|error| {
         format!(
             "could not read pattern source {}: {error}",
@@ -510,12 +769,12 @@ fn wuthering_scan(
     let input = Utf16Text::from(corpus.as_str());
 
     black_box(build_rustmatch(&patterns)?);
-    let median_compile_ns = measure(SCALE_MEASURED_ITERATIONS, || build_rustmatch(&patterns))?;
+    let median_compile_ns = measure(measured_iterations, || build_rustmatch(&patterns))?;
     let matcher = build_rustmatch(&patterns)?;
     let (expected, diagnostics) = rust_event_summary_with_diagnostics(&matcher, &input)?;
     let mut scrubber = CacheScrubber::new(cache_scrub_bytes)?;
 
-    for _ in 0..SCALE_WARMUP_ITERATIONS {
+    for _ in 0..warmup_iterations {
         black_box(scrubber.scrub());
         let actual = black_box(rust_event_summary(&matcher, &input)?);
         if actual != expected {
@@ -523,8 +782,8 @@ fn wuthering_scan(
         }
     }
 
-    let mut samples = Vec::with_capacity(SCALE_MEASURED_ITERATIONS as usize);
-    for _ in 0..SCALE_MEASURED_ITERATIONS {
+    let mut samples = Vec::with_capacity(measured_iterations as usize);
+    for _ in 0..measured_iterations {
         black_box(scrubber.scrub());
         let started = Instant::now();
         let actual = black_box(rust_event_summary(&matcher, &input)?);
@@ -549,17 +808,35 @@ fn wuthering_scan(
         corpus_source_digest: byte_digest(&corpus_bytes),
         pattern_count: patterns.len(),
         corpus_bytes: corpus.len(),
+        input_units: input.as_units().len(),
         cache_scrub_bytes: scrubber.bytes(),
         cache_scrub_digest: format!("fnv1a64:{:016x}", scrubber.digest()),
         event_count: expected.count,
         event_digest: expected.digest(),
-        warmup_iterations: SCALE_WARMUP_ITERATIONS,
-        measured_iterations: SCALE_MEASURED_ITERATIONS,
+        warmup_iterations,
+        measured_iterations,
         median_compile_ns,
         median_scan_ns: median(&mut samples),
         cache_diagnostics: Some(diagnostics.into()),
         correctness: "pass".to_owned(),
     })
+}
+
+fn benchmark_iteration_count(variable: &str, default: u32) -> Result<u32, String> {
+    match env::var(variable) {
+        Ok(source) => {
+            let value = source
+                .parse::<u32>()
+                .map_err(|error| format!("invalid {variable} value {source:?}: {error}"))?;
+            if value == 0 {
+                Err(format!("{variable} must be greater than zero"))
+            } else {
+                Ok(value)
+            }
+        }
+        Err(env::VarError::NotPresent) => Ok(default),
+        Err(error) => Err(format!("could not read {variable}: {error}")),
+    }
 }
 
 fn select_literal_patterns(source: &str, pattern_count: usize) -> Result<Vec<String>, String> {
@@ -657,7 +934,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         let throughput = format_hundredths(throughput_hundredths);
         write!(
             rows,
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
             html_escape(&receipt.revision),
             html_escape(&receipt.runner),
             receipt.pattern_count,
@@ -670,6 +947,14 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
                 .cache_diagnostics
                 .as_ref()
                 .map_or_else(|| "n/a".to_owned(), |value| value.fallback_transitions.to_string()),
+            receipt
+                .cache_diagnostics
+                .as_ref()
+                .map_or_else(|| "n/a".to_owned(), |value| html_escape(&value.prefilter_path)),
+            receipt.cache_diagnostics.as_ref().map_or_else(
+                || "n/a".to_owned(),
+                |value| value.prefilter_starts_scanned.to_string()
+            ),
         )
         .map_err(|error| format!("could not render report row: {error}"))?;
     }
@@ -683,7 +968,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1500px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1180px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Protocol: one warm-up and three measured scans; medians shown. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1500px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1350px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -884,6 +1169,120 @@ fn compare_wuthering_tripwire(
     })
 }
 
+fn compare_i7_wuthering_files(
+    baseline_path: &Path,
+    candidate_path: &Path,
+) -> Result<I7ScaleComparisonReceipt, String> {
+    let baseline: ScaleScanReceipt = read_receipt("I7 Wuthering disabled", baseline_path)?;
+    let candidate: ScaleScanReceipt = read_receipt("I7 Wuthering enabled", candidate_path)?;
+    compare_i7_wuthering(&baseline, &candidate)
+}
+
+fn compare_i7_wuthering(
+    baseline: &ScaleScanReceipt,
+    candidate: &ScaleScanReceipt,
+) -> Result<I7ScaleComparisonReceipt, String> {
+    baseline.validate()?;
+    candidate.validate()?;
+    if baseline.fixture_identity() != candidate.fixture_identity() {
+        return Err("I7 Wuthering disabled and enabled fixture identities differ".to_owned());
+    }
+    if baseline.revision != candidate.revision || baseline.runner != candidate.runner {
+        return Err(
+            "I7 Wuthering disabled and enabled runs must use one revision and runner".to_owned(),
+        );
+    }
+    if baseline.warmup_iterations < I7_WARMUP_ITERATIONS
+        || baseline.measured_iterations < I7_MEASURED_ITERATIONS
+    {
+        return Err(
+            "I7 Wuthering admission requires at least 3 warmups and 7 measurements".to_owned(),
+        );
+    }
+    if !matches!(baseline.pattern_count, 1_000 | 5_000 | 10_000) {
+        return Err("I7 Wuthering pattern count is outside the frozen campaign".to_owned());
+    }
+
+    let baseline_diagnostics = baseline
+        .cache_diagnostics
+        .as_ref()
+        .ok_or_else(|| "I7 Wuthering disabled receipt lacks diagnostics".to_owned())?;
+    let candidate_diagnostics = candidate
+        .cache_diagnostics
+        .as_ref()
+        .ok_or_else(|| "I7 Wuthering enabled receipt lacks diagnostics".to_owned())?;
+    if baseline_diagnostics.prefilter_path != "all-starts"
+        || baseline_diagnostics.prefilter_bypass != "disabled"
+    {
+        return Err("I7 Wuthering disabled receipt did not use all starts".to_owned());
+    }
+    if candidate_diagnostics.prefilter_path != "literal-prefilter"
+        || candidate_diagnostics.prefilter_bypass != "none"
+    {
+        return Err("I7 Wuthering enabled receipt did not use the literal prefilter".to_owned());
+    }
+    if candidate_diagnostics.prefilter_retained_bytes > I7_MAXIMUM_PREFILTER_BYTES {
+        return Err("I7 Wuthering retained prefilter exceeds 8 MiB".to_owned());
+    }
+    let candidate_limit = candidate
+        .input_units
+        .div_ceil(8)
+        .saturating_add(I7_CANDIDATE_FIXED_ALLOWANCE_BYTES);
+    if candidate_diagnostics.prefilter_candidate_bytes > candidate_limit {
+        return Err("I7 Wuthering candidate bitmap exceeds the frozen memory bound".to_owned());
+    }
+
+    let improvement_ns = baseline
+        .median_scan_ns
+        .saturating_sub(candidate.median_scan_ns);
+    let improvement_basis_points =
+        relative_decrease_basis_points(baseline.median_scan_ns, candidate.median_scan_ns);
+    if improvement_basis_points < I7_REQUIRED_IMPROVEMENT_BASIS_POINTS
+        || improvement_ns < I7_REQUIRED_IMPROVEMENT_NS
+    {
+        return Err(format!(
+            "I7 Wuthering positive gate failed for {} patterns: baseline={}ns candidate={}ns improvement={}ns ({}.{:02}%)",
+            baseline.pattern_count,
+            baseline.median_scan_ns,
+            candidate.median_scan_ns,
+            improvement_ns,
+            improvement_basis_points / 100,
+            improvement_basis_points % 100
+        ));
+    }
+    let compile_regression_ns = candidate
+        .median_compile_ns
+        .saturating_sub(baseline.median_compile_ns);
+    if compile_regression_ns > I7_MAXIMUM_COMPILE_REGRESSION_NS {
+        return Err(format!(
+            "I7 Wuthering compile guard failed for {} patterns: regression={}ns",
+            baseline.pattern_count, compile_regression_ns
+        ));
+    }
+
+    Ok(I7ScaleComparisonReceipt {
+        schema_version: 1,
+        evidence_id: "I7-B1",
+        comparison: "wuthering-safe-prefilter-v1",
+        revision: baseline.revision.clone(),
+        runner: baseline.runner.clone(),
+        pattern_count: baseline.pattern_count,
+        corpus_bytes: baseline.corpus_bytes,
+        input_units: baseline.input_units,
+        event_count: baseline.event_count,
+        event_digest: baseline.event_digest.clone(),
+        baseline_median_compile_ns: baseline.median_compile_ns,
+        candidate_median_compile_ns: candidate.median_compile_ns,
+        baseline_median_scan_ns: baseline.median_scan_ns,
+        candidate_median_scan_ns: candidate.median_scan_ns,
+        improvement_ns,
+        improvement_basis_points,
+        compile_regression_ns,
+        candidate_diagnostics: candidate_diagnostics.clone(),
+        status: "pass",
+    })
+}
+
 fn build_rustmatch(patterns: &[String]) -> Result<Matcher, String> {
     let mut builder = MatcherBuilder::new();
     if let Ok(source) = env::var("RUSTMATCH_BENCH_STATE_CACHE_BUDGET") {
@@ -891,6 +1290,30 @@ fn build_rustmatch(patterns: &[String]) -> Result<Matcher, String> {
             .parse::<usize>()
             .map_err(|error| format!("invalid state-cache budget {source:?}: {error}"))?;
         builder.state_cache_budget(budget);
+    }
+    if let Ok(source) = env::var("RUSTMATCH_BENCH_PREFILTER") {
+        let enabled = match source.as_str() {
+            "on" | "true" | "1" => true,
+            "off" | "false" | "0" => false,
+            _ => {
+                return Err(format!(
+                    "invalid prefilter control {source:?}; expected on or off"
+                ));
+            }
+        };
+        builder.prefilter_enabled(enabled);
+    }
+    if let Ok(source) = env::var("RUSTMATCH_BENCH_LITERAL_PREFILTER") {
+        let enabled = match source.as_str() {
+            "on" | "true" | "1" => true,
+            "off" | "false" | "0" => false,
+            _ => {
+                return Err(format!(
+                    "invalid literal-prefilter control {source:?}; expected on or off"
+                ));
+            }
+        };
+        builder.literal_prefilter_enabled(enabled);
     }
     for (index, pattern) in patterns.iter().enumerate() {
         let pattern_id = u32::try_from(index + 1)
@@ -1075,6 +1498,39 @@ struct CampaignFixture {
     gate: &'static str,
 }
 
+struct I7ScenarioContract {
+    gate: &'static str,
+    expected_path: &'static str,
+}
+
+impl I7ScenarioContract {
+    fn for_scenario(scenario: &str) -> Result<Self, String> {
+        match scenario {
+            "literal-sparse" | "mixed-sparse" => Ok(Self {
+                gate: "positive-10-percent-and-2-ms",
+                expected_path: "literal-prefilter",
+            }),
+            "literal-dense" => Ok(Self {
+                gate: "guard-3-percent-and-1-ms",
+                expected_path: "literal-or-density-bypass",
+            }),
+            "assertion-bypass" => Ok(Self {
+                gate: "guard-3-percent-and-1-ms",
+                expected_path: "assertion-bypass",
+            }),
+            "mixed-unfilterable" => Ok(Self {
+                gate: "guard-3-percent-and-1-ms",
+                expected_path: "start-table",
+            }),
+            "short-literal" => Ok(Self {
+                gate: "guard-3-percent-and-1-ms",
+                expected_path: "below-size-bypass",
+            }),
+            _ => Err(format!("scenario {scenario:?} has no frozen I7 contract")),
+        }
+    }
+}
+
 impl CampaignFixture {
     fn new(
         scenario: &str,
@@ -1094,8 +1550,10 @@ impl CampaignFixture {
             "literal-dense" => Self::literal_dense(pattern_count, corpus_target_bytes),
             "mixed-sparse" => Self::mixed_sparse(pattern_count, corpus_target_bytes),
             "assertion-bypass" => Self::assertion_sparse(pattern_count, corpus_target_bytes),
+            "mixed-unfilterable" => Self::mixed_unfilterable(pattern_count, corpus_target_bytes),
+            "short-literal" => Self::short_literal(pattern_count, corpus_target_bytes),
             _ => Err(format!(
-                "unknown I6 scenario {scenario:?}; expected literal-sparse, literal-dense, mixed-sparse, or assertion-bypass"
+                "unknown campaign scenario {scenario:?}; expected literal-sparse, literal-dense, mixed-sparse, assertion-bypass, mixed-unfilterable, or short-literal"
             )),
         }
     }
@@ -1149,6 +1607,54 @@ impl CampaignFixture {
             .map(|index| (format!(r"\bword{index:04}\b"), format!("word{index:04}")))
             .collect();
         Self::sparse_from_pairs(pairs, corpus_target_bytes, "non-regression-3-percent")
+    }
+
+    fn mixed_unfilterable(
+        pattern_count: usize,
+        corpus_target_bytes: usize,
+    ) -> Result<Self, String> {
+        let pairs: Vec<_> = (0..pattern_count)
+            .map(|index| {
+                if index % 2 == 0 {
+                    (format!("(?i)case{index:04}"), format!("CASE{index:04}"))
+                } else {
+                    (format!("plain{index:04}"), format!("plain{index:04}"))
+                }
+            })
+            .collect();
+        Self::sparse_from_pairs(pairs, corpus_target_bytes, "non-regression-3-percent")
+    }
+
+    fn short_literal(pattern_count: usize, corpus_target_bytes: usize) -> Result<Self, String> {
+        if pattern_count == 0 {
+            return Err("short-literal requires at least one pattern".to_owned());
+        }
+        let patterns: Vec<_> = (0..pattern_count)
+            .map(|index| format!("short{index:04}"))
+            .collect();
+        let mut corpus = vec![b'x'; corpus_target_bytes];
+        let retained_matches = pattern_count.min(16);
+        let mut expected_events = Vec::with_capacity(retained_matches);
+        for (pattern_index, pattern) in patterns.iter().take(retained_matches).enumerate() {
+            let pattern = pattern.as_bytes();
+            let start = corpus_target_bytes * (pattern_index + 1) / (retained_matches + 1);
+            if start + pattern.len() > corpus.len() {
+                return Err("short-literal corpus is too small for its retained matches".to_owned());
+            }
+            corpus[start..start + pattern.len()].copy_from_slice(pattern);
+            expected_events.push(event_for_literal(
+                pattern_index,
+                start,
+                start + pattern.len(),
+            )?);
+        }
+        Ok(Self {
+            patterns,
+            corpus: String::from_utf8(corpus)
+                .map_err(|error| format!("short-literal corpus must be UTF-8: {error}"))?,
+            expected_events,
+            gate: "non-regression-3-percent",
+        })
     }
 
     fn sparse_from_pairs(
@@ -1218,6 +1724,14 @@ impl EventSummary {
             self.sum, self.xor, self.sum_of_squares
         )
     }
+}
+
+fn event_summary(events: &[Event]) -> EventSummary {
+    let mut summary = EventSummary::default();
+    for event in events {
+        summary.add(event);
+    }
+    summary
 }
 
 fn event_hash(event: &Event) -> u64 {
@@ -1304,6 +1818,9 @@ enum CommandOutput {
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
+    I7Scan(I7ScanReceipt),
+    I7Comparison(I7ComparisonReceipt),
+    I7ScaleComparison(I7ScaleComparisonReceipt),
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
@@ -1416,6 +1933,180 @@ struct I6ComparisonReceipt {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+struct I7ScanReceipt {
+    schema_version: u32,
+    evidence_id: String,
+    benchmark: String,
+    claim: String,
+    scenario: String,
+    gate: String,
+    expected_path: String,
+    prefilter_mode: String,
+    revision: String,
+    runner: String,
+    profile: String,
+    pattern_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    cache_scrub_bytes: usize,
+    cache_scrub_digest: String,
+    event_count: usize,
+    event_digest: String,
+    warmup_iterations: u32,
+    measured_iterations: u32,
+    median_compile_ns: u128,
+    median_scan_ns: u128,
+    cache_diagnostics: CacheDiagnosticsReceipt,
+    correctness: String,
+}
+
+type I7FixtureIdentity<'a> = (
+    &'a str,
+    &'a str,
+    &'a str,
+    usize,
+    usize,
+    usize,
+    usize,
+    &'a str,
+    usize,
+    &'a str,
+    u32,
+    u32,
+);
+
+impl I7ScanReceipt {
+    fn validate(&self, description: &str) -> Result<(), String> {
+        if self.schema_version != 1
+            || self.evidence_id != "I7-P1"
+            || self.benchmark != "safe-prefilter-campaign-v1"
+            || self.claim != "optimization-admission"
+            || self.profile != "release"
+            || self.correctness != "pass"
+            || self.revision.is_empty()
+            || self.runner.is_empty()
+            || self.pattern_count == 0
+            || self.corpus_bytes == 0
+            || self.input_units == 0
+            || self.cache_scrub_bytes == 0
+            || self.cache_scrub_digest.is_empty()
+            || self.warmup_iterations < I7_WARMUP_ITERATIONS
+            || self.measured_iterations < I7_MEASURED_ITERATIONS
+            || self.median_compile_ns == 0
+            || self.median_scan_ns == 0
+        {
+            return Err(format!("invalid {description} I7 receipt metadata"));
+        }
+        Ok(())
+    }
+
+    fn validate_path(&self) -> Result<(), String> {
+        let diagnostics = &self.cache_diagnostics;
+        let valid = match self.expected_path.as_str() {
+            "literal-prefilter" => {
+                diagnostics.prefilter_path == "literal-prefilter"
+                    && diagnostics.prefilter_bypass == "none"
+            }
+            "literal-or-density-bypass" => {
+                diagnostics.prefilter_path == "literal-prefilter"
+                    || (diagnostics.prefilter_path == "start-table"
+                        && diagnostics.prefilter_bypass == "dense-sample")
+            }
+            "assertion-bypass" => {
+                diagnostics.prefilter_path == "all-starts"
+                    && diagnostics.prefilter_bypass == "assertions"
+            }
+            "start-table" => diagnostics.prefilter_path == "start-table",
+            "below-size-bypass" => {
+                diagnostics.prefilter_path == "start-table"
+                    && diagnostics.prefilter_bypass == "input-size"
+            }
+            _ => false,
+        };
+        if valid {
+            Ok(())
+        } else {
+            Err(format!(
+                "I7 scenario {} expected path {}, observed {} ({})",
+                self.scenario,
+                self.expected_path,
+                diagnostics.prefilter_path,
+                diagnostics.prefilter_bypass
+            ))
+        }
+    }
+
+    fn fixture_identity(&self) -> I7FixtureIdentity<'_> {
+        (
+            &self.scenario,
+            &self.gate,
+            &self.expected_path,
+            self.pattern_count,
+            self.corpus_bytes,
+            self.input_units,
+            self.cache_scrub_bytes,
+            &self.cache_scrub_digest,
+            self.event_count,
+            &self.event_digest,
+            self.warmup_iterations,
+            self.measured_iterations,
+        )
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct I7ComparisonReceipt {
+    schema_version: u32,
+    evidence_id: &'static str,
+    comparison: &'static str,
+    scenario: String,
+    gate: String,
+    revision: String,
+    runner: String,
+    pattern_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    event_count: usize,
+    event_digest: String,
+    baseline_median_compile_ns: u128,
+    candidate_median_compile_ns: u128,
+    baseline_median_scan_ns: u128,
+    candidate_median_scan_ns: u128,
+    improvement_ns: u128,
+    improvement_basis_points: u128,
+    regression_ns: u128,
+    slowdown_basis_points: u128,
+    compile_regression_ns: u128,
+    baseline_diagnostics: CacheDiagnosticsReceipt,
+    candidate_diagnostics: CacheDiagnosticsReceipt,
+    status: &'static str,
+}
+
+#[derive(Debug, Serialize)]
+struct I7ScaleComparisonReceipt {
+    schema_version: u32,
+    evidence_id: &'static str,
+    comparison: &'static str,
+    revision: String,
+    runner: String,
+    pattern_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    event_count: usize,
+    event_digest: String,
+    baseline_median_compile_ns: u128,
+    candidate_median_compile_ns: u128,
+    baseline_median_scan_ns: u128,
+    candidate_median_scan_ns: u128,
+    improvement_ns: u128,
+    improvement_basis_points: u128,
+    compile_regression_ns: u128,
+    candidate_diagnostics: CacheDiagnosticsReceipt,
+    status: &'static str,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 struct ScaleScanReceipt {
     schema_version: u32,
     evidence_id: String,
@@ -1430,6 +2121,8 @@ struct ScaleScanReceipt {
     corpus_source_digest: String,
     pattern_count: usize,
     corpus_bytes: usize,
+    #[serde(default)]
+    input_units: usize,
     cache_scrub_bytes: usize,
     cache_scrub_digest: String,
     event_count: usize,
@@ -1443,8 +2136,8 @@ struct ScaleScanReceipt {
     correctness: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 struct CacheDiagnosticsReceipt {
     cache_budget: usize,
     cache_states: usize,
@@ -1453,6 +2146,14 @@ struct CacheDiagnosticsReceipt {
     fallback_transitions: u64,
     cache_table_bytes: usize,
     assertion_bypasses: u64,
+    prefilter_path: String,
+    prefilter_bypass: String,
+    prefilter_retained_bytes: usize,
+    prefilter_candidate_bytes: usize,
+    prefilter_admissions: u64,
+    prefilter_candidate_starts: usize,
+    prefilter_starts_scanned: usize,
+    prefilter_starts_skipped: usize,
 }
 
 impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
@@ -1465,6 +2166,14 @@ impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
             fallback_transitions: value.fallback_transitions(),
             cache_table_bytes: value.cache_table_bytes(),
             assertion_bypasses: value.assertion_bypasses(),
+            prefilter_path: value.prefilter_path().to_owned(),
+            prefilter_bypass: value.prefilter_bypass().to_owned(),
+            prefilter_retained_bytes: value.prefilter_retained_bytes(),
+            prefilter_candidate_bytes: value.prefilter_candidate_bytes(),
+            prefilter_admissions: value.prefilter_admissions(),
+            prefilter_candidate_starts: value.prefilter_candidate_starts(),
+            prefilter_starts_scanned: value.prefilter_starts_scanned(),
+            prefilter_starts_skipped: value.prefilter_starts_skipped(),
         }
     }
 }
@@ -1606,9 +2315,10 @@ struct ComparisonReceipt {
 #[cfg(test)]
 mod tests {
     use super::{
-        CacheScrubber, CampaignFixture, Event, I6ScanReceipt, LiteralFixture,
-        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
-        compare_i6, compare_tripwire, compare_wuthering_tripwire, expand_corpus, regex_events,
+        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, Event, I6ScanReceipt,
+        I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT,
+        ScaleScanReceipt, TripwireReceipt, compare_i6, compare_i7, compare_i7_wuthering,
+        compare_tripwire, compare_wuthering_tripwire, expand_corpus, regex_events,
         select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
@@ -1816,6 +2526,105 @@ mod tests {
     }
 
     #[test]
+    fn every_frozen_i7_fixture_has_known_events() -> Result<(), String> {
+        // Prepare
+        let scenarios = [
+            "literal-sparse",
+            "literal-dense",
+            "mixed-sparse",
+            "assertion-bypass",
+            "mixed-unfilterable",
+            "short-literal",
+        ];
+
+        // Test
+        let fixtures = scenarios
+            .iter()
+            .map(|scenario| CampaignFixture::new(scenario, 8, 4096))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Assert
+        assert!(
+            fixtures
+                .iter()
+                .all(|fixture| fixture.patterns.len() == 8 && !fixture.expected_events.is_empty())
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn i7_comparison_requires_both_positive_thresholds() {
+        // Prepare
+        let baseline = i7_receipt(100_000_000, "off");
+        let candidate = i7_receipt(91_000_000, "on");
+
+        // Test
+        let result = compare_i7(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("positive gate failed")));
+    }
+
+    #[test]
+    fn i7_comparison_accepts_a_measured_positive_result() -> Result<(), String> {
+        // Prepare
+        let baseline = i7_receipt(100_000_000, "off");
+        let candidate = i7_receipt(80_000_000, "on");
+
+        // Test
+        let comparison = compare_i7(&baseline, &candidate)?;
+
+        // Assert
+        assert_eq!(comparison.status, "pass");
+        assert_eq!(comparison.improvement_basis_points, 2_000);
+        Ok(())
+    }
+
+    #[test]
+    fn i7_wuthering_comparison_requires_the_full_measurement_protocol() {
+        // Prepare
+        let mut baseline = scale_receipt(100_000_000, "revision");
+        let mut candidate = scale_receipt(80_000_000, "revision");
+        baseline.corpus_bytes = 8 * 1024 * 1024;
+        candidate.corpus_bytes = 8 * 1024 * 1024;
+        baseline.input_units = 8 * 1024 * 1024;
+        candidate.input_units = 8 * 1024 * 1024;
+        baseline.cache_diagnostics = Some(prefilter_diagnostics("all-starts", "disabled"));
+        candidate.cache_diagnostics = Some(prefilter_diagnostics("literal-prefilter", "none"));
+
+        // Test
+        let result = compare_i7_wuthering(&baseline, &candidate);
+
+        // Assert
+        assert!(matches!(result, Err(message) if message.contains("3 warmups and 7 measurements")));
+    }
+
+    #[test]
+    fn i7_wuthering_comparison_accepts_exact_positive_evidence() -> Result<(), String> {
+        // Prepare
+        let mut baseline = scale_receipt(100_000_000, "revision");
+        let mut candidate = scale_receipt(80_000_000, "revision");
+        baseline.corpus_bytes = 8 * 1024 * 1024;
+        candidate.corpus_bytes = 8 * 1024 * 1024;
+        baseline.input_units = 8 * 1024 * 1024;
+        candidate.input_units = 8 * 1024 * 1024;
+        baseline.warmup_iterations = 3;
+        baseline.measured_iterations = 7;
+        candidate.warmup_iterations = 3;
+        candidate.measured_iterations = 7;
+        baseline.cache_diagnostics = Some(prefilter_diagnostics("all-starts", "disabled"));
+        candidate.cache_diagnostics = Some(prefilter_diagnostics("literal-prefilter", "none"));
+
+        // Test
+        let comparison = compare_i7_wuthering(&baseline, &candidate)?;
+
+        // Assert
+        assert_eq!(comparison.status, "pass");
+        assert_eq!(comparison.improvement_basis_points, 2_000);
+        Ok(())
+    }
+
+    #[test]
     fn i6_comparison_requires_a_positive_target_result() {
         // Prepare
         let baseline = i6_receipt(100_000_000, "base");
@@ -1902,6 +2711,54 @@ mod tests {
         }
     }
 
+    fn i7_receipt(median_scan_ns: u128, mode: &str) -> I7ScanReceipt {
+        let diagnostics = if mode == "off" {
+            prefilter_diagnostics("all-starts", "disabled")
+        } else {
+            prefilter_diagnostics("literal-prefilter", "none")
+        };
+        I7ScanReceipt {
+            schema_version: 1,
+            evidence_id: "I7-P1".to_owned(),
+            benchmark: "safe-prefilter-campaign-v1".to_owned(),
+            claim: "optimization-admission".to_owned(),
+            scenario: "literal-sparse".to_owned(),
+            gate: "positive-10-percent-and-2-ms".to_owned(),
+            expected_path: "literal-prefilter".to_owned(),
+            prefilter_mode: mode.to_owned(),
+            revision: "revision".to_owned(),
+            runner: "runner".to_owned(),
+            profile: "release".to_owned(),
+            pattern_count: 1_000,
+            corpus_bytes: 8 * 1024 * 1024,
+            input_units: 8 * 1024 * 1024,
+            cache_scrub_bytes: 256 * 1024 * 1024,
+            cache_scrub_digest: "fnv1a64:scrub".to_owned(),
+            event_count: 1_000,
+            event_digest: "fnv1a64:events".to_owned(),
+            warmup_iterations: 3,
+            measured_iterations: 7,
+            median_compile_ns: 5_000_000,
+            median_scan_ns,
+            cache_diagnostics: diagnostics,
+            correctness: "pass".to_owned(),
+        }
+    }
+
+    fn prefilter_diagnostics(path: &str, bypass: &str) -> CacheDiagnosticsReceipt {
+        CacheDiagnosticsReceipt {
+            prefilter_path: path.to_owned(),
+            prefilter_bypass: bypass.to_owned(),
+            prefilter_retained_bytes: 512 * 1024,
+            prefilter_candidate_bytes: if path == "literal-prefilter" {
+                64 * 1024
+            } else {
+                0
+            },
+            ..CacheDiagnosticsReceipt::default()
+        }
+    }
+
     fn scale_receipt(median_scan_ns: u128, revision: &str) -> ScaleScanReceipt {
         ScaleScanReceipt {
             schema_version: 1,
@@ -1917,6 +2774,7 @@ mod tests {
             corpus_source_digest: "fnv1a64:corpus".to_owned(),
             pattern_count: 5_000,
             corpus_bytes: 675_259,
+            input_units: 675_259,
             cache_scrub_bytes: 64 * 1024 * 1024,
             cache_scrub_digest: "fnv1a64:scrub".to_owned(),
             event_count: 74_604,

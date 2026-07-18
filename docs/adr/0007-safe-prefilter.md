@@ -18,9 +18,9 @@ I7 may add two independent, conservative layers before the semantic engine:
 
 1. An exact one- and two-ASCII-symbol start table derived from the compiled
    NFA. Non-ASCII or assertion-dependent cases are admitted conservatively.
-2. A native multi-literal automaton used only when every pattern has a proven
-   necessary literal at a fixed offset from its start. The first production
-   extractor is deliberately limited to fixed literal prefixes.
+2. A compact native prefix-membership filter used only when every pattern has
+   a proven necessary literal at a fixed offset from its start. The first
+   production extractor is deliberately limited to fixed literal prefixes.
 
 The prefilter produces candidate start positions. The I6 semantic engine still
 verifies every candidate and remains the sole source of match events. A hidden
@@ -34,11 +34,18 @@ prefixes, predicates, case-folded predicates, and assertions are not guessed.
 Unsupported proof shapes return no hint and cause full literal-prefilter
 bypass for the matcher.
 
-The literal automaton is activated only for sufficiently large, fully
-filterable workloads. A bounded prefix sample estimates candidate density. If
-the sample is too dense, scanning falls back to the start table or ordinary I6
-path rather than paying for a second full pass. Activation thresholds are
-performance policy, never correctness assumptions.
+The production filter represents exact three-unit ASCII prefixes in a direct
+bit table. Four-unit prefixes and the first five units of longer prefixes use
+separate one-hash bitsets. Hash collisions only create extra candidates; they
+cannot suppress a match. A non-ASCII unit in the inspected prefix is admitted
+conservatively. The compact prefix-to-pattern mapping remains available for
+diagnostics, while the semantic engine alone creates match events.
+
+The literal filter is activated only for sufficiently large, fully filterable
+workloads. A bounded prefix sample estimates candidate density. If the sample
+is too dense, scanning falls back to the start table or ordinary I6 path rather
+than paying for a second full pass. Activation thresholds are performance
+policy, never correctness assumptions.
 
 ## Consequences
 
@@ -46,17 +53,29 @@ performance policy, never correctness assumptions.
 - Mixed pattern sets remain correct even when one pattern has no safe hint;
   they simply do not use the full literal prefilter.
 - Assertions retain the established context-sensitive engine path.
-- A native sparse automaton avoids a new runtime dependency and makes memory,
-  failure links, and candidate evidence inspectable.
+- The native filter avoids a new runtime dependency and makes retained memory,
+  candidate density, and skipped starts inspectable.
 - The first extractor intentionally misses profitable but harder cases. Future
   widening requires a new proof rule, adversarial tests, and measured benefit.
 - Candidate collection uses bounded, input-proportional storage and reports its
   footprint in benchmark diagnostics.
 
+## Rejected representation
+
+The first prototype used a sparse Aho-Corasick-style trie with failure links.
+It was semantically attractive and retained about 1.83 MiB for the 5,000-word
+Wuthering fixture, but native profiling showed that candidate generation had
+become a dominant cost. Linear lookup in small nodes and an anchored-trie
+variant did not recover enough scan time. The compact prefix filter was chosen
+because it preserved the same no-false-negative contract with a materially
+smaller and faster hot path. This decision does not imply that trie-based
+prefilters are generally poor; it records the result for this engine, fixture,
+and implementation.
+
 ## Admission evidence
 
 Production activation requires the frozen protocol in
 [`docs/experiments/i7-safe-prefilter.md`](../experiments/i7-safe-prefilter.md):
-exact on/off event equality, extractor and automaton adversaries, explicit
+exact on/off event equality, extractor and candidate-filter adversaries, explicit
 bypass evidence, resource accounting, and a positive native Rust result beyond
 noise in every declared activation region.
