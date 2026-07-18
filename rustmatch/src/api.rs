@@ -2,6 +2,7 @@
 
 use std::any::Any;
 use std::collections::HashSet;
+#[cfg(feature = "benchmark-internals")]
 use std::mem::size_of;
 use std::panic;
 use std::thread;
@@ -158,6 +159,7 @@ impl MatcherBuilder {
             compile_partitions(&self.patterns, self.worker_count, self.state_cache_budget)?;
         Ok(Matcher {
             partitions,
+            #[cfg(feature = "benchmark-internals")]
             requested_worker_count: self.worker_count,
             prefilter_enabled: self.prefilter_enabled,
             literal_prefilter_enabled: self.literal_prefilter_enabled,
@@ -215,6 +217,7 @@ fn compile_partitions(
 #[derive(Debug)]
 pub struct Matcher {
     partitions: Box<[MatcherPartition]>,
+    #[cfg(feature = "benchmark-internals")]
     requested_worker_count: usize,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
@@ -598,26 +601,36 @@ impl Matcher {
 
 struct PartitionScanOutput {
     events: Vec<Match>,
+    #[cfg(feature = "benchmark-internals")]
     stats: engine::ScanStats,
 }
 
 struct ParallelScanOutput {
     partitions: Vec<PartitionScanOutput>,
+    #[cfg(feature = "benchmark-internals")]
     stats: engine::ScanStats,
 }
 
 impl ParallelScanOutput {
     fn new(partitions: Vec<PartitionScanOutput>) -> Self {
+        #[cfg(feature = "benchmark-internals")]
         let mut partition_stats = partitions.iter().map(|partition| partition.stats);
+        #[cfg(feature = "benchmark-internals")]
         let mut stats = partition_stats
             .next()
             .expect("parallel scans contain at least two partitions");
+        #[cfg(feature = "benchmark-internals")]
         for next in partition_stats {
             stats.merge_partition(next);
         }
-        Self { partitions, stats }
+        Self {
+            partitions,
+            #[cfg(feature = "benchmark-internals")]
+            stats,
+        }
     }
 
+    #[cfg(feature = "benchmark-internals")]
     fn buffered_events(&self) -> usize {
         self.partitions
             .iter()
@@ -641,6 +654,7 @@ fn scan_partition(
     literal_prefilter_enabled: bool,
 ) -> Result<PartitionScanOutput, Error> {
     let mut events = Vec::new();
+    #[cfg(feature = "benchmark-internals")]
     let stats = engine::scan_with_stats(
         &partition.database,
         &partition.prefilter,
@@ -650,7 +664,21 @@ fn scan_partition(
         literal_prefilter_enabled,
         |matched| events.push(matched),
     )?;
-    Ok(PartitionScanOutput { events, stats })
+    #[cfg(not(feature = "benchmark-internals"))]
+    engine::scan(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+        |matched| events.push(matched),
+    )?;
+    Ok(PartitionScanOutput {
+        events,
+        #[cfg(feature = "benchmark-internals")]
+        stats,
+    })
 }
 
 #[cfg(test)]
@@ -700,6 +728,7 @@ mod tests {
         let matcher = builder.build()?;
 
         // Assert
+        #[cfg(feature = "benchmark-internals")]
         assert_eq!(matcher.requested_worker_count, 1_000);
         assert_eq!(matcher.partitions.len(), 2);
         Ok(())
