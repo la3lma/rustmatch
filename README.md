@@ -2323,14 +2323,14 @@ distinguishing reporting semantics.
 - Explicit worker/partition configuration.
 - Deterministic partition assignment.
 - Worker runtime and clean teardown.
-- Defined sink error and cancellation behavior.
-- Optional partition-local collection path.
+- Defined spawn, panic, callback, and teardown behavior.
+- Partition-local collection with explicit event-buffer accounting.
 
 **Tests**
 
 - Event multiset equality for worker counts 1, 2, 3, CPU count, and oversubscribed
   values.
-- Sink failures in every partition.
+- Spawn and worker-panic failure paths, plus caller-thread callback panic.
 - Repeated creation/drop to detect worker leaks.
 - Thread sanitizer or Loom-style model tests where practical.
 
@@ -2344,6 +2344,8 @@ distinguishing reporting semantics.
   count changes the event multiset.
 - Derive any default heuristic from Rust receipts. Java's heuristic may be a
   sweep candidate, but cannot satisfy this gate.
+- The frozen execution contract and thresholds are in
+  [`docs/experiments/i8-parallel-partitions.md`](docs/experiments/i8-parallel-partitions.md).
 
 ### Increment 9: Benchmark harness integration
 

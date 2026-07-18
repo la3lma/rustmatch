@@ -2,13 +2,13 @@
 
 **Last reviewed:** 2026-07-18
 
-**Implementation increments started:** **8/12**
+**Implementation increments started:** **9/12**
 
 **Implementation increments complete:** **8/12**
 
-**Active:** none
+**Active:** **I8 - Parallel pattern partitions**
 
-**Available for execution:** **I8 - Parallel pattern partitions**
+**Available for execution:** none while I8 is active
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -164,7 +164,7 @@ flowchart TB
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,S0,C0,C1,C2,B0,E0,G6,G7 complete;
-    class I8 available;
+    class I8 active;
     class X0,B1,H1,R1,R2 evidence;
     class G8,I10,I11 gate;
     class I9,H2,H3,R3,REL planned;
@@ -244,7 +244,7 @@ and use-case evidence bundle pass from a clean checkout.
 | I6 | Lazy deterministic-state cache | Complete | Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as `I6-P1`/`I6-B1` |
 | C2 | Wuthering Heights CI performance tripwire | Complete | PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs |
 | I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
-| I8 | Parallel partitions | Available | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
+| I8 | Parallel partitions | Active | Frozen protocol requires deterministic assignment, scoped lifecycle, serialized callback delivery, exact worker-count parity, bounded total cache, explicit result-buffer accounting, complete native thread sweeps, and a repeatable positive Rust throughput result beyond noise |
 | I9 | Benchmark integration | Planned | Packaged adapter accepted by the ordinary harness with validated, reproducible receipts |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
