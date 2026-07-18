@@ -7,7 +7,7 @@ use std::fs;
 use std::hint::black_box;
 use std::path::Path;
 use std::process::ExitCode;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use regex::{Regex, RegexSet};
 use rustmatch::{Matcher, MatcherBuilder, PatternId, ScanDiagnostics, Utf16Text};
@@ -998,6 +998,7 @@ fn wuthering_scan(
     corpus_target_bytes: usize,
     cache_scrub_bytes: usize,
 ) -> Result<ScaleScanReceipt, String> {
+    let measured_at_utc = measurement_timestamp_utc()?;
     let warmup_iterations =
         benchmark_iteration_count("RUSTMATCH_BENCH_WARMUP_ITERATIONS", SCALE_WARMUP_ITERATIONS)?;
     let measured_iterations = benchmark_iteration_count(
@@ -1057,6 +1058,7 @@ fn wuthering_scan(
         claim: "exploratory-scale-and-cache-pressure-evidence".to_owned(),
         revision: benchmark_revision(),
         runner: benchmark_runner(),
+        measured_at_utc: Some(measured_at_utc),
         profile: "release".to_owned(),
         pattern_source: pattern_source.display().to_string(),
         pattern_source_digest: byte_digest(&pattern_bytes),
@@ -1210,8 +1212,12 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         let buffered_mib = diagnostic_mib(receipt, |value| value.buffered_event_bytes);
         write!(
             rows,
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{partition_count}</td><td>{spawned_workers}</td><td>{database_mib} MiB</td><td>{prefilter_mib} MiB</td><td>{candidate_mib} MiB</td><td>{cache_table_mib} MiB</td><td>{buffered_mib} MiB</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{partition_count}</td><td>{spawned_workers}</td><td>{database_mib} MiB</td><td>{prefilter_mib} MiB</td><td>{candidate_mib} MiB</td><td>{cache_table_mib} MiB</td><td>{buffered_mib} MiB</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
             html_escape(&receipt.revision),
+            receipt
+                .measured_at_utc
+                .as_deref()
+                .map_or_else(|| "not recorded".to_owned(), html_escape),
             html_escape(&receipt.runner),
             receipt.pattern_count,
             receipt.worker_count,
@@ -1245,7 +1251,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:2100px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:2100px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Database</th><th>Prefilter</th><th>Candidate bitmap</th><th>Cache tables</th><th>Buffered events</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation. Memory columns report explicitly accounted bytes, not allocator overhead.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:2250px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:2250px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),th:nth-child(3),td:first-child,td:nth-child(2),td:nth-child(3){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Measured UTC</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Database</th><th>Prefilter</th><th>Candidate bitmap</th><th>Cache tables</th><th>Buffered events</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own UTC measurement timestamp, warm-up count, and measured-iteration count. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation. Memory columns report explicitly accounted bytes, not allocator overhead.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -1301,6 +1307,42 @@ fn benchmark_revision() -> String {
 
 fn benchmark_runner() -> String {
     env::var("RUSTMATCH_BENCH_RUNNER").unwrap_or_else(|_| "local-unidentified".to_owned())
+}
+
+fn measurement_timestamp_utc() -> Result<String, String> {
+    let seconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("system clock predates the Unix epoch: {error}"))?
+        .as_secs();
+    format_unix_timestamp_utc(seconds)
+}
+
+fn format_unix_timestamp_utc(seconds: u64) -> Result<String, String> {
+    let days = i64::try_from(seconds / 86_400)
+        .map_err(|_| "UTC timestamp exceeds the supported year range".to_owned())?;
+    let seconds_of_day = seconds % 86_400;
+    let hour = seconds_of_day / 3_600;
+    let minute = seconds_of_day % 3_600 / 60;
+    let second = seconds_of_day % 60;
+    let (year, month, day) = civil_date_from_unix_days(days);
+    Ok(format!(
+        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z"
+    ))
+}
+
+fn civil_date_from_unix_days(days: i64) -> (i64, i64, i64) {
+    let shifted = days + 719_468;
+    let era = shifted.div_euclid(146_097);
+    let day_of_era = shifted - era * 146_097;
+    let year_of_era =
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let mut year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_prime = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
+    let month = month_prime + if month_prime < 10 { 3 } else { -9 };
+    year += i64::from(month <= 2);
+    (year, month, day)
 }
 
 fn byte_digest(bytes: &[u8]) -> String {
@@ -1448,6 +1490,8 @@ fn compare_wuthering_tripwire(
         claim: "coarse-severe-regression-signal-only",
         baseline_revision: baseline.revision.clone(),
         candidate_revision: candidate.revision.clone(),
+        baseline_measured_at_utc: baseline.measured_at_utc.clone(),
+        candidate_measured_at_utc: candidate.measured_at_utc.clone(),
         runner: baseline.runner.clone(),
         pattern_count: baseline.pattern_count,
         corpus_bytes: baseline.corpus_bytes,
@@ -1470,6 +1514,41 @@ fn compare_i7_wuthering_files(
     let baseline: ScaleScanReceipt = read_receipt("I7 Wuthering disabled", baseline_path)?;
     let candidate: ScaleScanReceipt = read_receipt("I7 Wuthering enabled", candidate_path)?;
     compare_i7_wuthering(&baseline, &candidate)
+}
+
+fn validate_i7_wuthering_diagnostics<'a>(
+    baseline: &ScaleScanReceipt,
+    candidate: &'a ScaleScanReceipt,
+) -> Result<&'a CacheDiagnosticsReceipt, String> {
+    let baseline_diagnostics = baseline
+        .cache_diagnostics
+        .as_ref()
+        .ok_or_else(|| "I7 Wuthering disabled receipt lacks diagnostics".to_owned())?;
+    let candidate_diagnostics = candidate
+        .cache_diagnostics
+        .as_ref()
+        .ok_or_else(|| "I7 Wuthering enabled receipt lacks diagnostics".to_owned())?;
+    if baseline_diagnostics.prefilter_path != "all-starts"
+        || baseline_diagnostics.prefilter_bypass != "disabled"
+    {
+        return Err("I7 Wuthering disabled receipt did not use all starts".to_owned());
+    }
+    if candidate_diagnostics.prefilter_path != "literal-prefilter"
+        || candidate_diagnostics.prefilter_bypass != "none"
+    {
+        return Err("I7 Wuthering enabled receipt did not use the literal prefilter".to_owned());
+    }
+    if candidate_diagnostics.prefilter_retained_bytes > I7_MAXIMUM_PREFILTER_BYTES {
+        return Err("I7 Wuthering retained prefilter exceeds 8 MiB".to_owned());
+    }
+    let candidate_limit = candidate
+        .input_units
+        .div_ceil(8)
+        .saturating_add(I7_CANDIDATE_FIXED_ALLOWANCE_BYTES);
+    if candidate_diagnostics.prefilter_candidate_bytes > candidate_limit {
+        return Err("I7 Wuthering candidate bitmap exceeds the frozen memory bound".to_owned());
+    }
+    Ok(candidate_diagnostics)
 }
 
 fn compare_i7_wuthering(
@@ -1500,35 +1579,7 @@ fn compare_i7_wuthering(
         return Err("I7 Wuthering pattern count is outside the frozen campaign".to_owned());
     }
 
-    let baseline_diagnostics = baseline
-        .cache_diagnostics
-        .as_ref()
-        .ok_or_else(|| "I7 Wuthering disabled receipt lacks diagnostics".to_owned())?;
-    let candidate_diagnostics = candidate
-        .cache_diagnostics
-        .as_ref()
-        .ok_or_else(|| "I7 Wuthering enabled receipt lacks diagnostics".to_owned())?;
-    if baseline_diagnostics.prefilter_path != "all-starts"
-        || baseline_diagnostics.prefilter_bypass != "disabled"
-    {
-        return Err("I7 Wuthering disabled receipt did not use all starts".to_owned());
-    }
-    if candidate_diagnostics.prefilter_path != "literal-prefilter"
-        || candidate_diagnostics.prefilter_bypass != "none"
-    {
-        return Err("I7 Wuthering enabled receipt did not use the literal prefilter".to_owned());
-    }
-    if candidate_diagnostics.prefilter_retained_bytes > I7_MAXIMUM_PREFILTER_BYTES {
-        return Err("I7 Wuthering retained prefilter exceeds 8 MiB".to_owned());
-    }
-    let candidate_limit = candidate
-        .input_units
-        .div_ceil(8)
-        .saturating_add(I7_CANDIDATE_FIXED_ALLOWANCE_BYTES);
-    if candidate_diagnostics.prefilter_candidate_bytes > candidate_limit {
-        return Err("I7 Wuthering candidate bitmap exceeds the frozen memory bound".to_owned());
-    }
-
+    let candidate_diagnostics = validate_i7_wuthering_diagnostics(baseline, candidate)?;
     let improvement_ns = baseline
         .median_scan_ns
         .saturating_sub(candidate.median_scan_ns);
@@ -1563,6 +1614,8 @@ fn compare_i7_wuthering(
         comparison: "wuthering-safe-prefilter-v1",
         revision: baseline.revision.clone(),
         runner: baseline.runner.clone(),
+        baseline_measured_at_utc: baseline.measured_at_utc.clone(),
+        candidate_measured_at_utc: candidate.measured_at_utc.clone(),
         pattern_count: baseline.pattern_count,
         corpus_bytes: baseline.corpus_bytes,
         input_units: baseline.input_units,
@@ -2418,6 +2471,10 @@ struct I7ScaleComparisonReceipt {
     comparison: &'static str,
     revision: String,
     runner: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    baseline_measured_at_utc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    candidate_measured_at_utc: Option<String>,
     pattern_count: usize,
     corpus_bytes: usize,
     input_units: usize,
@@ -2443,6 +2500,8 @@ struct ScaleScanReceipt {
     claim: String,
     revision: String,
     runner: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    measured_at_utc: Option<String>,
     profile: String,
     pattern_source: String,
     pattern_source_digest: String,
@@ -2571,6 +2630,10 @@ struct ScaleComparisonReceipt {
     claim: &'static str,
     baseline_revision: String,
     candidate_revision: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    baseline_measured_at_utc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    candidate_measured_at_utc: Option<String>,
     runner: String,
     pattern_count: usize,
     corpus_bytes: usize,
@@ -2667,10 +2730,11 @@ mod tests {
         HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES,
         SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt, build_harness_matcher, compare_i6,
         compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
-        expand_corpus, harness_event_count, regex_events, rust_event_summary_with_diagnostics,
-        select_literal_patterns,
+        expand_corpus, format_unix_timestamp_utc, harness_event_count, regex_events,
+        render_scale_report, rust_event_summary_with_diagnostics, select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
+    use std::{fs, process};
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {
@@ -2832,13 +2896,22 @@ mod tests {
     fn wuthering_tripwire_accepts_small_absolute_noise() -> Result<(), String> {
         // Prepare
         let baseline = scale_receipt(40_000_000, "base");
-        let candidate = scale_receipt(85_000_000, "candidate");
+        let mut candidate = scale_receipt(85_000_000, "candidate");
+        candidate.measured_at_utc = Some("2026-07-18T05:26:02Z".to_owned());
 
         // Test
         let comparison = compare_wuthering_tripwire(&baseline, &candidate)?;
 
         // Assert
         assert_eq!(comparison.status, "pass");
+        assert_eq!(
+            comparison.baseline_measured_at_utc.as_deref(),
+            Some("2026-07-18T05:25:01Z")
+        );
+        assert_eq!(
+            comparison.candidate_measured_at_utc.as_deref(),
+            Some("2026-07-18T05:26:02Z")
+        );
         Ok(())
     }
 
@@ -2922,6 +2995,67 @@ mod tests {
         // Assert
         assert_eq!(corpus, "abøab");
         assert_eq!(corpus.len(), 6);
+        Ok(())
+    }
+
+    #[test]
+    fn utc_timestamp_format_handles_epoch_and_leap_day() -> Result<(), String> {
+        // Prepare.
+        let epoch = 0;
+        let leap_day_2000 = 951_782_400;
+
+        // Test.
+        let epoch_timestamp = format_unix_timestamp_utc(epoch)?;
+        let leap_day_timestamp = format_unix_timestamp_utc(leap_day_2000)?;
+
+        // Assert.
+        assert_eq!(epoch_timestamp, "1970-01-01T00:00:00Z");
+        assert_eq!(leap_day_timestamp, "2000-02-29T00:00:00Z");
+        Ok(())
+    }
+
+    #[test]
+    fn historical_scale_receipt_without_timestamp_remains_readable() -> Result<(), String> {
+        // Prepare.
+        let mut encoded = serde_json::to_value(scale_receipt(50_000_000, "historical"))
+            .map_err(|error| error.to_string())?;
+        encoded
+            .as_object_mut()
+            .ok_or_else(|| "scale receipt was not an object".to_owned())?
+            .remove("measured_at_utc");
+
+        // Test.
+        let decoded: ScaleScanReceipt =
+            serde_json::from_value(encoded).map_err(|error| error.to_string())?;
+
+        // Assert.
+        assert_eq!(decoded.measured_at_utc, None);
+        decoded.validate()
+    }
+
+    #[test]
+    fn scale_report_displays_measurement_timestamp() -> Result<(), String> {
+        // Prepare.
+        let directory =
+            std::env::temp_dir().join(format!("rustmatch-scale-timestamp-test-{}", process::id()));
+        fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+        let receipt_path = directory.join("receipt.json");
+        let report_path = directory.join("index.html");
+        fs::write(
+            &receipt_path,
+            serde_json::to_vec(&scale_receipt(50_000_000, "revision"))
+                .map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
+
+        // Test.
+        render_scale_report(&report_path, &[receipt_path.as_path()])?;
+        let html = fs::read_to_string(&report_path).map_err(|error| error.to_string())?;
+        fs::remove_dir_all(&directory).map_err(|error| error.to_string())?;
+
+        // Assert.
+        assert!(html.contains("<th>Measured UTC</th>"));
+        assert!(html.contains("2026-07-18T05:25:01Z"));
         Ok(())
     }
 
@@ -3208,6 +3342,7 @@ mod tests {
             claim: "exploratory-scale-and-cache-pressure-evidence".to_owned(),
             revision: revision.to_owned(),
             runner: "runner".to_owned(),
+            measured_at_utc: Some("2026-07-18T05:25:01Z".to_owned()),
             profile: "release".to_owned(),
             pattern_source: "patterns.txt".to_owned(),
             pattern_source_digest: "fnv1a64:patterns".to_owned(),

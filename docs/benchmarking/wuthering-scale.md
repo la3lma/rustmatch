@@ -58,11 +58,13 @@ script refuses a dirty tree unless `I6_ALLOW_DIRTY=1` is deliberately set.
 toolchain would otherwise produce an emulated binary. Always verify the output
 of `file` before making an architecture claim.
 
-The generated HTML table includes revision, runner, dimensions, event count,
-cache-state and fallback counts when available, selected candidate-start path,
-verified starts, compilation median, scan median, throughput, source paths, and
-source digests. Raw JSON receipts remain authoritative; the table is only a
-view.
+The generated HTML table includes the revision, an RFC 3339 UTC measurement
+timestamp, runner, dimensions, event count, cache-state and fallback counts
+when available, selected candidate-start path, verified starts, compilation
+median, scan median, throughput, source paths, and source digests. Raw JSON
+receipts remain authoritative; the table is only a view. New comparison
+receipts carry the timestamps of both source measurements. Older retained
+receipts without timestamps remain readable and are shown as `not recorded`.
 
 For I7 admission, `scripts/i7-wuthering-campaign.sh` measures the same native
 candidate binary with start acceleration disabled and enabled. It uses three
