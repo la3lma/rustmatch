@@ -13,6 +13,11 @@
 //! Assertion-free scans lazily cache deterministic state sets within a bounded,
 //! scan-local budget; callers can lower that budget or set it to zero to use
 //! the exact NFA path. Cache pressure never changes matching semantics.
+//! Assertion-free scans also use NFA-derived start tables, and sufficiently
+//! large fully filterable scans may use a conservative necessary-prefix
+//! filter. Both mechanisms only remove starts that cannot match; the semantic
+//! engine still verifies every admitted start and remains the sole source of
+//! match events.
 //!
 //! # Example
 //!
@@ -42,6 +47,7 @@ mod hir;
 mod nfa;
 mod parser;
 mod predicate;
+mod prefilter;
 mod types;
 
 #[cfg(feature = "benchmark-internals")]

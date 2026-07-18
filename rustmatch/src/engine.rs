@@ -4,36 +4,114 @@ use std::collections::HashMap;
 
 use crate::hir::Assertion;
 use crate::nfa::{EdgeKind, PatternDatabase, StateId};
+use crate::prefilter::{Prefilter, PrefilterBypass, PrefilterPath, ScanPlan};
 use crate::{Error, Match, Utf16Span, Utf16Text};
 
 pub(crate) const DEFAULT_STATE_CACHE_BUDGET: usize = 8_192;
 
 pub(crate) fn scan(
     database: &PatternDatabase,
+    prefilter: &Prefilter,
     input: &Utf16Text,
     state_cache_budget: usize,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
     sink: impl FnMut(Match),
 ) -> Result<(), Error> {
-    scan_with_stats(database, input, state_cache_budget, sink).map(|_| ())
+    scan_with_stats(
+        database,
+        prefilter,
+        input,
+        state_cache_budget,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+        sink,
+    )
+    .map(|_| ())
 }
 
 pub(crate) fn scan_with_stats(
     database: &PatternDatabase,
+    prefilter: &Prefilter,
     input: &Utf16Text,
     state_cache_budget: usize,
-    sink: impl FnMut(Match),
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
+    mut sink: impl FnMut(Match),
 ) -> Result<ScanStats, Error> {
+    let units = input.units();
+    let plan = prefilter.plan(units, prefilter_enabled, literal_prefilter_enabled);
+    let mut metrics = ScanStats {
+        prefilter_path: plan.path(),
+        prefilter_bypass: plan.bypass(),
+        prefilter_retained_bytes: plan.retained_bytes(),
+        prefilter_candidate_bytes: plan.candidate_bytes(),
+        prefilter_admissions: plan.admissions(),
+        prefilter_candidate_starts: plan.candidate_count(),
+        ..ScanStats::default()
+    };
+
     if database.uses_assertions() {
-        scan_with_assertions(database, input, sink)?;
-        Ok(ScanStats {
-            assertion_bypasses: 1,
-            ..ScanStats::default()
-        })
-    } else if state_cache_budget == 0 {
-        scan_without_assertions_nfa(database, input, sink)?;
-        Ok(ScanStats::default())
+        scan_with_assertions(database, input, &mut sink)?;
+        metrics.assertion_bypasses = 1;
+        metrics.prefilter_starts_scanned = units.len();
     } else {
-        scan_without_assertions_cached(database, input, state_cache_budget, sink)
+        match &plan {
+            ScanPlan::All { .. } => {
+                metrics.prefilter_starts_scanned = units.len();
+                scan_without_assertions_dispatch(
+                    database,
+                    input,
+                    state_cache_budget,
+                    0..units.len(),
+                    &mut metrics,
+                    &mut sink,
+                )?;
+            }
+            ScanPlan::StartTable { table, .. } => {
+                let mut starts_scanned = 0_usize;
+                let starts = (0..units.len())
+                    .filter(|&start| table.allows(units, start))
+                    .inspect(|_| starts_scanned += 1);
+                scan_without_assertions_dispatch(
+                    database,
+                    input,
+                    state_cache_budget,
+                    starts,
+                    &mut metrics,
+                    &mut sink,
+                )?;
+                metrics.prefilter_starts_scanned = starts_scanned;
+            }
+            ScanPlan::Candidates { candidates, .. } => {
+                metrics.prefilter_starts_scanned = candidates.count();
+                scan_without_assertions_dispatch(
+                    database,
+                    input,
+                    state_cache_budget,
+                    candidates.iter(),
+                    &mut metrics,
+                    &mut sink,
+                )?;
+            }
+        }
+    }
+    metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
+    Ok(metrics)
+}
+
+fn scan_without_assertions_dispatch(
+    database: &PatternDatabase,
+    input: &Utf16Text,
+    state_cache_budget: usize,
+    starts: impl Iterator<Item = usize>,
+    metrics: &mut ScanStats,
+    sink: impl FnMut(Match),
+) -> Result<(), Error> {
+    if state_cache_budget == 0 {
+        scan_without_assertions_nfa(database, input, starts, sink)
+    } else {
+        scan_without_assertions_cached(database, input, state_cache_budget, starts, metrics, sink)
     }
 }
 
@@ -42,12 +120,13 @@ pub(crate) fn scan_with_stats(
 fn scan_without_assertions_nfa(
     database: &PatternDatabase,
     input: &Utf16Text,
+    starts: impl Iterator<Item = usize>,
     mut sink: impl FnMut(Match),
 ) -> Result<(), Error> {
     let units = input.units();
     let mut scratch = Scratch::new(database);
 
-    for start in 0..units.len() {
+    for start in starts {
         scratch.reset_start();
         extend_epsilon_closure(
             database,
@@ -111,26 +190,23 @@ fn scan_without_assertions_cached(
     database: &PatternDatabase,
     input: &Utf16Text,
     state_cache_budget: usize,
+    starts: impl Iterator<Item = usize>,
+    metrics: &mut ScanStats,
     mut sink: impl FnMut(Match),
-) -> Result<ScanStats, Error> {
+) -> Result<(), Error> {
     let units = input.units();
     let mut scratch = Scratch::new(database);
     let mut cache = DeterministicCache::new(database, state_cache_budget, &mut scratch);
-    let mut metrics = ScanStats::default();
 
-    for start in 0..units.len() {
+    for start in starts {
         scratch.reset_cached_start();
         let mut cursor = ScanCursor::Cached(0);
 
         for (position, &symbol) in units.iter().enumerate().skip(start) {
             let outcome = match cursor {
-                ScanCursor::Cached(deterministic_state) => cache.transition(
-                    database,
-                    deterministic_state,
-                    symbol,
-                    &mut scratch,
-                    &mut metrics,
-                ),
+                ScanCursor::Cached(deterministic_state) => {
+                    cache.transition(database, deterministic_state, symbol, &mut scratch, metrics)
+                }
                 ScanCursor::Uncached => {
                     metrics.fallback_transitions += 1;
                     let generation = scratch.reset_cached_transition();
@@ -200,7 +276,7 @@ fn scan_without_assertions_cached(
 
     metrics.cache_states = cache.len();
     metrics.cache_table_bytes = cache.table_bytes();
-    Ok(metrics)
+    Ok(())
 }
 
 fn compute_transition(
@@ -443,6 +519,14 @@ pub(crate) struct ScanStats {
     pub(crate) fallback_transitions: u64,
     pub(crate) cache_table_bytes: usize,
     pub(crate) assertion_bypasses: u64,
+    pub(crate) prefilter_path: PrefilterPath,
+    pub(crate) prefilter_bypass: PrefilterBypass,
+    pub(crate) prefilter_retained_bytes: usize,
+    pub(crate) prefilter_candidate_bytes: usize,
+    pub(crate) prefilter_admissions: u64,
+    pub(crate) prefilter_candidate_starts: usize,
+    pub(crate) prefilter_starts_scanned: usize,
+    pub(crate) prefilter_starts_skipped: usize,
 }
 
 fn scan_with_assertions(
@@ -744,6 +828,7 @@ mod tests {
     use crate::hir::Hir;
     use crate::nfa;
     use crate::parser::parse;
+    use crate::prefilter::Prefilter;
     use crate::{PatternId, Utf16Text};
 
     type EventTuple = (u32, u64, u64);
@@ -928,13 +1013,27 @@ mod tests {
             for input in &inputs {
                 let text = Utf16Text::from(input.as_str());
                 let mut actual = Vec::new();
-                scan(&database, &text, DEFAULT_STATE_CACHE_BUDGET, |event| {
-                    actual.push((event.span().start(), event.span().end()));
-                })?;
+                scan(
+                    &database,
+                    &Prefilter::empty(),
+                    &text,
+                    DEFAULT_STATE_CACHE_BUDGET,
+                    false,
+                    false,
+                    |event| actual.push((event.span().start(), event.span().end())),
+                )?;
                 let mut nfa = Vec::new();
-                scan(&database, &text, 0, |event| {
-                    nfa.push((event.span().start(), event.span().end()));
-                })?;
+                scan(
+                    &database,
+                    &Prefilter::empty(),
+                    &text,
+                    0,
+                    false,
+                    false,
+                    |event| {
+                        nfa.push((event.span().start(), event.span().end()));
+                    },
+                )?;
 
                 let mut expected = Vec::new();
                 for start in 0..text.units().len() {
@@ -962,13 +1061,21 @@ mod tests {
         budget: usize,
     ) -> Result<CollectedScan, crate::Error> {
         let mut events = Vec::new();
-        let stats = scan_with_stats(database, input, budget, |event| {
-            events.push((
-                event.pattern_id().get(),
-                event.span().start(),
-                event.span().end(),
-            ));
-        })?;
+        let stats = scan_with_stats(
+            database,
+            &Prefilter::empty(),
+            input,
+            budget,
+            false,
+            false,
+            |event| {
+                events.push((
+                    event.pattern_id().get(),
+                    event.span().start(),
+                    event.span().end(),
+                ));
+            },
+        )?;
         events.sort_unstable();
         Ok((events, stats))
     }

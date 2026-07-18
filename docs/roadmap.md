@@ -2,13 +2,13 @@
 
 **Last reviewed:** 2026-07-18
 
-**Implementation increments started:** **7/12**
+**Implementation increments started:** **8/12**
 
-**Implementation increments complete:** **7/12**
+**Implementation increments complete:** **8/12**
 
-**Active:** **C2 - Wuthering Heights CI performance tripwire**
+**Active:** none
 
-**Available for execution:** none until C2 passes on the I6 pull request
+**Available for execution:** **I8 - Parallel pattern partitions**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -163,11 +163,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,S0,C0,C1,B0,E0,G6 complete;
-    class C2 active;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,S0,C0,C1,C2,B0,E0,G6,G7 complete;
+    class I8 available;
     class X0,B1,H1,R1,R2 evidence;
-    class G7,G8,I10,I11 gate;
-    class I7,I8,I9,H2,H3,R3,REL planned;
+    class G8,I10,I11 gate;
+    class I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -242,9 +242,9 @@ and use-case evidence bundle pass from a clean checkout.
 | I5 | UTF-16, flags, and assertions | Complete | Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as `I5-E1`; NFA-native line anchors and ASCII word boundaries, exhaustive boundary classification, assertion adversaries, and 28 differential cases pass as `I5-E2`; assertion-free scans retain a separate hot path |
 | S0 | Documented rmatch 2.x semantic parity gate | Complete | The complete documented consuming-language suite passes through the public Rust API against the pinned Java `2.0.0-RC1` oracle; pure zero-width rejection remains the explicit documented product difference |
 | I6 | Lazy deterministic-state cache | Complete | Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as `I6-P1`/`I6-B1` |
-| C2 | Wuthering Heights CI performance tripwire | Active | Retained 5,000-pattern fixture, base/head event equality, broad 100% plus 50 ms severe-regression threshold, reverse-order retry, and receipt upload implemented; awaiting pull-request CI |
-| I7 | Safe prefilter | Planned | Rust prefilter on/off event equality, adversarial safety fixtures, and positive improvement in the measured activation region; Java thresholds do not count |
-| I8 | Parallel partitions | Planned | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
+| C2 | Wuthering Heights CI performance tripwire | Complete | PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs |
+| I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
+| I8 | Parallel partitions | Available | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
 | I9 | Benchmark integration | Planned | Packaged adapter accepted by the ordinary harness with validated, reproducible receipts |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |

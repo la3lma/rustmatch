@@ -1,0 +1,11 @@
+category	samples	percent
+semantic scan and event aggregation	2918	36.1
+semantic transition construction	2401	29.7
+literal prefilter scan	1423	17.6
+deterministic cache lookup	1018	12.6
+terminal recording	97	1.2
+candidate iteration	73	0.9
+prefilter build	49	0.6
+matcher build	40	0.5
+cache scrub	16	0.2
+other or unresolved	48	0.6

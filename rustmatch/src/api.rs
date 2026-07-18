@@ -6,6 +6,7 @@ use crate::engine;
 use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
 use crate::parser;
+use crate::prefilter::Prefilter;
 use crate::{Error, Match, PatternFlags, PatternId, Utf16Text};
 
 /// Collects and validates patterns before compiling an immutable matcher.
@@ -17,6 +18,8 @@ pub struct MatcherBuilder {
     pattern_ids: HashSet<PatternId>,
     patterns: Vec<HirPattern>,
     state_cache_budget: usize,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
 }
 
 impl Default for MatcherBuilder {
@@ -25,6 +28,8 @@ impl Default for MatcherBuilder {
             pattern_ids: HashSet::new(),
             patterns: Vec::new(),
             state_cache_budget: engine::DEFAULT_STATE_CACHE_BUDGET,
+            prefilter_enabled: true,
+            literal_prefilter_enabled: true,
         }
     }
 }
@@ -46,6 +51,28 @@ impl MatcherBuilder {
     /// transitions depend on surrounding input context.
     pub fn state_cache_budget(&mut self, state_budget: usize) -> &mut Self {
         self.state_cache_budget = state_budget;
+        self
+    }
+
+    /// Enables or disables all I7 candidate-start acceleration.
+    ///
+    /// This control exists only for repository benchmark and differential-test
+    /// tooling. It is not part of rustmatch's supported application API.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn prefilter_enabled(&mut self, enabled: bool) -> &mut Self {
+        self.prefilter_enabled = enabled;
+        self
+    }
+
+    /// Enables or disables only the I7 necessary-literal layer.
+    ///
+    /// The NFA-derived start table remains enabled. This control exists only
+    /// for repository benchmark and differential-test tooling.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn literal_prefilter_enabled(&mut self, enabled: bool) -> &mut Self {
+        self.literal_prefilter_enabled = enabled;
         self
     }
 
@@ -103,9 +130,14 @@ impl MatcherBuilder {
         if self.patterns.is_empty() {
             return Err(Error::NoPatterns);
         }
+        let database = nfa::compile(&self.patterns)?;
+        let prefilter = Prefilter::compile(&self.patterns, &database);
         Ok(Matcher {
-            database: nfa::compile(&self.patterns)?,
+            database,
+            prefilter,
             state_cache_budget: self.state_cache_budget,
+            prefilter_enabled: self.prefilter_enabled,
+            literal_prefilter_enabled: self.literal_prefilter_enabled,
         })
     }
 }
@@ -118,7 +150,10 @@ impl MatcherBuilder {
 #[derive(Debug)]
 pub struct Matcher {
     database: PatternDatabase,
+    prefilter: Prefilter,
     state_cache_budget: usize,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
 }
 
 /// Scan-local cache counters intended only for the repository benchmark lane.
@@ -136,6 +171,14 @@ pub struct ScanDiagnostics {
     fallback_transitions: u64,
     cache_table_bytes: usize,
     assertion_bypasses: u64,
+    prefilter_path: crate::prefilter::PrefilterPath,
+    prefilter_bypass: crate::prefilter::PrefilterBypass,
+    prefilter_retained_bytes: usize,
+    prefilter_candidate_bytes: usize,
+    prefilter_admissions: u64,
+    prefilter_candidate_starts: usize,
+    prefilter_starts_scanned: usize,
+    prefilter_starts_skipped: usize,
 }
 
 #[cfg(feature = "benchmark-internals")]
@@ -182,6 +225,54 @@ impl ScanDiagnostics {
     pub const fn assertion_bypasses(self) -> u64 {
         self.assertion_bypasses
     }
+
+    /// Candidate-start path selected for this scan.
+    #[must_use]
+    pub const fn prefilter_path(self) -> &'static str {
+        self.prefilter_path.label()
+    }
+
+    /// Reason the full literal prefilter was bypassed, or `"none"`.
+    #[must_use]
+    pub const fn prefilter_bypass(self) -> &'static str {
+        self.prefilter_bypass.label()
+    }
+
+    /// Explicitly accounted bytes retained by immutable prefilter structures.
+    #[must_use]
+    pub const fn prefilter_retained_bytes(self) -> usize {
+        self.prefilter_retained_bytes
+    }
+
+    /// Bytes retained by the scan-local candidate bitmap.
+    #[must_use]
+    pub const fn prefilter_candidate_bytes(self) -> usize {
+        self.prefilter_candidate_bytes
+    }
+
+    /// Input starts admitted by the necessary-prefix membership filter.
+    #[must_use]
+    pub const fn prefilter_admissions(self) -> u64 {
+        self.prefilter_admissions
+    }
+
+    /// Unique candidate starts produced by the literal prefilter.
+    #[must_use]
+    pub const fn prefilter_candidate_starts(self) -> usize {
+        self.prefilter_candidate_starts
+    }
+
+    /// Start positions verified by the semantic engine.
+    #[must_use]
+    pub const fn prefilter_starts_scanned(self) -> usize {
+        self.prefilter_starts_scanned
+    }
+
+    /// Start positions safely omitted before semantic verification.
+    #[must_use]
+    pub const fn prefilter_starts_skipped(self) -> usize {
+        self.prefilter_starts_skipped
+    }
 }
 
 impl Matcher {
@@ -201,7 +292,15 @@ impl Matcher {
     /// A panic from `sink` propagates to the caller; rustmatch does not catch
     /// application panics.
     pub fn scan(&self, input: &Utf16Text, sink: impl FnMut(Match)) -> Result<(), Error> {
-        engine::scan(&self.database, input, self.state_cache_budget, sink)
+        engine::scan(
+            &self.database,
+            &self.prefilter,
+            input,
+            self.state_cache_budget,
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+            sink,
+        )
     }
 
     /// Runs one scan and returns scan-local cache counters to benchmark tooling.
@@ -215,7 +314,15 @@ impl Matcher {
         input: &Utf16Text,
         sink: impl FnMut(Match),
     ) -> Result<ScanDiagnostics, Error> {
-        let stats = engine::scan_with_stats(&self.database, input, self.state_cache_budget, sink)?;
+        let stats = engine::scan_with_stats(
+            &self.database,
+            &self.prefilter,
+            input,
+            self.state_cache_budget,
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+            sink,
+        )?;
         Ok(ScanDiagnostics {
             cache_budget: self.state_cache_budget,
             cache_states: stats.cache_states,
@@ -224,6 +331,14 @@ impl Matcher {
             fallback_transitions: stats.fallback_transitions,
             cache_table_bytes: stats.cache_table_bytes,
             assertion_bypasses: stats.assertion_bypasses,
+            prefilter_path: stats.prefilter_path,
+            prefilter_bypass: stats.prefilter_bypass,
+            prefilter_retained_bytes: stats.prefilter_retained_bytes,
+            prefilter_candidate_bytes: stats.prefilter_candidate_bytes,
+            prefilter_admissions: stats.prefilter_admissions,
+            prefilter_candidate_starts: stats.prefilter_candidate_starts,
+            prefilter_starts_scanned: stats.prefilter_starts_scanned,
+            prefilter_starts_skipped: stats.prefilter_starts_skipped,
         })
     }
 }
