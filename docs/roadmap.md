@@ -18,12 +18,14 @@ Roadmap IDs identify evidence-bearing milestones, not required one-to-one pull
 request boundaries. The README's bootstrap sequence favors small vertical PRs
 that keep the system executable.
 
-> **Hard optimization rule:** Java rmatch results can nominate an idea for a
-> Rust experiment, but cannot advance an optimization milestone. Every
-> performance-motivated change must preserve results and show a positive Rust
-> improvement beyond a predeclared noise threshold. Neutral, inconclusive, or
-> slower results fail the gate. Semantic extensions require correctness and
-> applicable non-regression evidence, not a speedup.
+> **Hard optimization rule:** Results from Java rmatch, RegexSet, Hyperscan, or
+> any other competitor can nominate a Rust experiment, but cannot advance an
+> optimization milestone. The acceptance baseline is the frozen, existing
+> Rustmatch production path, not the competitor. Every performance-motivated
+> change must preserve results and show a positive Rustmatch improvement beyond
+> a predeclared noise threshold. Neutral, inconclusive, or slower results fail
+> the gate. Semantic extensions require correctness and applicable
+> non-regression evidence, not a speedup.
 
 The system-level target is stronger than the admission rule for one change:
 rustmatch should ultimately exceed Java rmatch on representative workloads
@@ -89,6 +91,8 @@ flowchart TB
         G8["G8 Rust performance proof for I8<br/>correctness parity + positive win beyond noise<br/>Java evidence does not count"]
         I9["I9 Full benchmark-harness integration"]
         B1["B1 Correctness-gated cross-engine receipts<br/>and complete thread sweeps"]
+        B2["B2 Competitor-win diagnosis<br/>and Rust-native hypotheses"]
+        G9["G9 Existing-Rustmatch candidate gate<br/>correctness + positive win beyond noise"]
     end
 
     subgraph HARD[Hardening]
@@ -137,9 +141,10 @@ flowchart TB
     X0 -. authoritative Rust performance evidence .-> G7
     X0 -. authoritative Rust performance evidence .-> G8
 
-    B1 --> H1
-    B1 --> H2
-    B1 --> H3
+    B1 --> B2 --> G9
+    G9 --> H1
+    G9 --> H2
+    G9 --> H3
     H1 --> I10
     H2 --> I10
     H3 --> I10
@@ -171,8 +176,8 @@ flowchart TB
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
     class B1 active;
     class X0,H1,R1,R2 evidence;
-    class I10,I11 gate;
-    class H2,H3,R3,REL planned;
+    class G9,I10,I11 gate;
+    class B2,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -203,6 +208,8 @@ flowchart TB
     click G8 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-8-parallel-pattern-partitions" "Open I8 performance gate"
     click I9 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-9-benchmark-harness-integration" "Open I9 description"
     click B1 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b1-cross-engine-campaign.md" "Open frozen B1 campaign protocol"
+    click B2 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md" "Open competitor-win diagnosis protocol"
+    click G9 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md#candidate-admission-gate-g9" "Open current-Rustmatch admission gate"
     click H1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open hardening evidence"
     click H2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open API audit description"
     click H3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open dependency audit description"
@@ -252,6 +259,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Active | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) and exact harness now implement correctness-gated 1,000/2,500/5,000/7,500/10,000-pattern campaigns, density and cache-pressure controls, explicit semantic lanes, complete worker sweeps, confirmation, a 20-role core profile scale with validated counters, and a self-contained report archive; authoritative stable-host receipts and critical interpretation remain outstanding |
+| B2 | Competitor-win diagnosis and Rust-native hypotheses | Planned | Confirmed competitor-winning cells are ranked without conflating semantics; exact Rustmatch weak fixtures are profiled; each plausible mechanism becomes a bounded, predeclared Rust-native experiment or a documented non-candidate |
+| G9 | Existing-Rustmatch candidate gate | Planned | Every tried candidate preserves exact results and is admitted only with reproducible, noise-aware evidence that it improves the frozen existing Rustmatch baseline on its declared target set without an unacceptable broader regression; competitor parity is not the admission criterion |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |

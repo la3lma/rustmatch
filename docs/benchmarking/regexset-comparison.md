@@ -69,8 +69,12 @@ of the receipt rather than becoming an unexplained winner-only setting.
 B0 is a harness and honesty milestone, not a promise that the unoptimized I1
 engine wins. It passes when both lanes are reproducible, results are validated,
 and a smoke receipt survives. Performance work may then use RegexSet results to
-prioritize experiments, but an optimization enters rustmatch only after its own
-baseline/candidate gate shows a positive Rust improvement beyond noise.
+prioritize experiments, especially on confirmed workloads where RegexSet wins.
+RegexSet remains a diagnostic competitor, not the acceptance baseline. An
+optimization enters rustmatch only after its own comparison shows a positive
+improvement beyond noise over the exact existing Rustmatch production revision
+frozen before that experiment. The post-B1 procedure is specified in the
+[B2/G9 protocol](../experiments/b2-competitor-win-optimization.md).
 
 Run the first correctness-gated release-profile smoke locally with:
 

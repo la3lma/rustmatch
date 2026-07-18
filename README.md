@@ -584,16 +584,22 @@ determinization, state-set representations, caches, prefilters, specialized
 collections, SIMD, `unsafe`, allocation strategies, and automatic parallelism
 all pass through this gate.
 
-Java rmatch is valuable prior art. If an optimization worked there, that is a
-good reason to test it in Rust. It is not evidence that the optimization works
-in Rust. Different layouts, ownership, compiler optimizations, standard
-libraries, allocators, and runtime costs can reverse the result.
+Java rmatch, RegexSet, Hyperscan, and other engines are valuable prior art and
+diagnostic competitors. If an optimization worked there, or if a competitor
+wins a confirmed workload, that is a good reason to test a mechanism in Rust.
+It is not evidence that the mechanism improves Rustmatch. Different semantics,
+layouts, ownership, compiler optimizations, standard libraries, allocators, and
+runtime costs can reverse the result.
+
+The acceptance baseline is always the exact existing Rustmatch production
+revision frozen before the experiment. Competitor results nominate workloads
+and hypotheses; they do not replace a Rustmatch baseline/candidate comparison.
 
 Before implementing a performance idea, record:
 
 1. the mechanism and why it may help Rust;
 2. the workloads and metric it is intended to improve;
-3. the exact baseline revision and modes being compared;
+3. the exact existing Rustmatch baseline revision and modes being compared;
 4. the campaign's noise model and minimum meaningful improvement;
 5. the regressions in build time, memory, latency, or other scenarios that
    would make the trade unacceptable.
@@ -621,6 +627,12 @@ Diagnostic controls should separate competing explanations where practical;
 for example, a no-match corpus distinguishes pattern-set search cost from
 result delivery. A green threshold without this critical interpretation is an
 incomplete experiment.
+
+After B1, confirmed RegexSet-winning cells receive this treatment through the
+[`B2/G9 competitor-win protocol`](docs/experiments/b2-competitor-win-optimization.md).
+The resulting candidate may remain slower than RegexSet and still pass if it
+improves current Rustmatch. Conversely, beating RegexSet cannot admit a change
+that fails to improve current Rustmatch.
 
 This hard positive-improvement requirement does **not** apply to semantic
 extensions such as richer supported regex syntax. Those changes are admitted
@@ -812,7 +824,7 @@ hashes agree and expected and observed match counts agree.
 | Match semantics misunderstood | Plausible but wrong output | Golden fixtures plus differential event-multiset tests |
 | Object model copied from Java | Poor locality and unidiomatic API | Architecture around dense IDs and arrays before porting behavior |
 | Premature optimization | Complex wrong engine | Walking skeleton, reference interpreter, then measured optimization |
-| Java optimization copied on reputation | Rust complexity without a Rust benefit | Treat Java results as hypotheses; require correctness-gated Rust baseline/candidate receipts and a positive result beyond noise |
+| Competitor optimization copied on reputation | Rust complexity without a Rustmatch benefit | Treat Java rmatch, RegexSet, Hyperscan, and other results as hypotheses; require correctness-gated existing-Rustmatch baseline/candidate receipts and a positive result beyond noise |
 | Unsafe prefilter skips matches | Silent false negatives | Prefilter must prove necessity; differential bypass tests |
 | Parallel callbacks differ | Nondeterminism or races | Normalize events in tests; explicit `Send`/`Sync` sink contracts |
 | DFA state explosion | Unbounded memory | Lazy construction, budgets, metrics, and NFA fallback policy |
@@ -2400,6 +2412,23 @@ Its semantics, matrix, cache-pressure control, worker sweeps, profiling rules,
 and CI boundary are frozen in the
 [`B1 cross-engine campaign protocol`](docs/experiments/b1-cross-engine-campaign.md).
 
+### Post-B1: competitor-win diagnosis and Rustmatch admission
+
+**Purpose:** Turn confirmed competitor wins into well-founded Rust-native
+experiments without mistaking the competitor for the optimization baseline.
+
+After B1, B2 ranks semantically comparable cells where RegexSet wins, profiles
+the existing Rustmatch implementation on those exact fixtures, and records
+bounded mechanisms and diagnostic controls. G9 then compares each candidate
+with the exact Rustmatch production revision frozen before implementation.
+
+The candidate must preserve results, improve existing Rustmatch beyond a
+predeclared noise threshold on its target workloads, and avoid an unacceptable
+broader regression. Improvements outside the original target are welcome.
+RegexSet parity is neither required nor sufficient. The complete workflow and
+exit criteria are in the
+[`B2/G9 protocol`](docs/experiments/b2-competitor-win-optimization.md).
+
 ### Increment 10: Hardening
 
 **Purpose:** Turn a promising engine into a dependable library.
@@ -2460,8 +2489,8 @@ Every behavior or performance change should follow this sequence:
    optimization, or a mixture of both.
 2. **Prepare:** add or identify a failing fixture, property, or benchmark.
 3. **Predeclare:** state the expected event multiset; for an optimization also
-   state the Rust baseline, target workloads, metric, noise threshold, and
-   unacceptable regressions before implementation.
+   state the exact existing Rustmatch baseline, target workloads, metric, noise
+   threshold, and unacceptable regressions before implementation.
 4. **Test:** run the smallest focused test, then the full semantic suite.
 5. Implement the smallest coherent change.
 6. Run format, Clippy, tests, rustdoc, and fuzz smoke lanes.
@@ -2503,9 +2532,10 @@ performance-sensitive change.
 - Performance-sensitive changes carry the required external base/candidate
   receipts from the designated stable machine; the CI tripwire is only
   supplementary evidence.
-- A change proposed as an optimization has a retained Rust baseline/candidate
-  comparison showing a positive improvement beyond noise. Java evidence alone,
-  or merely avoiding a regression, does not satisfy this item.
+- A change proposed as an optimization has a retained existing-Rustmatch
+  baseline/candidate comparison showing a positive improvement beyond noise.
+  Competitor evidence alone, or merely avoiding a regression, does not satisfy
+  this item.
 
 ### Bootstrap execution sequence
 

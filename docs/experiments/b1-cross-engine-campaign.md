@@ -236,6 +236,25 @@ core line adds a profile point before a claim is accepted. Profiles record
 symbols, exact image, kernel restrictions, command, validated counters, raw
 output, and whole-process resource use.
 
+## Post-B1 optimization handoff
+
+B1 measures and explains the engines; it does not admit optimizations. After
+all required points, confirmations, and profiles are complete, the
+[B2/G9 protocol](b2-competitor-win-optimization.md) ranks the confirmed cells
+where RegexSet beats Rustmatch and profiles Rustmatch on those exact weak
+fixtures. Native set-membership and complete-event results remain separate.
+
+Those competitor wins nominate Rust-native hypotheses. They do not become the
+baseline for accepting a change. Each candidate is measured against the exact
+existing Rustmatch production revision frozen before implementation. A
+candidate is retained only when it preserves results, improves that Rustmatch
+baseline beyond the declared noise threshold on its target set, and avoids an
+unaccepted broader regression. It may also improve other workloads; such gains
+are welcome and reported. RegexSet parity is neither required nor sufficient.
+
+This handoff adds no point to the frozen 1,891-run initial B1 plan and does not
+change B1's engine identities, measurement boundaries, or exit criteria.
+
 ## CI boundary
 
 GitHub Actions keeps the optimized Wuthering Heights C2 tripwire: 5,000
