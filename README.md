@@ -628,11 +628,13 @@ for example, a no-match corpus distinguishes pattern-set search cost from
 result delivery. A green threshold without this critical interpretation is an
 incomplete experiment.
 
-After B1, confirmed RegexSet-winning cells receive this treatment through the
-[`B2/G9 competitor-win protocol`](docs/experiments/b2-competitor-win-optimization.md).
-The resulting candidate may remain slower than RegexSet and still pass if it
-improves current Rustmatch. Conversely, beating RegexSet cannot admit a change
-that fails to improve current Rustmatch.
+After B1, the complete retained dataset receives this treatment through the
+[`B2/G9 full-dataset analysis and admission protocol`](docs/experiments/b2-competitor-win-optimization.md).
+Quantitative and qualitative analysis, followed by a reviewed hypothesis
+registry, must finish before optimization code begins. The resulting candidate
+may remain slower than RegexSet and still pass if it improves current Rustmatch.
+Conversely, beating RegexSet cannot admit a change that fails to improve current
+Rustmatch.
 
 This hard positive-improvement requirement does **not** apply to semantic
 extensions such as richer supported regex syntax. Those changes are admitted
@@ -2412,15 +2414,17 @@ Its semantics, matrix, cache-pressure control, worker sweeps, profiling rules,
 and CI boundary are frozen in the
 [`B1 cross-engine campaign protocol`](docs/experiments/b1-cross-engine-campaign.md).
 
-### Post-B1: competitor-win diagnosis and Rustmatch admission
+### Post-B1: full-dataset analysis and Rustmatch admission
 
-**Purpose:** Turn confirmed competitor wins into well-founded Rust-native
-experiments without mistaking the competitor for the optimization baseline.
+**Purpose:** Understand the complete evidence before turning any observation
+into a Rust-native optimization experiment.
 
-After B1, B2 ranks semantically comparable cells where RegexSet wins, profiles
-the existing Rustmatch implementation on those exact fixtures, and records
-bounded mechanisms and diagnostic controls. G9 then compares each candidate
-with the exact Rustmatch production revision frozen before implementation.
+After B1, B2 first audits evidence integrity, then analyzes every valid workload
+quantitatively and automatically. A qualitative pass relates scaling regimes,
+cliffs, crossovers, anomalies, and competitor results to plausible mechanisms
+and alternatives. Only after that review may a ranked hypothesis registry
+authorize bounded experiments. G9 then compares each candidate with the exact
+Rustmatch production revision frozen before implementation.
 
 The candidate must preserve results, improve existing Rustmatch beyond a
 predeclared noise threshold on its target workloads, and avoid an unacceptable

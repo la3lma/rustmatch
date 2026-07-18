@@ -1,70 +1,180 @@
-# B2/G9 experiment: competitor-win diagnosis and Rustmatch admission
+# B2/G9 experiment: full-dataset analysis, hypotheses, and Rustmatch admission
 
 ## Status
 
 Planned after B1. This protocol does not alter the frozen B1 campaign, its
-runner, or its interpretation. B1 supplies the measurements; B2 turns confirmed
-competitor wins into bounded Rust-native hypotheses; G9 decides whether any
-candidate is better than the existing Rustmatch implementation.
+runner, or its interpretation. B1 supplies the complete retained evidence. B2
+examines that evidence before any optimization work begins. G9 then decides
+whether a bounded candidate is better than the existing Rustmatch
+implementation.
+
+The sequence is mandatory:
+
+1. complete and validate the test series;
+2. examine the complete dataset quantitatively and automatically;
+3. examine the results qualitatively and reason about the processes that could
+   have produced them;
+4. record and review explicit hypotheses and discriminating experiments; and
+5. only then implement one bounded candidate at a time and repeat
+   **hypothesize, test, evaluate, accept or reject**.
+
+No optimization branch or production candidate may start before the B2 review
+gate is complete. Exploring data, writing analysis tools, and improving the
+measurement or reporting harness are not optimization candidates, but they must
+not change or reinterpret the frozen B1 measurements.
 
 ## Baseline and purpose
 
 RegexSet is a diagnostic competitor. Its wins identify workloads where
 Rustmatch deserves closer inspection, especially after worker confirmation and
-semantic classification. RegexSet is not the optimization baseline and matching
-or beating it is not the condition for accepting code.
+semantic classification. RegexSet is not the optimization baseline, and
+matching or beating it is not the condition for accepting code. Competitor wins
+are one important part of B2, not the organizing principle for the analysis.
 
-For each experiment, the baseline is the exact Rustmatch production revision
-that exists before the candidate is implemented. That revision, build profile,
-toolchain, lockfile, host state, fixture hashes, worker counts, warm-up policy,
-measurement boundary, and result digest are frozen before candidate timing.
-Later Rustmatch improvements become the baseline for still later experiments;
-an older convenient baseline may not be reused to manufacture a win.
+The full B1 dataset is the subject of B2. That includes workloads where
+Rustmatch wins, loses, crosses over, scales unexpectedly, saturates early,
+incurs high preparation or process cost, produces many events, or disagrees
+with a simple performance model. Apparently strong results require scrutiny as
+well as weak ones: an unexplained win may expose a task difference, a reporting
+error, or a useful mechanism.
 
-## B2: diagnose before changing code
+For each later candidate experiment, the baseline is the exact Rustmatch
+production revision that exists before the candidate is implemented. That
+revision, build profile, toolchain, lockfile, host state, fixture hashes, worker
+counts, warm-up policy, measurement boundary, and result digest are frozen
+before candidate timing. Later Rustmatch improvements become the baseline for
+still later experiments; an older convenient baseline may not be reused to
+manufacture a win.
 
-After B1 is complete:
+## B2-A: evidence integrity and completeness
 
-1. Build a ranked table of confirmed cells where RegexSet beats Rustmatch.
-   Keep native set-membership and complete-event lanes separate, and show the
-   work each engine performs.
-2. Require complete declared worker sweeps and confirmation receipts before a
-   cell is called a win. Provisional or worker-asymmetric points can nominate
-   follow-up measurements, but not an optimization.
-3. Group the winning cells by pattern family, count, corpus size, density,
-   selected worker count, preparation cost, scan cost, memory behavior, and
-   output volume.
-4. Profile existing Rustmatch on the exact weak fixtures. Use the confirmed
-   Rustmatch worker optimum as well as one worker when that distinction helps
-   separate algorithmic cost from scheduling or partitioning cost.
-5. State a mechanism, not merely a correlation: for example excess candidate
-   starts, transition-cache pressure, state-set hashing, event delivery,
-   partition imbalance, synchronization, or memory bandwidth.
-6. Add diagnostic controls that can distinguish the mechanism from plausible
-   alternatives. A zero-match control, density sweep, pattern-count neighbor,
-   or cache-pressure corpus is preferable to guessing from one ratio.
-7. Record each plausible mechanism as a bounded experiment. Record implausible,
-   semantically irrelevant, or prohibitively complex ideas as non-candidates so
-   the same dead end is not repeatedly rediscovered.
+Before interpreting performance:
 
-An optimization may also improve workloads where RegexSet does not win. That is
-welcome and belongs in the retained result, but it does not relax the requirement
-to explain and measure the originally declared target.
+1. Prove that every required campaign point, confirmation, cache-pressure
+   control, and profile is present or has an explicit disposition.
+2. Verify revision, fixture, plan, image, toolchain, host, command, output count,
+   digest, timing-boundary, and service-isolation identities from retained
+   receipts rather than filenames or memory.
+3. Keep provisional measurements visibly separate from confirmed measurements.
+   Never silently substitute a partial worker sweep for a declared optimum.
+4. Keep native set-membership results separate from complete match-event
+   enumeration. State exactly what every engine is asked to compute.
+5. Audit failures, retries, exclusions, outliers, and missing cells. Exclusion
+   requires a recorded reason and must not be chosen because a result is
+   inconvenient.
+6. Regenerate the principal tables and plots from raw retained receipts. The
+   analysis is not ready if a result cannot be traced back to its inputs.
+
+## B2-Q: quantitative and automatic analysis
+
+Analyze the entire valid dataset, not only aggregate winners. The regenerable
+analysis must include at least:
+
+- absolute scan throughput and time, preparation cost, whole-process effort,
+  memory, output volume, and validated profile counters where available;
+- adjacent pattern-count slopes and scaling across 1,000, 2,500, 5,000, 7,500,
+  and 10,000 patterns rather than interpolation across distant endpoints;
+- corpus-size effects, cache-pressure effects, and the interaction between
+  pattern count and corpus size;
+- sparse/dense sensitivity, match-event density, and the cost of complete event
+  delivery;
+- worker speedup, parallel efficiency, retained throughput, selected optima,
+  early saturation, oversubscription, and partition imbalance;
+- preparation-versus-scan tradeoffs and the distinction between measured scan
+  speed and total machine effort;
+- crossovers, discontinuities, cliffs, non-monotonic behavior, heavy tails,
+  unstable rankings, and anomalous cells;
+- patterns shared by related workloads, using clustering or automated anomaly
+  detection where it clarifies rather than obscures the raw measurements; and
+- uncertainty, repetition drift, effect sizes, and sensitivity to the chosen
+  noise threshold.
+
+Summary ratios may nominate questions, but they may not hide intermediate
+cliffs or asymmetric work. Every automatic finding must link to the underlying
+receipts and be reproducible by a checked-in command or script. Negative and
+unexpected results are retained.
+
+## B2-L: qualitative and causal analysis
+
+Numbers describe behavior; they do not by themselves identify a mechanism. For
+each major scaling regime, crossover, cliff, anomaly, competitor advantage, and
+unexpected Rustmatch advantage:
+
+1. Inspect the exact workload, retained profiles, implementation path, output
+   contract, and relevant Rustmatch architecture.
+2. Explain the plausible process behind the observation in concrete terms, such
+   as candidate-start volume, transition-cache behavior, state-set hashing,
+   event construction, partition balance, synchronization, allocation, memory
+   locality, or bandwidth.
+3. Record credible alternative explanations and confounders, including task
+   asymmetry, warm-up, preparation boundaries, worker selection, cache state,
+   event density, scheduling, and measurement noise.
+4. Distinguish observation, inference, and demonstrated mechanism. A compelling
+   story is still a hypothesis until a discriminating experiment supports it.
+5. Compare related cells and controls to test whether the explanation is
+   consistent with the rest of the dataset, not merely one attractive ratio.
+
+Competitor implementations, earlier Rustmatch work, profiles, external advice,
+and lab notes may suggest mechanisms. They are sources of hypotheses, not
+evidence that an optimization works in Rustmatch.
+
+## B2-H: hypothesis registry and experiment design
+
+Turn the combined quantitative and qualitative review into a ranked hypothesis
+registry. Each entry records:
+
+- a stable identifier and the precise observation it addresses;
+- the proposed mechanism and credible alternatives;
+- supporting and conflicting evidence;
+- target cells, neighboring controls, semantic guard cases, and expected
+  directional results;
+- the exact current-Rustmatch baseline to be frozen if implementation begins;
+- the primary metric, noise model, minimum meaningful improvement, and stop
+  condition;
+- correctness, memory, preparation, latency, and broader-regression guards;
+- estimated impact, confidence, implementation cost, complexity, and risk; and
+- a disposition: experiment candidate, further measurement needed, explained
+  without code, duplicate mechanism, or documented non-candidate.
+
+Rank experiments by expected value, not by how interesting they are to
+implement. Prefer the smallest experiment that can distinguish the proposed
+mechanism from alternatives. A zero-match control, density sweep,
+pattern-count neighbor, cache-pressure fixture, one-worker comparison, or
+instrumented no-output path is often more informative than immediately changing
+the production engine.
+
+## B2 review gate
+
+Optimization work may begin only after a review confirms that:
+
+1. B2-A has established a complete, traceable evidence base;
+2. B2-Q covers the entire dataset with regenerable quantitative outputs;
+3. B2-L gives a reasoned disposition to every material regime, crossover,
+   cliff, anomaly, and competitor win;
+4. observations, inferences, and demonstrated mechanisms are clearly separated;
+5. the B2-H registry contains ranked, bounded, falsifiable experiments with
+   controls and stop conditions; and
+6. the reviewed analysis and registry are committed and linked from the
+   roadmap.
+
+If the review exposes missing or ambiguous evidence, return to measurement or
+analysis. Do not fill the gap with an implementation guess.
 
 ## Candidate experiment contract
 
-Before implementation, record:
+After the B2 review, and before implementing each candidate, record:
 
+- the hypothesis-registry identifier;
 - the exact existing Rustmatch baseline revision and artifact identity;
-- the proposed Rust-native mechanism and the profile evidence behind it;
-- target fixtures, worker modes, and the primary metric;
+- the proposed Rust-native mechanism and the evidence behind it;
+- target fixtures, worker modes, controls, and the primary metric;
 - exact output count and digest requirements;
 - the noise model and minimum meaningful improvement;
 - the broader guard set, including neighboring pattern counts, both corpus
   sizes, density controls, Wuthering Heights, and relevant semantic families;
 - unacceptable regressions in scan time, preparation time, memory, latency,
   fallback behavior, or another scenario; and
-- any proposed selective activation rule.
+- the stop condition and any proposed selective activation rule.
 
 Prior art from RegexSet, Java rmatch, Hyperscan, or another engine may inspire
 the mechanism. The Rust implementation must still fit Rustmatch's semantics and
@@ -76,7 +186,23 @@ both successful and rejected receipts. Several tiny mechanical commits may
 support one hypothesis, but unrelated optimization ideas must not be bundled in
 a way that prevents attribution.
 
-## Candidate admission gate (G9)
+## G9 experiment loop and candidate admission gate
+
+For every candidate:
+
+1. **Hypothesize:** select one reviewed B2-H entry and freeze its baseline,
+   expected result, controls, guards, and stop condition.
+2. **Test:** implement one bounded mechanism, pass semantic correctness, then
+   collect repeated and reverse-order base/candidate evidence.
+3. **Evaluate:** inspect absolute values, scaling shape, profiles, process cost,
+   memory, outliers, neighboring workloads, and alternative explanations. A
+   threshold result without critical interpretation is incomplete.
+4. **Accept or reject:** retain production code only if every admission
+   condition below holds. Otherwise remove it from the production path and
+   preserve the experiment and its lesson.
+5. **Repeat:** update the hypothesis registry and choose the next experiment
+   from the evidence now available. Do not stack an unproven optimization under
+   another candidate.
 
 A candidate enters the Rustmatch production path only when all of these hold:
 
@@ -105,14 +231,25 @@ experiments.
 
 ## Exit criteria
 
-B2 and G9 complete only when:
+B2 completes only when the full-dataset analysis and review gate are complete.
+In particular:
 
-1. every confirmed RegexSet-winning B1 cell has a semantic label and a reasoned
-   disposition: investigated candidate, explained task difference, duplicate
-   mechanism, or documented non-candidate;
-2. exact weak-fixture Rustmatch profiles and diagnostic controls are retained;
-3. every implemented candidate has a frozen current-Rustmatch baseline and a
-   reproducible base/candidate evidence bundle;
-4. accepted candidates pass G9 and rejected candidates leave no enabled
-   production-path complexity; and
-5. the roadmap and critical B1/B2 report link to the retained evidence.
+1. evidence integrity and campaign completeness are demonstrated;
+2. the quantitative report covers every valid workload and major scaling
+   dimension;
+3. every material regime, crossover, cliff, anomaly, and confirmed
+   RegexSet-winning cell has a reasoned disposition;
+4. qualitative analysis relates the measurements to plausible processes and
+   records alternatives and confounders;
+5. the reviewed hypothesis registry identifies the next bounded experiments as
+   well as documented non-candidates; and
+6. no optimization candidate was started before this evidence was committed and
+   reviewed.
+
+G9 completes for an implemented candidate only when:
+
+1. it has a frozen current-Rustmatch baseline and a reproducible
+   base/candidate evidence bundle;
+2. accepted code passes every admission condition and broader guard;
+3. rejected code leaves no enabled production-path complexity; and
+4. the roadmap, registry, and critical B1/B2 report link to the retained result.

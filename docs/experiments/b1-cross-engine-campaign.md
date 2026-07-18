@@ -240,9 +240,11 @@ output, and whole-process resource use.
 
 B1 measures and explains the engines; it does not admit optimizations. After
 all required points, confirmations, and profiles are complete, the
-[B2/G9 protocol](b2-competitor-win-optimization.md) ranks the confirmed cells
-where RegexSet beats Rustmatch and profiles Rustmatch on those exact weak
-fixtures. Native set-membership and complete-event results remain separate.
+[B2/G9 protocol](b2-competitor-win-optimization.md) first examines the complete
+dataset quantitatively and qualitatively. It then turns reviewed observations,
+including confirmed cells where RegexSet beats Rustmatch, into ranked,
+falsifiable hypotheses. Native set-membership and complete-event results remain
+separate.
 
 Those competitor wins nominate Rust-native hypotheses. They do not become the
 baseline for accepting a change. Each candidate is measured against the exact
@@ -251,6 +253,12 @@ candidate is retained only when it preserves results, improves that Rustmatch
 baseline beyond the declared noise threshold on its target set, and avoids an
 unaccepted broader regression. It may also improve other workloads; such gains
 are welcome and reported. RegexSet parity is neither required nor sufficient.
+
+No optimization candidate may begin before the B2 evidence-integrity,
+full-dataset analysis, qualitative review, and hypothesis-registry gate is
+complete. G9 then requires every candidate to follow a bounded
+hypothesize-test-evaluate-accept-or-reject cycle against the exact current
+Rustmatch baseline.
 
 This handoff adds no point to the frozen 1,891-run initial B1 plan and does not
 change B1's engine identities, measurement boundaries, or exit criteria.

@@ -91,7 +91,7 @@ flowchart TB
         G8["G8 Rust performance proof for I8<br/>correctness parity + positive win beyond noise<br/>competitor evidence does not count"]
         I9["I9 Full benchmark-harness integration"]
         B1["B1 Correctness-gated cross-engine receipts<br/>and complete thread sweeps"]
-        B2["B2 Competitor-win diagnosis<br/>and Rust-native hypotheses"]
+        B2["B2 Full-dataset analysis<br/>and reviewed hypotheses"]
         G9["G9 Existing-Rustmatch candidate gate<br/>correctness + positive win beyond noise"]
     end
 
@@ -208,8 +208,8 @@ flowchart TB
     click G8 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-8-parallel-pattern-partitions" "Open I8 performance gate"
     click I9 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-9-benchmark-harness-integration" "Open I9 description"
     click B1 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b1-cross-engine-campaign.md" "Open frozen B1 campaign protocol"
-    click B2 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md" "Open competitor-win diagnosis protocol"
-    click G9 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md#candidate-admission-gate-g9" "Open current-Rustmatch admission gate"
+    click B2 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md" "Open full-dataset analysis protocol"
+    click G9 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md#g9-experiment-loop-and-candidate-admission-gate" "Open current-Rustmatch admission gate"
     click H1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open hardening evidence"
     click H2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open API audit description"
     click H3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open dependency audit description"
@@ -259,7 +259,7 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Active | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) and exact harness now implement correctness-gated 1,000/2,500/5,000/7,500/10,000-pattern campaigns, density and cache-pressure controls, explicit semantic lanes, complete worker sweeps, confirmation, a 20-role core profile scale with validated counters, and a self-contained report archive; authoritative stable-host receipts and critical interpretation remain outstanding |
-| B2 | Competitor-win diagnosis and Rust-native hypotheses | Planned | Confirmed competitor-winning cells are ranked without conflating semantics; exact Rustmatch weak fixtures are profiled; each plausible mechanism becomes a bounded, predeclared Rust-native experiment or a documented non-candidate |
+| B2 | Full-dataset analysis and reviewed hypotheses | Planned | After B1 completes, the entire traceable dataset is examined quantitatively and qualitatively before optimization begins; major regimes, cliffs, anomalies, crossovers, and competitor wins receive reasoned dispositions, and a reviewed registry turns plausible mechanisms into bounded experiments or documented non-candidates |
 | G9 | Existing-Rustmatch candidate gate | Planned | Every tried candidate preserves exact results and is admitted only with reproducible, noise-aware evidence that it improves the frozen existing Rustmatch baseline on its declared target set without an unacceptable broader regression; competitor parity is not the admission criterion |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
