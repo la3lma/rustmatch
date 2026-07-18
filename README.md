@@ -555,8 +555,10 @@ specified as progressively stronger gates:
 2. **Allocation gate:** steady-state scan reuses scratch storage.
 3. **Regression gate:** representative scenarios must not slow by more than the
    campaign's noise-aware threshold without an explicit tradeoff decision.
-4. **Reference gate:** rustmatch should be competitive with Java rmatch on at
-   least the workloads where shared many-pattern machinery is valuable.
+4. **Reference gate:** rustmatch should exceed Java rmatch on representative
+   many-pattern workloads where both engines perform the same event-enumeration
+   task. A result may be fast in absolute terms before this gate passes, but it
+   is not yet fast enough for the project's intended destination.
 5. **Scaling gate:** measure 1,000, 2,500, 5,000, 7,500, and 10,000 patterns on
    8 MiB and 50 MiB inputs, including thread sweeps.
 6. **Honesty gate:** compile time, warm-up time, scan time, peak memory, match

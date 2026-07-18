@@ -25,6 +25,11 @@ that keep the system executable.
 > slower results fail the gate. Semantic extensions require correctness and
 > applicable non-regression evidence, not a speedup.
 
+The system-level target is stronger than the admission rule for one change:
+rustmatch should ultimately exceed Java rmatch on representative workloads
+where both engines enumerate the same events. Strong absolute throughput is
+progress, but does not by itself satisfy that reference gate.
+
 ## Dependency graph
 
 Select any task or gate to jump to its detailed description in the README.
