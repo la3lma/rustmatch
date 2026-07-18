@@ -530,6 +530,7 @@ pub(crate) struct ScanStats {
 }
 
 impl ScanStats {
+    #[cfg(feature = "benchmark-internals")]
     pub(crate) fn merge_partition(&mut self, other: Self) {
         self.cache_states = self.cache_states.saturating_add(other.cache_states);
         self.cache_hits = self.cache_hits.saturating_add(other.cache_hits);
