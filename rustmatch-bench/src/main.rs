@@ -229,33 +229,21 @@ fn harness_run(
     let matcher = build_harness_matcher(&fixture.patterns, mode)?;
     let prepare_ns = nanos(prepare_started.elapsed());
 
-    let (expected, diagnostics) = rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+    let measurements = measure_harness_scans(
+        warmups,
+        repeats,
+        || {
+            let (summary, diagnostics) =
+                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+            Ok(((summary, diagnostics), summary.count))
+        },
+        || harness_event_count(&matcher, &fixture.input),
+    )?;
+    let (expected, diagnostics) = measurements.evidence;
     let expected_count = expected.count;
     let event_digest = expected.digest();
-
-    let mut warmup_ns = Vec::with_capacity(warmups);
-    for _ in 0..warmups {
-        let started = Instant::now();
-        let count = harness_event_count(&matcher, &fixture.input)?;
-        warmup_ns.push(nanos(started.elapsed()));
-        if count != expected_count {
-            return Err(format!(
-                "harness warm-up produced {count} events; expected {expected_count}"
-            ));
-        }
-    }
-
-    let mut scan_ns = Vec::with_capacity(repeats);
-    for _ in 0..repeats {
-        let started = Instant::now();
-        let count = harness_event_count(&matcher, &fixture.input)?;
-        scan_ns.push(nanos(started.elapsed()));
-        if count != expected_count {
-            return Err(format!(
-                "harness measurement produced {count} events; expected {expected_count}"
-            ));
-        }
-    }
+    let warmup_ns = measurements.warmup_ns;
+    let scan_ns = measurements.scan_ns;
     let median_scan_ns = median(&mut scan_ns.clone());
     if median_scan_ns == 0 {
         return Err("harness median scan time must be positive".to_owned());
@@ -270,7 +258,7 @@ fn harness_run(
 
     Ok(HarnessRunReceipt {
         schema_version: 1,
-        runner_version: "rustmatch-harness-v1",
+        runner_version: "rustmatch-harness-v2",
         engine: "rustmatch-rust",
         revision: benchmark_revision(),
         rust_version: env::var("RUSTMATCH_RUST_VERSION")
@@ -292,6 +280,70 @@ fn harness_run(
         diagnostics: diagnostics.into(),
         correctness: "pass",
     })
+}
+
+#[derive(Debug)]
+struct HarnessMeasurements<T> {
+    evidence: T,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+}
+
+fn measure_harness_scans<T>(
+    warmups: usize,
+    repeats: usize,
+    first_scan: impl FnOnce() -> Result<(T, usize), String>,
+    mut subsequent_scan: impl FnMut() -> Result<usize, String>,
+) -> Result<HarnessMeasurements<T>, String> {
+    if repeats == 0 {
+        return Err("harness repeat count must be greater than zero".to_owned());
+    }
+
+    let first_started = Instant::now();
+    let (evidence, expected_count) = first_scan()?;
+    let first_scan_ns = nanos(first_started.elapsed());
+
+    let mut warmup_ns = Vec::with_capacity(warmups);
+    let mut scan_ns = Vec::with_capacity(repeats);
+    if warmups == 0 {
+        scan_ns.push(first_scan_ns);
+    } else {
+        warmup_ns.push(first_scan_ns);
+    }
+
+    while warmup_ns.len() < warmups {
+        let started = Instant::now();
+        let count = subsequent_scan()?;
+        warmup_ns.push(nanos(started.elapsed()));
+        validate_harness_count("warm-up", count, expected_count)?;
+    }
+
+    while scan_ns.len() < repeats {
+        let started = Instant::now();
+        let count = subsequent_scan()?;
+        scan_ns.push(nanos(started.elapsed()));
+        validate_harness_count("measurement", count, expected_count)?;
+    }
+
+    Ok(HarnessMeasurements {
+        evidence,
+        warmup_ns,
+        scan_ns,
+    })
+}
+
+fn validate_harness_count(
+    phase: &str,
+    actual_count: usize,
+    expected_count: usize,
+) -> Result<(), String> {
+    if actual_count == expected_count {
+        Ok(())
+    } else {
+        Err(format!(
+            "harness {phase} produced {actual_count} events; expected {expected_count}"
+        ))
+    }
 }
 
 fn build_harness_matcher(
@@ -2730,11 +2782,12 @@ mod tests {
         HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES,
         SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt, build_harness_matcher, compare_i6,
         compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
-        expand_corpus, format_unix_timestamp_utc, harness_event_count, regex_events,
-        render_scale_report, rust_event_summary_with_diagnostics, select_literal_patterns,
+        expand_corpus, format_unix_timestamp_utc, harness_event_count, measure_harness_scans,
+        regex_events, render_scale_report, rust_event_summary_with_diagnostics,
+        select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
-    use std::{fs, process};
+    use std::{cell::Cell, fs, process};
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {
@@ -2827,6 +2880,59 @@ mod tests {
                 reference = Some(evidence);
             }
         }
+        Ok(())
+    }
+
+    #[test]
+    fn harness_accounts_for_every_declared_scan() -> Result<(), String> {
+        // Prepare
+        let scan_calls = Cell::new(0_usize);
+
+        // Test
+        let measurements = measure_harness_scans(
+            2,
+            3,
+            || {
+                scan_calls.set(scan_calls.get() + 1);
+                Ok(("first-scan-evidence", 7))
+            },
+            || {
+                scan_calls.set(scan_calls.get() + 1);
+                Ok(7)
+            },
+        )?;
+
+        // Assert
+        assert_eq!(scan_calls.get(), 5);
+        assert_eq!(measurements.evidence, "first-scan-evidence");
+        assert_eq!(measurements.warmup_ns.len(), 2);
+        assert_eq!(measurements.scan_ns.len(), 3);
+        Ok(())
+    }
+
+    #[test]
+    fn harness_uses_first_scan_as_a_measurement_when_warmups_are_disabled() -> Result<(), String> {
+        // Prepare
+        let scan_calls = Cell::new(0_usize);
+
+        // Test
+        let measurements = measure_harness_scans(
+            0,
+            3,
+            || {
+                scan_calls.set(scan_calls.get() + 1);
+                Ok(("first-scan-evidence", 7))
+            },
+            || {
+                scan_calls.set(scan_calls.get() + 1);
+                Ok(7)
+            },
+        )?;
+
+        // Assert
+        assert_eq!(scan_calls.get(), 3);
+        assert!(measurements.warmup_ns.is_empty());
+        assert_eq!(measurements.scan_ns.len(), 3);
         Ok(())
     }
 
