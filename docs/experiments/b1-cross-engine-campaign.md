@@ -115,13 +115,17 @@ Together with the 44 ordinary generated scenarios and two 256 MiB checkpoints,
 these controls produce 49 frozen scenarios. The preregistered initial worker
 sweeps contain 1,891 runs before adaptive winner confirmation and profiling.
 The executable campaign is frozen in the private benchmark repository at commit
-`cefd3ba`. That revision includes the exact initial matrix, fresh-host resumable
-execution, deterministic winner confirmation, confirmed cache-pressure and
-profile plans, a self-contained hash-verified report archive, and the reversible
-clean-host window used for authoritative execution. It also preserves each
-run's UTC start and finish time and reports the campaign measurement window;
-the frozen scenario matrix and engine inputs are unchanged. The launch harness
-requests untruncated Docker identities when validating the approved service set.
+`91466be8fbc0f117433bf7ba6d9168aef477538e`. That revision includes the exact
+initial matrix, fresh-host resumable execution, deterministic winner
+confirmation, confirmed cache-pressure and profile plans, a self-contained
+hash-verified report archive, and the reversible clean-host window used for
+authoritative execution. It also preserves each run's UTC start and finish
+time, reports the campaign measurement window, requests untruncated Docker
+identities, and rejects the earlier RegexSet and Rustmatch runners whose
+consistency scans occurred outside their declared warm-ups. Both corrected
+runners prove that two requested warm-ups plus three measurements execute
+exactly five full scans. The frozen scenario dimensions and other engine inputs
+are unchanged.
 
 The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
 separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
