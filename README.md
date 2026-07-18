@@ -661,11 +661,11 @@ The tripwire should:
 - use a deliberately broad, versioned failure threshold; and
 - rerun once before failing a PR for timing alone.
 
-An initial candidate policy is a 50% median slowdown with at least 100 ms of
-absolute regression on a fixture whose baseline scan is long enough to measure.
-That threshold must be calibrated from repeated CI baselines before it becomes
-required. It is intentionally a smoke alarm, not evidence that a change is
-fast, neutral, or worthy of publication.
+The active Wuthering Heights policy requires the default one-worker path and
+fails only when the median slowdown exceeds 100% and the absolute regression is
+at least 50 ms. A possible failure is rerun in reverse order before the job is
+allowed to fail. This deliberately broad threshold is a smoke alarm, not
+evidence that a change is fast, neutral, or worthy of publication.
 
 A CI tripwire failure blocks the PR pending investigation and a stable-machine
 rerun. A CI tripwire pass does not satisfy the optimization admission gate.
