@@ -2,13 +2,13 @@
 
 **Last reviewed:** 2026-07-18
 
-**Implementation increments started:** **9/12**
+**Implementation increments started:** **10/12**
 
-**Implementation increments complete:** **9/12**
+**Implementation increments complete:** **10/12**
 
-**Active:** none
+**Active:** **B1 - Correctness-gated cross-engine receipts and thread sweeps**
 
-**Available for execution:** **I9 - Full benchmark-harness integration**
+**Available for execution:** none while B1 is active
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -163,9 +163,9 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
-    class I9 available;
-    class X0,B1,H1,R1,R2 evidence;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
+    class B1 active;
+    class X0,H1,R1,R2 evidence;
     class I10,I11 gate;
     class H2,H3,R3,REL planned;
 
@@ -245,7 +245,8 @@ and use-case evidence bundle pass from a clean checkout.
 | C2 | Wuthering Heights CI performance tripwire | Complete | PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs |
 | I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
-| I9 | Benchmark integration | Available for execution | Packaged adapter accepted by the ordinary harness with validated, reproducible receipts |
+| I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
+| B1 | Cross-engine receipts and thread sweeps | Active | Correctness-gated 1,000/2,500/5,000/7,500/10,000-pattern campaigns over 8 MiB and 50 MiB, declared density families, common engine semantics, complete worker sweeps, profiling, and critical scaling interpretation on the stable Linux host |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
