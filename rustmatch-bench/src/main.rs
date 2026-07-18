@@ -1237,6 +1237,8 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
 
+    let (measurement_window, timestamp_coverage) = report_measurement_window(&receipts);
+
     let mut rows = String::new();
     for receipt in &receipts {
         let scan_ms = format_hundredths(receipt.median_scan_ns / 10_000);
@@ -1303,7 +1305,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:2250px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:2250px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),th:nth-child(3),td:first-child,td:nth-child(2),td:nth-child(3){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Measured UTC</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Database</th><th>Prefilter</th><th>Candidate bitmap</th><th>Cache tables</th><th>Buffered events</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own UTC measurement timestamp, warm-up count, and measured-iteration count. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation. Memory columns report explicitly accounted bytes, not allocator overhead.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:2250px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:1rem}}.measurement-window{{display:inline-block;margin:0 0 2rem;padding:.55rem .8rem;border:1px solid rgba(15,101,75,.25);background:rgba(255,255,255,.62)}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:2250px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),th:nth-child(3),td:first-child,td:nth-child(2),td:nth-child(3){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><p class=\"measurement-window\"><strong>Measurement window (UTC):</strong> {measurement_window}{timestamp_coverage}</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Measured UTC</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Database</th><th>Prefilter</th><th>Candidate bitmap</th><th>Cache tables</th><th>Buffered events</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own UTC measurement timestamp, warm-up count, and measured-iteration count. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation. Memory columns report explicitly accounted bytes, not allocator overhead.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -1321,6 +1323,31 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         rows: receipts.len(),
         status: "pass",
     })
+}
+
+fn report_measurement_window(receipts: &[ScaleScanReceipt]) -> (String, String) {
+    let mut measurement_times = receipts
+        .iter()
+        .filter_map(|receipt| receipt.measured_at_utc.as_deref())
+        .collect::<Vec<_>>();
+    measurement_times.sort_unstable();
+    let window = match (measurement_times.first(), measurement_times.last()) {
+        (Some(first), Some(last)) if first == last => html_escape(first),
+        (Some(first), Some(last)) => {
+            format!("{} to {}", html_escape(first), html_escape(last))
+        }
+        _ => "not recorded in retained receipts".to_owned(),
+    };
+    let coverage = if measurement_times.len() == receipts.len() {
+        String::new()
+    } else {
+        format!(
+            " (timestamps recorded for {} of {} receipts)",
+            measurement_times.len(),
+            receipts.len()
+        )
+    };
+    (window, coverage)
 }
 
 fn format_tenths(value: u128) -> String {
@@ -3145,23 +3172,38 @@ mod tests {
         let directory =
             std::env::temp_dir().join(format!("rustmatch-scale-timestamp-test-{}", process::id()));
         fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
-        let receipt_path = directory.join("receipt.json");
+        let earlier_receipt_path = directory.join("earlier-receipt.json");
+        let later_receipt_path = directory.join("later-receipt.json");
         let report_path = directory.join("index.html");
+        let mut later_receipt = scale_receipt(60_000_000, "revision");
+        later_receipt.measured_at_utc = Some("2026-07-18T05:26:02Z".to_owned());
         fs::write(
-            &receipt_path,
+            &earlier_receipt_path,
             serde_json::to_vec(&scale_receipt(50_000_000, "revision"))
                 .map_err(|error| error.to_string())?,
         )
         .map_err(|error| error.to_string())?;
+        fs::write(
+            &later_receipt_path,
+            serde_json::to_vec(&later_receipt).map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
 
         // Test.
-        render_scale_report(&report_path, &[receipt_path.as_path()])?;
+        render_scale_report(
+            &report_path,
+            &[earlier_receipt_path.as_path(), later_receipt_path.as_path()],
+        )?;
         let html = fs::read_to_string(&report_path).map_err(|error| error.to_string())?;
         fs::remove_dir_all(&directory).map_err(|error| error.to_string())?;
 
         // Assert.
         assert!(html.contains("<th>Measured UTC</th>"));
         assert!(html.contains("2026-07-18T05:25:01Z"));
+        assert!(html.contains(
+            "<strong>Measurement window (UTC):</strong> 2026-07-18T05:25:01Z to \
+             2026-07-18T05:26:02Z"
+        ));
         Ok(())
     }
 
