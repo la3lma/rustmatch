@@ -169,12 +169,8 @@ fn compile_partitions(
     patterns: &[HirPattern],
     requested_worker_count: usize,
     total_state_cache_budget: usize,
-) -> Result<MatcherPartitions, Error> {
+) -> Result<Box<[MatcherPartition]>, Error> {
     let partition_count = requested_worker_count.min(patterns.len());
-    if partition_count == 1 {
-        return compile_partition(patterns, total_state_cache_budget)
-            .map(MatcherPartitions::Single);
-    }
     let patterns_per_partition = patterns.len() / partition_count;
     let extra_patterns = patterns.len() % partition_count;
     let cache_states_per_partition = total_state_cache_budget / partition_count;
@@ -186,9 +182,15 @@ fn compile_partitions(
         let pattern_count = patterns_per_partition + usize::from(partition_index < extra_patterns);
         let end = start + pattern_count;
         let partition_patterns = &patterns[start..end];
+        let database = nfa::compile(partition_patterns)?;
+        let prefilter = Prefilter::compile(partition_patterns, &database);
         let state_cache_budget =
             cache_states_per_partition + usize::from(partition_index < extra_cache_states);
-        partitions.push(compile_partition(partition_patterns, state_cache_budget)?);
+        partitions.push(MatcherPartition {
+            database,
+            prefilter,
+            state_cache_budget,
+        });
         start = end;
     }
 
@@ -200,20 +202,7 @@ fn compile_partitions(
             .sum::<usize>(),
         total_state_cache_budget
     );
-    Ok(MatcherPartitions::Parallel(partitions.into_boxed_slice()))
-}
-
-fn compile_partition(
-    patterns: &[HirPattern],
-    state_cache_budget: usize,
-) -> Result<MatcherPartition, Error> {
-    let database = nfa::compile(patterns)?;
-    let prefilter = Prefilter::compile(patterns, &database);
-    Ok(MatcherPartition {
-        database,
-        prefilter,
-        state_cache_budget,
-    })
+    Ok(partitions.into_boxed_slice())
 }
 
 /// Immutable compiled matcher reusable across finite UTF-16 inputs.
@@ -225,7 +214,7 @@ fn compile_partition(
 /// Callback delivery order is unspecified.
 #[derive(Debug)]
 pub struct Matcher {
-    partitions: MatcherPartitions,
+    partitions: Box<[MatcherPartition]>,
     requested_worker_count: usize,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
@@ -236,28 +225,6 @@ struct MatcherPartition {
     database: PatternDatabase,
     prefilter: Prefilter,
     state_cache_budget: usize,
-}
-
-#[derive(Debug)]
-enum MatcherPartitions {
-    Single(MatcherPartition),
-    Parallel(Box<[MatcherPartition]>),
-}
-
-impl MatcherPartitions {
-    fn as_slice(&self) -> &[MatcherPartition] {
-        match self {
-            Self::Single(partition) => std::slice::from_ref(partition),
-            Self::Parallel(partitions) => partitions,
-        }
-    }
-
-    fn parallel(&self) -> &[MatcherPartition] {
-        match self {
-            Self::Parallel(partitions) => partitions,
-            Self::Single(_) => unreachable!("parallel scan requires several partitions"),
-        }
-    }
 }
 
 /// Scan-local cache counters intended only for the repository benchmark lane.
@@ -435,7 +402,7 @@ impl Matcher {
     /// has stopped. An internal worker panic is joined and resumed on the
     /// caller thread.
     pub fn scan(&self, input: &Utf16Text, mut sink: impl FnMut(Match)) -> Result<(), Error> {
-        if let MatcherPartitions::Single(partition) = &self.partitions {
+        if let [partition] = self.partitions.as_ref() {
             return engine::scan(
                 &partition.database,
                 &partition.prefilter,
@@ -463,7 +430,7 @@ impl Matcher {
         input: &Utf16Text,
         mut sink: impl FnMut(Match),
     ) -> Result<ScanDiagnostics, Error> {
-        if let MatcherPartitions::Single(partition) = &self.partitions {
+        if let [partition] = self.partitions.as_ref() {
             let stats = engine::scan_with_stats(
                 &partition.database,
                 &partition.prefilter,
@@ -497,11 +464,11 @@ impl Matcher {
         BeforeSpawn: Fn(usize) -> Result<(), Error>,
         BeforeScan: Fn(usize) + Sync,
     {
-        let partitions = self.partitions.parallel();
+        debug_assert!(self.partitions.len() > 1);
         thread::scope(|scope| {
-            let mut handles = Vec::with_capacity(partitions.len() - 1);
+            let mut handles = Vec::with_capacity(self.partitions.len() - 1);
             let mut spawn_error = None;
-            for (partition_index, partition) in partitions.iter().enumerate().skip(1) {
+            for (partition_index, partition) in self.partitions.iter().enumerate().skip(1) {
                 if let Err(error) = before_spawn(partition_index) {
                     spawn_error = Some(error);
                     break;
@@ -531,7 +498,7 @@ impl Matcher {
             let caller_result = if spawn_error.is_none() {
                 before_scan(0);
                 Some(scan_partition(
-                    &partitions[0],
+                    &self.partitions[0],
                     input,
                     self.prefilter_enabled,
                     self.literal_prefilter_enabled,
@@ -540,7 +507,7 @@ impl Matcher {
                 None
             };
             let mut outputs: Vec<Option<PartitionScanOutput>> =
-                (0..partitions.len()).map(|_| None).collect();
+                (0..self.partitions.len()).map(|_| None).collect();
             let mut scan_error = None;
             if let Some(result) = caller_result {
                 match result {
@@ -581,12 +548,12 @@ impl Matcher {
 
     #[cfg(feature = "benchmark-internals")]
     fn diagnostics(&self, stats: engine::ScanStats, buffered_events: usize) -> ScanDiagnostics {
-        let partitions = self.partitions.as_slice();
         ScanDiagnostics {
             requested_worker_count: self.requested_worker_count,
-            partition_count: partitions.len(),
-            spawned_workers: partitions.len().saturating_sub(1),
-            total_cache_budget: partitions
+            partition_count: self.partitions.len(),
+            spawned_workers: self.partitions.len().saturating_sub(1),
+            total_cache_budget: self
+                .partitions
                 .iter()
                 .map(|partition| partition.state_cache_budget)
                 .sum(),
@@ -687,13 +654,11 @@ mod tests {
         let matcher = builder.build()?;
         let pattern_counts = matcher
             .partitions
-            .as_slice()
             .iter()
             .map(|partition| partition.database.pattern_count())
             .collect::<Vec<_>>();
         let cache_budgets = matcher
             .partitions
-            .as_slice()
             .iter()
             .map(|partition| partition.state_cache_budget)
             .collect::<Vec<_>>();
@@ -717,7 +682,7 @@ mod tests {
 
         // Assert
         assert_eq!(matcher.requested_worker_count, 1_000);
-        assert_eq!(matcher.partitions.as_slice().len(), 2);
+        assert_eq!(matcher.partitions.len(), 2);
         Ok(())
     }
 
