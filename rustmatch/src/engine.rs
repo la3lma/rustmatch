@@ -529,6 +529,48 @@ pub(crate) struct ScanStats {
     pub(crate) prefilter_starts_skipped: usize,
 }
 
+impl ScanStats {
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) fn merge_partition(&mut self, other: Self) {
+        self.cache_states = self.cache_states.saturating_add(other.cache_states);
+        self.cache_hits = self.cache_hits.saturating_add(other.cache_hits);
+        self.cache_misses = self.cache_misses.saturating_add(other.cache_misses);
+        self.fallback_transitions = self
+            .fallback_transitions
+            .saturating_add(other.fallback_transitions);
+        self.cache_table_bytes = self
+            .cache_table_bytes
+            .saturating_add(other.cache_table_bytes);
+        self.assertion_bypasses = self
+            .assertion_bypasses
+            .saturating_add(other.assertion_bypasses);
+        if self.prefilter_path != other.prefilter_path {
+            self.prefilter_path = PrefilterPath::MixedParallel;
+        }
+        if self.prefilter_bypass != other.prefilter_bypass {
+            self.prefilter_bypass = PrefilterBypass::MixedParallel;
+        }
+        self.prefilter_retained_bytes = self
+            .prefilter_retained_bytes
+            .saturating_add(other.prefilter_retained_bytes);
+        self.prefilter_candidate_bytes = self
+            .prefilter_candidate_bytes
+            .saturating_add(other.prefilter_candidate_bytes);
+        self.prefilter_admissions = self
+            .prefilter_admissions
+            .saturating_add(other.prefilter_admissions);
+        self.prefilter_candidate_starts = self
+            .prefilter_candidate_starts
+            .saturating_add(other.prefilter_candidate_starts);
+        self.prefilter_starts_scanned = self
+            .prefilter_starts_scanned
+            .saturating_add(other.prefilter_starts_scanned);
+        self.prefilter_starts_skipped = self
+            .prefilter_starts_skipped
+            .saturating_add(other.prefilter_starts_skipped);
+    }
+}
+
 fn scan_with_assertions(
     database: &PatternDatabase,
     input: &Utf16Text,

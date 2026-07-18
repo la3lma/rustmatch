@@ -1,0 +1,21 @@
+{
+  "base_medians": [
+    247778584,
+    248088500,
+    248255958,
+    248388583
+  ],
+  "candidate_medians": [
+    246618250,
+    248083208,
+    251544250,
+    254060708
+  ],
+  "signed_deltas_basis_points": [
+    -7,
+    127,
+    240,
+    -47
+  ],
+  "all_events_equal": true
+}

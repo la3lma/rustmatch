@@ -77,10 +77,11 @@ pre-I7 revision. The generated `index.html` places both paths side by side.
 8 MiB expansion of the retained fixture on both PR base and candidate in one
 GitHub Actions job. The expanded size deliberately crosses I7's full-prefilter
 activation threshold. The job requires identical source hashes and event
-evidence, retries once in reverse order, and fails only when slowdown exceeds
-both 100% and 50 ms. This broad `C2` threshold is a smoke alarm for severe
-regressions. It is not an optimization admission result and does not replace
-the native stable-machine campaign or its critical analysis.
+evidence, requires the default one-worker path, retries once in reverse order,
+and fails only when slowdown exceeds both 100% and 50 ms. This broad `C2`
+threshold is a smoke alarm for severe regressions. It is not an optimization
+admission result and does not replace the native stable-machine campaign or its
+critical analysis.
 
 The tripwire fails its GitHub Actions workflow when both limits are crossed.
 The project merge protocol treats that as blocking pending investigation, but

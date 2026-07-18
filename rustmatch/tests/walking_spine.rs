@@ -708,6 +708,202 @@ fn assertions_compose_with_groups_repetition_and_flags() -> Result<(), Error> {
     Ok(())
 }
 
+#[test]
+fn worker_counts_preserve_the_complete_event_multiset() -> Result<(), Error> {
+    // Prepare
+    let patterns = [
+        (700, "a"),
+        (701, "aa"),
+        (702, "ab|a"),
+        (703, "a+"),
+        (704, "[A-Z]+"),
+        (705, "(?i)cat"),
+        (706, "^line$"),
+        (707, r"\bword\b"),
+        (708, "😀"),
+        (709, "."),
+        (710, "aa"),
+    ];
+    let input = Utf16Text::from("aa CAT\nline\nword sword 😀");
+    let worker_counts = [1, 2, 3, 4, 8, 12, 24, 128];
+    let mut expected = None;
+
+    // Test
+    for worker_count in worker_counts {
+        let mut builder = MatcherBuilder::new();
+        builder.worker_count(worker_count);
+        for &(pattern_id, pattern) in &patterns {
+            builder.add(PatternId::new(pattern_id), pattern)?;
+        }
+        let matcher = builder.build()?;
+        let mut events = Vec::new();
+        matcher.scan(&input, |event| {
+            events.push((
+                event.pattern_id().get(),
+                event.span().start(),
+                event.span().end(),
+            ));
+        })?;
+        events.sort_unstable();
+        if let Some(reference) = &expected {
+            assert_eq!(&events, reference, "requested workers={worker_count}");
+        } else {
+            expected = Some(events);
+        }
+    }
+
+    // Assert
+    assert!(expected.is_some_and(|events| !events.is_empty()));
+    Ok(())
+}
+
+#[test]
+fn generated_pattern_families_are_partition_invariant() -> Result<(), Error> {
+    // Prepare
+    let worker_counts = [1, 2, 3, 4, 8, 24, 128];
+    let mut families = Vec::new();
+    for round in 0_u32..4 {
+        let patterns = (0_u32..37)
+            .map(|index| {
+                let pattern = match index % 5 {
+                    0 => format!("word{round}_{index}"),
+                    1 => format!("(?:ab|ba){{{},{}}}", index % 3 + 1, index % 3 + 2),
+                    2 => format!("[a-z]{{{},{}}}", index % 4 + 1, index % 4 + 3),
+                    3 => format!("(?i)token{round}{index}"),
+                    _ => format!("x+y{}", index % 7),
+                };
+                (800 + round * 100 + index, pattern)
+            })
+            .collect::<Vec<_>>();
+        let input =
+            format!("word{round}_0 TOKEN{round}3 ababba lowercase words xxy4 word{round}_35");
+        families.push((patterns, input));
+    }
+
+    // Test
+    let mut comparisons = Vec::new();
+    for (patterns, input) in families {
+        let mut expected: Option<Vec<(u32, u64, u64)>> = None;
+        for worker_count in worker_counts {
+            let mut builder = MatcherBuilder::new();
+            builder.worker_count(worker_count);
+            for (pattern_id, pattern) in &patterns {
+                builder.add(PatternId::new(*pattern_id), pattern)?;
+            }
+            let mut events = collect(&builder.build()?, &input)?;
+            events.sort_unstable();
+            if let Some(reference) = &expected {
+                comparisons.push((worker_count, events.as_slice() == reference.as_slice()));
+            } else {
+                expected = Some(events);
+            }
+        }
+        comparisons.push((1, expected.is_some_and(|events| !events.is_empty())));
+    }
+
+    // Assert
+    assert!(
+        comparisons.iter().all(|(_, equal)| *equal),
+        "partitioned scans diverged at worker counts {:?}",
+        comparisons
+            .iter()
+            .filter_map(|(workers, equal)| (!equal).then_some(*workers))
+            .collect::<Vec<_>>()
+    );
+    Ok(())
+}
+
+#[test]
+fn one_parallel_matcher_supports_simultaneous_scans() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.worker_count(4);
+    for (pattern_id, pattern) in [(720, "cat"), (721, "dog"), (722, "a+"), (723, r"\bpet\b")] {
+        builder.add(PatternId::new(pattern_id), pattern)?;
+    }
+    let matcher = builder.build()?;
+    let inputs = ["cat and dog", "a pet cat", "aaaa", "dogmatic dog"];
+
+    // Test
+    let parallel = std::thread::scope(|scope| {
+        inputs
+            .iter()
+            .map(|input| scope.spawn(|| collect(&matcher, input)))
+            .collect::<Vec<_>>()
+            .into_iter()
+            .map(|handle| handle.join().expect("test scan worker must not panic"))
+            .collect::<Result<Vec<_>, Error>>()
+    })?;
+    let sequential = inputs
+        .iter()
+        .map(|input| collect(&matcher, input))
+        .collect::<Result<Vec<_>, Error>>()?;
+
+    // Assert
+    assert_eq!(parallel, sequential);
+    Ok(())
+}
+
+#[test]
+fn callback_panic_leaves_parallel_matcher_reusable() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.worker_count(3);
+    builder.add(PatternId::new(730), "a")?;
+    builder.add(PatternId::new(731), "aa")?;
+    builder.add(PatternId::new(732), "aaa")?;
+    let matcher = builder.build()?;
+    let input = Utf16Text::from("aaaa");
+
+    // Test
+    let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _ = matcher.scan(&input, |_| panic!("controlled callback panic"));
+    }));
+    let mut recovered = collect(&matcher, "aaaa")?;
+    recovered.sort_unstable();
+
+    // Assert
+    assert!(panic_result.is_err());
+    assert_eq!(recovered.len(), 9);
+    Ok(())
+}
+
+#[test]
+fn repeated_parallel_build_scan_and_drop_cycles_remain_stable() -> Result<(), Error> {
+    // Prepare
+    let expected = vec![(740, 0, 3), (741, 4, 7), (742, 8, 11), (743, 12, 15)];
+
+    // Test
+    for _ in 0..32 {
+        let mut builder = MatcherBuilder::new();
+        builder.worker_count(4);
+        for (pattern_id, pattern) in [(740, "one"), (741, "two"), (742, "six"), (743, "ten")] {
+            builder.add(PatternId::new(pattern_id), pattern)?;
+        }
+        let mut events = collect(&builder.build()?, "one two six ten")?;
+        events.sort_unstable();
+
+        // Assert
+        assert_eq!(events, expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn zero_workers_is_rejected_at_build_time() -> Result<(), Error> {
+    // Prepare
+    let mut builder = MatcherBuilder::new();
+    builder.worker_count(0);
+    builder.add(PatternId::new(750), "valid")?;
+
+    // Test
+    let result = builder.build();
+
+    // Assert
+    assert!(matches!(result, Err(Error::InvalidWorkerCount)));
+    Ok(())
+}
+
 fn collect(matcher: &Matcher, text: &str) -> Result<Vec<(u32, u64, u64)>, Error> {
     let input = Utf16Text::from(text);
     let mut events = Vec::new();

@@ -20,6 +20,8 @@ pub(crate) enum PrefilterPath {
     AllStarts,
     StartTable,
     Literal,
+    #[cfg(feature = "benchmark-internals")]
+    MixedParallel,
 }
 
 #[cfg(feature = "benchmark-internals")]
@@ -29,6 +31,7 @@ impl PrefilterPath {
             Self::AllStarts => "all-starts",
             Self::StartTable => "start-table",
             Self::Literal => "literal-prefilter",
+            Self::MixedParallel => "mixed-parallel",
         }
     }
 }
@@ -44,6 +47,8 @@ pub(crate) enum PrefilterBypass {
     InputSize,
     Unfilterable,
     DenseSample,
+    #[cfg(feature = "benchmark-internals")]
+    MixedParallel,
 }
 
 #[cfg(feature = "benchmark-internals")]
@@ -58,6 +63,7 @@ impl PrefilterBypass {
             Self::InputSize => "input-size",
             Self::Unfilterable => "unfilterable",
             Self::DenseSample => "dense-sample",
+            Self::MixedParallel => "mixed-parallel",
         }
     }
 }

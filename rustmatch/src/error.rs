@@ -41,6 +41,8 @@ pub enum Error {
     },
     /// No patterns were registered before building.
     NoPatterns,
+    /// The requested worker count was zero.
+    InvalidWorkerCount,
     /// The compiled automaton would exceed its dense state-ID range.
     PatternSetTooLarge,
     /// A pattern position could not be represented as a public UTF-16 offset.
@@ -50,6 +52,8 @@ pub enum Error {
     },
     /// An input position could not be represented as a public UTF-16 offset.
     InputTooLarge,
+    /// The operating system could not start a requested scan worker.
+    WorkerUnavailable,
 }
 
 impl fmt::Display for Error {
@@ -78,6 +82,9 @@ impl fmt::Display for Error {
                 span.end()
             ),
             Self::NoPatterns => formatter.write_str("cannot build a matcher without patterns"),
+            Self::InvalidWorkerCount => {
+                formatter.write_str("worker count must be greater than zero")
+            }
             Self::PatternSetTooLarge => {
                 formatter.write_str("pattern set exceeds the supported automaton size")
             }
@@ -85,6 +92,7 @@ impl fmt::Display for Error {
                 write!(formatter, "pattern {pattern_id} is too large")
             }
             Self::InputTooLarge => formatter.write_str("input is too large"),
+            Self::WorkerUnavailable => formatter.write_str("could not start a scan worker"),
         }
     }
 }

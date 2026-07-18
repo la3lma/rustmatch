@@ -5,11 +5,13 @@
 > **Status: active implementation.** The vertically integrated semantic spine
 > now covers the documented rmatch 2.x consuming language, including UTF-16,
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
-> scale work begins at I6. This is a development prototype, not a published crate.
+> scale work has completed explicit parallel pattern partitioning; ordinary
+> cross-engine harness integration is next. This is a development prototype,
+> not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `6/12`
-> increments started and `6/12` complete.
+> status](docs/roadmap.md). Planning is complete; implementation is at `9/12`
+> increments started and `9/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -97,10 +99,16 @@ matcher.scan(&input, |hit| {
 The public types are `MatcherBuilder`, `Matcher`, `PatternId`, `PatternFlags`,
 `Utf16Text`, `Match`, `Utf16Span`, and one non-exhaustive `Error` type. The
 methods cover construction, plain or flagged pattern registration, build,
-scan, bounded state-cache configuration, and read-only accessors. The cache
+scan, bounded state-cache configuration, explicit pattern-partition worker
+configuration, and read-only accessors. The cache
 defaults to 8,192 scan-local deterministic states; setting
 `MatcherBuilder::state_cache_budget(0)` selects the exact NFA path. Filling a
 nonzero budget also falls back to that path rather than dropping work.
+`MatcherBuilder::worker_count(1)` is the default direct path. Larger values
+partition patterns deterministically, scan those partitions on scoped threads,
+join them, and deliver callbacks serially on the caller thread. The best count
+depends on the machine, pattern set, corpus, and match density; rustmatch does
+not encode one benchmark machine's optimum as a universal heuristic.
 `PatternId` is a `u32`-backed domain type;
 positions remain `u64` UTF-16 coordinates; and `Utf16Text` owns its exact
 `Vec<u16>`. Parser, HIR, NFA, state, cache, worker, and sink
@@ -134,6 +142,7 @@ The executable spine currently has this deliberately small contract:
 | Ordering | Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order. |
 | Failure boundary | Reject an invalid pattern during registration or build. Return an error if an input position cannot fit the public coordinate type. Expected user errors do not panic. |
 | Lifecycle | Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher. |
+| Parallelism | Default to one direct worker. An explicit larger worker count partitions patterns, preserves the event multiset, buffers multi-worker events, joins all scoped workers, and delivers callbacks serially. |
 
 The current pattern syntax is deliberately explicit:
 
@@ -661,11 +670,11 @@ The tripwire should:
 - use a deliberately broad, versioned failure threshold; and
 - rerun once before failing a PR for timing alone.
 
-An initial candidate policy is a 50% median slowdown with at least 100 ms of
-absolute regression on a fixture whose baseline scan is long enough to measure.
-That threshold must be calibrated from repeated CI baselines before it becomes
-required. It is intentionally a smoke alarm, not evidence that a change is
-fast, neutral, or worthy of publication.
+The active Wuthering Heights policy requires the default one-worker path and
+fails only when the median slowdown exceeds 100% and the absolute regression is
+at least 50 ms. A possible failure is rerun in reverse order before the job is
+allowed to fail. This deliberately broad threshold is a smoke alarm, not
+evidence that a change is fast, neutral, or worthy of publication.
 
 A CI tripwire failure blocks the PR pending investigation and a stable-machine
 rerun. A CI tripwire pass does not satisfy the optimization admission gate.
@@ -2323,14 +2332,14 @@ distinguishing reporting semantics.
 - Explicit worker/partition configuration.
 - Deterministic partition assignment.
 - Worker runtime and clean teardown.
-- Defined sink error and cancellation behavior.
-- Optional partition-local collection path.
+- Defined spawn, panic, callback, and teardown behavior.
+- Partition-local collection with explicit event-buffer accounting.
 
 **Tests**
 
 - Event multiset equality for worker counts 1, 2, 3, CPU count, and oversubscribed
   values.
-- Sink failures in every partition.
+- Spawn and worker-panic failure paths, plus caller-thread callback panic.
 - Repeated creation/drop to detect worker leaks.
 - Thread sanitizer or Loom-style model tests where practical.
 
@@ -2344,6 +2353,11 @@ distinguishing reporting semantics.
   count changes the event multiset.
 - Derive any default heuristic from Rust receipts. Java's heuristic may be a
   sweep candidate, but cannot satisfy this gate.
+- The frozen execution contract and thresholds are in
+  [`docs/experiments/i8-parallel-partitions.md`](docs/experiments/i8-parallel-partitions.md).
+- The accepted implementation, raw receipts, resource accounting, rejected
+  prototype, and critical profile interpretation are retained in the
+  [`I8 evidence package`](docs/evidence/i8/ef61173/README.md).
 
 ### Increment 9: Benchmark harness integration
 
