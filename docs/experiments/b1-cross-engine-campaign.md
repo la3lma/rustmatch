@@ -115,7 +115,7 @@ Together with the 44 ordinary generated scenarios and two 256 MiB checkpoints,
 these controls produce 49 frozen scenarios. The preregistered initial worker
 sweeps contain 1,891 runs before adaptive winner confirmation and profiling.
 The executable campaign is frozen in the private benchmark repository at commit
-`a285191`.
+`d4ae950`.
 
 The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
 separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
