@@ -494,14 +494,11 @@ impl Matcher {
                             self.literal_prefilter_enabled,
                         )
                     });
-                match worker {
-                    Ok(handle) => handles.push((partition_index, handle)),
-                    Err(error) => {
-                        spawn_error = Some(Error::WorkerUnavailable {
-                            message: error.to_string(),
-                        });
-                        break;
-                    }
+                if let Ok(handle) = worker {
+                    handles.push((partition_index, handle));
+                } else {
+                    spawn_error = Some(Error::WorkerUnavailable);
+                    break;
                 }
             }
 
@@ -703,9 +700,7 @@ mod tests {
         let input = Utf16Text::from("one two three");
         let before_spawn = |partition_index| {
             if partition_index == 2 {
-                Err(Error::WorkerUnavailable {
-                    message: "controlled spawn failure".to_owned(),
-                })
+                Err(Error::WorkerUnavailable)
             } else {
                 Ok(())
             }
@@ -715,10 +710,7 @@ mod tests {
         let result = matcher.scan_parallel_with_hooks(&input, &before_spawn, &|_| {});
 
         // Assert
-        assert!(matches!(
-            result,
-            Err(Error::WorkerUnavailable { message }) if message == "controlled spawn failure"
-        ));
+        assert!(matches!(result, Err(Error::WorkerUnavailable)));
         Ok(())
     }
 

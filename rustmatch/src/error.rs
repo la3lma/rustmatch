@@ -53,10 +53,7 @@ pub enum Error {
     /// An input position could not be represented as a public UTF-16 offset.
     InputTooLarge,
     /// The operating system could not start a requested scan worker.
-    WorkerUnavailable {
-        /// Operating-system error reported while starting the worker.
-        message: String,
-    },
+    WorkerUnavailable,
 }
 
 impl fmt::Display for Error {
@@ -95,9 +92,7 @@ impl fmt::Display for Error {
                 write!(formatter, "pattern {pattern_id} is too large")
             }
             Self::InputTooLarge => formatter.write_str("input is too large"),
-            Self::WorkerUnavailable { message } => {
-                write!(formatter, "could not start a scan worker: {message}")
-            }
+            Self::WorkerUnavailable => formatter.write_str("could not start a scan worker"),
         }
     }
 }
