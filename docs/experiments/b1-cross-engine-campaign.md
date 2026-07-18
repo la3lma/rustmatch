@@ -130,14 +130,15 @@ are unchanged.
 
 The initial timing window remains attributed to harness revision
 `91466be8fbc0f117433bf7ba6d9168aef477538e`. Before the separate profile window,
-benchmark revision `a05a6766bfc8eb301df2448479dce872d840a687` strengthened the
+benchmark revision `221b51d3c781939625100de2cf7eeca6f075f3f4` strengthened the
 profile and report path without changing any of the 1,891 initial timing runs.
 It validates and independently re-parses raw hardware counters; reports IPC,
 miss rates, scheduler activity, counter running time, and process RSS; expands
 the core profile line described below; and exposes adjacent pattern scaling,
 host-relative worker retention, and exact anomalies for critical review. The
-final report retains both window revisions rather than attributing earlier
-timings to the later profiler.
+report also preserves whole-process wall effort separately from preparation
+and scan throughput. The final report retains both window revisions rather
+than attributing earlier timings to the later profiler.
 
 The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
 separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
