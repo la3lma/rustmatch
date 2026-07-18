@@ -401,6 +401,7 @@ impl Matcher {
     /// A panic from `sink` propagates to the caller after every scoped worker
     /// has stopped. An internal worker panic is joined and resumed on the
     /// caller thread.
+    #[inline]
     pub fn scan(&self, input: &Utf16Text, mut sink: impl FnMut(Match)) -> Result<(), Error> {
         if let [partition] = self.partitions.as_ref() {
             return engine::scan(
@@ -414,8 +415,17 @@ impl Matcher {
             );
         }
 
+        self.scan_parallel_and_deliver(input, &mut sink)
+    }
+
+    #[inline(never)]
+    fn scan_parallel_and_deliver(
+        &self,
+        input: &Utf16Text,
+        sink: &mut impl FnMut(Match),
+    ) -> Result<(), Error> {
         let output = self.scan_parallel(input)?;
-        output.deliver(&mut sink);
+        output.deliver(sink);
         Ok(())
     }
 
