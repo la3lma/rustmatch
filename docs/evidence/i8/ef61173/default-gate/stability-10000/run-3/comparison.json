@@ -1,0 +1,7 @@
+{
+  "order": "base-candidate",
+  "base_ns": 248088500,
+  "candidate_ns": 254060708,
+  "signed_delta_basis_points": 240,
+  "event_equal": true
+}

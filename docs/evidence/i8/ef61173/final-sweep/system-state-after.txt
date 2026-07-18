@@ -1,0 +1,32 @@
+Sat Jul 18 02:38:08 UTC 2026
+Darwin rainstick.local 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:39:09 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T6020 arm64
+  PID  %CPU %MEM COMM
+24425 100.0  0.1 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
+94004  35.5  0.3 /System/Applications/Mail.app/Contents/MacOS/Mail
+ 5204   9.2 10.9 /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualization.VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine
+ 6293   7.0  0.1 /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/150.0.7871.128/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)
+33314   3.6  0.2 /Applications/ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/150.0.7871.115/Helpers/Codex (Service).app/Contents/MacOS/Codex (Service)
+33488   3.4  1.2 /Applications/ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/150.0.7871.115/Helpers/Codex (Renderer).app/Contents/MacOS/Codex (Renderer)
+67771   2.8  0.2 /Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/Frameworks/ChatGPT Atlas Framework.framework/Versions/149.0.7827.29/Helpers/ChatGPT Atlas (Renderer).app/Contents/MacOS/ChatGPT Atlas (Renderer)
+  617   1.9  0.4 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
+97554   1.7  0.5 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  930   1.4  0.0 /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/fontd
+  626   0.8  0.1 /usr/sbin/coreaudiod
+28165   0.7  0.4 claude
+  586   0.7  0.0 /System/Library/CoreServices/launchservicesd
+ 1592   0.7  0.1 /Users/rmz/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/Frameworks/Steam Helper.app/Contents/MacOS/Steam Helper
+21836   0.6  0.1 /Applications/Willow Voice.app/Contents/MacOS/Willow Voice
+92459   0.6  2.3 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
+31601   0.4  2.1 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
+  608   0.3  0.0 /usr/sbin/bluetoothd
+  872   0.3  0.0 /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock
+  941   0.3  0.0 /System/Library/ExtensionKit/Extensions/WallpaperAerialsExtension.appex/Contents/MacOS/WallpaperAerialsExtension
+ 1618   0.3  0.2 /Users/rmz/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/Frameworks/Steam Helper.app/Contents/MacOS/Steam Helper
+92464   0.2  0.4 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc/Contents/MacOS/com.apple.WebKit.Networking
+87966   0.2  0.6 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc/Contents/MacOS/com.apple.WebKit.GPU
+  875   0.1  0.0 /System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer
+  650   0.1  0.0 /usr/libexec/symptomsd
+ 6290   0.1  0.0 ssh
+  879   0.1  0.3 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder
+ 1560   0.1  0.2 /Users/rmz/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/MacOS/steam_osx
+ 7263   0.1  0.4 /Applications/Microsoft Outlook.app/Contents/MacOS/Microsoft Outlook

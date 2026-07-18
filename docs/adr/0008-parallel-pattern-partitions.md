@@ -1,6 +1,6 @@
 # ADR-0008: Explicit scoped pattern-partition parallelism
 
-- **Status:** Proposed pending the frozen I8 correctness and performance gate
+- **Status:** Accepted
 - **Date:** 2026-07-18
 - **Decision owners:** rustmatch maintainers
 
@@ -16,7 +16,7 @@ Calling it from workers would require synchronization, a stronger public bound,
 or observable races. Input partitioning would instead require proving overlap
 and unbounded-lookahead rules for the complete regular-expression language.
 
-## Proposed decision
+## Decision
 
 I8 partitions patterns, not input. `MatcherBuilder` receives an explicit
 requested worker count, defaults to one, and rejects zero. Build assigns
@@ -62,8 +62,11 @@ been measured and shown insufficient.
 
 ## Admission evidence
 
-The proposal is accepted only if the frozen protocol in
+The frozen protocol in
 [`docs/experiments/i8-parallel-partitions.md`](../experiments/i8-parallel-partitions.md)
-passes exact worker-count parity, lifecycle and failure tests, explicit memory
+passed exact worker-count parity, lifecycle and failure tests, explicit memory
 accounting, a protected one-worker default, and a repeatable native Rust
-throughput result beyond noise.
+throughput result beyond noise. The retained
+[`I8 evidence package`](../evidence/i8/ef61173/README.md) records a 60.09%
+10,000-pattern improvement at eight workers, a 0.04% winner-repeat drift, the
+complete thread sweep, and the associated memory and profile costs.

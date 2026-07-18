@@ -2,9 +2,13 @@
 
 ## Status
 
-Protocol frozen before production parallel-partition implementation. The
-semantics, fixtures, thresholds, resource accounting, and baseline below may
-not be relaxed after candidate results are known.
+Complete. The protocol was frozen before production implementation; its
+semantics, fixtures, thresholds, resource accounting, and baseline were not
+relaxed after candidate results were known. Candidate
+`ef6117368cd70b23fcfede1b26525c5f5366f53a` passed every correctness,
+performance, resource, build, and lifecycle gate. The retained receipts and
+critical analysis are in the
+[`I8 evidence package`](../evidence/i8/ef61173/README.md).
 
 ## Baseline and comparison design
 
@@ -132,3 +136,16 @@ collection, and serialized callback delivery.
 The final default remains one worker unless Rust evidence supports an automatic
 policy in a separate decision. A green 12-core result is not permission to
 encode one machine's optimum as a universal heuristic.
+
+## Result
+
+The confirmed 10,000-pattern positive workload measured 249.801 ms with one
+worker and 99.680 ms with eight workers, a 60.09% improvement and 150.121 ms
+absolute saving. The eight-worker repeat was 99.635 ms, 0.04% from the first
+result. All points emitted the same 1,912,854-event multiset.
+
+The complete sweep saturates at six to eight workers and declines thereafter.
+The total cache table remains exactly 4 MiB, but multi-worker scans buffer
+43.78 MiB of events at this match density and duplicate prefilter candidate
+storage per partition. The public default therefore remains one worker, while
+callers may select a measured worker count explicitly.

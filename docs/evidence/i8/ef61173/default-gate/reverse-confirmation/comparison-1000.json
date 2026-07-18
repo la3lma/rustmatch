@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "evidence_id": "I8-D1",
+  "comparison": "parallel-default-guard-reverse-confirmation-v1",
+  "baseline_revision": "f7a5e95588b96653f8cf3cb2445c6c17f571c4fe",
+  "candidate_revision": "ef6117368cd70b23fcfede1b26525c5f5366f53a",
+  "runner": "rainstick.local | Apple M2 Max | native arm64 | 12 physical/logical CPUs | exact final I8 reverse default confirmation",
+  "pattern_count": 1000,
+  "corpus_bytes": 8388608,
+  "event_count": 109693,
+  "event_digest": "multiset64:411611ac4d81776b:2069aadc8693690d:4ea0ad8eeb3a12c7",
+  "baseline_median_compile_ns": 1622250,
+  "candidate_median_compile_ns": 1613833,
+  "baseline_median_scan_ns": 35948666,
+  "candidate_median_scan_ns": 35990375,
+  "scan_regression_ns": 41709,
+  "scan_slowdown_basis_points": 11,
+  "compile_regression_ns": 0,
+  "compile_slowdown_basis_points": 0,
+  "relative_limit_basis_points": 300,
+  "absolute_limit_ns": 1000000,
+  "status": "pass"
+}

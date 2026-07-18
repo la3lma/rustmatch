@@ -1,0 +1,32 @@
+Sat Jul 18 02:37:39 UTC 2026
+Darwin rainstick.local 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:39:09 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T6020 arm64
+  PID  %CPU %MEM COMM
+24425  98.5  0.1 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent
+92459  95.0  2.3 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
+94004  84.2  0.3 /System/Applications/Mail.app/Contents/MacOS/Mail
+  866  26.2  0.0 /System/Library/PrivateFrameworks/Ecosystem.framework/Support/ecosystemd
+ 1972  25.8  0.9 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mds_stores
+ 5204  24.2 10.9 /System/Library/Frameworks/Virtualization.framework/Versions/A/XPCServices/com.apple.Virtualization.VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine
+  625  20.3  0.0 /usr/libexec/trustd
+ 5872  16.4  0.1 /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/150.0.7871.128/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)
+32153  14.3  0.0 /System/Library/PrivateFrameworks/EcosystemAnalytics.framework/Support/ecosystemanalyticsd
+74597   7.5  0.7 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/corespotlightd
+33314   4.8  0.2 /Applications/ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/150.0.7871.115/Helpers/Codex (Service).app/Contents/MacOS/Codex (Service)
+33488   4.5  1.2 /Applications/ChatGPT.app/Contents/Frameworks/Codex Framework.framework/Versions/150.0.7871.115/Helpers/Codex (Renderer).app/Contents/MacOS/Codex (Renderer)
+97554   3.4  0.5 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  930   3.2  0.0 /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/fontd
+67771   3.2  0.2 /Applications/ChatGPT Atlas.app/Contents/Support/ChatGPT Atlas.app/Contents/Frameworks/ChatGPT Atlas Framework.framework/Versions/149.0.7827.29/Helpers/ChatGPT Atlas (Renderer).app/Contents/MacOS/ChatGPT Atlas (Renderer)
+  858   2.3  0.0 /usr/libexec/linkd
+  617   2.2  0.4 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
+ 5123   1.4  0.7 /Applications/Docker.app/Contents/MacOS/com.docker.backend
+  572   1.2  0.1 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mds
+  626   1.0  0.1 /usr/sbin/coreaudiod
+ 1592   1.0  0.1 /Users/rmz/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/Frameworks/Steam Helper.app/Contents/MacOS/Steam Helper
+    1   0.9  0.0 /sbin/launchd
+  586   0.9  0.0 /System/Library/CoreServices/launchservicesd
+  543   0.9  0.1 /usr/libexec/logd
+  879   0.8  0.3 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder
+33275   0.7  0.6 /Applications/ChatGPT.app/Contents/MacOS/ChatGPT
+ 5870   0.7  0.0 sleep
+21836   0.6  0.1 /Applications/Willow Voice.app/Contents/MacOS/Willow Voice
+  584   0.6  0.0 /usr/libexec/opendirectoryd
