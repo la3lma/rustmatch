@@ -106,8 +106,21 @@ slow; no engine is omitted merely because the checkpoint is unfavorable.
 
 The established Wuthering Heights 1,000/5,000/10,000 line remains the realistic
 language-corpus scaling control. Its exact ASCII source files and hashes come
-from the Rust repository. Wuthering results complement generated fixtures; they
-do not replace the controlled family/density matrix.
+from Rust commit `65453779f2560014fba020161b262ca660aeb58b`. Because the
+repository is private, the harness extracts the blobs from that exact commit
+through a local or SSH-accessible Git clone and then verifies SHA-256; it does
+not retain a temporary authenticated download URL. Wuthering results complement
+generated fixtures; they do not replace the controlled family/density matrix.
+Together with the 44 ordinary generated scenarios and two 256 MiB checkpoints,
+these controls produce 49 frozen scenarios. The preregistered initial worker
+sweeps contain 1,891 runs before adaptive winner confirmation and profiling.
+The executable campaign is frozen in the private benchmark repository at commit
+`a285191`.
+
+The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
+separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
+engine-neutral fixture was locally checked against Rust rustmatch at all three
+event points; authoritative timings still await the stable host.
 
 ## Declared worker sweeps
 
@@ -125,6 +138,10 @@ recorded. Density controls use the abbreviated preregistered sets
 `1, 8, 32, 64, 128, 256` for RE2/J/Java regex. A measured winner is not inferred
 from adjacent points that were never run.
 
+The Wuthering language controls use the same abbreviated worker grids as the
+density controls. This retains one realistic pattern-count line without
+duplicating the entire synthetic calibration matrix.
+
 The unoptimized Rust NFA control is limited to the two 1,000-pattern / 8 MiB
 sparse scenarios with one warm-up and one retained measurement. I9 measured
 more than 52 seconds per NFA scan. Repeating that settled architectural contrast
@@ -138,6 +155,8 @@ answer. This exception was declared before B1 results.
 - Task throughput is logical corpus bytes divided by median complete-pattern-set
   scan time. It is never multiplied by patterns or workers.
 - Sweep points use two warm-ups and three measurements.
+- Hyperscan is invoked with `--per-scan`; its declared warm-up scans are
+  excluded and the median of the remaining scan throughputs is reported.
 - The apparent winner and its nearest declared neighbors are rerun with three
   warm-ups and seven measurements.
 - Winner confirmation is repeated in reverse order. A winner with more than 3%
