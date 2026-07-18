@@ -2,9 +2,12 @@
 
 ## Status
 
-Protocol frozen before production prefilter implementation. Thresholds,
-fixtures, and the baseline revision below may not be relaxed after candidate
-results are known.
+Complete. The protocol was frozen before production implementation; its
+thresholds, fixtures, and baseline were not relaxed after candidate results
+were known. Candidate `37f69819d9231fb99d747d4ae48034204657c1f2` passed every
+correctness, performance, resource, and build gate. The retained receipts and
+critical analysis are in the
+[`I7 evidence package`](../evidence/i7/37f6981/README.md).
 
 ## Baseline and comparison design
 
@@ -83,8 +86,8 @@ threshold.
 
 - No unsafe Rust and no new runtime dependency.
 - Candidate storage is bounded and reported separately for the immutable
-  automaton and scan-local candidate set.
-- The 10,000-pattern Wuthering automaton must retain no more than 8 MiB of
+  filter and scan-local candidate set.
+- The 10,000-pattern Wuthering filter must retain no more than 8 MiB of
   explicitly accounted prefilter storage.
 - Candidate-position storage must not exceed one bit per possible UTF-16 start
   plus 64 KiB of fixed metadata.
@@ -98,8 +101,8 @@ threshold.
 
 Passing thresholds is necessary but insufficient. The final evidence must
 explain absolute scan and build times, candidate and event density, starts
-skipped, automaton size, candidate storage, fallback/bypass reasons, profile
+skipped, filter size, candidate storage, fallback/bypass reasons, profile
 hotspots, pattern-count scaling, corpus-size scaling, and any scenario where
-the prefilter loses. Diagnostic controls must separate automaton scan cost from
+the prefilter loses. Diagnostic controls must separate filter scan cost from
 semantic verification and event delivery. A green threshold without this
 analysis does not complete I7.

@@ -59,15 +59,30 @@ toolchain would otherwise produce an emulated binary. Always verify the output
 of `file` before making an architecture claim.
 
 The generated HTML table includes revision, runner, dimensions, event count,
-cache-state and fallback counts when available, compilation median, scan
-median, throughput, source paths, and source digests. Raw JSON receipts remain
-authoritative; the table is only a view.
+cache-state and fallback counts when available, selected candidate-start path,
+verified starts, compilation median, scan median, throughput, source paths, and
+source digests. Raw JSON receipts remain authoritative; the table is only a
+view.
+
+For I7 admission, `scripts/i7-wuthering-campaign.sh` measures the same native
+candidate binary with start acceleration disabled and enabled. It uses three
+warmups and seven measured scans at 1,000, 5,000, and 10,000 patterns over the
+8 MiB expanded corpus, requires exact event evidence and a 10% plus 2 ms win at
+every point, and separately compares 10,000-pattern build time with the frozen
+pre-I7 revision. The generated `index.html` places both paths side by side.
 
 ## Coarse CI tripwire
 
-`scripts/c2-wuthering-tripwire.sh` runs the retained 5,000-pattern fixture on
-both PR base and candidate in one GitHub Actions job. It requires identical
-source hashes and event evidence, retries once in reverse order, and fails only
-when slowdown exceeds both 100% and 50 ms. This broad `C2` threshold is a smoke
-alarm for severe regressions. It is not an optimization admission result and
-does not replace the native stable-machine campaign or its critical analysis.
+`scripts/c2-wuthering-tripwire.sh` runs 5,000 patterns over a deterministic
+8 MiB expansion of the retained fixture on both PR base and candidate in one
+GitHub Actions job. The expanded size deliberately crosses I7's full-prefilter
+activation threshold. The job requires identical source hashes and event
+evidence, retries once in reverse order, and fails only when slowdown exceeds
+both 100% and 50 ms. This broad `C2` threshold is a smoke alarm for severe
+regressions. It is not an optimization admission result and does not replace
+the native stable-machine campaign or its critical analysis.
+
+The tripwire fails its GitHub Actions workflow when both limits are crossed.
+The project merge protocol treats that as blocking pending investigation, but
+the repository currently has no GitHub branch-protection rule that prevents an
+administrator from merging a failed workflow.

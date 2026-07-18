@@ -4,11 +4,11 @@
 
 **Implementation increments started:** **8/12**
 
-**Implementation increments complete:** **7/12**
+**Implementation increments complete:** **8/12**
 
-**Active:** **I7 - Safe start acceleration and literal prefilter**
+**Active:** none
 
-**Available for execution:** none while I7 is active
+**Available for execution:** **I8 - Parallel pattern partitions**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -163,11 +163,11 @@ flowchart TB
     class L5 gate;
     class L6 blocked;
 
-    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,S0,C0,C1,C2,B0,E0,G6 complete;
-    class I7 active;
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,S0,C0,C1,C2,B0,E0,G6,G7 complete;
+    class I8 available;
     class X0,B1,H1,R1,R2 evidence;
-    class G7,G8,I10,I11 gate;
-    class I8,I9,H2,H3,R3,REL planned;
+    class G8,I10,I11 gate;
+    class I9,H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -243,8 +243,8 @@ and use-case evidence bundle pass from a clean checkout.
 | S0 | Documented rmatch 2.x semantic parity gate | Complete | The complete documented consuming-language suite passes through the public Rust API against the pinned Java `2.0.0-RC1` oracle; pure zero-width rejection remains the explicit documented product difference |
 | I6 | Lazy deterministic-state cache | Complete | Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as `I6-P1`/`I6-B1` |
 | C2 | Wuthering Heights CI performance tripwire | Complete | PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs |
-| I7 | Safe prefilter | Active | Frozen native Rust on/off protocol requires structural necessity proofs, adversarial safety, explicit bypass evidence, bounded resources, and positive improvement beyond noise in every declared activation region |
-| I8 | Parallel partitions | Planned | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
+| I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
+| I8 | Parallel partitions | Available | Event equality across worker counts, failure/deadlock tests, resource cleanup, complete thread sweep, and a positive Rust throughput result beyond noise |
 | I9 | Benchmark integration | Planned | Packaged adapter accepted by the ordinary harness with validated, reproducible receipts |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |

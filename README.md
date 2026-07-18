@@ -671,8 +671,9 @@ A CI tripwire failure blocks the PR pending investigation and a stable-machine
 rerun. A CI tripwire pass does not satisfy the optimization admission gate.
 The generated literal `C1` lane catches broad hot-loop mistakes; the retained
 Wuthering Heights `C2` lane adds a realistic 5,000-pattern regression line with
-exact source and event digests. Both use deliberately broad thresholds and
-retain base, candidate, and comparison receipts.
+an 8 MiB deterministic corpus expansion, exact source and event digests, and a
+size above the full-prefilter activation threshold. Both use deliberately
+broad thresholds and retain base, candidate, and comparison receipts.
 
 #### Authoritative external regression testing
 
@@ -2276,7 +2277,8 @@ distinguishing reporting semantics.
 
 - One- and two-symbol start tables.
 - Necessary-literal extractor with proof metadata.
-- Native multi-literal prefilter prototype.
+- Compact native three-/four-/five-unit prefix-membership filter; collisions
+  admit extra candidates and never remove a possible match.
 - Candidate-position and pattern mapping.
 - Automatic bypass for assertions or patterns without safe hints.
 
@@ -2287,6 +2289,8 @@ distinguishing reporting semantics.
 - Alternation, optional prefix, repetition, and case-folding adversaries.
 - Corpus ending inside a literal.
 - Mixed filterable/unfilterable pattern sets.
+- Deterministic generated pattern families compared with the complete
+  all-start reference path.
 
 **Performance gate**
 
@@ -2299,6 +2303,16 @@ distinguishing reporting semantics.
   positive improvement beyond noise in its declared activation region and no
   correctness difference. Otherwise the prototype is removed or remains a
   non-production experiment.
+- `scripts/i7-focused-campaign.sh` runs the frozen generated scenarios, while
+  `scripts/i7-wuthering-campaign.sh` runs the 1,000/5,000/10,000-pattern
+  Wuthering line, verifies native binaries, retains JSON, and renders HTML.
+- The `C2` GitHub Actions job fails the workflow on a severe regression and
+  remains a deliberately broad smoke alarm. It cannot replace the native
+  3-warmup/7-measurement admission run or the required critical interpretation
+  of its results.
+- The accepted implementation, raw receipts, rejected prototypes, resource
+  accounting, and critical profile interpretation are retained in the
+  [`I7 evidence package`](docs/evidence/i7/37f6981/README.md).
 
 ### Increment 8: Parallel pattern partitions
 

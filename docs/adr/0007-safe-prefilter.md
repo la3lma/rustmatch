@@ -1,6 +1,6 @@
 # ADR-0007: Conservative start acceleration and necessary-literal prefilter
 
-- **Status:** Proposed pending the frozen I7 correctness and performance gate
+- **Status:** Accepted
 - **Date:** 2026-07-18
 - **Decision owners:** rustmatch maintainers
 
@@ -78,4 +78,7 @@ Production activation requires the frozen protocol in
 [`docs/experiments/i7-safe-prefilter.md`](../experiments/i7-safe-prefilter.md):
 exact on/off event equality, extractor and candidate-filter adversaries, explicit
 bypass evidence, resource accounting, and a positive native Rust result beyond
-noise in every declared activation region.
+noise in every declared activation region. Candidate
+`37f69819d9231fb99d747d4ae48034204657c1f2` passed that protocol; the raw
+receipts and critical interpretation are retained in the
+[`I7 evidence package`](../evidence/i7/37f6981/README.md).

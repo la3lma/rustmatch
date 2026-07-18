@@ -22,6 +22,7 @@ pub(crate) enum PrefilterPath {
     Literal,
 }
 
+#[cfg(feature = "benchmark-internals")]
 impl PrefilterPath {
     pub(crate) const fn label(self) -> &'static str {
         match self {
@@ -45,6 +46,7 @@ pub(crate) enum PrefilterBypass {
     DenseSample,
 }
 
+#[cfg(feature = "benchmark-internals")]
 impl PrefilterBypass {
     pub(crate) const fn label(self) -> &'static str {
         match self {

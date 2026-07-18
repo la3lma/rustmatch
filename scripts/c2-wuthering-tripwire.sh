@@ -27,7 +27,7 @@ receipts="$run_root/receipts"
 pattern_source="$repository_root/benchmarks/fixtures/wuthering-heights/real-words-in-wuthering-heights.txt"
 corpus_source="$repository_root/benchmarks/fixtures/wuthering-heights/wuthr10.txt"
 pattern_count=${C2_PATTERN_COUNT:-5000}
-corpus_bytes=$(wc -c < "$corpus_source" | tr -d ' ')
+corpus_bytes=${C2_CORPUS_BYTES:-8388608}
 cache_scrub_bytes=${C2_CACHE_SCRUB_BYTES:-67108864}
 mkdir -p "$receipts"
 
