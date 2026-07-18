@@ -807,6 +807,7 @@ fn wuthering_scan(
         corpus_source: corpus_source.display().to_string(),
         corpus_source_digest: byte_digest(&corpus_bytes),
         pattern_count: patterns.len(),
+        worker_count: diagnostics.requested_worker_count(),
         corpus_bytes: corpus.len(),
         input_units: input.as_units().len(),
         cache_scrub_bytes: scrubber.bytes(),
@@ -918,7 +919,13 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
     for receipt in &receipts {
         receipt.validate()?;
     }
-    receipts.sort_by_key(|receipt| (receipt.corpus_bytes, receipt.pattern_count));
+    receipts.sort_by_key(|receipt| {
+        (
+            receipt.corpus_bytes,
+            receipt.pattern_count,
+            receipt.worker_count,
+        )
+    });
 
     let mut rows = String::new();
     for receipt in &receipts {
@@ -932,12 +939,25 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
             / receipt.median_scan_ns
             / (1024 * 1024);
         let throughput = format_hundredths(throughput_hundredths);
+        let partition_count = receipt.cache_diagnostics.as_ref().map_or_else(
+            || "n/a".to_owned(),
+            |value| value.partition_count.to_string(),
+        );
+        let spawned_workers = receipt.cache_diagnostics.as_ref().map_or_else(
+            || "n/a".to_owned(),
+            |value| value.spawned_workers.to_string(),
+        );
+        let buffered_mib = receipt.cache_diagnostics.as_ref().map_or_else(
+            || "n/a".to_owned(),
+            |value| format_tenths(value.buffered_event_bytes as u128 * 10 / (1024 * 1024)),
+        );
         write!(
             rows,
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
+            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{partition_count}</td><td>{spawned_workers}</td><td>{corpus_mib} MiB</td><td>{scrub_mib} MiB</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{buffered_mib} MiB</td><td>{compile_ms} ms</td><td>{scan_ms} ms</td><td>{throughput} MiB/s</td><td><span class=\"pass\">pass</span></td></tr>",
             html_escape(&receipt.revision),
             html_escape(&receipt.runner),
             receipt.pattern_count,
+            receipt.worker_count,
             receipt.event_count,
             receipt
                 .cache_diagnostics
@@ -968,7 +988,7 @@ fn render_scale_report(output: &Path, receipt_paths: &[&Path]) -> Result<ReportR
         )
     });
     let html = format!(
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1500px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1350px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
+        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>rustmatch benchmark results</title><style>:root{{--ink:#13211c;--muted:#5c6862;--paper:#f5f1e8;--green:#0f654b;--line:#c9c2b4}}*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(145deg,#dce8dd,#f5f1e8 42%);color:var(--ink);font:16px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}}main{{max-width:1700px;margin:4rem auto;padding:0 2rem}}h1{{font:700 clamp(2rem,5vw,4.8rem)/.95 Georgia,serif;max-width:12ch;margin:0 0 1rem}}.lede{{max-width:72ch;color:var(--muted);margin-bottom:2rem}}.card{{background:rgba(255,255,255,.82);border:1px solid rgba(19,33,28,.15);box-shadow:0 24px 70px rgba(20,40,30,.12);overflow:auto}}table{{border-collapse:collapse;width:100%;min-width:1700px}}th,td{{padding:.9rem 1rem;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}}th{{position:sticky;top:0;background:#173c31;color:white;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}}th:first-child,th:nth-child(2),td:first-child,td:nth-child(2){{text-align:left}}tbody tr:hover{{background:#eef6ed}}.pass{{background:#ccebd8;color:#084b35;padding:.2rem .55rem;border-radius:999px;font-weight:700}}.note{{color:var(--muted);margin-top:1.4rem;font-size:.86rem}}code{{overflow-wrap:anywhere}}@media(max-width:700px){{main{{margin:2rem auto;padding:0 1rem}}}}</style></head><body><main><h1>rustmatch benchmark receipts</h1><p class=\"lede\">Exploratory Wuthering Heights literal-pattern scale results. Each timed scan follows a full cache-scrub pass; compilation and scanning are reported separately. These are engineering receipts, not cross-engine claims.</p><div class=\"card\"><table><thead><tr><th>Revision</th><th>Runner</th><th>Patterns</th><th>Requested workers</th><th>Partitions</th><th>Spawned workers</th><th>Corpus</th><th>Cache scrub</th><th>Events</th><th>Cache states</th><th>Fallbacks</th><th>Start path</th><th>Starts verified</th><th>Buffered events</th><th>Compile median</th><th>Scan median</th><th>Throughput</th><th>Correctness</th></tr></thead><tbody>{rows}</tbody></table></div><p class=\"note\">{provenance}<br>Each receipt records its own warm-up and measured-iteration counts. Literal patterns are the lexicographically first distinct non-empty lines from the source list, escaped before compilation.</p></main></body></html>"
     );
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -1123,6 +1143,9 @@ fn compare_wuthering_tripwire(
     if baseline.runner != candidate.runner {
         return Err("C2 baseline and candidate were not measured on the same runner".to_owned());
     }
+    if baseline.worker_count != 1 || candidate.worker_count != 1 {
+        return Err("C2 must compare the default one-worker path".to_owned());
+    }
 
     let regression_ns = candidate
         .median_scan_ns
@@ -1191,6 +1214,9 @@ fn compare_i7_wuthering(
         return Err(
             "I7 Wuthering disabled and enabled runs must use one revision and runner".to_owned(),
         );
+    }
+    if baseline.worker_count != 1 || candidate.worker_count != 1 {
+        return Err("I7 Wuthering evidence must use one worker".to_owned());
     }
     if baseline.warmup_iterations < I7_WARMUP_ITERATIONS
         || baseline.measured_iterations < I7_MEASURED_ITERATIONS
@@ -1285,6 +1311,12 @@ fn compare_i7_wuthering(
 
 fn build_rustmatch(patterns: &[String]) -> Result<Matcher, String> {
     let mut builder = MatcherBuilder::new();
+    if let Ok(source) = env::var("RUSTMATCH_BENCH_WORKERS") {
+        let worker_count = source
+            .parse::<usize>()
+            .map_err(|error| format!("invalid worker count {source:?}: {error}"))?;
+        builder.worker_count(worker_count);
+    }
     if let Ok(source) = env::var("RUSTMATCH_BENCH_STATE_CACHE_BUDGET") {
         let budget = source
             .parse::<usize>()
@@ -2120,6 +2152,8 @@ struct ScaleScanReceipt {
     corpus_source: String,
     corpus_source_digest: String,
     pattern_count: usize,
+    #[serde(default = "default_worker_count")]
+    worker_count: usize,
     corpus_bytes: usize,
     #[serde(default)]
     input_units: usize,
@@ -2139,6 +2173,9 @@ struct ScaleScanReceipt {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 struct CacheDiagnosticsReceipt {
+    requested_worker_count: usize,
+    partition_count: usize,
+    spawned_workers: usize,
     cache_budget: usize,
     cache_states: usize,
     cache_hits: u64,
@@ -2154,11 +2191,16 @@ struct CacheDiagnosticsReceipt {
     prefilter_candidate_starts: usize,
     prefilter_starts_scanned: usize,
     prefilter_starts_skipped: usize,
+    buffered_events: usize,
+    buffered_event_bytes: usize,
 }
 
 impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
     fn from(value: ScanDiagnostics) -> Self {
         Self {
+            requested_worker_count: value.requested_worker_count(),
+            partition_count: value.partition_count(),
+            spawned_workers: value.spawned_workers(),
             cache_budget: value.cache_budget(),
             cache_states: value.cache_states(),
             cache_hits: value.cache_hits(),
@@ -2174,8 +2216,14 @@ impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
             prefilter_candidate_starts: value.prefilter_candidate_starts(),
             prefilter_starts_scanned: value.prefilter_starts_scanned(),
             prefilter_starts_skipped: value.prefilter_starts_skipped(),
+            buffered_events: value.buffered_events(),
+            buffered_event_bytes: value.buffered_event_bytes(),
         }
     }
+}
+
+const fn default_worker_count() -> usize {
+    1
 }
 
 impl ScaleScanReceipt {
@@ -2189,6 +2237,7 @@ impl ScaleScanReceipt {
             || self.revision.is_empty()
             || self.runner.is_empty()
             || self.pattern_count == 0
+            || self.worker_count == 0
             || self.corpus_bytes == 0
             || self.cache_scrub_bytes == 0
             || self.median_compile_ns == 0
@@ -2773,6 +2822,7 @@ mod tests {
             corpus_source: "corpus.txt".to_owned(),
             corpus_source_digest: "fnv1a64:corpus".to_owned(),
             pattern_count: 5_000,
+            worker_count: 1,
             corpus_bytes: 675_259,
             input_units: 675_259,
             cache_scrub_bytes: 64 * 1024 * 1024,
