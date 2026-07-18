@@ -10,7 +10,7 @@
 > not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `9/12`
+> status](docs/roadmap.md). Planning is complete; implementation is at `10/12`
 > increments started and `9/12` complete.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
@@ -2384,6 +2384,8 @@ distinguishing reporting semantics.
 - Every retained rustmatch receipt passes expected match count.
 - Plots can include rustmatch without a one-off data conversion.
 - Exact worker counts and engine version are available in the campaign record.
+- The frozen integration and receipt contract is in
+  [`docs/experiments/i9-benchmark-harness.md`](docs/experiments/i9-benchmark-harness.md).
 
 ### Increment 10: Hardening
 
