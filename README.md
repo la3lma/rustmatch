@@ -2394,6 +2394,9 @@ distinguishing reporting semantics.
 I9 proves that rustmatch is a first-class harness lane. The broader pattern,
 corpus, density, engine, and worker sweep above is the separate B1 evidence
 campaign; completing I9 does not claim those comparative results in advance.
+Its semantics, matrix, cache-pressure control, worker sweeps, profiling rules,
+and CI boundary are frozen in the
+[`B1 cross-engine campaign protocol`](docs/experiments/b1-cross-engine-campaign.md).
 
 ### Increment 10: Hardening
 
