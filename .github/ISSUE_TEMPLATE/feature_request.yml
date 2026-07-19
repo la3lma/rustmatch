@@ -56,3 +56,5 @@ body:
           required: true
         - label: I have not assumed that a Java optimization is automatically useful in Rust.
           required: true
+        - label: I understand that a performance idea may be recorded, but optimization implementation cannot start until the complete B1 dataset has passed B2 review and the work has an authorized B2-H hypothesis.
+          required: true

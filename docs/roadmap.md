@@ -225,6 +225,12 @@ Solid arrows show required dependencies. Dotted arrows show evidence that
 accumulates across several increments; they are intentionally retained as a
 separate visual language from the execution path.
 
+I6 through I8 record bootstrap optimizations completed before the systematic B1
+campaign and before the B2 gate was adopted. They are historical evidence, not
+precedent for bypassing the current sequence. No new post-B1 optimization may
+start until B1 is complete and a reviewed B2-H hypothesis explicitly authorizes
+the bounded G9 experiment.
+
 ## Milestone ledger
 
 The graph is intentionally conservative. A milestone changes to `Active`

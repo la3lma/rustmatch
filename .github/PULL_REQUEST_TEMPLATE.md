@@ -15,8 +15,15 @@
 - [ ] This change does not touch a performance-sensitive path.
 - [ ] This semantic change touches a performance-sensitive path and has
       external non-regression receipts.
-- [ ] This is an optimization and has correctness parity plus a positive Rust
-      result beyond the predeclared noise threshold.
+- [ ] This is an optimization authorized by a reviewed B2-H hypothesis and has
+      correctness parity plus a positive Rust result beyond the predeclared
+      noise threshold against frozen current Rustmatch.
+
+## Optimization authorization
+
+<!-- For an optimization, name the reviewed B2-H hypothesis ID and the exact
+authorization artifact. Otherwise write N/A. A competitor win or an appealing
+implementation idea is not authorization to start optimization work. -->
 
 ## Review checklist
 
