@@ -43,8 +43,10 @@ Every pull request must:
 5. Pass every required functional CI job.
 6. Run the external regression protocol before merge when the hot path changes.
 7. For an optimization, name the reviewed B2-H hypothesis and authorization
-   artifact before implementation starts, then supply positive Rust performance
-   evidence against the frozen existing-Rustmatch baseline.
+   artifact before implementation starts. Record the exact benchmark-repository
+   commit, reviewed-manifest SHA-256, and hypothesis ID listed in that manifest's
+   `authorized_hypotheses`, then supply positive Rust performance evidence
+   against the frozen existing-Rustmatch baseline.
 8. Leave no unexplained generated files, lint suppressions, or TODO markers.
 
 ### Pull-request cadence
@@ -247,7 +249,9 @@ fuzz, Miri, package, consumer, and external benchmark gates described in the
 - [ ] New dependencies or unsafe code have explicit justification and evidence.
 - [ ] Hot-path changes have external regression receipts.
 - [ ] Claimed optimizations name an authorized, reviewed B2-H hypothesis and
-      have a positive Rust result beyond noise against frozen current Rustmatch.
+      bind the benchmark commit, review-manifest SHA-256, and authorized ID;
+      they have a positive Rust result beyond noise against frozen current
+      Rustmatch.
 - [ ] Generated and machine-readable artifacts are reproducible and validated.
 
 See [SUPPORT.md](SUPPORT.md) for help and reporting boundaries.

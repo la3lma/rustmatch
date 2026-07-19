@@ -23,6 +23,16 @@ gate is complete. Exploring data, writing analysis tools, and improving the
 measurement or reporting harness are not optimization candidates, but they must
 not change or reinterpret the frozen B1 measurements.
 
+The executable B1/B2 evidence workflow lives in the private-until-published
+[`rmatch-performance-measurements`](https://github.com/la3lma/rmatch-performance-measurements)
+repository. Its
+[`B2 analysis protocol`](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md)
+generates the evidence audit and automatic tables, requires a structured human
+qualitative review, binds a critical review to exact hashes, and emits a
+reviewed `review-manifest.json`. This document remains the Rustmatch-side
+contract; the benchmark repository supplies the retained evidence and
+authorization artifact.
+
 ## Baseline and purpose
 
 RegexSet is a diagnostic competitor. Its wins identify workloads where
@@ -160,11 +170,28 @@ Optimization work may begin only after a review confirms that:
 If the review exposes missing or ambiguous evidence, return to measurement or
 analysis. Do not fill the gap with an implementation guess.
 
+Passing review is represented by a committed benchmark-repository
+`review-manifest.json`, not by an informal statement. Before an optimization
+branch starts, verify and record:
+
+- the exact benchmark-repository commit containing the reviewed archive;
+- the SHA-256 of `review-manifest.json`;
+- that its pre-review evidence, qualitative analysis, hypothesis registry, and
+  critical-review hashes validate;
+- that `optimization_authorized` is `true`; and
+- that the selected stable B2-H ID appears in `authorized_hypotheses`.
+
+Authorization is per hypothesis. A passing B2 review does not authorize an
+unlisted idea, and a listed idea still has to satisfy the current-Rustmatch G9
+admission gate below.
+
 ## Candidate experiment contract
 
 After the B2 review, and before implementing each candidate, record:
 
 - the hypothesis-registry identifier;
+- the benchmark-repository review commit and reviewed-manifest SHA-256 that
+  authorize that identifier;
 - the exact existing Rustmatch baseline revision and artifact identity;
 - the proposed Rust-native mechanism and the evidence behind it;
 - target fixtures, worker modes, controls, and the primary metric;

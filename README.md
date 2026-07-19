@@ -2432,6 +2432,12 @@ broader regression. Improvements outside the original target are welcome.
 RegexSet parity is neither required nor sufficient. The complete workflow and
 exit criteria are in the
 [`B2/G9 protocol`](docs/experiments/b2-competitor-win-optimization.md).
+The retained campaign, automatic analysis, qualitative-review, and
+hypothesis-authorization artifacts are produced by the
+[`rmatch-performance-measurements` B2 workflow](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md).
+An optimization branch must bind the exact benchmark commit,
+`review-manifest.json` SHA-256, and an ID explicitly listed in
+`authorized_hypotheses`; a general claim that B2 was reviewed is not enough.
 
 ### Increment 10: Hardening
 
