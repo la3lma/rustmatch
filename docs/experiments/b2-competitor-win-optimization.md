@@ -197,11 +197,14 @@ After the B2 review, and before implementing each candidate, record:
 - target fixtures, worker modes, controls, and the primary metric;
 - exact output count and digest requirements;
 - the noise model and minimum meaningful improvement;
+- a guard-regression ceiling no greater than 3%, plus an evidence-based
+  rationale when the target improvement is below the usual 5%;
 - the broader guard set, including neighboring pattern counts, both corpus
   sizes, density controls, Wuthering Heights, and relevant semantic families;
 - unacceptable regressions in scan time, preparation time, memory, latency,
   fallback behavior, or another scenario; and
-- the stop condition and any proposed selective activation rule.
+- the stop condition and any proposed selective activation rule; and
+- the timestamped lab-note path that will retain every outcome.
 
 Prior art from RegexSet, Java rmatch, Hyperscan, or another engine may inspire
 the mechanism. The Rust implementation must still fit Rustmatch's semantics and
@@ -249,12 +252,30 @@ A candidate enters the Rustmatch production path only when all of these hold:
    outliers, mechanism evidence, limits, and alternative explanations are
    discussed.
 
+The numerical policy is deliberately asymmetric:
+
+- A repeatable guard regression greater than **3%** is an automatic rejection,
+  regardless of gains elsewhere.
+- A statistically distinguishable regression is not acceptable merely because
+  it is smaller than 3%; a result inside the predeclared noise band is
+  inconclusive rather than proof of non-regression.
+- Added optimization complexity should normally produce at least **5%**
+  repeatable improvement on its target set. A smaller positive gain may be
+  accepted for genuine simplification or removal of maintenance risk, but only
+  with explicit rationale and no demonstrated guard regression.
+
 RegexSet parity is neither necessary nor sufficient for admission. A candidate
 that remains slower than RegexSet may still be a good Rustmatch optimization if
 it demonstrably improves current Rustmatch. A candidate that beats RegexSet but
 does not improve current Rustmatch is rejected. Neutral, inconclusive, or slower
 candidates are removed from the production path and retained only as documented
 experiments.
+
+Every attempt, including rejected and inconclusive candidates, receives a
+timestamped lab note using the benchmark repository's
+[`G9 template`](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/g9-optimization-lab-note-template.md).
+Negative results are retained so attractive slowdowns are not repeatedly
+reimplemented without new evidence.
 
 ## Exit criteria
 
@@ -279,4 +300,5 @@ G9 completes for an implemented candidate only when:
    base/candidate evidence bundle;
 2. accepted code passes every admission condition and broader guard;
 3. rejected code leaves no enabled production-path complexity; and
-4. the roadmap, registry, and critical B1/B2 report link to the retained result.
+4. every outcome has a retained lab note; and
+5. the roadmap, registry, and critical B1/B2 report link to the retained result.

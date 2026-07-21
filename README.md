@@ -602,7 +602,9 @@ Before implementing a performance idea, record:
 3. the exact existing Rustmatch baseline revision and modes being compared;
 4. the campaign's noise model and minimum meaningful improvement;
 5. the regressions in build time, memory, latency, or other scenarios that
-   would make the trade unacceptable.
+   would make the trade unacceptable; and
+6. the timestamped lab-note path that will retain the result whether the
+   experiment succeeds, fails, or remains inconclusive.
 
 The implementation passes only when:
 
@@ -613,6 +615,14 @@ The implementation passes only when:
   threshold for the intended workload;
 - the complete scenario set reveals no unaccepted material regression; and
 - any selective activation rule is itself measured and reproducible.
+
+A repeatable guard regression above 3% is an automatic rejection. This is a
+ceiling, not permission to accept a smaller statistically distinguishable
+regression. Optimization-specific complexity should normally earn at least a
+5% repeatable improvement on its declared target set. A smaller positive result
+may be considered when the change also materially simplifies the code or
+removes maintenance risk, but never when the guard set demonstrates a real
+regression.
 
 A neutral, inconclusive, or slower result fails the optimization gate. The
 experiment may be retained as a useful lab note, but the code is removed or
@@ -633,6 +643,9 @@ After B1, the complete retained dataset receives this treatment through the
 Quantitative and qualitative analysis, followed by a reviewed hypothesis
 registry, must finish before optimization code begins. The resulting candidate
 may remain slower than RegexSet and still pass if it improves current Rustmatch.
+The benchmark repository's
+[`post-assay optimization playbook`](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/post-assay-optimization-playbook.md)
+defines the ranked handoff and lab-notebook record used by that loop.
 Conversely, beating RegexSet cannot admit a change that fails to improve current
 Rustmatch.
 
@@ -2432,6 +2445,9 @@ broader regression. Improvements outside the original target are welcome.
 RegexSet parity is neither required nor sufficient. The complete workflow and
 exit criteria are in the
 [`B2/G9 protocol`](docs/experiments/b2-competitor-win-optimization.md).
+The non-negotiable default policy rejects any repeatable guard regression above
+3%, normally asks optimization complexity to earn at least a 5% target gain,
+and retains a lab note for every accepted, rejected, or inconclusive attempt.
 The retained campaign, automatic analysis, qualitative-review, and
 hypothesis-authorization artifacts are produced by the
 [`rmatch-performance-measurements` B2 workflow](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md).
