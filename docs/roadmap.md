@@ -174,10 +174,11 @@ flowchart TB
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
-    class B1 active;
+    class B1,B2 complete;
     class X0,H1,R1,R2 evidence;
-    class G9,I10,I11 gate;
-    class B2,H2,H3,R3,REL planned;
+    class G9 available;
+    class I10,I11 gate;
+    class H2,H3,R3,REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -227,9 +228,12 @@ separate visual language from the execution path.
 
 I6 through I8 record bootstrap optimizations completed before the systematic B1
 campaign and before the B2 gate was adopted. They are historical evidence, not
-precedent for bypassing the current sequence. No new post-B1 optimization may
-start until B1 is complete and a reviewed B2-H hypothesis explicitly authorizes
-the bounded G9 experiment.
+precedent for bypassing the current sequence. The stable-host B1 campaign and
+reviewed B2 analysis are now complete. Their durable
+[Optimization and scale synthesis](optimization-and-scale.md) is maintained at
+`docs/optimization-and-scale.md`. It authorizes only the bounded rank-one
+`B2-H-0001` G9 experiment; no other post-B1 optimization may start until that
+result and its lab note return to B2.
 
 ## Milestone ledger
 
@@ -264,9 +268,9 @@ and use-case evidence bundle pass from a clean checkout.
 | I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
-| B1 | Cross-engine receipts and thread sweeps | Active | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) and exact harness now implement correctness-gated 1,000/2,500/5,000/7,500/10,000-pattern campaigns, density and cache-pressure controls, explicit semantic lanes, complete worker sweeps, confirmation, a 20-role core profile scale with validated counters, and a self-contained report archive; authoritative stable-host receipts and critical interpretation remain outstanding |
-| B2 | Full-dataset analysis and reviewed hypotheses | Planned | After B1 completes, the entire traceable dataset is examined quantitatively and qualitatively before optimization begins; major regimes, cliffs, anomalies, crossovers, and competitor wins receive reasoned dispositions, and a reviewed registry turns plausible mechanisms into bounded experiments or documented non-candidates |
-| G9 | Existing-Rustmatch candidate gate | Planned | Every tried candidate preserves exact results and is admitted only with reproducible, noise-aware evidence that it improves the frozen existing Rustmatch baseline on its declared target set without an unacceptable broader regression; competitor parity is not the admission criterion |
+| B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry hypothesis registry, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); only rank-one `B2-H-0001` is authorized |
+| G9 | Existing-Rustmatch candidate gate | Available for execution | `B2-H-0001` may run against measured baseline `da755b0069c94d4da9db74a8778dd9932fc64671`; exact event semantics, AB/BA confirmation, the normal 5% target-gain gate, every 3% guard ceiling, and a lab note for every outcome remain mandatory |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
