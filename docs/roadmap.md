@@ -1,14 +1,15 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-07-18
+**Last reviewed:** 2026-07-25
 
 **Implementation increments started:** **10/12**
 
 **Implementation increments complete:** **10/12**
 
-**Active:** **B1 - Correctness-gated cross-engine receipts and thread sweeps**
+**Active:** none; the next G9 experiment has been reviewed but not started
 
-**Available for execution:** none while B1 is active
+**Available for execution:** **B2-H-0002 - measure per-scan worker lifecycle
+and join cost before considering a persistent pool**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -231,9 +232,12 @@ campaign and before the B2 gate was adopted. They are historical evidence, not
 precedent for bypassing the current sequence. The stable-host B1 campaign and
 reviewed B2 analysis are now complete. Their durable
 [Optimization and scale synthesis](optimization-and-scale.md) is maintained at
-`docs/optimization-and-scale.md`. It authorizes only the bounded rank-one
-`B2-H-0001` G9 experiment; no other post-B1 optimization may start until that
-result and its lab note return to B2.
+`docs/optimization-and-scale.md`. B2-H-0001 completed with exact semantics but
+regressed both targets by about 28%; its shared-candidate revision is rejected
+and not admitted. The refreshed review authorizes only rank-one `B2-H-0002`,
+beginning with phase timing. Persistent worker-pool code may be attempted only
+if lifecycle plus join exceeds the predeclared 5% gate. No other post-B1
+optimization may start until that result and its lab note return to B2.
 
 ## Milestone ledger
 
@@ -269,8 +273,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry hypothesis registry, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); only rank-one `B2-H-0001` is authorized |
-| G9 | Existing-Rustmatch candidate gate | Available for execution | `B2-H-0001` may run against measured baseline `da755b0069c94d4da9db74a8778dd9932fc64671`; exact event semantics, AB/BA confirmation, the normal 5% target-gain gate, every 3% guard ceiling, and a lab note for every outcome remain mandatory |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry registry, the rejected B2-H-0001 result, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); only rank-one `B2-H-0002` is authorized |
+| G9 | Existing-Rustmatch candidate gate | Available for execution | B2-H-0001 is complete and rejected; `B2-H-0002` may begin diagnostic phase timing against measured baseline `da755b0069c94d4da9db74a8778dd9932fc64671`, while production pool work still requires lifecycle plus join above 5%; exact semantics, AB/BA confirmation, every 3% guard ceiling, and a lab note for every outcome remain mandatory |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
