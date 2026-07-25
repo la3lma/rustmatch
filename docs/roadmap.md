@@ -8,9 +8,9 @@
 
 **Active:** none; the next G9 experiment has been reviewed but not started
 
-**Available for execution:** **B2-H-0003 - measure per-partition elapsed time,
-candidate starts, cache fallback, event volume, and CPU placement before
-considering load-aware partitioning**
+**Available for execution:** **B2-H-0005 - sweep a small internal cache-budget
+envelope under a fixed total-memory ceiling before considering adaptive
+per-partition budgeting**
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -235,14 +235,16 @@ reviewed B2 analysis are now complete. Their durable
 [Optimization and scale synthesis](optimization-and-scale.md) is maintained at
 `docs/optimization-and-scale.md`. B2-H-0001 completed with exact semantics but
 regressed both targets by about 28%; its shared-candidate revision is rejected
-and not admitted. B2-H-0002 also completed with exact semantics, but lifecycle
-plus join measured only 2.4618% at the median with a 1.8677% bootstrap lower
-bound. Its predeclared 5% gate failed, so no persistent-pool candidate was
-created or admitted. The refreshed review authorizes only rank-one
-`B2-H-0003`, beginning with per-partition diagnostics on the exact
-eight-to-twelve-worker transition. Production weighting is forbidden until
-material, stable skew is measured and distinguished from candidate-start,
-cache, event-volume, locality, and placement alternatives.
+and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the
+median, so no persistent-pool candidate was authorized. B2-H-0003 then measured
+only 1.7699% and 1.4288% median removable partition skew, unstable slowest
+partitions, and no stable compile-time predictor. Its load-aware partitioning
+proposal is also rejected without production code. The refreshed review
+authorizes only rank-one `B2-H-0005`, beginning with a controlled cache-budget
+sweep on the exact 10,000-pattern sixteen-to-twenty-four-worker transition.
+Adaptive budgeting is forbidden until a fixed-total-memory diagnostic shows a
+monotonic fallback response, a plausible minimum 5% opportunity, and no
+disproportionate memory or locality cost.
 
 ## Milestone ledger
 
@@ -278,8 +280,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry registry, rejected B2-H-0001 and B2-H-0002 results, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); only rank-one `B2-H-0003` is authorized |
-| G9 | Existing-Rustmatch candidate gate | Available for execution | B2-H-0001 and B2-H-0002 are complete and rejected; `B2-H-0003` may begin diagnostic per-partition timing, candidate, cache, event, and placement measurement against baseline `da755b0069c94d4da9db74a8778dd9932fc64671`; no weighting code is authorized until stable material skew is shown, and exact semantics, every 3% guard ceiling, the normal 5% gain gate, and a lab note for every outcome remain mandatory |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry registry, rejected B2-H-0001 through B2-H-0003 results, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); only rank-one `B2-H-0005` is authorized |
+| G9 | Existing-Rustmatch candidate gate | Available for execution | B2-H-0001 through B2-H-0003 are complete and rejected; `B2-H-0005` may begin a small cache-budget diagnostic on the 10,000-pattern sixteen-to-twenty-four-worker transition against baseline `da755b0069c94d4da9db74a8778dd9932fc64671`; no adaptive policy code is authorized until a fixed-total-memory sweep shows a monotonic fallback response and plausible 5% opportunity, and exact semantics, every 3% guard ceiling, the normal 5% gain gate, and a lab note for every outcome remain mandatory |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
