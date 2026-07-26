@@ -4,7 +4,7 @@
 
 ## Admission policy
 
-Correctness and exact event semantics are prerequisites. A repeatable regression above 3% on any declared guard is an automatic rejection. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. Rejected diagnostics and prototypes remain in the ledger and lab notebook, but never enter the production source tree.
+Correctness and exact event semantics are prerequisites. Any repeatable regression outside a predeclared noise band rejects a candidate; a regression above 3% on any declared guard is an automatic veto. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. Rejected diagnostics and prototypes remain in the ledger and lab notebook, but never enter the production source tree.
 
 ## Merged-improvement progress
 
@@ -125,8 +125,20 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Mechanism:** Measure exact logical input work, cache pressure, AMD fill proxies, and topology-aware placement across the sparse and dense high-worker reversals without changing production behavior.
 - **Measured result:** The sparse 16-to-24-worker step lost 42.52% throughput while cache misses rose 47.07%; the dense 16-to-32 step lost 41.30% while cache misses rose 61.97%. Aggregate logical work scaled exactly with partitions, while topology-aware placement recovered only 0.70% and 0.12%.
 - **Tradeoffs and caveats:** The retained fill events are memory-hierarchy proxies rather than direct controller bandwidth. The diagnostic supports duplicated traversal and hierarchy pressure, but does not isolate DRAM saturation or provide a production implementation.
-- **Decision:** Diagnostic completed with exact semantics and clean instrumentation. It admits no code; fresh B2 review separately authorized B2-H-0009 as the bounded production follow-up.
+- **Decision:** Diagnostic completed with exact semantics and clean instrumentation. It admits no code; fresh B2 review separately authorized B2-H-0009 as the bounded production follow-up, which was subsequently tested and rejected.
 - **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/e38edc1ede61ce253866939e3aee84db576ef836/docs/lab-notebook/2026-07-26-b2-h-0008-future-memory.md](https://github.com/la3lma/rmatch-performance-measurements/blob/e38edc1ede61ce253866939e3aee84db576ef836/docs/lab-notebook/2026-07-26-b2-h-0008-future-memory.md)
+
+### B2-H-0009 - Parallel shared candidate planning
+
+- **Date:** 2026-07-26
+- **Outcome:** `rejected`
+- **Baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+- **Candidate:** `b05e482ce9aafd9dac1bf083308d78ed0ce131ef`
+- **Mechanism:** Build one conservative union candidate bitmap with eight disjoint input-range shards, then let each existing pattern-partition worker admit only its own necessary prefixes.
+- **Measured result:** Exact semantics and all four primary targets passed. The sparse 50 MiB, 10,000-literal, 24-worker target improved 734.672% (8.35x), with the other primary effects ranging from +122.143% to +395.281%. The unchanged zero-output private fallback regressed 2.00249%, with all six pairs negative.
+- **Tradeoffs and caveats:** The shared plan removed repeated corpus traversal and proved very high upside for large high-worker literal workloads. Binary analysis found the private scanner's 4,341-instruction mnemonic sequence unchanged but relocated, making the guard failure a code-layout regression rather than an algorithmic fallback change. Padding for one benchmark would be unprincipled; a follow-up must isolate shared machinery structurally.
+- **Decision:** Rejected under the non-negotiable no-regression gate. No candidate code was merged despite the target wins; all accepted and rejected receipts remain retained.
+- **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/8d735196bef1e488f544e158ecd4b20a6332586b/docs/lab-notebook/2026-07-26-b2-h-0009-parallel-shared-candidates.md](https://github.com/la3lma/rmatch-performance-measurements/blob/8d735196bef1e488f544e158ecd4b20a6332586b/docs/lab-notebook/2026-07-26-b2-h-0009-parallel-shared-candidates.md)
 
 ## Cross-engine evolution
 
@@ -146,7 +158,7 @@ Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ra
 
 | Priority | Hypothesis | Status | Why it remains plausible | Next discriminating test | Expected value |
 |---:|---|---|---|---|---|
-| 1 | **B2-H-0009 - Parallel shared candidate planning** | authorized | H8 reproduced the high-worker collapse with exact duplicated logical work and rising cache pressure, while placement recovered under 1%. Rejected H1 cut aggregate machine work by about 70% but serialized union planning and all-partition admission. | Build one conservative union candidate bitmap in parallel start-range shards, then perform prefix admission inside each existing pattern-partition worker. Require phase profiles before the six-pair sparse and dense admission matrix. | 15% expected gain; high but bounded implementation risk |
+| 1 | **FUTURE-SHARED-ISOLATION - Structurally isolated shared candidate engine** | unreviewed | H9 proved 2.22x-8.35x primary-target speedups with exact semantics, but was rejected because introducing the shared path relocated an otherwise instruction-identical private scanner and produced a repeatable 2.00249% fallback regression. | Review a build and dispatch design that isolates shared-candidate machinery from the private scanner's code generation and placement, then authorize a fresh complete matrix. Do not tune padding to one benchmark. | Very high measured upside; medium packaging and code-generation risk |
 | 2 | **B2-H-0006 - Exact input-parallel scanning** | further measurement | Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership. | Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation. | High theoretical upside, currently blocked on semantic design |
 | 3 | **FUTURE-LAYOUT - Transition-table and scratch-state locality** | unreviewed | A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity. | Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch. | Moderate possible gain with contained semantics risk |
 | 4 | **FUTURE-ASSERT - Assertion-heavy specialized scan path** | unreviewed | I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter. | Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures. | Large narrow-workload upside |

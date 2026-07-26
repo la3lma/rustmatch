@@ -10,11 +10,11 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 <p><strong>Last reviewed:</strong> 2026-07-26</p>
 <p><strong>Implementation increments started:</strong> <strong>10/12</strong></p>
 <p><strong>Implementation increments complete:</strong> <strong>10/12</strong></p>
-<p><strong>Active:</strong> none; G9 is available with exactly <code>B2-H-0009</code> authorized</p>
-<p><strong>Next evidence goal:</strong> freeze and implement <code>B2-H-0009</code>, profile its shared
-candidate phase, and proceed to paired admission timing only if candidate
-construction is parallel and no caller-side all-partitions admission loop
-remains</p>
+<p><strong>Active:</strong> none; <code>B2-H-0009</code> is terminally rejected and G9 requires fresh
+review</p>
+<p><strong>Next evidence goal:</strong> review the structurally isolated shared-candidate
+follow-up suggested by <code>B2-H-0009</code>; begin no implementation until B2 authorizes
+and freezes exactly one new hypothesis</p>
 <p>This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
@@ -42,7 +42,7 @@ Color carries status or role, so task boxes do not repeat state labels.
 Every task and gate begins with a unique symbolic short name. These IDs are
 stable references for commits, pull requests, evidence manifests, and roadmap
 discussion even when a task's wording or color changes.</p>
-<figure class="mermaid-diagram"><a href="../../assets/mermaid/9376be609419320f9daa624d2b723930ccd33d59755e3207855bedeaa561d0c5.svg" title="Open full-size SVG"><img src="../../assets/mermaid/9376be609419320f9daa624d2b723930ccd33d59755e3207855bedeaa561d0c5.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/9376be609419320f9daa624d2b723930ccd33d59755e3207855bedeaa561d0c5.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg" title="Open full-size SVG"><img src="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg">Open full-size SVG</a></figcaption></figure>
 <p>Solid arrows show required dependencies. Dotted arrows show evidence that
 accumulates across several increments; they are intentionally retained as a
 separate visual language from the execution path.</p>
@@ -73,10 +73,16 @@ delivery batching are rejected without production code. B2-H-0008 then
 reproduced the sparse and dense high-worker collapses at -42.52% and -41.30%;
 logical input work scaled exactly with partitions while cache misses rose
 47.07% and 61.97%. Topology-aware placement recovered only 0.70% and 0.12%.
-That diagnostic admits no code, but the v11 review now authorizes exactly
+That diagnostic admits no code, but the v11 review authorized exactly
 <code>B2-H-0009</code>: parallel shared candidate construction followed by
 partition-local prefix admission, with the existing private plan retained as
-fallback.</p>
+fallback. H9 subsequently preserved exact semantics and improved every primary
+target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
+fast. The unchanged zero-output private fallback nevertheless regressed
+2.00249% with all six pairs negative. The strict no-regression gate therefore
+rejected the candidate and admitted no code. Its measured algorithmic upside
+supports fresh review of a structurally isolated successor, not benchmark-
+specific padding or an automatic retry.</p>
 <h2>Milestone ledger</h2>
 <p>The graph is intentionally conservative. A milestone changes to <code>Active</code>
 only after implementation or fixture work exists and at least one named
@@ -108,8 +114,8 @@ and use-case evidence bundle pass from a clean checkout.</p>
 <tr><td>I8</td><td>Parallel partitions</td><td>Complete</td><td>Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the <a href="evidence/i8/ef61173/README.html">I8 evidence package</a></td></tr>
 <tr><td>I9</td><td>Benchmark integration</td><td>Complete</td><td>Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the <a href="evidence/i9/fdd5efa/README.html">I9 evidence package</a></td></tr>
 <tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
-<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, six terminal experiments through B2-H-0008, and the hash-bound <a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a>; review v11 authorizes exactly B2-H-0009</td></tr>
-<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Available: B2-H-0009</td><td>Freeze and test the parallel shared-candidate plan against baseline <code>da755b0069c94d4da9db74a8778dd9932fc64671</code>; phase profiles must prove parallel construction and no serial all-partitions admission loop before paired timing; both targets need at least 5% gain, every guard retains the absolute 3% veto, and a lab note is mandatory</td></tr>
+<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven terminal experiments through B2-H-0009, and the hash-bound <a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a>; H9 is rejected with no production merge</td></tr>
+<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Available: fresh review required</td><td>B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; review and freeze exactly one successor before implementation, retain the no-regression and absolute 3% vetoes, and preserve a lab note for every outcome</td></tr>
 <tr><td>I10</td><td>Hardening</td><td>Planned</td><td>Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit</td></tr>
 <tr><td>I11</td><td>Release preparation</td><td>Planned</td><td>Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete</td></tr>
 <tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>

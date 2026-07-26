@@ -6,12 +6,12 @@
 
 **Implementation increments complete:** **10/12**
 
-**Active:** none; G9 is available with exactly `B2-H-0009` authorized
+**Active:** none; `B2-H-0009` is terminally rejected and G9 requires fresh
+review
 
-**Next evidence goal:** freeze and implement `B2-H-0009`, profile its shared
-candidate phase, and proceed to paired admission timing only if candidate
-construction is parallel and no caller-side all-partitions admission loop
-remains
+**Next evidence goal:** review the structurally isolated shared-candidate
+follow-up suggested by `B2-H-0009`; begin no implementation until B2 authorizes
+and freezes exactly one new hypothesis
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -179,7 +179,7 @@ flowchart TB
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
     class B1,B2 complete;
     class X0,H1,R1,R2 evidence;
-    class G9 available;
+    class G9 gate;
     class I10,I11 gate;
     class H2,H3,R3,REL planned;
 
@@ -256,10 +256,16 @@ delivery batching are rejected without production code. B2-H-0008 then
 reproduced the sparse and dense high-worker collapses at -42.52% and -41.30%;
 logical input work scaled exactly with partitions while cache misses rose
 47.07% and 61.97%. Topology-aware placement recovered only 0.70% and 0.12%.
-That diagnostic admits no code, but the v11 review now authorizes exactly
+That diagnostic admits no code, but the v11 review authorized exactly
 `B2-H-0009`: parallel shared candidate construction followed by
 partition-local prefix admission, with the existing private plan retained as
-fallback.
+fallback. H9 subsequently preserved exact semantics and improved every primary
+target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
+fast. The unchanged zero-output private fallback nevertheless regressed
+2.00249% with all six pairs negative. The strict no-regression gate therefore
+rejected the candidate and admitted no code. Its measured algorithmic upside
+supports fresh review of a structurally isolated successor, not benchmark-
+specific padding or an automatic retry.
 
 ## Milestone ledger
 
@@ -295,8 +301,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, six terminal experiments through B2-H-0008, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); review v11 authorizes exactly B2-H-0009 |
-| G9 | Existing-Rustmatch candidate gate | Available: B2-H-0009 | Freeze and test the parallel shared-candidate plan against baseline `da755b0069c94d4da9db74a8778dd9932fc64671`; phase profiles must prove parallel construction and no serial all-partitions admission loop before paired timing; both targets need at least 5% gain, every guard retains the absolute 3% veto, and a lab note is mandatory |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven terminal experiments through B2-H-0009, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); H9 is rejected with no production merge |
+| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; review and freeze exactly one successor before implementation, retain the no-regression and absolute 3% vetoes, and preserve a lab note for every outcome |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
