@@ -114,21 +114,21 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Measured result:** Callback omission changed median scan time by -0.16% at 16 workers and +0.08% at 32, with both 95% intervals spanning zero. Vector growth consumed only 0.033-0.078 ms; the zero-output control passed.
 - **Tradeoffs and caveats:** The diagnostic preserved all 500,000 events and exact digest. Maximum partition scan time rose from 128.43 ms to 216.43 ms from 16 to 32 workers, while callback throughput retained 60.28%, pointing away from delivery and toward discovery or shared-resource pressure.
 - **Decision:** Diagnostic rejected; no event-buffering, callback-batching, profiling, or production candidate was created.
-- **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md)
+- **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md](https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md)
 
 ## Cross-engine evolution
 
 ### Snapshot 2026-07-26
 
-Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `ac3a2303f3b8543018e0c4e12381ec48b734a963`.
+Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `d2a92174e4629aa33d04b636e469c7e41505c240`.
 
 Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.
 
 | Engine | Contract | Cells won | Geometric-mean Rust/engine | Median | Range |
 |---|---|---:|---:|---:|---:|
-| [Java rmatch](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-java-rmatch.csv) | same complete event contract | 38/38 | 13.769x | 19.596x | 2.301x-32.062x |
-| [RegexSet](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-regexset-diagnostic.csv) | different output contract | 15/35 | 0.463x | 0.751x | 0.006x-2.673x |
-| [Hyperscan](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-native-reference-diagnostic.csv) | native-reference diagnostic | 8/39 | 0.128x | 0.127x | 0.006x-4.798x |
+| [Java rmatch](https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-java-rmatch.csv) | same complete event contract | 38/38 | 13.769x | 19.596x | 2.301x-32.062x |
+| [RegexSet](https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-regexset-diagnostic.csv) | different output contract | 15/35 | 0.463x | 0.751x | 0.006x-2.673x |
+| [Hyperscan](https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-native-reference-diagnostic.csv) | native-reference diagnostic | 8/39 | 0.128x | 0.127x | 0.006x-4.798x |
 
 ## Plausible future optimizations
 

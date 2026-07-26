@@ -125,7 +125,7 @@
       "result": "Callback omission changed median scan time by -0.16% at 16 workers and +0.08% at 32, with both 95% intervals spanning zero. Vector growth consumed only 0.033-0.078 ms; the zero-output control passed.",
       "tradeoffs": "The diagnostic preserved all 500,000 events and exact digest. Maximum partition scan time rose from 128.43 ms to 216.43 ms from 16 to 32 workers, while callback throughput retained 60.28%, pointing away from delivery and toward discovery or shared-resource pressure.",
       "decision": "Diagnostic rejected; no event-buffering, callback-batching, profiling, or production candidate was created.",
-      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md",
       "progress": null
     }
   ],
@@ -133,7 +133,7 @@
     {
       "date": "2026-07-26",
       "rust_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
-      "review_revision": "ac3a2303f3b8543018e0c4e12381ec48b734a963",
+      "review_revision": "d2a92174e4629aa33d04b636e469c7e41505c240",
       "method": "Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.",
       "engines": [
         {
@@ -145,7 +145,7 @@
           "median_ratio": 19.595616,
           "minimum_ratio": 2.30143,
           "maximum_ratio": 32.061976,
-          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-java-rmatch.csv"
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-java-rmatch.csv"
         },
         {
           "engine": "RegexSet",
@@ -156,7 +156,7 @@
           "median_ratio": 0.751472,
           "minimum_ratio": 0.005783,
           "maximum_ratio": 2.673008,
-          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-regexset-diagnostic.csv"
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-regexset-diagnostic.csv"
         },
         {
           "engine": "Hyperscan",
@@ -167,7 +167,7 @@
           "median_ratio": 0.127427,
           "minimum_ratio": 0.006285,
           "maximum_ratio": 4.797955,
-          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-native-reference-diagnostic.csv"
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-native-reference-diagnostic.csv"
         }
       ]
     }
