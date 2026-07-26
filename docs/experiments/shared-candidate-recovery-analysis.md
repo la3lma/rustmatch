@@ -1,6 +1,6 @@
 # Shared candidate recovery analysis
 
-**Status:** design review; no successor implementation is authorized
+**Status:** `investigate`; no successor implementation is authorized
 
 **Predecessor:** `B2-H-0009`
 
@@ -23,10 +23,12 @@ about 73% of that displacement. The rejected one-worker guard never executed
 the shared planner.
 
 This is a strong instrumentation and code-layout confound. It does not prove
-that removing the extra fields will eliminate the 2.00249% regression, so the
-candidate remains correctly rejected. It does identify a substantially
-narrower and more principled successor than padding or a wholesale algorithm
-rewrite.
+that removing the extra fields will eliminate the 2.00249% regression. The
+exact candidate remains correctly rejected and unmerged under its frozen
+`G9-v1` ruling. Under the later
+[`G9-v2` decision policy](../optimization-decision-policy.md), the mechanism is
+`investigate`: the contrast obligates a substantially narrower and more
+principled successor than padding or a wholesale algorithm rewrite.
 
 ## What H9 established
 
@@ -55,12 +57,14 @@ semantic partitions. Target peak RSS improved by 47% to 98%.
 This is not a marginal result that depends on a favorable summary statistic.
 All six pairs favored the candidate on all four primary targets.
 
-## Why H9 was still rejected
+## Why H9 was not admitted
 
 The zero-output 50 MiB, one-worker guard regressed 2.00249%, with all six pairs
 negative. That crossed the frozen two-percent demonstrated-regression boundary.
-The separate absolute three-percent veto did not fire, but the stricter
-no-regression rule was sufficient.
+The separate absolute three-percent veto did not fire, but the `G9-v1`
+no-regression rule rejected the exact artifact. `G9-v2` preserves that
+non-admission and classifies the evidence as an investigation rather than a
+terminal algorithmic rejection.
 
 This guard has one partition. H9 cannot compile a shared union for fewer than
 16 partitions and cannot plan shared candidates for inputs below 32 MiB. The
@@ -126,7 +130,8 @@ The direct scanner sizes remained identical in both controls.
 
 These facts establish a measurement confound, not a causal acquittal. A fresh
 candidate must remove the confound and pass the same guard. H9 itself remains
-rejected.
+rejected and unmerged; the shared-candidate mechanism remains under
+investigation.
 
 ## Recommended successor
 
@@ -194,19 +199,21 @@ A future B2 review may authorize exactly one successor with these stages:
 3. **Discriminating preflight**
    - run the frozen zero-output guard with balanced AB/BA order;
    - do not edit or retune after seeing that result;
-   - terminate on any demonstrated regression.
+   - stop admission timing and investigate any demonstrated regression above
+     two percent.
 4. **Complete admission matrix**
    - rerun all H9 primary targets, neighbors, semantic guards, and fallbacks;
    - retain the five-percent target floor, two-percent demonstrated-regression
      boundary, and absolute three-percent veto;
-   - merge only if every target and guard passes.
+   - merge only if every target and guard passes; classify a repeatable
+     two-to-three-percent regression as `investigate`, never as admission.
 
 The preflight is a cost-saving stage, not a weaker gate. A passing preflight
 does not admit code; the complete matrix remains mandatory.
 
 ## Approaches explicitly rejected
 
-- Do not relax the regression rule because the target gain is large.
+- Do not average away a regression because the target gain is large.
 - Do not pad or reorder functions until one benchmark happens to pass.
 - Do not omit the zero-output or small-input guards.
 - Do not time a candidate-only receipt schema against the baseline schema.

@@ -1,8 +1,18 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "title": "Optimization attempt ledger",
   "last_reviewed": "2026-07-26",
-  "policy": "Correctness and exact event semantics are prerequisites. Any repeatable regression outside a predeclared noise band rejects a candidate; a regression above 3% on any declared guard is an automatic veto. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. Rejected diagnostics and prototypes remain in the ledger and lab notebook, but never enter the production source tree.",
+  "policy_version": "G9-v2",
+  "policy_effective_date": "2026-07-26",
+  "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes admission. A demonstrated regression above 2% through 3% requires investigation: the candidate is not merged, receives no progress credit, and must produce a retained causal follow-up. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement.",
+  "policy_rules": [
+    "Merged: every correctness and admission gate passes; the production baseline advances.",
+    "Investigate: a demonstrated guard regression is above 2% through 3%, or a reviewed high-discrepancy result contains unusually large opposing effects with plausible separable causes. No code is admitted and the baseline does not move.",
+    "Rejected: correctness fails, a guard regression exceeds 3%, or evidence closes the mechanism without sufficient unresolved value. An automatic artifact veto does not erase a separately documented algorithmic signal.",
+    "Inconclusive: evidence cannot establish the required target gain, regression, or causal direction.",
+    "Only merged attempts enter the efficiency-progress graph. Every outcome retains its measurements and lab note."
+  ],
+  "policy_history": "G9-v2 refines the learning disposition without changing historical measurements or admission decisions. B2-H-0009 was rejected and not admitted under G9-v1; its immutable result now also motivates a G9-v2 investigation of the shared-candidate mechanism.",
   "attempts": [
     {
       "id": "I6",
@@ -146,13 +156,13 @@
       "id": "B2-H-0009",
       "name": "Parallel shared candidate planning",
       "date": "2026-07-26",
-      "status": "rejected",
+      "status": "investigate",
       "baseline_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
       "candidate_revision": "b05e482ce9aafd9dac1bf083308d78ed0ce131ef",
       "summary": "Build one conservative union candidate bitmap with eight disjoint input-range shards, then let each existing pattern-partition worker admit only its own necessary prefixes.",
       "result": "Exact semantics and all four primary targets passed. The sparse 50 MiB, 10,000-literal, 24-worker target improved 734.672% (8.35x), with the other primary effects ranging from +122.143% to +395.281%. The unchanged zero-output private fallback regressed 2.00249%, with all six pairs negative.",
-      "tradeoffs": "The shared plan removed repeated corpus traversal and proved very high upside for large high-worker literal workloads. Binary analysis found the private scanner's 4,341-instruction mnemonic sequence unchanged but relocated. Static controls found that candidate-only diagnostics account for 0x1540, about 73%, of a uniform 0x1cf0 displacement; shared implementation code leaves 0x7b0. This is a strong code-layout confound, but not grounds to overturn the measured rejection.",
-      "decision": "Rejected under the non-negotiable no-regression gate. No candidate code was merged despite the target wins; all accepted and rejected receipts remain retained.",
+      "tradeoffs": "The shared plan removed repeated corpus traversal and proved very high upside for large high-worker literal workloads. Binary analysis found the private scanner's 4,341-instruction mnemonic sequence unchanged but relocated. Static controls found that candidate-only diagnostics account for 0x1540, about 73%, of a uniform 0x1cf0 displacement; shared implementation code leaves 0x7b0. The rejecting guard never activated the new algorithm, creating a strong code-layout confound and an unusually large target/guard discrepancy.",
+      "decision": "The exact H9 artifact remains rejected, unmerged, and excluded from progress under its frozen G9-v1 ruling. Under G9-v2 the mechanism is classified investigate: retain every receipt and run one instrumentation-neutral, pipeline-isolated successor through the unchanged numeric gates.",
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/8d735196bef1e488f544e158ecd4b20a6332586b/docs/lab-notebook/2026-07-26-b2-h-0009-parallel-shared-candidates.md",
       "progress": null
     }

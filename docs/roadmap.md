@@ -6,8 +6,8 @@
 
 **Implementation increments complete:** **10/12**
 
-**Active:** none; `B2-H-0009` is terminally rejected and G9 requires fresh
-review
+**Active:** `B2-H-0009` shared-candidate mechanism is `investigate`; its exact
+artifact remains rejected and unmerged
 
 **Next evidence goal:** review the
 [instrumentation-neutral shared-candidate successor](experiments/shared-candidate-recovery-analysis.md)
@@ -27,9 +27,13 @@ that keep the system executable.
 > optimization milestone. The acceptance baseline is the frozen, existing
 > Rustmatch production path, not the competitor. Every performance-motivated
 > change must preserve results and show a positive Rustmatch improvement beyond
-> a predeclared noise threshold. Neutral, inconclusive, or slower results fail
-> the gate. Semantic extensions require correctness and applicable
-> non-regression evidence, not a speedup.
+> a predeclared noise threshold. Only a fully passing candidate may merge.
+> Investigated, neutral, inconclusive, rejected, or slower results leave the
+> production baseline unchanged. The
+> [versioned decision policy](optimization-decision-policy.md) requires causal
+> follow-up when large opposing effects expose a separable signal. Semantic
+> extensions require correctness and applicable non-regression evidence, not a
+> speedup.
 
 The system-level target is stronger than the admission rule for one change:
 rustmatch should ultimately exceed Java rmatch on representative workloads
@@ -237,7 +241,7 @@ reviewed B2 analysis are now complete. Their durable
 [Optimization and scale synthesis](optimization-and-scale.md) is maintained at
 `docs/optimization-and-scale.md`. The generated
 [Optimization attempt ledger](optimization-attempt-ledger.md) retains every
-accepted and rejected attempt, an improvement-only progress chart, and the
+merged, investigated, rejected, and inconclusive attempt, an improvement-only progress chart, and the
 versioned Java rmatch, RegexSet, and Hyperscan scorecard. B2-H-0001 completed
 with exact semantics but
 regressed both targets by about 28%; its shared-candidate revision is rejected
@@ -264,8 +268,11 @@ fallback. H9 subsequently preserved exact semantics and improved every primary
 target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
 fast. The unchanged zero-output private fallback nevertheless regressed
 2.00249% with all six pairs negative. The strict no-regression gate therefore
-rejected the candidate and admitted no code. Its measured algorithmic upside
-supports fresh review of a structurally isolated successor, not benchmark-
+rejected the exact candidate under `G9-v1` and admitted no code. The later
+[`G9-v2` decision policy](optimization-decision-policy.md) preserves that
+admission result while classifying the mechanism as `investigate`. Its measured
+algorithmic upside supports fresh review of a structurally isolated successor,
+not benchmark-specific tuning.
 
 The subsequent
 [recovery analysis](experiments/shared-candidate-recovery-analysis.md) found a
@@ -312,8 +319,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven terminal experiments through B2-H-0009, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); H9 is rejected with no production merge |
-| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the [recovery analysis](experiments/shared-candidate-recovery-analysis.md) recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor, while retaining every no-regression veto |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven completed experiments through B2-H-0009, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); H9's artifact is rejected with no production merge while its mechanism is `investigate` under G9-v2 |
+| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the [recovery analysis](experiments/shared-candidate-recovery-analysis.md) recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor under the [G9-v2 policy](optimization-decision-policy.md), while retaining the two-percent investigation boundary and three-percent veto |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |

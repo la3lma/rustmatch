@@ -616,18 +616,21 @@ The implementation passes only when:
 - the complete scenario set reveals no unaccepted material regression; and
 - any selective activation rule is itself measured and reproducible.
 
-A repeatable guard regression above 3% is an automatic rejection. This is a
-ceiling, not permission to accept a smaller statistically distinguishable
-regression. Optimization-specific complexity should normally earn at least a
-5% repeatable improvement on its declared target set. A smaller positive result
-may be considered when the change also materially simplifies the code or
-removes maintenance risk, but never when the guard set demonstrates a real
-regression.
+A repeatable guard regression above 3% automatically rejects the exact
+artifact. A repeatable regression above 2% through 3% blocks admission and
+requires investigation under the versioned
+[optimization decision policy](docs/optimization-decision-policy.md). These are
+not regression budgets: any demonstrated regression blocks admission.
+Optimization-specific complexity should normally earn at least a 5% repeatable
+improvement on its declared target set. A smaller positive result may be
+considered when the change also materially simplifies the code or removes
+maintenance risk, but never when the guard set demonstrates a real regression.
 
-A neutral, inconclusive, or slower result fails the optimization gate. The
-experiment may be retained as a useful lab note, but the code is removed or
-left disabled outside the production path. A local win accompanied by losses
-elsewhere may justify a narrowly activated path only when the activation
+A neutral, inconclusive, investigated, rejected, or slower result fails the
+admission gate. Its evidence and lab note remain part of the project, but the
+code is removed or left disabled outside the production path. Large opposing
+effects require causal review; a local win accompanied by losses elsewhere may
+justify a successor or narrowly activated path only when the activation
 criterion is explicit, safe, and independently measured.
 
 Pass/fail is not performance analysis. Every admitted optimization must also
@@ -2445,9 +2448,13 @@ broader regression. Improvements outside the original target are welcome.
 RegexSet parity is neither required nor sufficient. The complete workflow and
 exit criteria are in the
 [`B2/G9 protocol`](docs/experiments/b2-competitor-win-optimization.md).
-The non-negotiable default policy rejects any repeatable guard regression above
-3%, normally asks optimization complexity to earn at least a 5% target gain,
-and retains a lab note for every accepted, rejected, or inconclusive attempt.
+The versioned
+[`G9-v2` decision policy](docs/optimization-decision-policy.md) automatically
+vetoes admission for any repeatable guard regression above 3%, classifies a
+demonstrated regression above 2% through 3% as `investigate`, normally asks
+optimization complexity to earn at least a 5% target gain, and retains a lab
+note for every merged, investigated, rejected, or inconclusive attempt. An
+investigation admits no code and does not advance the baseline.
 The retained campaign, automatic analysis, qualitative-review, and
 hypothesis-authorization artifacts are produced by the
 [`rmatch-performance-measurements` B2 workflow](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md).

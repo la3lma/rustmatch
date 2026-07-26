@@ -16,7 +16,11 @@ struct Ledger {
     schema_version: u32,
     title: String,
     last_reviewed: String,
+    policy_version: String,
+    policy_effective_date: String,
     policy: String,
+    policy_rules: Vec<String>,
+    policy_history: String,
     attempts: Vec<Attempt>,
     comparison_snapshots: Vec<ComparisonSnapshot>,
     future_candidates: Vec<FutureCandidate>,
@@ -128,7 +132,7 @@ fn generate() -> Result<Generated, String> {
 }
 
 fn validate(ledger: &Ledger) -> Result<(), String> {
-    if ledger.schema_version != 1 {
+    if ledger.schema_version != 2 {
         return Err(format!(
             "unsupported ledger schema {}",
             ledger.schema_version
@@ -137,6 +141,16 @@ fn validate(ledger: &Ledger) -> Result<(), String> {
     if ledger.attempts.is_empty() {
         return Err("optimization ledger has no attempts".to_owned());
     }
+    if ledger.policy_version.trim().is_empty()
+        || ledger.policy_effective_date.trim().is_empty()
+        || ledger.policy_rules.is_empty()
+        || ledger
+            .policy_rules
+            .iter()
+            .any(|rule| rule.trim().is_empty())
+    {
+        return Err("optimization ledger has an incomplete decision policy".to_owned());
+    }
     let mut identifiers = HashSet::new();
     for attempt in &ledger.attempts {
         if !identifiers.insert(&attempt.id) {
@@ -144,7 +158,7 @@ fn validate(ledger: &Ledger) -> Result<(), String> {
         }
         if !matches!(
             attempt.status.as_str(),
-            "merged" | "rejected" | "inconclusive"
+            "merged" | "investigate" | "rejected" | "inconclusive"
         ) {
             return Err(format!(
                 "optimization attempt {} has invalid status {}",
@@ -246,7 +260,17 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
         ledger.last_reviewed
     )
     .expect("write to string");
-    writeln!(output, "## Admission policy\n\n{}\n", ledger.policy).expect("write to string");
+    writeln!(
+        output,
+        "## Decision policy\n\n**{}**, effective **{}**. \
+         [Read the complete policy](optimization-decision-policy.md).\n\n{}\n",
+        ledger.policy_version, ledger.policy_effective_date, ledger.policy
+    )
+    .expect("write to string");
+    for rule in &ledger.policy_rules {
+        writeln!(output, "- {rule}").expect("write to string");
+    }
+    writeln!(output, "\n{}\n", ledger.policy_history).expect("write to string");
     writeln!(
         output,
         "## Merged-improvement progress\n\n![Optimization progress](plots/optimization-progress.svg)\n"
@@ -257,7 +281,7 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
         "The chart is an **admission evidence speedup index**, not a direct \
          end-to-end historical benchmark. It starts at 1.0 and multiplies each \
          merged optimization's frozen baseline/candidate scan-time ratio. \
-         Rejected and inconclusive experiments are excluded by construction.\n"
+         Every non-merged experiment is excluded by construction.\n"
     )
     .expect("write to string");
     writeln!(
@@ -376,6 +400,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
     for attempt in &ledger.attempts {
         let status_class = match attempt.status.as_str() {
             "merged" => "merged",
+            "investigate" => "investigate",
             "rejected" => "rejected",
             _ => "inconclusive",
         };
@@ -472,6 +497,11 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
         .expect("write to string");
     }
 
+    let mut policy_rules = String::new();
+    for rule in &ledger.policy_rules {
+        write!(policy_rules, "<li>{}</li>", html_escape(rule)).expect("write to string");
+    }
+
     format!(
         "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">\
          <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\
@@ -482,8 +512,10 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
          RegexSet, and Hyperscan.</p><div class=\"top-links\">\
          <a href=\"html-universe/index.html\">Browse the HTML evidence universe</a></div>\
          <div class=\"stamp\">Reviewed {reviewed}</div></header>\
-         <main><section class=\"policy\"><div class=\"section-kicker\">Non-negotiable gate</div>\
-         <p>{policy}</p></section><section><div class=\"section-kicker\">Merged only</div>\
+         <main><section class=\"policy\"><div class=\"section-kicker\">Decision policy · {policy_version}</div>\
+         <p>{policy}</p><ul>{policy_rules}</ul><p class=\"policy-history\">{policy_history}</p>\
+         <a href=\"html-universe/repository/docs/optimization-decision-policy.html\">Read the complete policy</a>\
+         </section><section><div class=\"section-kicker\">Merged only</div>\
          <h2>Efficiency progress</h2><div class=\"chart\">{svg}</div>\
          <p class=\"chart-note\">Admission evidence speedup index on a logarithmic scale. \
          Each point multiplies the prior index by that merged optimization's own \
@@ -501,6 +533,9 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
         title = html_escape(&ledger.title),
         reviewed = html_escape(&ledger.last_reviewed),
         policy = html_escape(&ledger.policy),
+        policy_version = html_escape(&ledger.policy_version),
+        policy_rules = policy_rules,
+        policy_history = html_escape(&ledger.policy_history),
         css = CSS,
     )
 }
@@ -642,6 +677,7 @@ const CSS: &str = r#"
 :root{--ink:#10251f;--muted:#587067;--paper:#f6f0e2;--cream:#fffaf0;--green:#0b6b5d;--rust:#ba4b2f;--line:#c8d5cd}
 *{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 4%,#f7d8b6 0,transparent 27rem),linear-gradient(145deg,#f7f0df,#dcece4);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.55}
 header,main{width:min(1160px,calc(100% - 40px));margin:auto}header{padding:80px 0 52px;border-bottom:1px solid rgba(16,37,31,.2);position:relative}h1{font-size:clamp(3rem,8vw,7.2rem);line-height:.9;max-width:950px;margin:.15em 0;letter-spacing:-.055em}h2{font-size:clamp(2rem,4vw,3.5rem);line-height:1;margin:.2em 0 .7em}h3{font-size:1.5rem;margin:.15em 0}.eyebrow,.section-kicker,.status,.stamp,.meta,small,th,.rank{font-family:"Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.1em}.eyebrow,.section-kicker{font-weight:700;color:var(--rust);font-size:.78rem}.lede{font-size:1.35rem;max-width:760px;color:var(--muted)}.top-links{margin-top:25px}.top-links a{display:inline-block;padding:10px 15px;border:1px solid var(--green);border-radius:999px;text-decoration:none;font:700 .72rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.08em}.stamp{position:absolute;right:0;top:92px;font-size:.72rem}.policy{background:var(--ink);color:#f8f2e5;padding:32px 40px;border-radius:0 0 26px 26px}.policy p{font-size:1.2rem;margin:.4rem 0}.policy .section-kicker{color:#f5b38c}section{padding:66px 0}.chart{filter:drop-shadow(0 18px 24px rgba(16,37,31,.12))}.chart svg{display:block;width:100%;height:auto}.chart-note{max-width:860px;color:var(--muted)}.table-wrap{overflow-x:auto;background:rgba(255,250,240,.72);border:1px solid var(--line);border-radius:18px;margin-top:28px}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--line)}th{font-size:.72rem}.attempts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.attempt{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 14px 38px rgba(16,37,31,.07)}.attempt-head{display:flex;justify-content:space-between;gap:18px}.status{height:max-content;font-size:.65rem;padding:6px 9px;border-radius:99px}.status.merged{background:#cce9da;color:#075243}.status.rejected{background:#f2c9bc;color:#7a2818}.status.inconclusive{background:#efdfae;color:#654d06}dl{display:grid;grid-template-columns:130px 1fr;gap:10px 16px}dt{font-weight:700}dd{margin:0;color:var(--muted)}code{font:600 .86em "SFMono-Regular",Consolas,monospace}.meta{font-size:.68rem;color:var(--muted)}a{color:var(--green);font-weight:700}.snapshot{border-top:1px solid rgba(16,37,31,.2)}.engine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.engine-card{text-decoration:none;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;transition:transform .2s ease,box-shadow .2s ease}.engine-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(16,37,31,.12)}.engine-card span{font:700 .8rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--rust)}.engine-card strong{font:700 clamp(2.8rem,6vw,5rem) "Avenir Next",sans-serif;letter-spacing:-.06em}.engine-card b{margin-top:16px}.engine-card em{font-size:.88rem;color:var(--muted);margin-top:8px}.candidate-list{list-style:none;padding:0;border-top:1px solid var(--line)}.candidate-list li{display:grid;grid-template-columns:70px 1fr;gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}.rank{font-size:2rem;color:var(--rust)}.candidate-title{font-weight:700;font-size:1.25rem}.candidate-list p{margin:.45rem 0;color:var(--muted)}footer{padding:36px 0 70px;border-top:1px solid rgba(16,37,31,.2);color:var(--muted)}
+.status.investigate{background:#c9deef;color:#174e73}.policy ul{padding-left:1.25rem}.policy li{margin:.45rem 0}.policy a{color:#ffd2b4}.policy-history{font-size:1rem!important;color:#d5e4dd}
 @media(max-width:760px){header{padding-top:50px}.stamp{position:static;margin-top:24px}.attempts,.engine-grid{grid-template-columns:1fr}.policy{padding:26px}.attempt-head{display:block}.status{display:inline-block;margin-top:10px}dl{grid-template-columns:1fr}.candidate-list li{grid-template-columns:46px 1fr}.rank{font-size:1.3rem}}
 "#;
 
@@ -660,7 +696,7 @@ mod tests {
     }
 
     #[test]
-    fn progress_excludes_rejected_attempts() {
+    fn progress_excludes_every_non_merged_attempt() {
         let ledger = ledger();
         let points = progress_points(&ledger);
         assert_eq!(
@@ -670,6 +706,7 @@ mod tests {
         let svg = render_svg(&points).expect("chart should render");
         assert!(!svg.contains("B2-H-0001"));
         assert!(!svg.contains("B2-H-0005"));
+        assert!(!svg.contains("B2-H-0009"));
     }
 
     #[test]
