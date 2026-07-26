@@ -185,6 +185,53 @@ impl Prefilter {
             },
         }
     }
+
+    pub(crate) fn shared_literal_filter(&self) -> Option<SharedLiteralFilter<'_>> {
+        self.literal.as_ref().map(SharedLiteralFilter)
+    }
+
+    pub(crate) fn shared_allows_start(&self, input: &[u16], start: usize) -> bool {
+        start
+            .checked_add(MIN_LITERAL_UNITS)
+            .is_some_and(|end| end <= input.len())
+            && self
+                .literal
+                .as_ref()
+                .is_some_and(|filter| filter.prefix_allows(input, start))
+    }
+
+    pub(crate) const fn retained_bytes(&self) -> usize {
+        self.retained_bytes
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct SharedLiteralFilter<'a>(&'a LiteralPrefilter);
+
+impl<'a> SharedLiteralFilter<'a> {
+    pub(crate) fn ascii_three_exact(self) -> &'a [u64] {
+        self.0.ascii_three_exact.as_ref()
+    }
+
+    pub(crate) fn ascii_four_hash(self) -> &'a [u64] {
+        self.0.ascii_four_hash.as_ref()
+    }
+
+    pub(crate) fn ascii_five_hash(self) -> &'a [u64] {
+        self.0.ascii_five_hash.as_ref()
+    }
+
+    pub(crate) const fn has_three(self) -> bool {
+        self.0.has_three
+    }
+
+    pub(crate) const fn has_four(self) -> bool {
+        self.0.has_four
+    }
+
+    pub(crate) const fn has_five(self) -> bool {
+        self.0.has_five
+    }
 }
 
 pub(crate) enum ScanPlan<'a> {
