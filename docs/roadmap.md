@@ -9,10 +9,11 @@
 **Active:** `B2-H-0011` has passed G9-v2 and merged as exact measured source;
 H9 and H10 remain rejected historical artifacts
 
-**Next evidence goal:** perform a fresh post-H11 B2 ranking before freezing any
-new optimization; the highest-ranked remaining direction is exact
-input-parallel scanning, but its event-order and boundary construction must be
-proved before implementation
+**Next evidence goal:** freeze a diagnostic-only assertion-bearing conservative
+prefilter. The [post-H11 portfolio review](experiments/post-h11-future-optimization-portfolio.md)
+ranks it above partition-aware H11 routing, SIMD candidate discovery, an exact
+literal backend, and exact input parallelism because it targets a source-proven
+76-second all-start path with a smaller, false-positive-only change
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -310,6 +311,29 @@ source modification as `de33ea1`. The
 [retained H11 summary](experiments/b2-h-0011-private-prefilter-recovery.md)
 records the matrix and evidence hashes. H9 and H10 remain rejected and excluded
 from the merged-improvement graph.
+
+The subsequent
+[B2-H-0006 semantic design review](experiments/b2-h-0006-input-parallel-design.md)
+resolves the old overlap blocker: input workers can own disjoint start-position
+ranges while reading the complete immutable input, so unbounded matches,
+assertions, duplicates, and unspecified callback ordering require no chunk
+reconciliation. It does not authorize code. H11 already performs one shared
+candidate pass and routes almost every retained candidate to one semantic
+partition, so H-0006 must first demonstrate at least 5% post-H11 phase
+headroom before a benchmark-only full-database prototype is justified.
+
+The broader
+[post-H11 future optimization portfolio](experiments/post-h11-future-optimization-portfolio.md)
+reviews every currently known open direction and the negative evidence that
+closes earlier mechanisms. It promotes conservative necessary-literal
+prefiltering for assertion-bearing databases to the next experiment: the
+retained 1,000-pattern `\bword…\b` fixture currently disables every prefilter
+and spends roughly 76 seconds scanning all starts over 8 MiB. The proposed
+diagnostic steps only past supported leading zero-width assertions during
+necessary-literal analysis; the existing assertion-aware semantic engine
+remains authoritative. H11 routing and SIMD candidate discovery rank next.
+B2-H-0006 moves to rank five because its semantics are now sound but its
+incremental post-H11 headroom is unproven.
 
 ## Milestone ledger
 

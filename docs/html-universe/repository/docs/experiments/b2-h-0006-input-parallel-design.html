@@ -1,0 +1,261 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0006 exact input-parallel scanning design review · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0006-input-parallel-design.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0006-input-parallel-design.md</div></header><main><h1>B2-H-0006 exact input-parallel scanning design review</h1>
+<p><strong>Status:</strong> semantic construction resolved; diagnostic evidence required</p>
+<p><strong>Reviewed production baseline:</strong> H11 exact measured source
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<p><strong>Scope:</strong> theoretical and source-level assessment only; no optimization is
+authorized by this document</p>
+<h2>Executive conclusion</h2>
+<p>Exact input-parallel scanning is possible without input overlap, speculative
+DFA state reconciliation, duplicate suppression, or ordered event merging.
+Rustmatch already defines a scan as the independent longest consuming match
+for every <code>(pattern identity, input start)</code> pair. Workers can therefore own
+disjoint ranges of <strong>start positions</strong> while retaining read-only access to the
+complete input. A match that starts in one range may read and end arbitrarily
+far beyond that range.</p>
+<p>This construction resolves the semantic blocker recorded for B2-H-0006. It
+does not yet establish a performance opportunity. H11 already replaced
+partition-local full-corpus literal discovery with one parallel shared
+candidate pass. On H11's retained 50 MiB cells, total semantic starts are only
+about 1.01 to 1.02 times the union candidate count, so the partition-local
+prefix checks already route almost every candidate to one pattern partition.
+The original expectation that input parallelism would remove sixteen to
+thirty-two complete corpus traversals is therefore stale for H11-eligible
+workloads.</p>
+<p>The next justified action is a bounded diagnostic that answers two questions:</p>
+<ol>
+<li>After H11, which workloads still spend enough time in semantic verification
+or repeated start-domain work for input parallelism to recover at least 5%?</li>
+<li>Can a shared full-pattern database with worker-local scratch and a bounded
+cache policy outperform H11's smaller pattern partitions without a guard
+regression or unacceptable memory multiplication?</li>
+</ol>
+<p>No production implementation should begin unless both questions pass.</p>
+<h2>Why start ownership is exact</h2>
+<p>Let an input contain <code>n</code> UTF-16 code units and let the legal consuming start
+domain be:</p>
+<pre><code class="language-text">S = { 0, 1, ..., n - 1 }
+</code></pre>
+<p>Partition <code>S</code> into disjoint half-open ranges <code>S0 ... Sk</code> whose union is <code>S</code>.
+Worker <code>i</code> runs the existing anchored-at-start semantic engine for every start
+in <code>Si</code>, against the complete immutable input and complete applicable pattern
+set. It does <strong>not</strong> stop matching at the end of <code>Si</code>.</p>
+<p>For each pattern identity <code>p</code> and start <code>s</code>, ADR-0002 defines at most one event:
+the greatest accepted consuming end <code>e</code>. Exactly one worker owns <code>s</code>, that
+worker observes the same suffix and context as the serial engine, and it runs
+until the same dead state or input end. It therefore emits exactly the serial
+event <code>(p, s, e)</code>, if one exists. Taking the union of worker outputs gives the
+serial event multiset.</p>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/9a014b80858c925c715ddf80306a75ccb8080c3db5bd54f7525e45d63b9fa2f1.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/9a014b80858c925c715ddf80306a75ccb8080c3db5bd54f7525e45d63b9fa2f1.svg" alt="Why start ownership is exact diagram"></a><figcaption>Why start ownership is exact · <a href="../../../assets/mermaid/9a014b80858c925c715ddf80306a75ccb8080c3db5bd54f7525e45d63b9fa2f1.svg">Open full-size SVG</a></figcaption></figure>
+<h3>Boundary cases</h3>
+<table><thead><tr><th>Concern</th><th>Exact rule</th></tr></thead><tbody>
+<tr><td>Unbounded repetition</td><td>A worker may read to input end. Only the start is range-bounded, never the match end.</td></tr>
+<tr><td>Match crossing a range boundary</td><td>The worker that owns the start emits it. No overlap or reconciliation is needed.</td></tr>
+<tr><td>Line anchors and word boundaries</td><td>Assertion evaluation receives the full input and absolute position, preserving global left/right context.</td></tr>
+<tr><td>Pure zero-width patterns</td><td>Registration already rejects them. Assertions may constrain a consuming match and remain covered.</td></tr>
+<tr><td>Duplicate pattern text</td><td>Caller IDs remain distinct database ordinals, so equal text still emits separate events.</td></tr>
+<tr><td>Duplicate events</td><td>Start ranges are disjoint, so no two workers can emit the same <code>(pattern_id, start, end)</code> event.</td></tr>
+<tr><td>Event order</td><td>ADR-0002 explicitly leaves callback order unspecified. Correctness is multiset equality, so worker vectors may be concatenated without a global sort.</td></tr>
+<tr><td>UTF-16</td><td>Ranges are in UTF-16 code-unit indices, which are already the engine's public coordinate system. Isolated surrogates require no special boundary rule.</td></tr>
+<tr><td>Failure before callbacks</td><td>As in I8, workers buffer locally, all workers join, and errors or panics are resolved before serial callback delivery.</td></tr>
+</tbody></table>
+<p>This is simpler than speculative parallel DFA membership. Ko et al. partition a
+single continuing DFA run and must infer each chunk's unknown incoming state.
+Rustmatch restarts matching independently at every input start, so a start
+owner always begins at the database root. The paper remains useful evidence
+that input partitioning can scale, but its speculation and chunk-composition
+machinery are not needed for this construction.</p>
+<h2>Source fit</h2>
+<p>Most of the semantic engine is already close to range-capable:</p>
+<ul>
+<li><code>scan_without_assertions_nfa</code> and <code>scan_without_assertions_cached</code> accept an
+arbitrary start iterator.</li>
+<li>literal prefilter construction already scans explicit start ranges;</li>
+<li>H11's shared candidate bitmap is immutable after construction and can expose
+candidates from a bounded word range;</li>
+<li><code>Utf16Text</code> and every compiled database table are immutable and naturally
+shareable;</li>
+<li>the assertion path is the notable exception because it hard-codes
+<code>0..units.len()</code>, but its assertion helpers already consume the complete
+input and absolute positions.</li>
+</ul>
+<p>The semantic code change should therefore be small: make every engine path
+consume a bounded start domain and add adversarial parity tests. The larger
+uncertainty is the compiled and scan-local state layout.</p>
+<h2>Performance model after H11</h2>
+<h3>What H11 already removed</h3>
+<p>H11 scans a compatible large literal corpus once to construct a union candidate
+bitmap, using up to eight disjoint input-word shards. Each existing pattern
+partition then filters only those candidates through its necessary-prefix
+table before semantic verification.</p>
+<p>Retained candidate receipts show:</p>
+<table><thead><tr><th>H11 cell</th><th style="text-align: right">Union candidates</th><th style="text-align: right">Total semantic starts</th><th style="text-align: right">Starts/candidate</th></tr></thead><tbody>
+<tr><td>Sparse 50 MiB, 16 workers</td><td style="text-align: right">55,748</td><td style="text-align: right">56,652</td><td style="text-align: right">1.016</td></tr>
+<tr><td>Sparse 50 MiB, 24 workers</td><td style="text-align: right">55,748</td><td style="text-align: right">56,668</td><td style="text-align: right">1.017</td></tr>
+<tr><td>Dense 50 MiB, 16 workers</td><td style="text-align: right">696,850</td><td style="text-align: right">708,150</td><td style="text-align: right">1.016</td></tr>
+<tr><td>Dense 50 MiB, 32 workers</td><td style="text-align: right">696,850</td><td style="text-align: right">708,350</td><td style="text-align: right">1.017</td></tr>
+</tbody></table>
+<p>Those ratios mean H11 already avoids nearly all repeated semantic admission in
+these cells. Input parallelism cannot claim H11's earlier 2.16x-to-7.96x gain
+again.</p>
+<h3>What input parallelism might still improve</h3>
+<ul>
+<li>It can distribute uneven candidate density by input range rather than being
+limited to one worker per pattern partition.</li>
+<li>A single multi-pattern database can process all patterns for one start in one
+deterministic/NFA traversal instead of entering separate partition engines.</li>
+<li>It can eliminate repeated candidate-bitmap iteration and partition-prefix
+probes.</li>
+<li>It may help non-H11 paths that still scan the full start domain per pattern
+partition, including start-table, all-start, and assertion-bearing workloads.</li>
+<li>It provides a path to using more cores without increasing the number of
+pattern partitions and their associated prefilter/candidate structures.</li>
+</ul>
+<h3>What can erase the gain</h3>
+<ul>
+<li>A full-pattern database has a larger root closure, transition working set,
+and terminal array than one pattern partition.</li>
+<li><code>Scratch</code> scales with database states and patterns and must be private to each
+concurrent worker.</li>
+<li>The lazy deterministic cache is mutable and scan-local. Giving every worker
+the current 8,192-state budget multiplies the current four-MiB direct-table
+ceiling by worker count; dividing one total budget may cause full-database
+fallback.</li>
+<li>Workers over different input ranges may independently materialize many of
+the same deterministic states.</li>
+<li>Equal byte ranges can be badly imbalanced when candidate or match density is
+uneven.</li>
+<li>H11's candidate-construction pass may already dominate sparse large-literal
+cells, leaving little semantic work for a second parallel axis to accelerate.</li>
+</ul>
+<p>Hyperscan's runtime design reinforces the scratch issue rather than solving it:
+its compiled database is shareable, but every concurrent scanning context
+requires separate preallocated scratch. Rustmatch should likewise account
+worker-local scratch explicitly rather than hide it behind throughput.</p>
+<h2>Designs considered</h2>
+<h3>Recommended diagnostic: one database, disjoint start domains</h3>
+<p>Compile one database containing the complete pattern set. Build one immutable
+candidate/start plan, partition that plan into contiguous disjoint start
+domains, and scan the domains concurrently with worker-local scratch and cache.</p>
+<p>This is the only first experiment that tests the intended algorithmic change:
+one combined automaton plus input-axis parallelism.</p>
+<h3>Not recommended: transpose the existing partition loop</h3>
+<p>An input worker could scan every existing pattern partition over its own range.
+That preserves exactness, but every partition is then entered by every worker,
+replicating caches and setup while retaining essentially the same semantic
+transition work. It tests scheduling more than algorithmic work reduction.</p>
+<h3>Not recommended: overlapped byte slices</h3>
+<p>Overlapped slices require a maximum match length or unbounded reconciliation,
+duplicate suppression, and careful assertion context. Start ownership makes
+all of that unnecessary.</p>
+<h3>Not recommended initially: speculative continuing DFA chunks</h3>
+<p>The PA-09 construction solves membership for a DFA state that flows across
+chunks. Rustmatch's event contract is a fresh anchored computation for every
+start, so speculative incoming-state maps add complexity without addressing
+the current engine's work shape.</p>
+<h2>Staged strategy</h2>
+<h3>Stage S: executable semantic proof</h3>
+<p>Add a private start-domain parameter to every engine path. The default remains
+the complete domain. Before any timing:</p>
+<ol>
+<li>Compare the union of 1, 2, 3, 8, and oversubscribed start-domain scans with
+the serial event multiset.</li>
+<li>Place matches immediately before, on, and after every shard boundary.</li>
+<li>Include unbounded repetitions whose accepted end crosses several shards.</li>
+<li>Include line anchors, word boundaries, duplicate pattern text with distinct
+IDs, isolated surrogates, empty input, one-unit input, and the maximum
+practical boundary indices.</li>
+<li>Exercise worker-spawn failure, worker panic, sink panic, repeated scans, and
+no-callback-before-error behavior.</li>
+</ol>
+<p>Stage S passes only with exact event identity for every shard count and no
+public behavior change. It should remain a diagnostic commit, not an admitted
+optimization.</p>
+<h3>Stage P: phase and headroom diagnostic</h3>
+<p>On exact H11, add benchmark-only phase accounting for:</p>
+<ul>
+<li>candidate/start-plan construction;</li>
+<li>partition-prefix routing;</li>
+<li>semantic verification;</li>
+<li>maximum and summed worker time;</li>
+<li>cache states, fallbacks, and table bytes;</li>
+<li>scratch, candidate, and event-buffer retained bytes.</li>
+</ul>
+<p>Measure at least:</p>
+<ul>
+<li>one sparse and one dense H11-eligible 50 MiB cell;</li>
+<li>one start-table or all-start cell where H11 does not activate;</li>
+<li>one assertion-bearing cell;</li>
+<li>one event-heavy Wuthering cell;</li>
+<li>one zero-output and one 8 MiB guard.</li>
+</ul>
+<p>Stop H-0006 if the serial fraction plus removable worker tail is below 5% on
+all plausible targets. This avoids building a full-database path when H11 has
+already consumed the opportunity.</p>
+<h3>Stage D: benchmark-only full-database prototype</h3>
+<p>If Stage P shows headroom, build a diagnostic axis that is explicitly selected
+by benchmark code and leaves the production/default path byte-identical:</p>
+<ol>
+<li>Compile one immutable full-pattern database and compatible prefilter.</li>
+<li>Construct one candidate bitmap in parallel.</li>
+<li>Partition bitmap words by measured candidate count, not merely equal input
+length, while keeping each worker's start range contiguous.</li>
+<li>Give each worker private <code>Scratch</code>, event storage, and deterministic cache.</li>
+<li>Concatenate worker event vectors after all workers join.</li>
+<li>Record both a fixed-total cache policy and a bounded per-worker policy as
+diagnostic alternatives; neither may silently redefine the public budget.</li>
+</ol>
+<p>The first sweep should use 1, 2, 4, 8, and 16 input workers. It should compare
+against current H11 at H11's best retained pattern-worker count, not against
+the old pre-H11 baseline.</p>
+<h3>Stage G: guarded candidate, only after a positive diagnostic</h3>
+<p>A fresh G9 authorization should freeze exactly one selective production shape.
+Likely activation dimensions are:</p>
+<ul>
+<li>minimum input size;</li>
+<li>start-plan kind;</li>
+<li>candidate count and density;</li>
+<li>compiled state/pattern count;</li>
+<li>assertion presence;</li>
+<li>requested workers;</li>
+<li>projected scratch and cache bytes.</li>
+</ul>
+<p>The existing H11 path remains fallback. Admission requires exact event parity,
+at least 5% repeatable gain on declared targets, no demonstrated regression,
+the unchanged 3% absolute veto, full memory accounting, and a retained lab note
+regardless of outcome.</p>
+<h2>Decision</h2>
+<p>B2-H-0006 is no longer blocked on semantic design. The exact construction is
+<strong>disjoint ownership of starts over the complete input</strong>, not overlapped input
+slices.</p>
+<p>It remains blocked on measured post-H11 headroom and state-locality economics.
+The most efficient next move is Stage P followed, only if positive, by the
+benchmark-only Stage D prototype. Direct production implementation would be
+premature because H11 already captured most repeated traversal on the workloads
+that originally motivated this hypothesis.</p>
+<h2>Sources</h2>
+<ul>
+<li><a href="../adr/0002-match-event-semantics.html">ADR-0002: normative event semantics</a></li>
+<li><a href="../adr/0008-parallel-pattern-partitions.html">ADR-0008: current pattern-partition parallelism</a></li>
+<li><a href="b2-h-0011-private-prefilter-recovery.html">H11 accepted recovery</a></li>
+<li><a href="https://arxiv.org/abs/1210.5093">Ko et al., speculative parallel DFA membership</a></li>
+<li><a href="https://intel.github.io/hyperscan/dev-reference/runtime.html">Hyperscan runtime scratch model</a></li>
+<li><a href="https://docs.rs/regex-automata/latest/regex_automata/struct.Input.html"><code>regex-automata::Input</code> bounded and anchored searches</a></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/b2-h-0006-input-parallel-design.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

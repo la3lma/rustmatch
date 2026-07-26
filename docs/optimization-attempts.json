@@ -290,39 +290,93 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "B2-H-0006",
-      "name": "Exact input-parallel scanning",
-      "status": "further measurement",
-      "why": "Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership.",
-      "next_test": "Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation.",
-      "expected_value": "High theoretical upside, currently blocked on semantic design"
+      "id": "FUTURE-ASSERT",
+      "name": "Assertion-bearing conservative prefilter",
+      "status": "reviewed; next experiment",
+      "why": "Assertion-bearing databases currently disable every prefilter. The retained 1,000-pattern boundary fixture scans all starts and takes roughly 76 seconds over 8 MiB even though each consuming literal begins at the same start after a zero-width assertion.",
+      "next_test": "Freeze a diagnostic-only candidate that extracts necessary literals past supported leading zero-width assertions, builds the existing false-positive-only candidate bitmap, and leaves assertion-aware semantic verification unchanged.",
+      "expected_value": "Very high narrow-workload opportunity, high evidence confidence, medium-low cost, medium semantic risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
       "priority": 2,
-      "id": "FUTURE-LAYOUT",
-      "name": "Transition-table and scratch-state locality",
-      "status": "unreviewed",
-      "why": "A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity.",
-      "next_test": "Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch.",
-      "expected_value": "Moderate possible gain with contained semantics risk"
+      "id": "FUTURE-ROUTE",
+      "name": "Partition-aware H11 candidate routing",
+      "status": "reviewed successor; phase diagnostic pending",
+      "why": "Every H11 semantic partition still probes every union candidate, while only about 1.6%-1.7% more semantic starts than candidates survive across all partitions. A global prefix-to-partition route can remove repeated probes without changing the verifier.",
+      "next_test": "Measure union discovery, partition-prefix routing, semantic verification, and worker tails. Prototype a compact route mask or list only if routing exposes at least 5% removable target time.",
+      "expected_value": "Medium-high opportunity, medium confidence, medium cost, low-medium correctness risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
       "priority": 3,
-      "id": "FUTURE-ASSERT",
-      "name": "Assertion-heavy specialized scan path",
-      "status": "unreviewed",
-      "why": "I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter.",
-      "next_test": "Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures.",
-      "expected_value": "Large narrow-workload upside"
+      "id": "FUTURE-SIMD",
+      "name": "SIMD shared candidate discovery",
+      "status": "literature-supported; phase prototype pending",
+      "why": "H11's union candidate scan still applies a scalar prefix predicate at each input start. Hyperscan's largest leads are sparse and zero-output literal scans, where vectorized multi-literal filtering is structurally advantaged.",
+      "next_test": "Isolate candidate-discovery time and compare one portable SIMD UTF-16 prefix scanner with the scalar H11 loop, retaining runtime feature detection and a byte-identical scalar fallback.",
+      "expected_value": "High literal-path opportunity, medium confidence, medium-high portability cost and regression risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
       "priority": 4,
-      "id": "FUTURE-LITERATURE",
-      "name": "Specialized multi-pattern literal algorithm",
-      "status": "unreviewed",
-      "why": "RegexSet and Hyperscan leads are largest in sparse or zero-output literal regimes, where specialized automata and vectorized literal search are structurally advantaged.",
-      "next_test": "Evaluate an exact-event Aho-Corasick or SIMD literal-only backend behind a strict workload classifier; do not reuse the rejected I7 trie prefilter design.",
-      "expected_value": "High upside, high implementation and maintenance cost"
+      "id": "FUTURE-LITERAL-EXACT",
+      "name": "Exact literal-only backend",
+      "status": "reviewed research prototype",
+      "why": "A strict exact-literal backend can emit overlapping occurrences and pattern IDs directly, avoiding both prefilter candidate generation and NFA/cache verification. This is materially different from I7's rejected Aho-Corasick-style prefilter.",
+      "next_test": "Build a diagnostic raw-u16 multi-pattern automaton for exact consuming literals and measure exact event parity, build cost, retained bytes, sparse, dense, zero-output, and Wuthering behavior.",
+      "expected_value": "Very high literal-only upside, medium confidence, high implementation, memory, and maintenance risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+    },
+    {
+      "priority": 5,
+      "id": "B2-H-0006",
+      "name": "Exact input-parallel semantic scanning",
+      "status": "semantic design reviewed; phase diagnostic pending",
+      "why": "Disjoint start-position ownership over the complete immutable input is exact. H11 already removed most repeated literal traversal on eligible cells, so the remaining value must come from combined-database semantic work, worker tails, or non-H11 paths.",
+      "next_test": "Run Stage P from the design review. Prototype a full database with candidate-balanced disjoint start ranges only if post-H11 removable semantic or tail headroom exceeds 5%.",
+      "expected_value": "Potentially broad high upside, medium-low confidence, high state-locality and resource risk",
+      "evidence": "experiments/b2-h-0006-input-parallel-design.md"
+    },
+    {
+      "priority": 6,
+      "id": "FUTURE-LAYOUT",
+      "name": "Transition-table and scratch-state locality",
+      "status": "profiling required",
+      "why": "A larger cache reduced fallback but increased hardware misses, so representation and locality remain more credible than capacity. Existing profiles still show transition construction and cache lookup as material costs.",
+      "next_test": "Bind cache-line and working-set profiles to one concrete narrower-index, hot/cold split, structure-of-arrays, or generation-stamped scratch hypothesis before changing production layout.",
+      "expected_value": "Moderate broad opportunity, medium-low confidence, medium-high implementation and performance-regression risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+    },
+    {
+      "priority": 7,
+      "id": "FUTURE-BITPARALLEL",
+      "name": "General bit-parallel regex execution",
+      "status": "strategic research track",
+      "why": "SIMD bitsets and multi-string shift-or have demonstrated high throughput in the literature and Hyperscan, but Rustmatch must retain complete longest-event enumeration, assertions, raw UTF-16, and bounded memory.",
+      "next_test": "After literal specialization evidence, prototype a bounded bitset NFA transition kernel on one assertion-free semantic family and compare exact events, working set, and fallback.",
+      "expected_value": "Very high theoretical ceiling, low present confidence, very high effort and semantic risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+    },
+    {
+      "priority": 8,
+      "id": "FUTURE-PHASE-FUSION",
+      "name": "Fused persistent planning and semantic phases",
+      "status": "dormant pending new phase evidence",
+      "why": "H2 refuted thread-spawn avoidance: spawn was 0.0320%. A materially new design would have to remove a measured barrier or intermediate candidate materialization by fusing planning, routing, and semantic work.",
+      "next_test": "Do not build a pool. Reconsider only if the shared phase diagnostic identifies a barrier or materialization above 5% that fusion can remove.",
+      "expected_value": "Low-medium uncertain opportunity, high cost, and medium-high lifecycle and regression risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+    },
+    {
+      "priority": 9,
+      "id": "FUTURE-SELECTOR",
+      "name": "Adaptive workload-path selector",
+      "status": "dependency-blocked",
+      "why": "Selection adds no speed by itself. It becomes useful only after independent alternatives have passed and can be separated by immutable compiled features, input size, and candidate density.",
+      "next_test": "Wait for at least two independently admitted paths, then freeze classifier boundaries and adversarial near-boundary guards without retuning historical series.",
+      "expected_value": "Compound portfolio value, but no independent opportunity and high misclassification regression risk",
+      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     }
   ]
 }

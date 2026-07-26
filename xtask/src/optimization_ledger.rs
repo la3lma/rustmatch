@@ -82,6 +82,7 @@ struct FutureCandidate {
     why: String,
     next_test: String,
     expected_value: String,
+    evidence: Option<String>,
 }
 
 #[derive(Debug)]
@@ -133,6 +134,7 @@ fn generate() -> Result<Generated, String> {
     })
 }
 
+#[allow(clippy::too_many_lines)]
 fn validate(ledger: &Ledger) -> Result<(), String> {
     if ledger.schema_version != 3 {
         return Err(format!(
@@ -415,12 +417,15 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
     )
     .expect("write to string");
     for candidate in &ledger.future_candidates {
+        let hypothesis = candidate.evidence.as_ref().map_or_else(
+            || format!("**{} - {}**", candidate.id, candidate.name),
+            |evidence| format!("[**{} - {}**]({evidence})", candidate.id, candidate.name),
+        );
         writeln!(
             output,
-            "| {} | **{} - {}** | {} | {} | {} | {} |",
+            "| {} | {} | {} | {} | {} | {} |",
             candidate.priority,
-            candidate.id,
-            candidate.name,
+            hypothesis,
             candidate.status,
             candidate.why,
             candidate.next_test,
@@ -535,17 +540,28 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
 
     let mut candidates = String::new();
     for candidate in &ledger.future_candidates {
+        let evidence = candidate
+            .evidence
+            .as_ref()
+            .map_or_else(String::new, |value| {
+                let href = crate::html_universe::ledger_evidence_href(value);
+                format!(
+                    "<p><a href=\"{}\">Read design review</a></p>",
+                    html_escape(&href)
+                )
+            });
         write!(
             candidates,
             "<li><span class=\"rank\">{:02}</span><div><div class=\"candidate-title\">{} · {}</div>\
-             <p>{}</p><p><b>Next test:</b> {}</p><small>{} · {}</small></div></li>",
+             <p>{}</p><p><b>Next test:</b> {}</p><small>{} · {}</small>{}</div></li>",
             candidate.priority,
             html_escape(&candidate.id),
             html_escape(&candidate.name),
             html_escape(&candidate.why),
             html_escape(&candidate.next_test),
             html_escape(&candidate.status),
-            html_escape(&candidate.expected_value)
+            html_escape(&candidate.expected_value),
+            evidence
         )
         .expect("write to string");
     }

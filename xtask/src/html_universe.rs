@@ -791,15 +791,33 @@ mod tests {
     fn repository_mermaid_inventory_is_complete() {
         let sources = markdown_sources().expect("collect Markdown");
         let diagrams = mermaid_diagrams(&sources).expect("collect Mermaid diagrams");
-        assert_eq!(diagrams.len(), 2);
+        assert_eq!(diagrams.len(), 4);
 
-        let roadmap = std::fs::read_to_string(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .parent()
-                .expect("repository root")
-                .join("docs/roadmap.md"),
-        )
-        .expect("read roadmap");
+        let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .expect("repository root");
+        let roadmap =
+            std::fs::read_to_string(repository_root.join("docs/roadmap.md")).expect("read roadmap");
         assert_eq!(mermaid_blocks(&roadmap).expect("parse roadmap").len(), 1);
+        let input_parallel = std::fs::read_to_string(
+            repository_root.join("docs/experiments/b2-h-0006-input-parallel-design.md"),
+        )
+        .expect("read input-parallel design");
+        assert_eq!(
+            mermaid_blocks(&input_parallel)
+                .expect("parse input-parallel design")
+                .len(),
+            1
+        );
+        let portfolio = std::fs::read_to_string(
+            repository_root.join("docs/experiments/post-h11-future-optimization-portfolio.md"),
+        )
+        .expect("read post-H11 portfolio");
+        assert_eq!(
+            mermaid_blocks(&portfolio)
+                .expect("parse post-H11 portfolio")
+                .len(),
+            1
+        );
     }
 }
