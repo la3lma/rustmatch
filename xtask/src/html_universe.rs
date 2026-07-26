@@ -1,14 +1,20 @@
 //! Render the repository's human-scale Markdown as a navigable HTML mirror.
 
 use pulldown_cmark::{CowStr, Event, Options, Parser, Tag, html};
-use std::collections::BTreeSet;
+use sha2::{Digest, Sha256};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
+use std::ops::Range;
 use std::path::{Component, Path, PathBuf};
+use std::process::Command;
 
 const OUTPUT_ROOT: &str = "docs/html-universe";
 const INDEX: &str = "docs/html-universe/index.html";
 const REPOSITORY_ROOT: &str = "docs/html-universe/repository";
+const MERMAID_ROOT: &str = "docs/html-universe/assets/mermaid";
+const MERMAID_CLI_PACKAGE: &str = "@mermaid-js/mermaid-cli@11.16.0";
+const MERMAID_SOURCE_MARKER: &str = "rustmatch-mermaid-source-sha256";
 const LEDGER_HTML: &str = "docs/optimization-attempt-ledger.html";
 const AUDIT_SCALE_SOURCE: &str = "docs/optimization-and-scale.md";
 
@@ -17,8 +23,20 @@ struct GeneratedFile {
     contents: Vec<u8>,
 }
 
+struct MermaidBlock {
+    range: Range<usize>,
+    source: String,
+    title: String,
+}
+
+struct MermaidDiagram {
+    hash: String,
+    source: String,
+    path: PathBuf,
+}
+
 pub fn render() -> Result<(), String> {
-    let generated = generate()?;
+    let generated = generate(true)?;
     let root = Path::new(OUTPUT_ROOT);
     if repository_path(root).exists() {
         fs::remove_dir_all(repository_path(root))
@@ -37,7 +55,7 @@ pub fn render() -> Result<(), String> {
 }
 
 pub fn verify() -> Result<(), String> {
-    let generated = generate()?;
+    let generated = generate(false)?;
     let expected_paths = generated
         .iter()
         .map(|file| file.path.clone())
@@ -91,10 +109,16 @@ pub fn ledger_evidence_href(value: &str) -> String {
     )
 }
 
-fn generate() -> Result<Vec<GeneratedFile>, String> {
+fn generate(render_diagrams: bool) -> Result<Vec<GeneratedFile>, String> {
     let sources = markdown_sources()?;
     let source_set = sources.iter().cloned().collect::<BTreeSet<_>>();
-    let mut generated = Vec::with_capacity(sources.len() + 1);
+    let diagrams = mermaid_diagrams(&sources)?;
+    let mut generated = if render_diagrams {
+        render_mermaid_assets(&diagrams)?
+    } else {
+        load_mermaid_assets(&diagrams)?
+    };
+    generated.reserve(sources.len() + 1);
     for source in &sources {
         generated.push(GeneratedFile {
             path: mirror_path(source),
@@ -107,6 +131,151 @@ fn generate() -> Result<Vec<GeneratedFile>, String> {
     });
     generated.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(generated)
+}
+
+fn mermaid_diagrams(sources: &[PathBuf]) -> Result<Vec<MermaidDiagram>, String> {
+    let mut diagrams = BTreeMap::<String, MermaidDiagram>::new();
+    for source in sources {
+        let markdown = fs::read_to_string(repository_path(source))
+            .map_err(|error| format!("could not read {}: {error}", source.display()))?;
+        for block in mermaid_blocks(&markdown)? {
+            let hash = mermaid_hash(&block.source);
+            let diagram = MermaidDiagram {
+                path: mermaid_asset_path(&hash),
+                hash: hash.clone(),
+                source: block.source,
+            };
+            if let Some(existing) = diagrams.get(&hash) {
+                if existing.source != diagram.source {
+                    return Err(format!(
+                        "SHA-256 collision between Mermaid diagrams in {}",
+                        source.display()
+                    ));
+                }
+            } else {
+                diagrams.insert(hash, diagram);
+            }
+        }
+    }
+    Ok(diagrams.into_values().collect())
+}
+
+fn render_mermaid_assets(diagrams: &[MermaidDiagram]) -> Result<Vec<GeneratedFile>, String> {
+    if diagrams.is_empty() {
+        return Ok(Vec::new());
+    }
+    let temporary = std::env::temp_dir().join(format!(
+        "rustmatch-html-universe-mermaid-{}",
+        std::process::id()
+    ));
+    if temporary.exists() {
+        fs::remove_dir_all(&temporary)
+            .map_err(|error| format!("could not clear {}: {error}", temporary.display()))?;
+    }
+    fs::create_dir_all(&temporary)
+        .map_err(|error| format!("could not create {}: {error}", temporary.display()))?;
+
+    let result = diagrams
+        .iter()
+        .enumerate()
+        .map(|(index, diagram)| {
+            let input = temporary.join(format!("{index}.mmd"));
+            let output = temporary.join(format!("{index}.svg"));
+            fs::write(&input, &diagram.source)
+                .map_err(|error| format!("could not write {}: {error}", input.display()))?;
+            let command_output = Command::new("npx")
+                .arg("--yes")
+                .arg(MERMAID_CLI_PACKAGE)
+                .arg("-i")
+                .arg(&input)
+                .arg("-o")
+                .arg(&output)
+                .arg("-b")
+                .arg("transparent")
+                .output()
+                .map_err(|error| format!("could not start Mermaid renderer: {error}"))?;
+            if !command_output.status.success() {
+                return Err(format!(
+                    "Mermaid renderer failed for {}: {}",
+                    diagram.path.display(),
+                    String::from_utf8_lossy(&command_output.stderr).trim()
+                ));
+            }
+            let svg = fs::read_to_string(&output)
+                .map_err(|error| format!("could not read {}: {error}", output.display()))?;
+            Ok(GeneratedFile {
+                path: diagram.path.clone(),
+                contents: bind_svg_to_source(svg, &diagram.hash)?.into_bytes(),
+            })
+        })
+        .collect::<Result<Vec<_>, String>>();
+    let cleanup = fs::remove_dir_all(&temporary)
+        .map_err(|error| format!("could not remove {}: {error}", temporary.display()));
+    match (result, cleanup) {
+        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
+        (Ok(files), Ok(())) => Ok(files),
+    }
+}
+
+fn load_mermaid_assets(diagrams: &[MermaidDiagram]) -> Result<Vec<GeneratedFile>, String> {
+    diagrams
+        .iter()
+        .map(|diagram| {
+            let contents = fs::read(repository_path(&diagram.path)).map_err(|error| {
+                format!(
+                    "{} is missing or unreadable ({error}); run `cargo xtask optimization-ledger`",
+                    diagram.path.display()
+                )
+            })?;
+            verify_svg_source_binding(&contents, &diagram.hash, &diagram.path)?;
+            Ok(GeneratedFile {
+                path: diagram.path.clone(),
+                contents,
+            })
+        })
+        .collect()
+}
+
+fn bind_svg_to_source(mut svg: String, hash: &str) -> Result<String, String> {
+    let svg_start = svg
+        .find("<svg")
+        .ok_or_else(|| "Mermaid renderer returned output without an SVG root".to_owned())?;
+    let root_end = svg[svg_start..]
+        .find('>')
+        .map(|offset| svg_start + offset + 1)
+        .ok_or_else(|| "Mermaid renderer returned a malformed SVG root".to_owned())?;
+    svg.insert_str(root_end, &svg_source_marker(hash));
+    Ok(svg)
+}
+
+fn verify_svg_source_binding(contents: &[u8], hash: &str, path: &Path) -> Result<(), String> {
+    let svg = std::str::from_utf8(contents)
+        .map_err(|error| format!("{} is not UTF-8 SVG: {error}", path.display()))?;
+    if svg.contains(&svg_source_marker(hash)) {
+        Ok(())
+    } else {
+        Err(format!(
+            "{} is not bound to its current Mermaid source; run `cargo xtask optimization-ledger`",
+            path.display()
+        ))
+    }
+}
+
+fn svg_source_marker(hash: &str) -> String {
+    format!("<metadata id=\"{MERMAID_SOURCE_MARKER}\">{hash}</metadata>")
+}
+
+fn mermaid_hash(source: &str) -> String {
+    let digest = Sha256::digest(source.as_bytes());
+    let mut hash = String::with_capacity(digest.len() * 2);
+    for byte in digest {
+        write!(hash, "{byte:02x}").expect("write to string");
+    }
+    hash
+}
+
+fn mermaid_asset_path(hash: &str) -> PathBuf {
+    Path::new(MERMAID_ROOT).join(format!("{hash}.svg"))
 }
 
 fn markdown_sources() -> Result<Vec<PathBuf>, String> {
@@ -160,6 +329,72 @@ fn mirror_path(source: &Path) -> PathBuf {
     output
 }
 
+fn mermaid_blocks(markdown: &str) -> Result<Vec<MermaidBlock>, String> {
+    const START: &str = "```mermaid\n";
+    const END: &str = "\n```";
+
+    let mut blocks = Vec::new();
+    let mut cursor = 0;
+    while let Some(offset) = markdown[cursor..].find(START) {
+        let start = cursor + offset;
+        if start > 0 && markdown.as_bytes()[start - 1] != b'\n' {
+            cursor = start + START.len();
+            continue;
+        }
+        let source_start = start + START.len();
+        let source_end = markdown[source_start..]
+            .find(END)
+            .map(|offset| source_start + offset)
+            .ok_or_else(|| "unterminated Mermaid code block".to_owned())?;
+        let end = source_end + END.len();
+        blocks.push(MermaidBlock {
+            range: start..end,
+            source: markdown[source_start..source_end].to_owned(),
+            title: preceding_heading(&markdown[..start])
+                .unwrap_or_else(|| "Mermaid diagram".to_owned()),
+        });
+        cursor = end;
+    }
+    Ok(blocks)
+}
+
+fn preceding_heading(markdown: &str) -> Option<String> {
+    markdown.lines().rev().find_map(|line| {
+        let heading = line.trim_start().strip_prefix('#')?.trim_start_matches('#');
+        let heading = heading.trim();
+        (!heading.is_empty()).then(|| heading.to_owned())
+    })
+}
+
+fn render_mermaid_blocks(markdown: &str, output_parent: &Path) -> Result<String, String> {
+    let blocks = mermaid_blocks(markdown)?;
+    if blocks.is_empty() {
+        return Ok(markdown.to_owned());
+    }
+    let mut rendered = String::with_capacity(markdown.len());
+    let mut cursor = 0;
+    for block in blocks {
+        rendered.push_str(&markdown[cursor..block.range.start]);
+        let hash = mermaid_hash(&block.source);
+        let href = relative_url(output_parent, &mermaid_asset_path(&hash));
+        write!(
+            rendered,
+            "<figure class=\"mermaid-diagram\"><a href=\"{}\" title=\"Open full-size SVG\">\
+             <img src=\"{}\" alt=\"{} diagram\"></a>\
+             <figcaption>{} · <a href=\"{}\">Open full-size SVG</a></figcaption></figure>",
+            html_escape(&href),
+            html_escape(&href),
+            html_escape(&block.title),
+            html_escape(&block.title),
+            html_escape(&href)
+        )
+        .expect("write to string");
+        cursor = block.range.end;
+    }
+    rendered.push_str(&markdown[cursor..]);
+    Ok(rendered)
+}
+
 fn render_document(source: &Path, source_set: &BTreeSet<PathBuf>) -> Result<String, String> {
     let markdown = fs::read_to_string(repository_path(source))
         .map_err(|error| format!("could not read {}: {error}", source.display()))?;
@@ -167,12 +402,13 @@ fn render_document(source: &Path, source_set: &BTreeSet<PathBuf>) -> Result<Stri
     let output_parent = output
         .parent()
         .ok_or_else(|| format!("{} has no parent", output.display()))?;
+    let rendered_markdown = render_mermaid_blocks(&markdown, output_parent)?;
     let options = Options::ENABLE_TABLES
         | Options::ENABLE_FOOTNOTES
         | Options::ENABLE_STRIKETHROUGH
         | Options::ENABLE_TASKLISTS
         | Options::ENABLE_GFM;
-    let events = Parser::new_ext(&markdown, options)
+    let events = Parser::new_ext(&rendered_markdown, options)
         .map(|event| rewrite_event(event, source, output_parent, source_set));
     let mut body = String::new();
     html::push_html(&mut body, events);
@@ -464,7 +700,7 @@ const DOCUMENT_CSS: &str = r#"
 nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
 header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
 main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
-p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 "#;
 
@@ -476,7 +712,11 @@ const INDEX_CSS: &str = r#"
 
 #[cfg(test)]
 mod tests {
-    use super::{ledger_evidence_href, mirror_path, normalize_path, relative_url, split_local_url};
+    use super::{
+        bind_svg_to_source, ledger_evidence_href, markdown_sources, mermaid_blocks,
+        mermaid_diagrams, mermaid_hash, mirror_path, normalize_path, relative_url,
+        render_mermaid_blocks, split_local_url, verify_svg_source_binding,
+    };
     use std::path::Path;
 
     #[test]
@@ -515,5 +755,51 @@ mod tests {
             split_local_url("../roadmap.md#milestones"),
             Some(("../roadmap.md", "#milestones"))
         );
+    }
+
+    #[test]
+    fn mermaid_blocks_become_hash_bound_svg_figures() {
+        let source = "flowchart LR\n    A --> B";
+        let markdown = format!("# Document\n\n## Dependency graph\n\n```mermaid\n{source}\n```\n");
+        let rendered =
+            render_mermaid_blocks(&markdown, Path::new("docs/html-universe/repository/docs"))
+                .expect("render Mermaid block");
+        let hash = mermaid_hash(source);
+
+        assert!(!rendered.contains("```mermaid"));
+        assert!(rendered.contains("<figure class=\"mermaid-diagram\">"));
+        assert!(rendered.contains("alt=\"Dependency graph diagram\""));
+        assert!(rendered.contains(&format!("../../assets/mermaid/{hash}.svg")));
+    }
+
+    #[test]
+    fn rendered_svg_is_bound_to_its_source_hash() {
+        let hash = mermaid_hash("flowchart LR\nA --> B");
+        let svg = bind_svg_to_source("<svg></svg>".to_owned(), &hash).expect("bind SVG");
+        assert!(verify_svg_source_binding(svg.as_bytes(), &hash, Path::new("diagram.svg")).is_ok());
+        assert!(
+            verify_svg_source_binding(
+                svg.as_bytes(),
+                &mermaid_hash("different"),
+                Path::new("diagram.svg")
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn repository_mermaid_inventory_is_complete() {
+        let sources = markdown_sources().expect("collect Markdown");
+        let diagrams = mermaid_diagrams(&sources).expect("collect Mermaid diagrams");
+        assert_eq!(diagrams.len(), 2);
+
+        let roadmap = std::fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .expect("repository root")
+                .join("docs/roadmap.md"),
+        )
+        .expect("read roadmap");
+        assert_eq!(mermaid_blocks(&roadmap).expect("parse roadmap").len(), 1);
     }
 }
