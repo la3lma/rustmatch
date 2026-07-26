@@ -10,12 +10,12 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 <p><strong>Last reviewed:</strong> 2026-07-26</p>
 <p><strong>Implementation increments started:</strong> <strong>10/12</strong></p>
 <p><strong>Implementation increments complete:</strong> <strong>10/12</strong></p>
-<p><strong>Active:</strong> <code>B2-H-0009</code> shared-candidate mechanism is <code>investigate</code>; its exact
-artifact remains rejected and unmerged</p>
-<p><strong>Next evidence goal:</strong> review the
-<a href="experiments/shared-candidate-recovery-analysis.html">instrumentation-neutral shared-candidate successor</a>
-suggested by <code>B2-H-0009</code>; begin no implementation until B2 authorizes and
-freezes exactly one new hypothesis</p>
+<p><strong>Active:</strong> the shared-candidate mechanism remains <code>investigate</code>; exact
+<code>B2-H-0009</code> and <code>B2-H-0010</code> artifacts are rejected and unmerged</p>
+<p><strong>Next evidence goal:</strong> compare the actual inactive guard symbols, callers,
+placement, and external profiles across baseline, H9, and H10; begin no new
+implementation until that causal microscope justifies and B2 freezes exactly
+one successor</p>
 <p>This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
@@ -100,6 +100,16 @@ The recommended successor therefore keeps the timed harness byte-identical to
 baseline, moves phase diagnostics to a separate non-timed artifact, and
 separates whole private and shared dispatch pipelines. A new internal crate is
 the ranked fallback only if that bounded candidate still fails.</p>
+<p>That successor became <code>B2-H-0010</code>. It passed the static proxy and preserved
+exact semantics while improving all four intended targets by 118.381% to
+709.958%. It nevertheless regressed sparse and dense 8 MiB fallbacks and the
+one-worker zero-output guard by 20.120% to 24.928%; none of those cells created
+the shared planner, and all crossed the unchanged three-percent veto. H10 is
+therefore rejected and unmerged. Preparation and RSS were neutral, while an
+inactive Wuthering guard also remained neutral, so the open question is now
+path-sensitive scan codegen, placement, or cache/branch behavior. The next
+work is symbol-accurate and profile-backed diagnosis of those actual guard
+paths, not another source candidate or a changed threshold.</p>
 <h2>Milestone ledger</h2>
 <p>The graph is intentionally conservative. A milestone changes to <code>Active</code>
 only after implementation or fixture work exists and at least one named
@@ -131,8 +141,8 @@ and use-case evidence bundle pass from a clean checkout.</p>
 <tr><td>I8</td><td>Parallel partitions</td><td>Complete</td><td>Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the <a href="evidence/i8/ef61173/README.html">I8 evidence package</a></td></tr>
 <tr><td>I9</td><td>Benchmark integration</td><td>Complete</td><td>Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the <a href="evidence/i9/fdd5efa/README.html">I9 evidence package</a></td></tr>
 <tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
-<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven completed experiments through B2-H-0009, and the hash-bound <a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a>; H9's artifact is rejected with no production merge while its mechanism is <code>investigate</code> under G9-v2</td></tr>
-<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Available: fresh review required</td><td>B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the <a href="experiments/shared-candidate-recovery-analysis.html">recovery analysis</a> recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor under the <a href="optimization-decision-policy.html">G9-v2 policy</a>, while retaining the two-percent investigation boundary and three-percent veto</td></tr>
+<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0010. H9 and H10 are rejected with no production merge; their 2.18x-8.35x shared-candidate target ratios keep the mechanism <code>investigate</code> under G9-v2</td></tr>
+<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Active: causal diagnosis</td><td>B2-H-0010 preserved exact semantics and improved every primary target 118.381%-709.958%, but three dormant paths regressed 20.120%-24.928% and crossed the unchanged veto. The next gate is a baseline/H9/H10 symbol and external-profile microscope of those actual paths; no successor implementation is authorized yet</td></tr>
 <tr><td>I10</td><td>Hardening</td><td>Planned</td><td>Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit</td></tr>
 <tr><td>I11</td><td>Release preparation</td><td>Planned</td><td>Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete</td></tr>
 <tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>

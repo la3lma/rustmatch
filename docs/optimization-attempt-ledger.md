@@ -14,7 +14,7 @@ Correctness and exact event semantics remain prerequisites. A demonstrated guard
 - Inconclusive: evidence cannot establish the required target gain, regression, or causal direction.
 - Only merged attempts enter the efficiency-progress graph. Every outcome retains its measurements and lab note.
 
-G9-v2 refines the learning disposition without changing historical measurements or admission decisions. B2-H-0009 was rejected and not admitted under G9-v1; its immutable result now also motivates a G9-v2 investigation of the shared-candidate mechanism.
+G9-v2 refines the learning disposition without changing historical measurements or admission decisions. B2-H-0009 was rejected and not admitted under G9-v1. Its instrumentation-neutral successor B2-H-0010 was also rejected after three inactive paths crossed the unchanged three-percent veto; the mechanism remains under G9-v2 causal investigation because all intended targets improved by 118%-710%.
 
 ## Merged-improvement progress
 
@@ -150,6 +150,18 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Decision:** The exact H9 artifact remains rejected, unmerged, and excluded from progress under its frozen G9-v1 ruling. Under G9-v2 the mechanism is classified investigate: retain every receipt and run one instrumentation-neutral, pipeline-isolated successor through the unchanged numeric gates.
 - **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/8d735196bef1e488f544e158ecd4b20a6332586b/docs/lab-notebook/2026-07-26-b2-h-0009-parallel-shared-candidates.md](https://github.com/la3lma/rmatch-performance-measurements/blob/8d735196bef1e488f544e158ecd4b20a6332586b/docs/lab-notebook/2026-07-26-b2-h-0009-parallel-shared-candidates.md)
 
+### B2-H-0010 - Instrumentation-neutral shared candidate isolation
+
+- **Date:** 2026-07-26
+- **Outcome:** `investigate`
+- **Baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+- **Candidate:** `a371125f22fb18797c1d1c6e595f1fd0a987c5a0`
+- **Mechanism:** Reconstruct H9 with scan-local shared candidates, byte-identical benchmark source, unchanged Matcher and diagnostics state, and separately compiled private and shared source modules.
+- **Measured result:** Exact semantics and all four primary targets passed. Sparse 50 MiB improved 371.639% and 709.958%; dense 50 MiB improved 118.381% and 310.996%. Three inactive guards that never created the shared planner regressed 20.120%-24.928%, with all six pairs negative in each cell.
+- **Tradeoffs and caveats:** The static isolation proxy passed: the selected baseline and candidate private specialization had equal size, mnemonic sequence, and 64-byte alignment. The large inactive-path regressions nevertheless remained scan-phase costs, while preparation and RSS were neutral. A neutral inactive Wuthering guard proves the effect is workload- or path-sensitive rather than a universal dispatch charge.
+- **Decision:** The exact H10 artifact is rejected, unmerged, and excluded from progress by the unchanged three-percent veto. The shared-candidate mechanism remains investigate because its 2.18x-8.10x target ratios oppose large regressions on dormant paths; next compare the actual guard symbols, callers, placement, and profiles across baseline, H9, and H10 before authorizing another implementation.
+- **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/1795c527e82b07738e5669ead9e878775cd8e1e6/docs/lab-notebook/2026-07-26-b2-h-0010-shared-candidate-isolation.md](https://github.com/la3lma/rmatch-performance-measurements/blob/1795c527e82b07738e5669ead9e878775cd8e1e6/docs/lab-notebook/2026-07-26-b2-h-0010-shared-candidate-isolation.md)
+
 ## Cross-engine evolution
 
 ### Snapshot 2026-07-26
@@ -168,7 +180,7 @@ Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ra
 
 | Priority | Hypothesis | Status | Why it remains plausible | Next discriminating test | Expected value |
 |---:|---|---|---|---|---|
-| 1 | **FUTURE-SHARED-ISOLATION - Instrumentation-neutral shared candidate engine** | unreviewed | H9 proved 2.22x-8.35x primary-target speedups with exact semantics. The rejected one-worker guard never executed the shared planner. Static controls attribute about 73% of its uniform binary displacement to candidate-only diagnostics and leave a bounded shared-code residual. | Review an instrumentation-neutral successor whose timed benchmark source is byte-identical to baseline, whose private and shared pipelines are separate, and whose phase diagnostics use a different non-timed artifact. Compare static private-code identity before timing; escalate to an internal crate only if that candidate still fails. | Very high measured upside; now a bounded instrumentation and dispatch-isolation risk |
+| 1 | **FUTURE-GUARD-PATH - Shared-candidate inactive-path causal microscope** | active investigation | H10 preserved 2.18x-8.10x target ratios but regressed three paths that never activated shared planning by 20.12%-24.93%. The selected private-symbol isolation proxy passed, while one other inactive workload remained neutral. This localizes the unknown cost to path-sensitive scan codegen, caller placement, or cache and branch behavior rather than shared-plan execution. | Identify the exact hot symbols and call chains for sparse 8 MiB, dense 8 MiB, and one-worker zero-output guards; compare baseline, H9, and H10 maps, mnemonics, addresses, pages, and external perf profiles. Authorize a separately compiled boundary or explicit inactive fast path only if this evidence establishes the cause. | Very high upside with a now-narrow causal question; no source candidate until the dormant-path regression is explained |
 | 2 | **B2-H-0006 - Exact input-parallel scanning** | further measurement | Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership. | Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation. | High theoretical upside, currently blocked on semantic design |
 | 3 | **FUTURE-LAYOUT - Transition-table and scratch-state locality** | unreviewed | A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity. | Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch. | Moderate possible gain with contained semantics risk |
 | 4 | **FUTURE-ASSERT - Assertion-heavy specialized scan path** | unreviewed | I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter. | Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures. | Large narrow-workload upside |

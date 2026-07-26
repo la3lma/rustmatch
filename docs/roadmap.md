@@ -6,13 +6,13 @@
 
 **Implementation increments complete:** **10/12**
 
-**Active:** `B2-H-0009` shared-candidate mechanism is `investigate`; its exact
-artifact remains rejected and unmerged
+**Active:** the shared-candidate mechanism remains `investigate`; exact
+`B2-H-0009` and `B2-H-0010` artifacts are rejected and unmerged
 
-**Next evidence goal:** review the
-[instrumentation-neutral shared-candidate successor](experiments/shared-candidate-recovery-analysis.md)
-suggested by `B2-H-0009`; begin no implementation until B2 authorizes and
-freezes exactly one new hypothesis
+**Next evidence goal:** compare the actual inactive guard symbols, callers,
+placement, and external profiles across baseline, H9, and H10; begin no new
+implementation until that causal microscope justifies and B2 freezes exactly
+one successor
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -285,6 +285,17 @@ baseline, moves phase diagnostics to a separate non-timed artifact, and
 separates whole private and shared dispatch pipelines. A new internal crate is
 the ranked fallback only if that bounded candidate still fails.
 
+That successor became `B2-H-0010`. It passed the static proxy and preserved
+exact semantics while improving all four intended targets by 118.381% to
+709.958%. It nevertheless regressed sparse and dense 8 MiB fallbacks and the
+one-worker zero-output guard by 20.120% to 24.928%; none of those cells created
+the shared planner, and all crossed the unchanged three-percent veto. H10 is
+therefore rejected and unmerged. Preparation and RSS were neutral, while an
+inactive Wuthering guard also remained neutral, so the open question is now
+path-sensitive scan codegen, placement, or cache/branch behavior. The next
+work is symbol-accurate and profile-backed diagnosis of those actual guard
+paths, not another source candidate or a changed threshold.
+
 ## Milestone ledger
 
 The graph is intentionally conservative. A milestone changes to `Active`
@@ -319,8 +330,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven completed experiments through B2-H-0009, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); H9's artifact is rejected with no production merge while its mechanism is `investigate` under G9-v2 |
-| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the [recovery analysis](experiments/shared-candidate-recovery-analysis.md) recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor under the [G9-v2 policy](optimization-decision-policy.md), while retaining the two-percent investigation boundary and three-percent veto |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0010. H9 and H10 are rejected with no production merge; their 2.18x-8.35x shared-candidate target ratios keep the mechanism `investigate` under G9-v2 |
+| G9 | Existing-Rustmatch candidate gate | Active: causal diagnosis | B2-H-0010 preserved exact semantics and improved every primary target 118.381%-709.958%, but three dormant paths regressed 20.120%-24.928% and crossed the unchanged veto. The next gate is a baseline/H9/H10 symbol and external-profile microscope of those actual paths; no successor implementation is authorized yet |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
