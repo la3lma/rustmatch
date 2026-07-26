@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I6 lazy deterministic-state cache experiment · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/i6-lazy-state-cache.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/i6-lazy-state-cache.md</div></header><main><h1>I6 lazy deterministic-state cache experiment</h1>
+<h2>Status</h2>
+<p>Complete. The benchmark foundation was merged before cache implementation, and
+the exact baseline, fixtures, and admission thresholds remained frozen. The
+retained native ARM receipts and critical analysis are in the
+<a href="../evidence/i6/406c1f5/README.html"><code>I6 evidence package</code></a>.</p>
+<h2>Mechanism under test</h2>
+<p>The candidate prototype interns epsilon-closed NFA state sets as sorted boxed
+state-ID slices, using a hash bucket followed by complete equality. Transitions
+are materialized on demand. Materialized states have a direct 128-entry <code>u32</code>
+ASCII transition table and a sparse non-ASCII path. A state-count budget bounds
+cache growth. When the budget cannot admit a new state, scanning continues
+through the exact NFA path. Assertion-bearing sets bypass this context-free
+cache.</p>
+<p>This is a Rust hypothesis, not a porting entitlement. Java rmatch motivates the
+experiment but supplies no admission evidence.</p>
+<h2>Baseline and candidate</h2>
+<ul>
+<li>Baseline revision: <strong><code>9ef1b17cc6a865f44920c7c4f74f4a44b0b2c8f4</code></strong>.</li>
+<li>Candidate revision:
+<strong><code>406c1f5294b8797fbc47eb0c37342244426c8a9f</code></strong>.</li>
+<li>Build: <code>cargo build --locked --release --package rustmatch-bench</code> for both
+revisions.</li>
+<li>Runner: the same identified physical runner and allocation for both builds.</li>
+<li>Focused comparison command: <code>scripts/i6-focused-campaign.sh</code>.</li>
+<li>Scale command: <code>scripts/i6-campaign.sh</code>.</li>
+</ul>
+<h2>Workloads</h2>
+<p>All fixtures are deterministic 7-bit ASCII, validate their exact event set
+before timing, and retain compilation and scan time separately.</p>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">Patterns</th><th style="text-align: right">Corpus</th><th>Gate</th><th>Why it exists</th></tr></thead><tbody>
+<tr><td><code>literal-sparse</code></td><td style="text-align: right">64</td><td style="text-align: right">1 MiB</td><td>at least 5% faster</td><td>Existing representative sparse-literal workload</td></tr>
+<tr><td><code>literal-sparse</code></td><td style="text-align: right">256</td><td style="text-align: right">2 MiB</td><td>at least 5% faster</td><td>Larger shared start closure and transition reuse</td></tr>
+<tr><td><code>mixed-sparse</code></td><td style="text-align: right">64</td><td style="text-align: right">1 MiB</td><td>at least 5% faster</td><td>Alternation and repetition create nontrivial subsets</td></tr>
+<tr><td><code>literal-dense</code></td><td style="text-align: right">64</td><td style="text-align: right">1 MiB</td><td>no more than 3% slower</td><td>Event delivery can dominate transition work</td></tr>
+<tr><td><code>assertion-bypass</code></td><td style="text-align: right">64</td><td style="text-align: right">1 MiB</td><td>no more than 3% slower</td><td>Context-sensitive patterns must retain the exact path</td></tr>
+</tbody></table>
+<p>The retained receipt records revision, runner, scenario, fixture dimensions,
+event count and digest, warm-up and measured iteration counts, compilation
+time, and median scan time.</p>
+<p>The focused admission fixtures are accompanied by the cache-pressured
+<a href="../benchmarking/wuthering-scale.html"><code>I6-B1</code> Wuthering Heights scale campaign</a>.
+That lane records 1,000, 5,000, and 10,000 literal patterns against the full
+legacy corpus. It scrubs a dedicated 256 MiB buffer before every scan and
+publishes both raw JSON receipts and an HTML table. The scale lane diagnoses
+pattern-count behavior; it does not dilute the focused 5% improvement gate or
+stand in for cross-engine benchmarking.</p>
+<h2>Noise and admission rule</h2>
+<ul>
+<li>Three warm-up scans and seven measured scans are run per scenario.</li>
+<li>The median measured scan time is compared.</li>
+<li>A target workload must improve by at least 5%, not merely avoid regression.</li>
+<li>A non-target workload may not regress by more than 3%.</li>
+<li>A failed comparison is repeated once in reverse base/candidate order before
+it is accepted as a failure.</li>
+<li>The complete event digest must be identical before timing can be admitted.</li>
+</ul>
+<p>The cache is rejected or redesigned if either target workload misses its
+positive threshold, any guard workload crosses its regression ceiling, event
+output differs, or the bounded-cache fallback cannot be proved exact.</p>
+<h2>Resource tradeoffs</h2>
+<p>The first production candidate may use at most 4 MiB of scan-local cache table
+storage at its default budget, excluding the NFA state-set payload itself. The
+8,192-state default uses exactly that table allowance; in a preliminary
+10,000-pattern Wuthering run, a 4,096-state variant used 2 MiB but scanned
+14.7% slower. The cache allocates lazily and exposes internal
+hit/miss/state/fallback counters to tests and receipts through a non-default
+benchmark feature, not the supported application API.
+Compilation time may not regress by more than 3% in a repeatable result. Peak
+memory and cache-state count must be retained during the stable-machine run;
+if they cannot yet be measured automatically, the gap blocks I6 completion,
+not the benchmark-foundation merge.</p>
+<h2>Analysis requirement</h2>
+<p>Passing thresholds is necessary but not sufficient. The retained report must
+also explain absolute times, output volume, scaling shape, cache pressure,
+fallback, memory, profile hotspots, rejected or inferior variants, and limits
+on what the campaign proves. A green boolean without that analysis does not
+complete an optimization increment.</p>
+<h2>Correctness evidence required</h2>
+<ul>
+<li>Optimized and NFA-baseline event multisets agree for generated pattern/input
+sets.</li>
+<li>Budgets of zero, one, and a small finite value exercise disabled, immediate
+pressure, and partial-cache behavior.</li>
+<li>A budget miss falls back without losing, duplicating, or reordering the
+normalized event multiset.</li>
+<li>Assertion-sensitive pattern sets bypass or use explicitly context-keyed
+states; context-free keys must never be reused across incompatible context.</li>
+<li>The complete repository semantic and Java differential gate remains green.</li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/i6-lazy-state-cache.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

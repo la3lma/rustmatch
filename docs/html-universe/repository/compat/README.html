@@ -1,0 +1,93 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compatibility fixtures and Java oracle · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../../compat/README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">compat/README.md</div></header><main><h1>Compatibility fixtures and Java oracle</h1>
+<p>This directory contains the executable compatibility boundary between
+rustmatch and the pinned Java reference. It is not a Java implementation of
+rustmatch.</p>
+<h2>Contract</h2>
+<ul>
+<li>Each non-empty line in <code>fixtures/*.jsonl</code> is one fixture conforming to the
+versioned schema in <code>schema/</code>.</li>
+<li>Pattern and input symbols are raw UTF-16 code units. JSON strings are not the
+normative representation.</li>
+<li>The Java oracle resolves exactly <code>no.rmz:rmatch:2.0.0-RC1</code>, verifies the JAR
+SHA-256, uses a single matcher, and sorts events before writing JSONL.</li>
+<li><code>rust_expectation</code> distinguishes behavior in the currently implemented Rust
+syntax slice from behavior already supported by the Java reference.</li>
+<li><code>ascii-literal-v1</code> preserves the bootstrap literal contract, while
+<code>ascii-predicate-v1</code> grows independently as ASCII predicate syntax is carried
+through the same executable spine. <code>ascii-composition-v1</code> adds alternation,
+grouping, empty-branch behavior, longest-branch selection, and malformed
+group cases. <code>ascii-repetition-v1</code> adds greedy unary and counted repetition,
+quantifier binding, overlapping starts, longest-match ambiguity, the 1,000
+expansion limit, and malformed counts.</li>
+<li><code>utf16-flags-v1</code> covers non-ASCII literals and ranges, supplementary and raw
+surrogate inputs, prefix flags, Java single-<code>char</code> folding, titlecase edge
+behavior, and malformed flag placement.</li>
+<li><code>assertions-v1</code> covers line anchors and ASCII word boundaries at input and
+line edges, inside groups and alternatives, alongside flags, and around
+non-ASCII and raw-surrogate code units. It also pins the Java asymmetry that
+<code>$</code> needs a consumed character while <code>^</code> can follow a consumed newline.</li>
+<li><code>expected/java-21-case-fold-v1.bin</code> records all 65,536 Java 21 lower/upper
+<code>char</code> pairs in a fixed binary format. The oracle regenerates it twice and
+compares its manifest and bytes before Rust differential evidence runs.</li>
+<li>A pure zero-width alternation records one intentional difference explicitly:
+Java accepts it and emits no events, while the Rust product contract rejects
+patterns that can only produce a zero-width match.</li>
+<li>Files under <code>expected/</code> are generated evidence. Change them only together
+with a reviewed fixture, oracle, or pinned-reference change.</li>
+</ul>
+<p>Run the compatibility gate from the repository root:</p>
+<pre><code class="language-sh">cargo xtask oracle
+</code></pre>
+<p>The oracle command regenerates all fixture families twice, proves deterministic
+output, and compares both results and manifests byte-for-byte with the committed
+evidence. The Rust adapters can also be run separately:</p>
+<pre><code class="language-sh">cargo run -p rustmatch-compat -- verify-literals
+cargo run -p rustmatch-compat -- verify-predicates
+cargo run -p rustmatch-compat -- verify-composition
+cargo run -p rustmatch-compat -- verify-repetition
+cargo run -p rustmatch-compat -- verify-utf16-flags
+cargo run -p rustmatch-compat -- verify-assertions
+</code></pre>
+<p>The command requires Java 21 and Maven. On macOS it selects an installed Java
+21 automatically when the default Java is another release. The full repository
+gate, <code>cargo xtask ci</code>, includes the same check.</p>
+<h2>Dependency admission</h2>
+<p>The oracle has two runtime dependencies:</p>
+<ul>
+<li>Java rmatch <code>2.0.0-RC1</code>, because that exact published artifact is the object
+being observed.</li>
+<li>Jackson Core, because a streaming JSON parser and generator avoid a fragile
+handwritten JSON implementation without introducing databinding or an
+object-mapping model.</li>
+</ul>
+<p>Neither dependency enters the Rust library or its runtime dependency graph.</p>
+<p>The unpublished <code>rustmatch-compat</code> adapter uses Serde and Serde JSON to consume
+the same JSONL without maintaining a second handwritten parser. It runs the
+fixtures through the public Rust API and compares every supported event with
+the pinned Java result. These dependencies likewise remain outside the
+<code>rustmatch</code> library. Run that evidence directly with:</p>
+<pre><code class="language-sh">cargo xtask evidence
+</code></pre>
+<p>That command runs the pinned Java oracle, the Rust differential adapter, and
+the correctness-gated benchmark smoke before printing the E0 summary for every
+declared use case. A summary status of <code>pass</code> means the listed evidence ran and
+the incomplete use cases were reported honestly; it does not promote <code>partial</code>
+or <code>not-started</code> use cases to complete.</p>
+</main><footer>Generated from <code>compat/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

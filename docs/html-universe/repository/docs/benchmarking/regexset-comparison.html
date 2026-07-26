@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Early comparison with Rust `RegexSet` · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../benchmarking/regexset-comparison.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/benchmarking/regexset-comparison.md</div></header><main><h1>Early comparison with Rust <code>RegexSet</code></h1>
+<ul>
+<li><strong>Roadmap task:</strong> B0</li>
+<li><strong>Initial pinned competitor:</strong> <code>regex</code> 1.13.1</li>
+<li><strong>Status:</strong> Bootstrap smoke complete; scaling campaign deferred to X0/B1</li>
+</ul>
+<h2>Why this belongs early</h2>
+<p><a href="https://docs.rs/regex/1.13.1/regex/struct.RegexSet.html"><code>regex::RegexSet</code></a>
+is the established, highly optimized pure-Rust API for searching many regular
+expressions in one pass. A Rust many-pattern matcher that ignores it would not
+understand its most relevant existing alternative.</p>
+<p>The APIs do not return the same information. <code>RegexSet</code> answers whether any
+pattern matched and which pattern indices matched somewhere. It deliberately
+does not return match locations. rustmatch reports a longest match for every
+pattern and every matching start position, including overlaps. A single number
+that silently compares those different jobs would be advertising, not
+evidence.</p>
+<h2>Two correctness-gated lanes</h2>
+<h3>RS-NATIVE: native set membership</h3>
+<p>Both engines compile the same accepted pattern set and scan the same input.
+The rustmatch events are reduced to the set of pattern IDs that matched at
+least once and compared with <code>RegexSet::matches</code>.</p>
+<p>This is <code>RegexSet</code>'s native workload and likely its strongest result. rustmatch
+still computes its richer event stream, so the receipt must say that the work
+is asymmetric. This lane answers whether rustmatch remains usable when an
+application only needs set membership; it does not define semantic parity.</p>
+<h3>RS-EVENTS: complete rustmatch event semantics</h3>
+<p><code>RegexSet</code> first identifies candidate patterns. Individually compiled
+<code>regex::Regex</code> values then recover matches for those candidates with repeated
+<code>find_at</code> searches. Each search resumes one byte after the previous match's
+start, rather than after its end, so overlapping literal starts are preserved.
+The normalized <code>(pattern_id, start, end)</code> multiset must equal rustmatch before
+a timing is retained.</p>
+<p>This lane answers the actual rustmatch workload. It is necessarily less native
+to <code>RegexSet</code>, and the result must not be presented as a general indictment of
+the <code>regex</code> crate.</p>
+<h2>Receipt requirements</h2>
+<p>Every retained point records:</p>
+<ul>
+<li>rustmatch revision and package hash;</li>
+<li>exact <code>regex</code> version and Cargo lockfile hash;</li>
+<li>pattern and corpus generator versions, seeds, sizes, and hashes;</li>
+<li>accepted/rejected pattern counts;</li>
+<li>compile time separately from scan time;</li>
+<li>warm-up and measured iteration counts;</li>
+<li>event count and normalized event hash for RS-EVENTS;</li>
+<li>matching-pattern count and normalized ID-set hash for RS-NATIVE;</li>
+<li>process, CPU, operating-system, compiler, profile, and thread settings;</li>
+<li>raw samples, summary statistics, and the predeclared noise rule.</li>
+</ul>
+<p>Both engines run single-threaded first. Later throughput campaigns may run
+several independent <code>RegexSet</code> scans in parallel, just as every other engine is
+allowed to use the available machine. The thread sweep and optimum remain part
+of the receipt rather than becoming an unexplained winner-only setting.</p>
+<h2>Admission rule</h2>
+<p>B0 is a harness and honesty milestone, not a promise that the unoptimized I1
+engine wins. It passes when both lanes are reproducible, results are validated,
+and a smoke receipt survives. Performance work may then use RegexSet results to
+prioritize experiments, especially on confirmed workloads where RegexSet wins.
+RegexSet remains a diagnostic competitor, not the acceptance baseline. An
+optimization enters rustmatch only after its own comparison shows a positive
+improvement beyond noise over the exact existing Rustmatch production revision
+frozen before that experiment. The post-B1 procedure is specified in the
+<a href="../experiments/b2-competitor-win-optimization.html">B2/G9 protocol</a>.</p>
+<p>Run the first correctness-gated release-profile smoke locally with:</p>
+<pre><code class="language-sh">cargo xtask bench-smoke
+</code></pre>
+<p>The smoke uses a small deterministic generated fixture and prints one JSON
+receipt. It is included in <code>cargo xtask ci</code>, but it is not a stable-machine
+performance campaign and its timing fields must not be quoted as a result.</p>
+<h2>CI smoke alarm versus stable-machine evidence</h2>
+<p>The C1 runner and comparator validate exact generated literal events before
+timing and compare seven-scan medians. The pull-request lane uses isolated base
+and candidate Cargo targets on one GitHub runner and reruns in reverse order
+before failing. Its deliberately broad threshold requires both more than 50
+percent slowdown and at least 100 ms of absolute regression. Receipts are
+retained for 30 days.</p>
+<p>C1 does not time <code>RegexSet</code> and cannot admit an optimization. It is only a
+smoke alarm for catastrophic rustmatch regressions. RegexSet scaling results
+and performance-sensitive rustmatch changes require correctness-gated,
+base/candidate measurements on the designated stable machine, currently
+<code>agogo.local</code>, with the complete provenance described above.</p>
+<p>The runner and comparator are ordinary release-profile commands so the same
+receipt contract can be exercised locally:</p>
+<pre><code class="language-sh">RUSTMATCH_BENCH_REVISION="$(git rev-parse HEAD)" \
+RUSTMATCH_BENCH_RUNNER=local \
+  cargo run --locked --release --package rustmatch-bench -- literal-tripwire \
+  &gt; candidate.json
+
+target/release/rustmatch-bench compare-tripwire base.json candidate.json
+</code></pre>
+<p>Repository contributors normally use the complete same-runner driver instead:</p>
+<pre><code class="language-sh">BASE_SHA=origin/main scripts/c1-tripwire.sh
+</code></pre>
+<p>The pull-request workflow invokes that same script and retains its three JSON
+receipts. This keeps CI orchestration thin and lets the comparison path be
+reproduced before a branch is pushed. The driver resolves both revisions to
+commit SHAs and refuses to label a dirty working tree as a reproducible result;
+<code>C1_ALLOW_DIRTY=1</code> exists only for harness development and its output must not
+be retained as evidence.</p>
+<h3>Initial hosted-runner calibration</h3>
+<p>The activation PR ran the same base and candidate three times on 2026-07-17.
+All attempts passed without invoking the retry path:</p>
+<table><thead><tr><th>Attempt</th><th style="text-align: right">Base median</th><th style="text-align: right">Candidate median</th><th style="text-align: right">Candidate change</th></tr></thead><tbody>
+<tr><td>1</td><td style="text-align: right">439.9 ms</td><td style="text-align: right">432.5 ms</td><td style="text-align: right">-1.68%</td></tr>
+<tr><td>2</td><td style="text-align: right">566.0 ms</td><td style="text-align: right">569.4 ms</td><td style="text-align: right">+0.60%</td></tr>
+<tr><td>3</td><td style="text-align: right">563.8 ms</td><td style="text-align: right">566.1 ms</td><td style="text-align: right">+0.40%</td></tr>
+</tbody></table>
+<p>The large shift in absolute time between hosted runners is expected noise and
+is evidence for the same-runner design, not a rustmatch performance result.
+The retained receipts belong to <a href="https://github.com/la3lma/rustmatch/actions/runs/29596635864">GitHub Actions run
+29596635864</a>.</p>
+</main><footer>Generated from <code>docs/benchmarking/regexset-comparison.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

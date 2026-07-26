@@ -1,0 +1,187 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I8 evidence: explicit parallel pattern partitions · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../../../index.html">rustmatch evidence</a><div><a href="../../../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../../../index.html">HTML universe</a><a href="../../../../../../evidence/i8/ef61173/README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/evidence/i8/ef61173/README.md</div></header><main><h1>I8 evidence: explicit parallel pattern partitions</h1>
+<p>This directory retains the admission evidence for implementation
+<code>ef6117368cd70b23fcfede1b26525c5f5366f53a</code> against the protocol frozen in
+<a href="../../../experiments/i8-parallel-partitions.html"><code>docs/experiments/i8-parallel-partitions.md</code></a>.
+The default-path baseline is
+<code>f7a5e95588b96653f8cf3cb2445c6c17f571c4fe</code>, the pre-I8 merge revision.</p>
+<h2>Environment and evidence identity</h2>
+<p>All admission timings were produced by a verified Mach-O arm64 release binary
+on:</p>
+<ul>
+<li><code>rainstick.local</code></li>
+<li>Apple M2 Max</li>
+<li>12 physical/logical CPUs</li>
+<li>macOS 26.5</li>
+<li>Rust 1.97.0 standard library for <code>aarch64-apple-darwin</code></li>
+<li>three warmups and seven measured scans</li>
+<li>a 256 MiB cache-scrub working set before every admission scan</li>
+</ul>
+<p>The installed Rust compiler is an x86_64 executable, so the benchmark was
+explicitly built with <code>--target aarch64-apple-darwin</code>; <code>file</code> verified the
+result before it was timed. The runner was not idle: the retained system-state
+files record WebKit, Mail, Spotlight, and a virtual machine competing for CPU.
+Reverse-order pairs and repeated winner runs are therefore the admission
+evidence. The complete sweep is useful for shape and resource analysis, not
+for publishing a machine-maximum claim.</p>
+<h2>Correctness and lifecycle result</h2>
+<p>The complete workspace suite passes exact normalized event-multiset equality
+for requested worker counts 1, 2, 3, 4, 8, 12, 24, and 128. It covers literals,
+duplicate text under distinct IDs, predicates, alternation, groups, repetition,
+flags, UTF-16 supplementary and isolated-surrogate units, anchors, boundaries,
+empty input, end-of-input matches, generated pattern families, and simultaneous
+scans of one matcher.</p>
+<p>Focused tests also prove the non-happy paths: zero workers are rejected, a
+spawn failure returns a typed error before callback delivery, an internal
+worker panic is joined and resumed, and a callback panic leaves the matcher
+reusable after all scoped workers have stopped. Repeated build/scan/drop cycles
+complete without retained workers. No unsafe Rust or runtime dependency was
+introduced.</p>
+<p>Every one of the 27 Wuthering Heights sweep receipts reports the same event
+count and digest at a given pattern count. The 10,000-pattern line always emits
+1,912,854 events with digest
+<code>multiset64:e2645ce33f92320c:682cc0a867ada85d:c4a89edd4c72902e</code>.</p>
+<h2>Positive admission result</h2>
+<p>The frozen positive gate is 10,000 patterns over the deterministic 8 MiB
+Wuthering Heights expansion. Both a 20% relative improvement and 20 ms absolute
+improvement were required. Eight workers won the final sweep and were then run in
+winner/baseline/winner order:</p>
+<table><thead><tr><th>Mode</th><th style="text-align: right">Median scan</th></tr></thead><tbody>
+<tr><td>one worker</td><td style="text-align: right">249.801 ms</td></tr>
+<tr><td>eight workers, first run</td><td style="text-align: right">99.680 ms</td></tr>
+<tr><td>eight workers, repeated</td><td style="text-align: right">99.635 ms</td></tr>
+</tbody></table>
+<p>The first winner run is 150.121 ms and 60.09% faster than one worker. The two
+winner medians differ by 0.04%, below the frozen 5% repeatability limit. Exact
+event evidence is identical. I8 therefore clears its positive Rust gate without
+using Java results as admission evidence.</p>
+<h2>Complete thread sweep</h2>
+<p>The final 10,000-pattern sweep shows useful but strongly sublinear scaling:</p>
+<table><thead><tr><th style="text-align: right">Workers</th><th style="text-align: right">Median</th><th style="text-align: right">Speedup</th><th style="text-align: right">Parallel efficiency</th></tr></thead><tbody>
+<tr><td style="text-align: right">1</td><td style="text-align: right">249.021 ms</td><td style="text-align: right">1.00x</td><td style="text-align: right">100.0%</td></tr>
+<tr><td style="text-align: right">2</td><td style="text-align: right">162.337 ms</td><td style="text-align: right">1.53x</td><td style="text-align: right">76.7%</td></tr>
+<tr><td style="text-align: right">3</td><td style="text-align: right">130.570 ms</td><td style="text-align: right">1.91x</td><td style="text-align: right">63.6%</td></tr>
+<tr><td style="text-align: right">4</td><td style="text-align: right">113.870 ms</td><td style="text-align: right">2.19x</td><td style="text-align: right">54.7%</td></tr>
+<tr><td style="text-align: right">6</td><td style="text-align: right">105.610 ms</td><td style="text-align: right">2.36x</td><td style="text-align: right">39.3%</td></tr>
+<tr><td style="text-align: right">8</td><td style="text-align: right">104.488 ms</td><td style="text-align: right">2.38x</td><td style="text-align: right">29.8%</td></tr>
+<tr><td style="text-align: right">12</td><td style="text-align: right">105.936 ms</td><td style="text-align: right">2.35x</td><td style="text-align: right">19.6%</td></tr>
+<tr><td style="text-align: right">18</td><td style="text-align: right">123.161 ms</td><td style="text-align: right">2.02x</td><td style="text-align: right">11.2%</td></tr>
+<tr><td style="text-align: right">24</td><td style="text-align: right">153.936 ms</td><td style="text-align: right">1.62x</td><td style="text-align: right">6.7%</td></tr>
+</tbody></table>
+<p>The curve plateaus from six through twelve workers, with its lowest median at
+eight, and declines after twelve. More partitions duplicate corpus and
+prefilter traversal, increase scheduling and join work, and contend for shared
+caches and memory bandwidth. The current
+implementation also starts scoped workers for every scan and serializes event
+delivery after the scans complete. There is no evidence for making eight the
+default on other machines or workloads, so the public default remains one.</p>
+<p>The 1,000- and 5,000-pattern curves contain deliberate activation-threshold
+discontinuities. At 1,000 patterns, four partitions contain only 250 patterns;
+at 5,000 patterns, 24 partitions contain about 208. Both fall below I7's
+256-pattern full-prefilter threshold and switch to the smaller start-table
+path. Their apparent improvement is partly a different algorithmic path, not
+clean evidence that those worker counts scale better. The 10,000-pattern
+positive line keeps every tested partition above that threshold and is the
+sounder parallelism comparison.</p>
+<h2>Short-input guard</h2>
+<p>Thread startup dominates when both the input and pattern set are small. On a
+1 KiB Wuthering prefix, one worker took 0.006 ms, 0.020 ms, and 0.084 ms for
+10, 100, and 500 patterns. Eight workers took 0.134 ms, 0.130 ms, and 0.152 ms:
+roughly 23.6x, 6.5x, and 1.8x slower. At 1,000 patterns the two paths were
+within 0.013 ms and one worker still won; at 10,000 patterns the partitioned
+path won. The crossover
+depends on both dimensions and the machine, which is why callers must choose
+parallelism from measurements rather than a built-in core-count heuristic.</p>
+<h2>Default and build guard</h2>
+<p>The final one-worker candidate was measured beside the frozen pre-I8 binary on
+the same runner. Times are medians:</p>
+<table><thead><tr><th style="text-align: right">Patterns</th><th style="text-align: right">Pre-I8</th><th style="text-align: right">I8 one worker</th><th style="text-align: right">Change</th></tr></thead><tbody>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">35.955 ms</td><td style="text-align: right">37.025 ms</td><td style="text-align: right">2.97% / 1.070 ms slower</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">104.775 ms</td><td style="text-align: right">107.462 ms</td><td style="text-align: right">2.56% / 2.686 ms slower</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">247.715 ms</td><td style="text-align: right">247.801 ms</td><td style="text-align: right">0.03% / 0.086 ms slower</td></tr>
+</tbody></table>
+<p>Every first-pair loss remains below the 3% relative half of the conjunctive
+failure threshold. Because the 1,000-pattern result was only 0.03 percentage
+points below that limit, the series was repeated in candidate/base order. That
+confirmation was neutral at 1,000, faster at 5,000, and produced one 4.94%
+10,000-pattern outlier. Four additional order-alternating 10,000-pattern pairs
+measured candidate changes of -0.07%, +1.27%, +2.40%, and -0.47%. The outlier
+is retained, but it did not repeat. The evidence supports no material default
+regression claim more precise than the frozen 3% guard.</p>
+<p>Median build time was lower at 5,000 and 10,000 patterns. The 1,000-pattern
+build difference was 0.38% and 0.006 ms, so the 3% plus 1 ms build guard also
+passes. The direct one-partition path spawns no worker and buffers no events.</p>
+<h2>Resource accounting</h2>
+<p>At 10,000 patterns, the configured cache remains one total 8,192-state budget.
+Its table storage is 4,194,304 bytes for every measured worker count; I8 does
+not multiply it by the partition count. Retained database storage changes only
+from 3,740,660 bytes at one worker to 3,743,420 bytes at 24 workers.</p>
+<p>Other storage does scale with partitions:</p>
+<table><thead><tr><th style="text-align: right">Workers</th><th style="text-align: right">Prefilter retained</th><th style="text-align: right">Candidate bitmaps</th><th style="text-align: right">Event buffer</th><th style="text-align: right">Peak footprint</th></tr></thead><tbody>
+<tr><td style="text-align: right">1</td><td style="text-align: right">0.59 MiB</td><td style="text-align: right">1.00 MiB</td><td style="text-align: right">0</td><td style="text-align: right">62.6 MiB</td></tr>
+<tr><td style="text-align: right">6</td><td style="text-align: right">2.79 MiB</td><td style="text-align: right">6.00 MiB</td><td style="text-align: right">43.78 MiB</td><td style="text-align: right">149.1 MiB</td></tr>
+<tr><td style="text-align: right">8</td><td style="text-align: right">3.67 MiB</td><td style="text-align: right">8.00 MiB</td><td style="text-align: right">43.78 MiB</td><td style="text-align: right">162.1 MiB</td></tr>
+<tr><td style="text-align: right">12</td><td style="text-align: right">5.43 MiB</td><td style="text-align: right">12.00 MiB</td><td style="text-align: right">43.78 MiB</td><td style="text-align: right">157.1 MiB</td></tr>
+<tr><td style="text-align: right">24</td><td style="text-align: right">10.70 MiB</td><td style="text-align: right">24.00 MiB</td><td style="text-align: right">43.78 MiB</td><td style="text-align: right">155.2 MiB</td></tr>
+</tbody></table>
+<p>Peak-process measurements vary with allocator reuse and concurrent scheduling,
+which explains the nearly flat multi-worker peak observations. The structural
+counts are more reliable: each active full prefilter adds one input-sized
+candidate bitmap, and every multi-worker scan buffers all 1,912,854 events.
+The 43.78 MiB event buffer is the largest explicit I8 cost and is paid even
+when more workers no longer improve throughput.</p>
+<h2>Profile interpretation</h2>
+<p>Companion native <code>sample</code> profiles used 10,000 patterns and a 50 MiB Wuthering
+expansion so the steady scan dominated startup. One worker took 1.605 s; eight
+workers took 1.057 s while sampling was active. These are profile companions,
+not the 8 MiB admission gate.</p>
+<p>The one-worker aggregate is led by semantic transition construction, literal
+prefilter traversal, and deterministic-cache transition/lookup. With eight
+workers, aggregate samples are led by duplicated literal-prefilter traversal,
+then partition scanning and transition construction. Join waits and serialized
+<code>scan_parallel_and_deliver</code> work are visible as separate costs. Aggregate
+multi-thread sample counts cannot be read as wall-time percentages, but they
+do identify the scaling limits: every partition scans the corpus, transition
+work remains substantial, and event collection/delivery has not disappeared.</p>
+<p>Thread creation is intentionally difficult to see in the long 50 MiB profile
+but matters on short scans. A persistent executor, shared prefilter candidate
+stream, or concurrent/fallible event sink could change that balance. Each is a
+separate design with semantic and resource consequences and is not smuggled
+into I8.</p>
+<h2>Rejected prototype</h2>
+<p>An intermediate attempt stored the single partition inline to avoid the small
+boxed-slice dispatch. Native measurements and generated assembly showed that
+it enlarged the hot dispatcher and made the default path worse. It was reverted.
+The accepted implementation instead keeps a small inlineable one-partition
+dispatcher, moves the heavier parallel path out of line, passes the callback by
+value, and keeps the worker-start error compact. This restored the pre-I8
+single-worker shape.</p>
+<h2>Critical conclusion</h2>
+<p>I8 is admitted because exact semantics, lifecycle behavior, the default and
+build guards, total-cache accounting, and the predeclared positive throughput
+gate all pass. Explicit pattern partitions turn a 10,000-pattern, 8 MiB scan
+from roughly 250 ms into roughly 100 ms on this 12-core machine.</p>
+<p>The result is not linear scaling, an automatic worker heuristic, or a claim
+that more workers are always better. The current design trades materially more
+memory and duplicated corpus work for throughput and saturates early. Those
+costs, along with the threshold discontinuities, are part of the result. I9
+must carry exact worker counts and correctness evidence into the ordinary
+cross-engine harness rather than collapsing this nuanced curve into one
+unqualified "parallel" number.</p>
+</main><footer>Generated from <code>docs/evidence/i8/ef61173/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

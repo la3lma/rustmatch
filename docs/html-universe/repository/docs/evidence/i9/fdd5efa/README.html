@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I9 evidence: ordinary benchmark-harness integration · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../../../index.html">rustmatch evidence</a><div><a href="../../../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../../../index.html">HTML universe</a><a href="../../../../../../evidence/i9/fdd5efa/README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/evidence/i9/fdd5efa/README.md</div></header><main><h1>I9 evidence: ordinary benchmark-harness integration</h1>
+<h2>Outcome</h2>
+<p>I9 is complete for rustmatch commit
+<code>fdd5efa674d34221b0dc3b13520dcbe5b903f6bc</code>. The ordinary private performance
+harness gained the Rust-native engine in
+<a href="https://github.com/la3lma/rmatch-performance-measurements/pull/1"><code>rmatch-performance-measurements</code> PR #1</a>,
+merged as <code>04eb7ae</code>.</p>
+<p>The harness now:</p>
+<ul>
+<li>exports only an exact 40-character commit through <code>git archive</code>;</li>
+<li>excludes dirty files, untracked files, repository credentials, and <code>.git</code>;</li>
+<li>builds the locked workspace with the pinned Rust <code>1.97.0</code> toolchain in a
+multi-stage container and runs a small unprivileged runtime image offline;</li>
+<li>records exact source, image, host, input, timing, partition, event, and
+implementation-diagnostic evidence;</li>
+<li>rejects incomplete or inconsistent output even when the engine exits zero;
+and</li>
+<li>plots retained Rust receipts through the ordinary plot generator.</li>
+</ul>
+<p>The retained receipts and plot live in the private harness campaign
+<a href="https://github.com/la3lma/rmatch-performance-measurements/tree/main/receipts/rainstick-2026-07-18-rustmatch-i9-smoke"><code>rainstick-2026-07-18-rustmatch-i9-smoke</code></a>.</p>
+<h2>Correctness matrix</h2>
+<table><thead><tr><th>Scenario</th><th>NFA</th><th>Optimized 1 worker</th><th>Optimized 8 partitions</th><th>Event identity</th></tr></thead><tbody>
+<tr><td>1,000 diverse literals / 8 MiB</td><td>4,000</td><td>4,000</td><td>4,000</td><td>identical digest</td></tr>
+<tr><td>1,000 mixed regex / 8 MiB</td><td>2,000</td><td>2,000</td><td>2,000</td><td>identical digest</td></tr>
+</tbody></table>
+<p>All six outer receipts passed manifest counts, exact source identity, toolchain,
+mode, partition, timing-array, event-digest, and diagnostic validation.</p>
+<h2>Critical performance reading</h2>
+<table><thead><tr><th>Scenario</th><th>Mode</th><th style="text-align: right">Median scan</th><th style="text-align: right">Throughput</th></tr></thead><tbody>
+<tr><td>Diverse literals</td><td>NFA, 1 worker</td><td style="text-align: right">53.541 s</td><td style="text-align: right">1.25 Mbit/s</td></tr>
+<tr><td>Diverse literals</td><td>Optimized, 1 worker</td><td style="text-align: right">23.931 ms</td><td style="text-align: right">2,804.24 Mbit/s</td></tr>
+<tr><td>Diverse literals</td><td>Optimized, 8 partitions</td><td style="text-align: right">12.244 ms</td><td style="text-align: right">5,481.16 Mbit/s</td></tr>
+<tr><td>Mixed regex</td><td>NFA, 1 worker</td><td style="text-align: right">52.319 s</td><td style="text-align: right">1.28 Mbit/s</td></tr>
+<tr><td>Mixed regex</td><td>Optimized, 1 worker</td><td style="text-align: right">23.086 ms</td><td style="text-align: right">2,906.92 Mbit/s</td></tr>
+<tr><td>Mixed regex</td><td>Optimized, 8 partitions</td><td style="text-align: right">10.579 ms</td><td style="text-align: right">6,343.52 Mbit/s</td></tr>
+</tbody></table>
+<p>The optimized single-worker engine is roughly 2,200 times faster than the NFA
+control on these fixtures. Eight partitions reduce median scan time by about
+49% for diverse literals and 54% for mixed regex. Exact event parity makes
+those differences admissible, but the local Docker host and short campaign do
+not support cross-engine or universal worker-count claims.</p>
+<p>The NFA control also changes future campaign design. One 8 MiB control scan
+takes more than 52 seconds, so repeating it across every B1 point would consume
+large amounts of machine time without refining the central conclusion. B1 may
+retain sparse NFA controls while concentrating repetitions and thread sweeps on
+the viable optimized modes, provided that choice is declared before results
+are interpreted.</p>
+<h2>CI boundary</h2>
+<p>Wuthering Heights remains useful in GitHub Actions as a realistic build-breaking
+tripwire. The active C2 lane uses 5,000 patterns and an 8 MiB deterministic
+corpus, verifies exact event evidence, retries a possible failure in reverse
+order, and fails only beyond both 100% slowdown and 50 ms. That broad policy is
+appropriate for catching severe regressions on noisy hosted runners.</p>
+<p>It is not an authoritative benchmark. NFA controls, cross-engine comparisons,
+complete thread sweeps, cache-sensitive scaling, and critical profile analysis
+remain outside CI as retained stable-host evidence.</p>
+<h2>Verification</h2>
+<ul>
+<li>Rust runner unit tests: 24 passed before source pinning.</li>
+<li>Rust workspace Clippy: all targets and features, warnings denied.</li>
+<li>Harness orchestration tests: 6 passed.</li>
+<li>Harness GitHub Actions <code>python-tests</code>: passed on PR #1.</li>
+<li>Pinned container build: passed with Rust <code>1.97.0</code> and the locked dependency
+graph.</li>
+<li>Six container receipts: passed strict validation and scenario-local event
+parity.</li>
+<li>Generated SVG: passed XML validation and visual inspection.</li>
+</ul>
+<h2>Remaining work</h2>
+<p>B1 is active. It must add fair cross-engine semantics and receipts, the full
+declared pattern/corpus matrix, density controls, worker sweeps, stable Linux
+host identity, and critical profiling interpretation. I9 establishes the lane;
+it does not pre-approve B1's eventual comparative claims.</p>
+</main><footer>Generated from <code>docs/evidence/i9/fdd5efa/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

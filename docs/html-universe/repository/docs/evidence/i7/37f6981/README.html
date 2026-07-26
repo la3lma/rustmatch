@@ -1,0 +1,146 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I7 evidence: conservative start acceleration · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../../../index.html">rustmatch evidence</a><div><a href="../../../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../../../index.html">HTML universe</a><a href="../../../../../../evidence/i7/37f6981/README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/evidence/i7/37f6981/README.md</div></header><main><h1>I7 evidence: conservative start acceleration</h1>
+<p>This directory retains the admission evidence for implementation
+<code>37f69819d9231fb99d747d4ae48034204657c1f2</code> against the frozen protocol in
+<a href="../../../experiments/i7-safe-prefilter.html"><code>docs/experiments/i7-safe-prefilter.md</code></a>.
+The build-cost baseline is
+<code>284571996b343041d374f2620905f32d63dbafdc</code>, the pre-I7 merge revision.</p>
+<h2>Environment and evidence identity</h2>
+<p>Every admission timing was produced by a verified Mach-O arm64 release binary
+on:</p>
+<ul>
+<li><code>rainstick.local</code></li>
+<li>Apple M2 Max</li>
+<li>12 logical CPUs</li>
+<li>macOS 26.5</li>
+<li>Rust 1.97.0 standard library for <code>aarch64-apple-darwin</code></li>
+<li>three warmups and seven measured scans</li>
+<li>a 256 MiB cache-scrub working set before every scan</li>
+</ul>
+<p>The compiler process was an x86_64 Rust 1.97.0 toolchain cross-building native
+arm64 binaries. Rustmatch's reported pattern-build and scan timings ran inside
+the native binary. The raw JSON in <code>focused/</code> and <code>wuthering-8m/</code> is
+authoritative; this document is its critical interpretation.</p>
+<h2>Correctness result</h2>
+<p>The complete workspace suite passes, including deterministic generated
+filterable pattern families, structural-prefix proofs, optional and repeated
+terms, alternation, predicates, case-insensitive syntax, Unicode UTF-16 units,
+assertions, input-end matches, mixed filterable and unfilterable sets, and
+candidate-bitmap ordering. Every focused and Wuthering on/off pair produced an
+identical event count and digest.</p>
+<p>The prefilter never creates match events. It admits possible start positions;
+the I6 semantic engine verifies them and remains the only source of observable
+events. Assertions bypass start acceleration, and uncertain prefix analysis
+admits work rather than risking a false negative.</p>
+<h2>Focused admission result</h2>
+<p>All frozen focused gates passed. Times are medians.</p>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">Patterns</th><th style="text-align: right">Disabled</th><th style="text-align: right">Enabled</th><th style="text-align: right">Change</th><th>Selected path</th></tr></thead><tbody>
+<tr><td>literal sparse</td><td style="text-align: right">1,000</td><td style="text-align: right">45.157 ms</td><td style="text-align: right">18.548 ms</td><td style="text-align: right">58.92% faster</td><td>literal filter</td></tr>
+<tr><td>literal sparse</td><td style="text-align: right">5,000</td><td style="text-align: right">48.118 ms</td><td style="text-align: right">20.653 ms</td><td style="text-align: right">57.07% faster</td><td>literal filter</td></tr>
+<tr><td>literal dense</td><td style="text-align: right">1,000</td><td style="text-align: right">89.432 ms</td><td style="text-align: right">64.705 ms</td><td style="text-align: right">27.64% faster</td><td>literal filter</td></tr>
+<tr><td>mixed sparse</td><td style="text-align: right">1,000</td><td style="text-align: right">44.622 ms</td><td style="text-align: right">18.791 ms</td><td style="text-align: right">57.88% faster</td><td>literal filter</td></tr>
+<tr><td>assertion bypass</td><td style="text-align: right">1,000</td><td style="text-align: right">76.122 s</td><td style="text-align: right">76.224 s</td><td style="text-align: right">0.13% slower</td><td>all starts</td></tr>
+<tr><td>mixed unfilterable</td><td style="text-align: right">1,000</td><td style="text-align: right">46.570 ms</td><td style="text-align: right">6.434 ms</td><td style="text-align: right">86.18% faster</td><td>start table</td></tr>
+<tr><td>short literal</td><td style="text-align: right">5,000</td><td style="text-align: right">0.992 ms</td><td style="text-align: right">0.720 ms</td><td style="text-align: right">27.47% faster</td><td>start table</td></tr>
+</tbody></table>
+<p>The assertion result is a guard, not a positive claim. Both paths perform the
+same all-start semantic scan; 0.13% on a 76-second run is below the frozen 3%
+and 1 ms conjunctive failure threshold. It demonstrates bypass neutrality, but
+also exposes assertion-heavy scanning as an expensive unresolved path.</p>
+<p>The short-input result is only 0.273 ms in absolute terms. It confirms that the
+full input-sized candidate bitmap is not allocated below the activation
+threshold; it is not presented as a meaningful application-speed claim.</p>
+<h2>Wuthering Heights scale result</h2>
+<p>The retained 8 MiB campaign uses a deterministic expansion of the historical
+Wuthering Heights corpus. Exact event evidence passed at every pattern count.</p>
+<table><thead><tr><th style="text-align: right">Patterns</th><th style="text-align: right">Events</th><th style="text-align: right">Disabled</th><th style="text-align: right">Enabled</th><th style="text-align: right">Saved</th><th style="text-align: right">Improvement</th></tr></thead><tbody>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">109,693</td><td style="text-align: right">56.066 ms</td><td style="text-align: right">35.995 ms</td><td style="text-align: right">20.071 ms</td><td style="text-align: right">35.79%</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">926,975</td><td style="text-align: right">148.888 ms</td><td style="text-align: right">108.565 ms</td><td style="text-align: right">40.323 ms</td><td style="text-align: right">27.08%</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">1,912,854</td><td style="text-align: right">296.844 ms</td><td style="text-align: right">251.244 ms</td><td style="text-align: right">45.601 ms</td><td style="text-align: right">15.36%</td></tr>
+</tbody></table>
+<p>Relative improvement declines as the pattern set and emitted event set grow,
+although absolute time saved still increases. This is not constant-time
+pattern scaling. At 10,000 patterns the filter removes most impossible starts,
+but the remaining candidate starts drive cache pressure, semantic transition
+construction, and delivery of almost two million events.</p>
+<table><thead><tr><th style="text-align: right">Patterns</th><th style="text-align: right">Candidate starts</th><th style="text-align: right">Starts skipped</th><th style="text-align: right">Candidate density</th><th style="text-align: right">Starts skipped</th></tr></thead><tbody>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">100,411</td><td style="text-align: right">8,288,197</td><td style="text-align: right">1.20%</td><td style="text-align: right">98.80%</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">791,212</td><td style="text-align: right">7,597,396</td><td style="text-align: right">9.43%</td><td style="text-align: right">90.57%</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">1,598,884</td><td style="text-align: right">6,789,724</td><td style="text-align: right">19.06%</td><td style="text-align: right">80.94%</td></tr>
+</tbody></table>
+<p>Candidate density rises with pattern count because more prefixes are admitted
+and because hash collisions are intentionally false-positive only. The trend
+explains part of the diminishing relative return. Improving selectivity could
+remove more semantic work; merely making the current filter loop cheaper has a
+much smaller ceiling.</p>
+<h2>Resource and build result</h2>
+<p>The 10,000-pattern filter retains 620,896 bytes, well below the frozen 8 MiB
+limit. The scan-local candidate bitmap uses 1,048,576 bytes for 8,388,608 input
+starts, exactly one bit per start. The start-table path allocates no candidate
+bitmap. I7 adds no runtime dependency and uses no unsafe Rust.</p>
+<p>Median 10,000-pattern build time changed from 7.673 ms on the frozen pre-I7
+revision to 17.261 ms for the candidate, a 9.587 ms absolute regression. The
+relative increase is large because the baseline operation is short, but the
+measured cost remains below the precommitted 25 ms reusable-matcher allowance.
+It is a real setup cost and should not be hidden in scan-only claims.</p>
+<h2>Profile interpretation</h2>
+<p>A companion native <code>xctrace</code> Time Profiler run used 10,000 patterns and a
+50 MiB expanded Wuthering corpus. Its 8,083 samples are summarized in
+<code>profiles/native-arm64-summary.tsv</code>:</p>
+<table><thead><tr><th>Category</th><th style="text-align: right">Samples</th></tr></thead><tbody>
+<tr><td>semantic scan and event aggregation</td><td style="text-align: right">36.1%</td></tr>
+<tr><td>semantic transition construction</td><td style="text-align: right">29.7%</td></tr>
+<tr><td>literal filter scan</td><td style="text-align: right">17.6%</td></tr>
+<tr><td>deterministic cache lookup</td><td style="text-align: right">12.6%</td></tr>
+<tr><td>terminal recording, candidate iteration, build, scrub, and unresolved</td><td style="text-align: right">4.0%</td></tr>
+</tbody></table>
+<p>The raw Instruments trace remains local because it is large. This profile used
+a production-equivalent build immediately before the evidence commit; later
+changes only renamed a diagnostic field and added documentation. It is
+directional hotspot evidence, not a substitute for the revision-exact JSON
+admission timings.</p>
+<p>Even deleting the complete measured filter cost could recover at most about
+17.6% in that profile. The larger remaining opportunity is reducing or
+parallelizing semantic work for admitted starts while preserving exact event
+ordering and multiplicity. I8 should test that hypothesis rather than assuming
+that the Java implementation's partitioning choices transfer to Rust.</p>
+<h2>Rejected prototypes</h2>
+<p>The first implementation used a sparse Aho-Corasick-style trie with failure
+links. It retained about 1.83 MiB at 5,000 Wuthering patterns, but candidate
+generation became a dominant native-profile cost. Small-node linear lookup and
+an anchored-trie variant did not recover enough time. Those variants were
+removed rather than retained as speculative complexity.</p>
+<p>The accepted compact filter uses a direct table for exact three-unit ASCII
+prefixes and one-hash bitsets for four-unit and first-five-unit prefixes. Hash
+collisions add verification work but cannot remove a match. This result is
+specific to the current engine and workloads; it is not a general claim that
+trie or Aho-Corasick prefilters are poor designs.</p>
+<h2>Critical conclusion</h2>
+<p>I7 is admitted because exact semantics, every frozen positive and guard gate,
+resource bounds, and native positive evidence all pass. The implementation
+removes substantial impossible-start work on both synthetic fixtures and the
+retained realistic corpus without exposing prefilter machinery in the public
+API.</p>
+<p>I7 does not solve assertion-heavy scans, prove the final activation policy,
+establish cross-engine superiority, or prevent result-heavy scaling from
+approaching linear growth over this range. Wuthering Heights remains an
+appropriate stable regression corpus at the current performance level. Larger
+and more diverse corpora should supplement it after I8 and later optimizations
+make this line too fast or too narrow to expose the next bottleneck.</p>
+</main><footer>Generated from <code>docs/evidence/i7/37f6981/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

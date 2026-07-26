@@ -1,0 +1,94 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wuthering Heights scale campaign · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../benchmarking/wuthering-scale.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/benchmarking/wuthering-scale.md</div></header><main><h1>Wuthering Heights scale campaign</h1>
+<p>The <code>I6-B1</code> campaign makes optimization work visible before it is admitted. It
+uses the original rmatch development corpus and word list, but reports only
+Rust-on-Rust engineering evidence. Cross-engine claims belong in the separate
+performance-measurements repository.</p>
+<h2>Workload</h2>
+<ul>
+<li>The corpus is the approximately 675 KiB Wuthering Heights fixture retained by
+the Java rmatch repository.</li>
+<li>The pattern source is that repository's list of words found in the book.</li>
+<li>Each run selects 1,000, 5,000, and 10,000 distinct non-empty lines in stable
+lexical order and escapes them as literal regular expressions.</li>
+<li>The complete corpus is scanned after every cache scrub. Compilation and scan
+medians are recorded separately.</li>
+<li>One warm-up and three measured scans keep the unoptimized baseline tractable.
+The focused I6 admission campaign uses three warm-ups and seven measurements.</li>
+</ul>
+<p>The scale lane intentionally complements rather than replaces the focused I6
+fixtures. Wuthering Heights reveals pattern-count scaling and cache sensitivity;
+small generated fixtures isolate the mechanism and retain exact event lists.
+It remains the stable development and regression corpus while the engine is
+still gaining large improvements. Once its runs become too short or too narrow
+to guide tuning, larger and more diverse corpora must supplement it rather than
+erase the historical line.</p>
+<p>A same-sized no-match control is useful when interpreting pattern scaling.
+Wuthering's event count grows with the selected word set; a no-match input
+separates result-delivery and fallback growth from the cost of scanning one
+additional input unit.</p>
+<h2>Cache pressure</h2>
+<p>Before each warm-up and measured scan, the runner writes one word per nominal
+64-byte line across a dedicated scrub buffer. The default buffer is 256 MiB,
+large enough to exceed ordinary workstation caches and the 128 MiB last-level
+cache of the current high-throughput runner. The receipt records the actual
+size and a digest proving that the scrub pass executed. This is controlled
+cache pressure, not a claim that software can portably flush every hardware
+cache.</p>
+<h2>Run and inspect</h2>
+<p>The corpus remains outside this repository. With sibling <code>rustmatch</code> and
+<code>rmatch</code> checkouts:</p>
+<pre><code class="language-console">scripts/i6-campaign.sh
+open target/benchmark-results/index.html
+</code></pre>
+<p>Override <code>RMATCH_REPOSITORY</code>, <code>PATTERN_SOURCE</code>, or <code>CORPUS_SOURCE</code> when the
+source checkout is elsewhere. <code>CORPUS_BYTES</code>, <code>CACHE_SCRUB_BYTES</code>, and
+<code>PATTERN_COUNTS</code> control an explicitly identified exploratory variant. The
+script refuses a dirty tree unless <code>I6_ALLOW_DIRTY=1</code> is deliberately set.
+<code>I6_CARGO_TARGET</code> selects and records a native target path when the host
+toolchain would otherwise produce an emulated binary. Always verify the output
+of <code>file</code> before making an architecture claim.</p>
+<p>The generated HTML table includes the revision, an RFC 3339 UTC measurement
+timestamp, runner, dimensions, event count, cache-state and fallback counts
+when available, selected candidate-start path, verified starts, compilation
+median, scan median, throughput, source paths, and source digests. Raw JSON
+receipts remain authoritative; the table is only a view. New comparison
+receipts carry the timestamps of both source measurements. Older retained
+receipts without timestamps remain readable and are shown as <code>not recorded</code>.</p>
+<p>For I7 admission, <code>scripts/i7-wuthering-campaign.sh</code> measures the same native
+candidate binary with start acceleration disabled and enabled. It uses three
+warmups and seven measured scans at 1,000, 5,000, and 10,000 patterns over the
+8 MiB expanded corpus, requires exact event evidence and a 10% plus 2 ms win at
+every point, and separately compares 10,000-pattern build time with the frozen
+pre-I7 revision. The generated <code>index.html</code> places both paths side by side.</p>
+<h2>Coarse CI tripwire</h2>
+<p><code>scripts/c2-wuthering-tripwire.sh</code> runs 5,000 patterns over a deterministic
+8 MiB expansion of the retained fixture on both PR base and candidate in one
+GitHub Actions job. The expanded size deliberately crosses I7's full-prefilter
+activation threshold. The job requires identical source hashes and event
+evidence, requires the default one-worker path, retries once in reverse order,
+and fails only when slowdown exceeds both 100% and 50 ms. This broad <code>C2</code>
+threshold is a smoke alarm for severe regressions. It is not an optimization
+admission result and does not replace the native stable-machine campaign or its
+critical analysis.</p>
+<p>The tripwire fails its GitHub Actions workflow when both limits are crossed.
+The project merge protocol treats that as blocking pending investigation, but
+the repository currently has no GitHub branch-protection rule that prevents an
+administrator from merging a failed workflow.</p>
+</main><footer>Generated from <code>docs/benchmarking/wuthering-scale.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

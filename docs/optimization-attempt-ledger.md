@@ -143,4 +143,4 @@ Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ra
 
 ## Regeneration
 
-Run `cargo xtask optimization-ledger` after changing the source ledger. `cargo xtask ci` runs `cargo xtask verify-optimization-ledger` and fails when the Markdown, HTML, or SVG is stale.
+Run `cargo xtask optimization-ledger` after changing the source ledger. `cargo xtask ci` runs `cargo xtask verify-optimization-ledger` and fails when the Markdown, HTML, SVG, or HTML evidence universe is stale.

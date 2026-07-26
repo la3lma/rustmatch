@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I6 evidence: bounded lazy deterministic-state cache · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../../../index.html">rustmatch evidence</a><div><a href="../../../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../../../index.html">HTML universe</a><a href="../../../../../../evidence/i6/406c1f5/README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/evidence/i6/406c1f5/README.md</div></header><main><h1>I6 evidence: bounded lazy deterministic-state cache</h1>
+<p>This directory retains the admission evidence for candidate
+<code>406c1f5294b8797fbc47eb0c37342244426c8a9f</code> against frozen baseline
+<code>9ef1b17cc6a865f44920c7c4f74f4a44b0b2c8f4</code>.</p>
+<h2>Environment correction</h2>
+<p>The first local campaign accidentally used an x86_64 Rust toolchain and
+x86_64 binaries under Rosetta on an Apple Silicon host. Those timings were
+discarded rather than relabelled. Every retained timing here was produced by a
+verified Mach-O arm64 benchmark binary on:</p>
+<ul>
+<li><code>rainstick.local</code></li>
+<li>Apple M2 Max</li>
+<li>12 logical CPUs</li>
+<li>macOS 26.5</li>
+<li>Rust 1.97.0 standard library for <code>aarch64-apple-darwin</code></li>
+<li>Cargo release profile</li>
+</ul>
+<p>The compiler itself ran under Rosetta while cross-building the native binary.
+That affects Rust build wall time, which is not a metric in these receipts. The
+reported compile metric is rustmatch's in-process pattern compilation and ran
+inside the native arm64 benchmark process.</p>
+<h2>Admission result</h2>
+<p>All focused gates passed with exact event equality. Times are medians.</p>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">Patterns</th><th style="text-align: right">Baseline</th><th style="text-align: right">Candidate</th><th style="text-align: right">Improvement</th><th style="text-align: right">Cache states</th><th style="text-align: right">Fallbacks</th></tr></thead><tbody>
+<tr><td>literal sparse</td><td style="text-align: right">64</td><td style="text-align: right">395.39 ms</td><td style="text-align: right">5.37 ms</td><td style="text-align: right">98.64%</td><td style="text-align: right">79</td><td style="text-align: right">0</td></tr>
+<tr><td>literal sparse</td><td style="text-align: right">256</td><td style="text-align: right">3,230.81 ms</td><td style="text-align: right">10.50 ms</td><td style="text-align: right">99.67%</td><td style="text-align: right">292</td><td style="text-align: right">0</td></tr>
+<tr><td>mixed sparse</td><td style="text-align: right">64</td><td style="text-align: right">389.98 ms</td><td style="text-align: right">5.00 ms</td><td style="text-align: right">98.71%</td><td style="text-align: right">253</td><td style="text-align: right">0</td></tr>
+<tr><td>literal dense</td><td style="text-align: right">64</td><td style="text-align: right">736.22 ms</td><td style="text-align: right">12.81 ms</td><td style="text-align: right">98.25%</td><td style="text-align: right">79</td><td style="text-align: right">0</td></tr>
+<tr><td>assertion bypass</td><td style="text-align: right">64</td><td style="text-align: right">614.60 ms</td><td style="text-align: right">574.85 ms</td><td style="text-align: right">6.46%</td><td style="text-align: right">0</td><td style="text-align: right">0</td></tr>
+</tbody></table>
+<p>The first native dense-literal comparison reported a 13.61% pattern-compile
+regression on a roughly 50 microsecond operation. The protocol's mandatory
+reverse-order repeat measured the candidate faster and passed. This is treated
+as timing noise, not hidden from the record.</p>
+<p>The 10,000-pattern Wuthering memory run produced the same 153,971 events and
+the same digest on both revisions. Median scan time fell from 45.014 seconds to
+32.827 milliseconds. Peak resident memory rose from 33,177,600 to 38,043,648
+bytes: 4,866,048 bytes (4.64 MiB) for the 4 MiB direct transition tables plus
+state-set and index metadata.</p>
+<h2>Scale results</h2>
+<p>The standard 8,192-state budget produced:</p>
+<table><thead><tr><th style="text-align: right">Patterns</th><th style="text-align: right">Corpus</th><th style="text-align: right">Events</th><th style="text-align: right">Scan median</th><th style="text-align: right">Cache states</th><th style="text-align: right">Fallback transitions</th></tr></thead><tbody>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">675,259 B</td><td style="text-align: right">8,809</td><td style="text-align: right">5.59 ms</td><td style="text-align: right">3,284</td><td style="text-align: right">0</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">675,259 B</td><td style="text-align: right">74,604</td><td style="text-align: right">16.24 ms</td><td style="text-align: right">8,192</td><td style="text-align: right">15,460</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">675,259 B</td><td style="text-align: right">153,971</td><td style="text-align: right">30.57 ms</td><td style="text-align: right">8,192</td><td style="text-align: right">107,407</td></tr>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">8 MiB</td><td style="text-align: right">109,693</td><td style="text-align: right">53.70 ms</td><td style="text-align: right">3,284</td><td style="text-align: right">0</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">8 MiB</td><td style="text-align: right">926,975</td><td style="text-align: right">148.17 ms</td><td style="text-align: right">8,192</td><td style="text-align: right">189,826</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">8 MiB</td><td style="text-align: right">1,912,854</td><td style="text-align: right">289.95 ms</td><td style="text-align: right">8,192</td><td style="text-align: right">1,332,071</td></tr>
+</tbody></table>
+<p>From 5,000 to 10,000 patterns, scan time is close to linear. That observation
+cannot be interpreted as pure search scaling: the number of emitted events
+also doubles, while the cache fills and exact fallback work grows sharply.</p>
+<p>An 8 MiB no-match control separates those factors. It used one cached state,
+two misses, no fallback, and zero events at every pattern count:</p>
+<table><thead><tr><th style="text-align: right">Patterns</th><th style="text-align: right">Scan median</th></tr></thead><tbody>
+<tr><td style="text-align: right">1,000</td><td style="text-align: right">39.44 ms</td></tr>
+<tr><td style="text-align: right">5,000</td><td style="text-align: right">40.53 ms</td></tr>
+<tr><td style="text-align: right">10,000</td><td style="text-align: right">39.55 ms</td></tr>
+</tbody></table>
+<p>The no-match scan is effectively independent of pattern count. Wuthering's
+upper-end growth is therefore dominated by result-bearing paths and cache
+pressure rather than a mandatory linear pattern-set scan at every position.</p>
+<h2>Profiling and cache tradeoff</h2>
+<p>The companion profile used a repeated 50 MiB Wuthering corpus and the same
+1,000/5,000/10,000 pattern sets. <code>xctrace</code> Time Profiler sampled at 1 ms. Raw
+trace bundles remain local because they are large; the correctness-bearing
+companion receipts and the extracted summary are retained here.</p>
+<p>The most useful trend is <code>compute_transition</code>: approximately 0.1% of samples
+at 1,000 patterns, 4.8% at 5,000, and 22.6% at 10,000. Resetting one start held
+near 266 ms in absolute sampled time across all three runs. This supports the
+hypothesis that exact fallback, not fixed per-position setup, drives much of
+the high-pattern incremental cost. Some optimized scan-loop samples are
+reported by Instruments only as <code>&lt;deduplicated_symbol&gt;</code>, so the profile is
+directional rather than an exact cost partition.</p>
+<p>Increasing the cache budget on the 10,000-pattern, 8 MiB workload showed:</p>
+<table><thead><tr><th style="text-align: right">Budget</th><th style="text-align: right">Materialized states</th><th style="text-align: right">Direct tables</th><th style="text-align: right">Fallbacks</th><th style="text-align: right">Scan median</th></tr></thead><tbody>
+<tr><td style="text-align: right">8,192</td><td style="text-align: right">8,192</td><td style="text-align: right">4 MiB</td><td style="text-align: right">1,332,071</td><td style="text-align: right">289.95 ms</td></tr>
+<tr><td style="text-align: right">16,384</td><td style="text-align: right">16,384</td><td style="text-align: right">8 MiB</td><td style="text-align: right">370,921</td><td style="text-align: right">237.58 ms</td></tr>
+<tr><td style="text-align: right">32,768</td><td style="text-align: right">28,100</td><td style="text-align: right">13.72 MiB</td><td style="text-align: right">0</td><td style="text-align: right">243.08 ms</td></tr>
+</tbody></table>
+<p>Eliminating fallback entirely was not fastest. The 16,384-state variant was
+18.1% faster than the default, while 32,768 paid enough cache cost to lose part
+of that gain. The 8,192-state default remains the conservative 4 MiB choice;
+callers with this workload can select 16,384 explicitly. I7 should reduce
+impossible start work before rustmatch spends more memory by default.</p>
+<h2>Critical conclusion</h2>
+<p>I6 is admitted because it preserves exact semantics, clears every declared
+positive and guard threshold, and exchanges a measured 4.64 MiB peak-RSS cost
+for a very large native Rust scan improvement. It does not establish constant
+time for result-heavy pattern growth, accelerate assertion-bearing sets, prove
+the best cache representation, or replace cross-engine benchmarking. The
+retained no-match control and profile narrow the next questions; they do not
+turn this campaign into a general performance claim.</p>
+<p>The Wuthering Heights corpus remains the stable development and regression
+line while performance is still changing quickly. Larger and more diverse
+corpora become necessary once this fixture no longer provides enough timing
+resolution or representative pressure.</p>
+</main><footer>Generated from <code>docs/evidence/i6/406c1f5/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

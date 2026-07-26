@@ -1,0 +1,321 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rustmatch implementation roadmap · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../roadmap.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/roadmap.md</div></header><main><h1>rustmatch implementation roadmap</h1>
+<p><strong>Last reviewed:</strong> 2026-07-26</p>
+<p><strong>Implementation increments started:</strong> <strong>10/12</strong></p>
+<p><strong>Implementation increments complete:</strong> <strong>10/12</strong></p>
+<p><strong>Active:</strong> none; B2 review v8 authorizes no optimization experiment</p>
+<p><strong>Next evidence goal:</strong> review and freeze one read-only diagnostic that
+distinguishes duplicated memory traffic from physical-core, SMT, and scheduler
+placement; no G9 timing or production change may begin before that review</p>
+<p>This page is the at-a-glance map from the completed product planning to a
+tested rustmatch release. The detailed requirements, architecture, use cases,
+evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
+This graph shows dependency and status; it does not replace those definitions.
+Roadmap IDs identify evidence-bearing milestones, not required one-to-one pull
+request boundaries. The README's bootstrap sequence favors small vertical PRs
+that keep the system executable.</p>
+<blockquote>
+<p><strong>Hard optimization rule:</strong> Results from Java rmatch, RegexSet, Hyperscan, or
+any other competitor can nominate a Rust experiment, but cannot advance an
+optimization milestone. The acceptance baseline is the frozen, existing
+Rustmatch production path, not the competitor. Every performance-motivated
+change must preserve results and show a positive Rustmatch improvement beyond
+a predeclared noise threshold. Neutral, inconclusive, or slower results fail
+the gate. Semantic extensions require correctness and applicable
+non-regression evidence, not a speedup.</p>
+</blockquote>
+<p>The system-level target is stronger than the admission rule for one change:
+rustmatch should ultimately exceed Java rmatch on representative workloads
+where both engines enumerate the same events. Strong absolute throughput is
+progress, but does not by itself satisfy that reference gate.</p>
+<h2>Dependency graph</h2>
+<p>Select any task or gate to jump to its detailed description in the README.
+Color carries status or role, so task boxes do not repeat state labels.
+Every task and gate begins with a unique symbolic short name. These IDs are
+stable references for commits, pull requests, evidence manifests, and roadmap
+discussion even when a task's wording or color changes.</p>
+<pre><code class="language-mermaid">flowchart TB
+    subgraph LEGEND[Color legend]
+        L0["Planned"]
+        L1["Complete"]
+        L2["Available for execution"]
+        L3["Active"]
+        L4["Evidence and testing"]
+        L5["Gate or review"]
+        L6["Blocked or failed"]
+    end
+
+    subgraph PLAN[Planning foundation]
+        P0["P0 Product requirements and scope"]
+        P1["P1 Architecture and executable-spine strategy"]
+        P2["P2 Use-case evidence contracts"]
+        Q0["Q0 Documentation and Rust hygiene policy"]
+        Q1["Q1 Community health and repository governance"]
+    end
+
+    subgraph BOOT[Bootstrap and first executable system]
+        I0["I0 Semantic charter and ADRs"]
+        F0["F0 Fixture schema and Java 2.0.0-RC1 oracle JSONL"]
+        W0["W0 Cargo workspace and quality tooling"]
+        A0["A0 Public builder, input, span, and sink API"]
+        I1["I1 Executable ASCII-literal spine&lt;br/&gt;HIR -&gt; shared NFA -&gt; database -&gt; scan -&gt; events"]
+        C0["C0 Mandatory functional PR CI"]
+        C1["C1 Coarse CI performance tripwire"]
+        C2["C2 Wuthering Heights CI performance tripwire"]
+        B0["B0 RegexSet-aware benchmark adapter&lt;br/&gt;and correctness smoke"]
+        E0["E0 UC evidence summary command"]
+    end
+
+    subgraph SEM[Vertically integrated semantic growth]
+        I2["I2 ASCII predicates"]
+        I3["I3 Alternation and grouping"]
+        I4["I4 Repetition and longest-match semantics"]
+        I5["I5 UTF-16, flags, anchors, and boundaries"]
+        S0["S0 Documented rmatch 2.x semantic parity gate"]
+    end
+
+    subgraph OPT[Optimization and scale]
+        X0["X0 Authoritative external base/branch&lt;br/&gt;regression campaign"]
+        I6["I6 Lazy deterministic-state cache"]
+        G6["G6 Rust performance proof for I6&lt;br/&gt;correctness parity + positive win beyond noise&lt;br/&gt;competitor evidence does not count"]
+        I7["I7 Safe start acceleration and literal prefilter"]
+        G7["G7 Rust performance proof for I7&lt;br/&gt;correctness parity + positive win beyond noise&lt;br/&gt;competitor evidence does not count"]
+        I8["I8 Parallel pattern partitions"]
+        G8["G8 Rust performance proof for I8&lt;br/&gt;correctness parity + positive win beyond noise&lt;br/&gt;competitor evidence does not count"]
+        I9["I9 Full benchmark-harness integration"]
+        B1["B1 Correctness-gated cross-engine receipts&lt;br/&gt;and complete thread sweeps"]
+        B2["B2 Full-dataset analysis&lt;br/&gt;and reviewed hypotheses"]
+        G9["G9 Existing-Rustmatch candidate gate&lt;br/&gt;correctness + positive win beyond noise"]
+    end
+
+    subgraph HARD[Hardening]
+        H1["H1 Property, fuzz, Miri, and soak evidence"]
+        H2["H2 Public API and rustdoc audit"]
+        H3["H3 Dependency, license, security, and MSRV audit"]
+        I10["I10 Hardening gate"]
+    end
+
+    subgraph RELEASE[Release preparation]
+        R1["R1 Packaged-artifact semantic and consumer tests"]
+        R2["R2 Exact-artifact performance campaign"]
+        R3["R3 Compatibility matrix, changelog, and package review"]
+        I11["I11 Release gate"]
+        REL["REL Publish crate, signed tag, and GitHub release"]
+    end
+
+    P0 --&gt; I0
+    P1 --&gt; I0
+    P2 --&gt; I0
+    Q0 --&gt; W0
+    Q1 --&gt; W0
+
+    I0 --&gt; F0
+    I0 --&gt; A0
+    F0 --&gt; I1
+    W0 --&gt; I1
+    A0 --&gt; I1
+    I1 --&gt; B0
+    I1 --&gt; E0
+    I1 --&gt; C0
+    I1 --&gt; C1
+
+    B0 --&gt; I2
+    E0 --&gt; I2
+    C0 --&gt; I2
+    C1 --&gt; I2
+    I2 --&gt; I3 --&gt; I4 --&gt; I5 --&gt; S0
+    F0 -. differential evidence grows with every slice .-&gt; S0
+    E0 -. every slice must expose its UC evidence .-&gt; S0
+
+    B0 --&gt; X0
+    C1 -. severe-anomaly signal only .-&gt; X0
+    S0 --&gt; I6 --&gt; G6 --&gt; C2 --&gt; I7 --&gt; G7 --&gt; I8 --&gt; G8 --&gt; I9 --&gt; B1
+    X0 -. authoritative Rust performance evidence .-&gt; G6
+    X0 -. authoritative Rust performance evidence .-&gt; G7
+    X0 -. authoritative Rust performance evidence .-&gt; G8
+
+    B1 --&gt; B2 --&gt; G9
+    G9 --&gt; H1
+    G9 --&gt; H2
+    G9 --&gt; H3
+    H1 --&gt; I10
+    H2 --&gt; I10
+    H3 --&gt; I10
+
+    I10 --&gt; R1
+    I10 --&gt; R2
+    I10 --&gt; R3
+    R1 --&gt; I11
+    R2 --&gt; I11
+    R3 --&gt; I11
+    I11 --&gt; REL
+
+    classDef planned fill:#e5e7eb,stroke:#6b7280,color:#111827,stroke-width:1px;
+    classDef complete fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;
+    classDef available fill:#fef9c3,stroke:#ca8a04,color:#422006,stroke-width:3px;
+    classDef active fill:#ffedd5,stroke:#ea580c,color:#431407,stroke-width:3px;
+    classDef evidence fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:2px;
+    classDef gate fill:#f3e8ff,stroke:#9333ea,color:#3b0764,stroke-width:3px;
+    classDef blocked fill:#fee2e2,stroke:#dc2626,color:#450a0a,stroke-width:3px;
+
+    class L0 planned;
+    class L1 complete;
+    class L2 available;
+    class L3 active;
+    class L4 evidence;
+    class L5 gate;
+    class L6 blocked;
+
+    class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
+    class B1,B2 complete;
+    class X0,H1,R1,R2 evidence;
+    class G9 blocked;
+    class I10,I11 gate;
+    class H2,H3,R3,REL planned;
+
+    click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
+    click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
+    click P2 "https://github.com/la3lma/rustmatch/blob/main/README.md#use-case-evidence-contract" "Open evidence contracts"
+    click Q0 "https://github.com/la3lma/rustmatch/blob/main/CONTRIBUTING.md" "Open documentation and Rust hygiene policy"
+    click Q1 "https://github.com/la3lma/rustmatch/blob/main/GOVERNANCE.md" "Open community health and governance policy"
+    click I0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-0-time-box-the-semantic-charter" "Open I0 description"
+    click F0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-0-time-box-the-semantic-charter" "Open fixture and oracle description"
+    click W0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open workspace description"
+    click A0 "https://github.com/la3lma/rustmatch/blob/main/README.md#public-api-requirements" "Open public API requirements"
+    click I1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-1-executable-ascii-literal-spine" "Open I1 description"
+    click C0 "https://github.com/la3lma/rustmatch/blob/main/README.md#fast-functional-pr-ci" "Open functional CI policy"
+    click C1 "https://github.com/la3lma/rustmatch/blob/main/README.md#coarse-ci-performance-tripwire" "Open CI performance policy"
+    click C2 "https://github.com/la3lma/rustmatch/blob/main/docs/benchmarking/wuthering-scale.md#coarse-ci-tripwire" "Open Wuthering CI tripwire"
+    click B0 "https://github.com/la3lma/rustmatch/blob/main/docs/benchmarking/regexset-comparison.md" "Open RegexSet benchmark contract"
+    click E0 "https://github.com/la3lma/rustmatch/blob/main/README.md#use-case-evidence-contract" "Open evidence command description"
+    click I2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-2-ascii-predicates-through-the-spine" "Open I2 description"
+    click I3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-3-alternation-and-grouping-through-the-spine" "Open I3 description"
+    click I4 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-4-repetition-and-general-longest-match-execution" "Open I4 description"
+    click I5 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-5-assertions-and-exact-character-behavior" "Open I5 description"
+    click S0 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-5-assertions-and-exact-character-behavior" "Open semantic parity gate"
+    click X0 "https://github.com/la3lma/rustmatch/blob/main/README.md#authoritative-external-regression-testing" "Open external regression policy"
+    click I6 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-6-lazy-deterministic-state-cache" "Open I6 description"
+    click G6 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-6-lazy-deterministic-state-cache" "Open I6 performance gate"
+    click I7 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-7-safe-start-acceleration-and-literal-prefilter" "Open I7 description"
+    click G7 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-7-safe-start-acceleration-and-literal-prefilter" "Open I7 performance gate"
+    click I8 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-8-parallel-pattern-partitions" "Open I8 description"
+    click G8 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-8-parallel-pattern-partitions" "Open I8 performance gate"
+    click I9 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-9-benchmark-harness-integration" "Open I9 description"
+    click B1 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b1-cross-engine-campaign.md" "Open frozen B1 campaign protocol"
+    click B2 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md" "Open full-dataset analysis protocol"
+    click G9 "https://github.com/la3lma/rustmatch/blob/main/docs/experiments/b2-competitor-win-optimization.md#g9-experiment-loop-and-candidate-admission-gate" "Open current-Rustmatch admission gate"
+    click H1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open hardening evidence"
+    click H2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open API audit description"
+    click H3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open dependency audit description"
+    click I10 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-10-hardening" "Open I10 gate"
+    click R1 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-11-release-preparation" "Open packaged test description"
+    click R2 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-11-release-preparation" "Open release performance description"
+    click R3 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-11-release-preparation" "Open release documentation description"
+    click I11 "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-11-release-preparation" "Open I11 gate"
+    click REL "https://github.com/la3lma/rustmatch/blob/main/README.md#increment-11-release-preparation" "Open publication description"
+</code></pre>
+<p>Solid arrows show required dependencies. Dotted arrows show evidence that
+accumulates across several increments; they are intentionally retained as a
+separate visual language from the execution path.</p>
+<p>I6 through I8 record bootstrap optimizations completed before the systematic B1
+campaign and before the B2 gate was adopted. They are historical evidence, not
+precedent for bypassing the current sequence. The stable-host B1 campaign and
+reviewed B2 analysis are now complete. Their durable
+<a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a> is maintained at
+<code>docs/optimization-and-scale.md</code>. The generated
+<a href="optimization-attempt-ledger.html">Optimization attempt ledger</a> retains every
+accepted and rejected attempt, an improvement-only progress chart, and the
+versioned Java rmatch, RegexSet, and Hyperscan scorecard. B2-H-0001 completed
+with exact semantics but
+regressed both targets by about 28%; its shared-candidate revision is rejected
+and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the
+median, so no persistent-pool candidate was authorized. B2-H-0003 then measured
+only 1.7699% and 1.4288% median removable partition skew, unstable slowest
+partitions, and no stable compile-time predictor. Its load-aware partitioning
+proposal is also rejected without production code. The refreshed review
+also rejects B2-H-0005: doubling the cache budget reduced fallback by about 5%
+at both endpoints, but paired throughput changed only +0.43% at sixteen workers
+and -0.83% at twenty-four workers while hardware cache-miss rate worsened by
+roughly 20% to 26%. No adaptive cache policy or diagnostic revision is
+admitted. B2-H-0004 then measured external callback omission at only -0.16%
+median scan-time opportunity at sixteen workers and +0.08% at thirty-two
+workers; event-vector growth consumed only 0.033-0.078 ms. Exact buffering and
+delivery batching are rejected without production code. The v8 review
+authorizes no next hypothesis. Its highest-value follow-up is a reviewed
+diagnostic that separates duplicated memory traffic from CPU placement before
+any G9 timing begins.</p>
+<h2>Milestone ledger</h2>
+<p>The graph is intentionally conservative. A milestone changes to <code>Active</code>
+only after implementation or fixture work exists and at least one named
+evidence command runs. It changes to <code>Complete</code> only when its README exit criteria
+and use-case evidence bundle pass from a clean checkout.</p>
+<table><thead><tr><th>ID</th><th>Milestone</th><th>Status</th><th>Evidence needed for <code>Complete</code></th></tr></thead><tbody>
+<tr><td>P0</td><td>Product requirements and scope</td><td>Complete</td><td>PRD, goals, non-goals, requirements, and release criteria in README</td></tr>
+<tr><td>P1</td><td>Architecture and executable-spine strategy</td><td>Complete</td><td>Architecture, boundaries, ADR backlog, and vertical delivery strategy in README</td></tr>
+<tr><td>P2</td><td>Use-case evidence contracts</td><td>Complete</td><td>Evidence classes plus UC-0 through UC-12 proof requirements in README</td></tr>
+<tr><td>Q0</td><td>Documentation and Rust hygiene policy</td><td>Complete</td><td>Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks</td></tr>
+<tr><td>Q1</td><td>Community health and repository governance</td><td>Complete</td><td>Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked</td></tr>
+<tr><td>I0</td><td>Time-boxed semantic charter</td><td>Complete</td><td>Accepted UTF-16 and event ADRs, versioned fixture schema, exact Maven Central <code>no.rmz:rmatch:2.0.0-RC1</code> oracle, seven first-slice cases, deterministic golden results, and <code>cargo xtask ci</code> evidence</td></tr>
+<tr><td>F0</td><td>Fixture schema and Java oracle</td><td>Complete</td><td>Raw UTF-16 JSONL schema, structured rejection output, exact artifact checksum, two-run determinism, golden results, manifest hashes, and mandatory CI comparison</td></tr>
+<tr><td>W0</td><td>Cargo workspace and quality tooling</td><td>Complete</td><td>Rust 2024 workspace, pinned <code>1.97.0</code> toolchain, <code>1.85.0</code> MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run</td></tr>
+<tr><td>A0</td><td>Minimal public API</td><td>Complete</td><td>Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine</td></tr>
+<tr><td>I1</td><td>Executable ASCII-literal spine</td><td>Complete</td><td>Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, benchmark smoke, and E0 evidence summary</td></tr>
+<tr><td>C0</td><td>Mandatory functional PR CI</td><td>Complete</td><td>Required GitHub quality gate runs formatting, Clippy, tests, Rustdoc, MSRV, the pinned Java oracle, all implemented differential tiers, and benchmark smoke</td></tr>
+<tr><td>B0</td><td>RegexSet-aware benchmark smoke</td><td>Complete</td><td>Correctness-gated RS-NATIVE set-membership and overlap-preserving RS-EVENTS lanes pass against pinned <code>regex</code> 1.13.1; systematic stable-machine scaling is deferred to X0/B1</td></tr>
+<tr><td>C1</td><td>Coarse CI performance tripwire</td><td>Complete</td><td>Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner base/head comparator, catastrophic-slowdown tests, one automatic reverse-order retry, retained artifacts, and three green hosted-runner calibration attempts</td></tr>
+<tr><td>E0</td><td>UC evidence summary command</td><td>Complete</td><td><code>cargo xtask evidence</code> runs the oracle, differential adapter, and benchmark smoke, then reports all UC-0 through UC-12 as partial or not started with named evidence</td></tr>
+<tr><td>I2</td><td>ASCII predicates</td><td>Complete</td><td>Dot, classes, ranges, negation, escapes, and six ASCII shorthands run through interned 128-bit predicates; exhaustive truth tables, bounded parser totality, a fuzz target, and 12 Java differential fixtures pass as <code>I2-E1</code></td></tr>
+<tr><td>I3</td><td>Alternation and grouping</td><td>Complete</td><td>Normalized recursive HIR, Thompson branching, nullable/minimum-length analysis, public composition fixtures, epsilon-closure invariants, bounded HIR/NFA property comparison, and 17 pinned Java cases pass as <code>I3-E1</code></td></tr>
+<tr><td>I4</td><td>Repetition and longest match</td><td>Complete</td><td>Unary and counted repetition run through normalized HIR and Thompson NFA loops; public overlap, ambiguity, nullable-loop, 1,000-bound, property, and recovery tests pass; 29 pinned Java cases pass as <code>I4-E1</code>; full repository and performance gates are green</td></tr>
+<tr><td>I5</td><td>UTF-16, flags, and assertions</td><td>Complete</td><td>Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as <code>I5-E1</code>; NFA-native line anchors and ASCII word boundaries, exhaustive boundary classification, assertion adversaries, and 28 differential cases pass as <code>I5-E2</code>; assertion-free scans retain a separate hot path</td></tr>
+<tr><td>S0</td><td>Documented rmatch 2.x semantic parity gate</td><td>Complete</td><td>The complete documented consuming-language suite passes through the public Rust API against the pinned Java <code>2.0.0-RC1</code> oracle; pure zero-width rejection remains the explicit documented product difference</td></tr>
+<tr><td>I6</td><td>Lazy deterministic-state cache</td><td>Complete</td><td>Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as <code>I6-P1</code>/<code>I6-B1</code></td></tr>
+<tr><td>C2</td><td>Wuthering Heights CI performance tripwire</td><td>Complete</td><td>PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs</td></tr>
+<tr><td>I7</td><td>Safe prefilter</td><td>Complete</td><td>Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as <code>I7-P1</code>/<code>I7-B1</code></td></tr>
+<tr><td>I8</td><td>Parallel partitions</td><td>Complete</td><td>Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the <a href="evidence/i8/ef61173/README.html">I8 evidence package</a></td></tr>
+<tr><td>I9</td><td>Benchmark integration</td><td>Complete</td><td>Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the <a href="evidence/i9/fdd5efa/README.html">I9 evidence package</a></td></tr>
+<tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
+<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed seven-entry registry, five rejected results through B2-H-0004, and the hash-bound <a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a>; the v8 ranked queue and authorization list are empty</td></tr>
+<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Blocked pending reviewed hypothesis</td><td>B2-H-0001, B2-H-0002, B2-H-0003, B2-H-0005, and B2-H-0004 are complete and rejected; no production candidate is admitted, and no new timing may begin until a fresh review authorizes exactly one bounded hypothesis against baseline <code>da755b0069c94d4da9db74a8778dd9932fc64671</code>; every 3% guard ceiling, normal 5% gain gate, and lab note remain mandatory</td></tr>
+<tr><td>I10</td><td>Hardening</td><td>Planned</td><td>Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit</td></tr>
+<tr><td>I11</td><td>Release preparation</td><td>Planned</td><td>Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete</td></tr>
+<tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>
+</tbody></table>
+<h2>Status update protocol</h2>
+<p>Yellow means that a task's declared prerequisites are satisfied and the task
+can be started. It does not mean that the roadmap has selected that task as the
+next or most important work. When several tasks are yellow, the next task is a
+separate decision based on current value, risk reduction, evidence needs,
+available capacity, and explicit maintainer direction. Starting the selected
+task changes it to orange; the remaining executable candidates stay yellow.</p>
+<p>When work begins or a gate is completed:</p>
+<ol>
+<li>Keep the node's symbolic short name stable. New tasks and gates must receive
+a unique short name before they are added.</li>
+<li>Change the node's Mermaid class to <code>available</code>, <code>active</code>, <code>complete</code>, or
+<code>blocked</code> as appropriate; node labels remain free of repeated status prose.</li>
+<li>Update the milestone ledger with a link to the durable evidence.</li>
+<li>Update the summary counts at the top of this page and in the README link.</li>
+<li>Verify that the node still links to its detailed README description.</li>
+<li>Commit the roadmap update with the implementation or evidence that justifies
+it, not as an unsupported progress claim.</li>
+</ol>
+<p>The roadmap status is evidence-driven. Code volume, elapsed time, and a green
+unit test for one disconnected layer do not by themselves move a box forward.</p>
+</main><footer>Generated from <code>docs/roadmap.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

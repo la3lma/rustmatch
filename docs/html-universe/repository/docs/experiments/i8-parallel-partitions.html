@@ -1,0 +1,158 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>I8 experiment: explicit parallel pattern partitions · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/i8-parallel-partitions.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/i8-parallel-partitions.md</div></header><main><h1>I8 experiment: explicit parallel pattern partitions</h1>
+<h2>Status</h2>
+<p>Complete. The protocol was frozen before production implementation; its
+semantics, fixtures, thresholds, resource accounting, and baseline were not
+relaxed after candidate results were known. Candidate
+<code>ef6117368cd70b23fcfede1b26525c5f5366f53a</code> passed every correctness,
+performance, resource, build, and lifecycle gate. The retained receipts and
+critical analysis are in the
+<a href="../evidence/i8/ef61173/README.html"><code>I8 evidence package</code></a>.</p>
+<h2>Baseline and comparison design</h2>
+<ul>
+<li>Frozen pre-I8 revision:
+<strong><code>f7a5e95588b96653f8cf3cb2445c6c17f571c4fe</code></strong>.</li>
+<li>Semantic comparison: one final I8 release binary built with one requested
+worker and with every worker count in the declared sweep.</li>
+<li>Default-path regression comparison: the frozen pre-I8 revision against the
+final candidate with one worker on the same identified runner.</li>
+<li>Every timing pair uses the same physical allocation, validates complete
+event evidence before timing is admitted, scrubs an identified cache working
+set, and retains raw JSON receipts.</li>
+<li>Java rmatch's parallelism and worker heuristic are hypotheses only. They do
+not count as Rust admission evidence.</li>
+</ul>
+<h2>Proposed execution contract</h2>
+<ul>
+<li><code>MatcherBuilder</code> exposes an explicit requested worker count. The default is
+one, and zero is rejected at build time.</li>
+<li>The actual partition count is the smaller of the requested count and the
+number of registered patterns. No arbitrary upper cap is imposed.</li>
+<li>Pattern assignment is deterministic from registration order and balances
+partition pattern counts to within one.</li>
+<li>Each partition owns an immutable compiled database and conservative
+prefilter. A scan may read those partitions concurrently.</li>
+<li>The configured deterministic-state budget remains a total per-scan budget,
+divided deterministically among partitions. Parallelism may not silently
+multiply the documented cache-table allowance.</li>
+<li>One-partition scans use the established direct path without spawning a
+thread or buffering match events.</li>
+<li>Multi-partition scans use scoped threads. The caller thread performs one
+partition; additional partitions use named scoped workers that are joined
+before <code>scan</code> returns.</li>
+<li>The existing infallible <code>FnMut(Match)</code> sink is invoked serially on the caller
+thread after every partition scan succeeds. Callback order remains
+unspecified.</li>
+<li>A sink panic propagates only after workers have been joined. A worker-spawn
+failure is returned before any callback is invoked. An internal worker panic
+is joined and resumed on the caller thread rather than detached or hidden.</li>
+<li>Partition-local result collection is therefore proportional to emitted
+events in explicit multi-worker mode. Buffered event count and bytes must be
+reported. A concurrent or fallible sink API requires a separate public-API
+decision and is not smuggled into I8.</li>
+<li>No persistent thread pool is introduced in I8. Repeated scans pay scoped
+worker startup and teardown, which must be measured honestly.</li>
+</ul>
+<h2>Correctness and lifecycle gate</h2>
+<ul>
+<li>Complete normalized event multisets must be identical for requested worker
+counts 1, 2, 3, 4, 8, 12, 24, and an oversubscribed value larger than the
+pattern count.</li>
+<li>The worker-count matrix covers:
+<ul>
+<li>literals with overlapping starts and duplicate text under distinct IDs;</li>
+<li>alternation, groups, greedy repetition, predicates, and case folding;</li>
+<li>UTF-16 supplementary characters and isolated surrogates;</li>
+<li>line anchors and word boundaries;</li>
+<li>empty input and input ending at a match;</li>
+<li>filterable, dense, mixed, unfilterable, and assertion-bearing sets.</li>
+</ul>
+</li>
+<li>Deterministic generated pattern families compare every worker count with the
+one-worker reference path.</li>
+<li>Repeated build, scan, and drop cycles must complete without retained workers
+or changing event evidence.</li>
+<li>A controlled worker panic must be joined and propagated without deadlock.</li>
+<li>A controlled spawn failure must return a typed error before callback
+delivery. Test-only injection may be used to prove this otherwise rare path.</li>
+<li>A callback panic must propagate on the caller thread after all workers have
+stopped; the matcher remains reusable when the caller catches that panic.</li>
+<li>The public matcher remains safe to share across caller-managed threads. Two
+simultaneous scans of one matcher must preserve each scan's event multiset.</li>
+</ul>
+<p>Any event difference, leaked worker, detached panic, callback before a scan
+error, or deadlock rejects I8 regardless of speed.</p>
+<h2>Native performance campaign</h2>
+<p>The retained Wuthering Heights campaign uses 1,000, 5,000, and 10,000 literal
+patterns over the 8 MiB deterministic corpus expansion. The native worker
+sweep is 1, 2, 3, 4, 6, 8, 12, 18, and 24 requested workers. Every point uses at
+least three warmups and seven measured scans and records the actual partition
+count.</p>
+<p>The 10,000-pattern workload is the frozen positive target. Its best repeatable
+multi-worker result must improve over the candidate's one-worker median by at
+least 20% and 20 ms; both conditions apply. A threshold crossing is repeated
+in reverse order. The selected winner must also repeat within 5% on a second
+campaign before admission.</p>
+<p>The 1,000- and 5,000-pattern sweeps diagnose startup cost, cache pressure, and
+saturation. They are not required to improve because parallel execution is
+explicit, but every result and any loss must be reported. A short-input guard
+must demonstrate why callers should retain one worker for small scans.</p>
+<p>The frozen pre-I8 revision and final one-worker candidate are compared on the
+same 1,000/5,000/10,000 Wuthering line. A default scan regression fails only
+when it exceeds both 3% and 1 ms after reverse-order confirmation. This protects
+the existing default without turning sub-millisecond build or scan noise into
+a false failure.</p>
+<h2>Resource and build gate</h2>
+<ul>
+<li>No unsafe Rust and no runtime dependency are added for worker management.</li>
+<li>Actual workers never exceed the smaller of requested workers and patterns.</li>
+<li>The sum of deterministic direct-cache tables may not exceed the bytes
+implied by the configured total state budget.</li>
+<li>Retained databases, retained prefilters, scan-local candidate bitmaps,
+worker stacks where observable, buffered events, and peak resident memory
+are reported separately.</li>
+<li>One-worker scans allocate no partition-result buffer and spawn no worker.</li>
+<li>Median one-worker build time may regress from the frozen baseline only when
+both 3% and 1 ms are exceeded after reverse-order confirmation.</li>
+<li>Multi-partition build time and retained memory are reported for every worker
+count. They may grow because patterns are compiled into separate databases,
+but the growth must be explained and cannot be hidden in scan throughput.</li>
+</ul>
+<h2>Critical analysis requirement</h2>
+<p>Passing the positive target is necessary but insufficient. The final evidence
+must explain absolute scan and build time, speedup and efficiency per worker,
+where scaling saturates, event-buffer cost, candidate density per partition,
+cache states and fallback pressure, CPU utilization, memory-bandwidth evidence
+where available, scheduler/startup cost, peak memory, and every losing point.
+Profiles must distinguish partition scanning, worker lifecycle, result
+collection, and serialized callback delivery.</p>
+<p>The final default remains one worker unless Rust evidence supports an automatic
+policy in a separate decision. A green 12-core result is not permission to
+encode one machine's optimum as a universal heuristic.</p>
+<h2>Result</h2>
+<p>The confirmed 10,000-pattern positive workload measured 249.801 ms with one
+worker and 99.680 ms with eight workers, a 60.09% improvement and 150.121 ms
+absolute saving. The eight-worker repeat was 99.635 ms, 0.04% from the first
+result. All points emitted the same 1,912,854-event multiset.</p>
+<p>The complete sweep saturates at six to eight workers and declines thereafter.
+The total cache table remains exactly 4 MiB, but multi-worker scans buffer
+43.78 MiB of events at this match density and duplicate prefilter candidate
+storage per partition. The public default therefore remains one worker, while
+callers may select a measured worker count explicitly.</p>
+</main><footer>Generated from <code>docs/experiments/i8-parallel-partitions.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

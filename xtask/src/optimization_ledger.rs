@@ -91,6 +91,7 @@ pub fn render() -> Result<(), String> {
     write_output(MARKDOWN, &generated.markdown)?;
     write_output(HTML, &generated.html)?;
     write_output(SVG, &generated.svg)?;
+    crate::html_universe::render()?;
     println!("rendered {MARKDOWN}, {HTML}, and {SVG}");
     Ok(())
 }
@@ -100,6 +101,7 @@ pub fn verify() -> Result<(), String> {
     verify_output(MARKDOWN, &generated.markdown)?;
     verify_output(HTML, &generated.html)?;
     verify_output(SVG, &generated.svg)?;
+    crate::html_universe::verify()?;
     println!("optimization ledger is current");
     Ok(())
 }
@@ -362,7 +364,7 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
         "\n## Regeneration\n\nRun `cargo xtask optimization-ledger` after changing \
          the source ledger. `cargo xtask ci` runs \
          `cargo xtask verify-optimization-ledger` and fails when the Markdown, \
-         HTML, or SVG is stale."
+         HTML, SVG, or HTML evidence universe is stale."
     )
     .expect("write to string");
     output
@@ -377,6 +379,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
             "rejected" => "rejected",
             _ => "inconclusive",
         };
+        let evidence_href = crate::html_universe::ledger_evidence_href(&attempt.evidence);
         write!(
             attempts,
             "<article class=\"attempt\"><div class=\"attempt-head\"><div><span class=\"eyebrow\">{}</span>\
@@ -396,7 +399,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
             html_escape(&attempt.date),
             html_escape(short_revision(&attempt.baseline_revision)),
             html_escape(short_revision(&attempt.candidate_revision)),
-            html_escape(&attempt.evidence)
+            html_escape(&evidence_href)
         )
         .expect("write to string");
     }
@@ -476,7 +479,9 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
          <header><div class=\"eyebrow\">rustmatch · performance evidence</div>\
          <h1>{title}</h1><p class=\"lede\">A proof-oriented history of what made \
          Rustmatch faster, what failed, and where it stands against Java rmatch, \
-         RegexSet, and Hyperscan.</p><div class=\"stamp\">Reviewed {reviewed}</div></header>\
+         RegexSet, and Hyperscan.</p><div class=\"top-links\">\
+         <a href=\"html-universe/index.html\">Browse the HTML evidence universe</a></div>\
+         <div class=\"stamp\">Reviewed {reviewed}</div></header>\
          <main><section class=\"policy\"><div class=\"section-kicker\">Non-negotiable gate</div>\
          <p>{policy}</p></section><section><div class=\"section-kicker\">Merged only</div>\
          <h2>Efficiency progress</h2><div class=\"chart\">{svg}</div>\
@@ -490,6 +495,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
          {comparisons}<section><div class=\"section-kicker\">Evidence-ranked queue</div>\
          <h2>Plausible future optimizations</h2><ol class=\"candidate-list\">{candidates}</ol>\
          </section><footer>Generated from <code>docs/optimization-attempts.json</code>. \
+         <a href=\"html-universe/index.html\">Browse retained documents as HTML</a>. \
          Run <code>cargo xtask optimization-ledger</code>; CI rejects stale output.</footer>\
          </main></body></html>",
         title = html_escape(&ledger.title),
@@ -635,7 +641,7 @@ fn verify_output(path: &str, expected: &str) -> Result<(), String> {
 const CSS: &str = r#"
 :root{--ink:#10251f;--muted:#587067;--paper:#f6f0e2;--cream:#fffaf0;--green:#0b6b5d;--rust:#ba4b2f;--line:#c8d5cd}
 *{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 4%,#f7d8b6 0,transparent 27rem),linear-gradient(145deg,#f7f0df,#dcece4);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.55}
-header,main{width:min(1160px,calc(100% - 40px));margin:auto}header{padding:80px 0 52px;border-bottom:1px solid rgba(16,37,31,.2);position:relative}h1{font-size:clamp(3rem,8vw,7.2rem);line-height:.9;max-width:950px;margin:.15em 0;letter-spacing:-.055em}h2{font-size:clamp(2rem,4vw,3.5rem);line-height:1;margin:.2em 0 .7em}h3{font-size:1.5rem;margin:.15em 0}.eyebrow,.section-kicker,.status,.stamp,.meta,small,th,.rank{font-family:"Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.1em}.eyebrow,.section-kicker{font-weight:700;color:var(--rust);font-size:.78rem}.lede{font-size:1.35rem;max-width:760px;color:var(--muted)}.stamp{position:absolute;right:0;top:92px;font-size:.72rem}.policy{background:var(--ink);color:#f8f2e5;padding:32px 40px;border-radius:0 0 26px 26px}.policy p{font-size:1.2rem;margin:.4rem 0}.policy .section-kicker{color:#f5b38c}section{padding:66px 0}.chart{filter:drop-shadow(0 18px 24px rgba(16,37,31,.12))}.chart svg{display:block;width:100%;height:auto}.chart-note{max-width:860px;color:var(--muted)}.table-wrap{overflow-x:auto;background:rgba(255,250,240,.72);border:1px solid var(--line);border-radius:18px;margin-top:28px}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--line)}th{font-size:.72rem}.attempts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.attempt{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 14px 38px rgba(16,37,31,.07)}.attempt-head{display:flex;justify-content:space-between;gap:18px}.status{height:max-content;font-size:.65rem;padding:6px 9px;border-radius:99px}.status.merged{background:#cce9da;color:#075243}.status.rejected{background:#f2c9bc;color:#7a2818}.status.inconclusive{background:#efdfae;color:#654d06}dl{display:grid;grid-template-columns:130px 1fr;gap:10px 16px}dt{font-weight:700}dd{margin:0;color:var(--muted)}code{font:600 .86em "SFMono-Regular",Consolas,monospace}.meta{font-size:.68rem;color:var(--muted)}a{color:var(--green);font-weight:700}.snapshot{border-top:1px solid rgba(16,37,31,.2)}.engine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.engine-card{text-decoration:none;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;transition:transform .2s ease,box-shadow .2s ease}.engine-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(16,37,31,.12)}.engine-card span{font:700 .8rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--rust)}.engine-card strong{font:700 clamp(2.8rem,6vw,5rem) "Avenir Next",sans-serif;letter-spacing:-.06em}.engine-card b{margin-top:16px}.engine-card em{font-size:.88rem;color:var(--muted);margin-top:8px}.candidate-list{list-style:none;padding:0;border-top:1px solid var(--line)}.candidate-list li{display:grid;grid-template-columns:70px 1fr;gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}.rank{font-size:2rem;color:var(--rust)}.candidate-title{font-weight:700;font-size:1.25rem}.candidate-list p{margin:.45rem 0;color:var(--muted)}footer{padding:36px 0 70px;border-top:1px solid rgba(16,37,31,.2);color:var(--muted)}
+header,main{width:min(1160px,calc(100% - 40px));margin:auto}header{padding:80px 0 52px;border-bottom:1px solid rgba(16,37,31,.2);position:relative}h1{font-size:clamp(3rem,8vw,7.2rem);line-height:.9;max-width:950px;margin:.15em 0;letter-spacing:-.055em}h2{font-size:clamp(2rem,4vw,3.5rem);line-height:1;margin:.2em 0 .7em}h3{font-size:1.5rem;margin:.15em 0}.eyebrow,.section-kicker,.status,.stamp,.meta,small,th,.rank{font-family:"Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.1em}.eyebrow,.section-kicker{font-weight:700;color:var(--rust);font-size:.78rem}.lede{font-size:1.35rem;max-width:760px;color:var(--muted)}.top-links{margin-top:25px}.top-links a{display:inline-block;padding:10px 15px;border:1px solid var(--green);border-radius:999px;text-decoration:none;font:700 .72rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.08em}.stamp{position:absolute;right:0;top:92px;font-size:.72rem}.policy{background:var(--ink);color:#f8f2e5;padding:32px 40px;border-radius:0 0 26px 26px}.policy p{font-size:1.2rem;margin:.4rem 0}.policy .section-kicker{color:#f5b38c}section{padding:66px 0}.chart{filter:drop-shadow(0 18px 24px rgba(16,37,31,.12))}.chart svg{display:block;width:100%;height:auto}.chart-note{max-width:860px;color:var(--muted)}.table-wrap{overflow-x:auto;background:rgba(255,250,240,.72);border:1px solid var(--line);border-radius:18px;margin-top:28px}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--line)}th{font-size:.72rem}.attempts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.attempt{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 14px 38px rgba(16,37,31,.07)}.attempt-head{display:flex;justify-content:space-between;gap:18px}.status{height:max-content;font-size:.65rem;padding:6px 9px;border-radius:99px}.status.merged{background:#cce9da;color:#075243}.status.rejected{background:#f2c9bc;color:#7a2818}.status.inconclusive{background:#efdfae;color:#654d06}dl{display:grid;grid-template-columns:130px 1fr;gap:10px 16px}dt{font-weight:700}dd{margin:0;color:var(--muted)}code{font:600 .86em "SFMono-Regular",Consolas,monospace}.meta{font-size:.68rem;color:var(--muted)}a{color:var(--green);font-weight:700}.snapshot{border-top:1px solid rgba(16,37,31,.2)}.engine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.engine-card{text-decoration:none;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;transition:transform .2s ease,box-shadow .2s ease}.engine-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(16,37,31,.12)}.engine-card span{font:700 .8rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--rust)}.engine-card strong{font:700 clamp(2.8rem,6vw,5rem) "Avenir Next",sans-serif;letter-spacing:-.06em}.engine-card b{margin-top:16px}.engine-card em{font-size:.88rem;color:var(--muted);margin-top:8px}.candidate-list{list-style:none;padding:0;border-top:1px solid var(--line)}.candidate-list li{display:grid;grid-template-columns:70px 1fr;gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}.rank{font-size:2rem;color:var(--rust)}.candidate-title{font-weight:700;font-size:1.25rem}.candidate-list p{margin:.45rem 0;color:var(--muted)}footer{padding:36px 0 70px;border-top:1px solid rgba(16,37,31,.2);color:var(--muted)}
 @media(max-width:760px){header{padding-top:50px}.stamp{position:static;margin-top:24px}.attempts,.engine-grid{grid-template-columns:1fr}.policy{padding:26px}.attempt-head{display:block}.status{display:inline-block;margin-top:10px}dl{grid-template-columns:1fr}.candidate-list li{grid-template-columns:46px 1fr}.rank{font-size:1.3rem}}
 "#;
 

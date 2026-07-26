@@ -1,5 +1,6 @@
 //! Repository maintenance commands for rustmatch.
 
+mod html_universe;
 mod optimization_ledger;
 
 use std::env;
@@ -141,6 +142,16 @@ fn main() -> ExitCode {
 }
 
 fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
+    let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .ok_or_else(|| "xtask manifest must be inside the repository".to_owned())?;
+    env::set_current_dir(repository_root).map_err(|error| {
+        format!(
+            "could not enter repository root {}: {error}",
+            repository_root.display()
+        )
+    })?;
+
     let command = args.next();
     if args.next().is_some() {
         return Err("expected exactly one command; run `cargo xtask help`".to_owned());
