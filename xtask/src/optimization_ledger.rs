@@ -51,7 +51,9 @@ struct Progress {
 
 #[derive(Debug, Deserialize)]
 struct ComparisonSnapshot {
+    current: bool,
     date: String,
+    scope: String,
     rust_revision: String,
     review_revision: String,
     method: String,
@@ -132,7 +134,7 @@ fn generate() -> Result<Generated, String> {
 }
 
 fn validate(ledger: &Ledger) -> Result<(), String> {
-    if ledger.schema_version != 2 {
+    if ledger.schema_version != 3 {
         return Err(format!(
             "unsupported ledger schema {}",
             ledger.schema_version
@@ -202,7 +204,40 @@ fn validate(ledger: &Ledger) -> Result<(), String> {
     if priorities != expected {
         return Err("future candidate priorities must be contiguous from one".to_owned());
     }
+    let current_snapshots = ledger
+        .comparison_snapshots
+        .iter()
+        .filter(|snapshot| snapshot.current)
+        .collect::<Vec<_>>();
+    if current_snapshots.len() != 1 {
+        return Err(format!(
+            "optimization ledger must have exactly one current comparison snapshot, found {}",
+            current_snapshots.len()
+        ));
+    }
+    if !ledger
+        .comparison_snapshots
+        .first()
+        .is_some_and(|snapshot| snapshot.current)
+    {
+        return Err("the current comparison snapshot must be listed first".to_owned());
+    }
+    let latest_merged = ledger
+        .attempts
+        .iter()
+        .rev()
+        .find(|attempt| attempt.status == "merged")
+        .ok_or_else(|| "optimization ledger has no merged attempt".to_owned())?;
+    if current_snapshots[0].rust_revision != latest_merged.candidate_revision {
+        return Err(format!(
+            "current comparison snapshot revision {} does not match latest merged candidate {}",
+            current_snapshots[0].rust_revision, latest_merged.candidate_revision
+        ));
+    }
     for snapshot in &ledger.comparison_snapshots {
+        if snapshot.scope.trim().is_empty() {
+            return Err("comparison snapshot has an empty scope".to_owned());
+        }
         validate_revision(&snapshot.rust_revision, "comparison snapshot")?;
         validate_revision(&snapshot.review_revision, "comparison snapshot")?;
         for engine in &snapshot.engines {
@@ -331,11 +366,21 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
 
     writeln!(output, "## Cross-engine evolution\n").expect("write to string");
     for snapshot in &ledger.comparison_snapshots {
+        let freshness = if snapshot.current {
+            "Current production snapshot"
+        } else {
+            "Historical snapshot"
+        };
         writeln!(
             output,
-            "### Snapshot {}\n\nRust revision `{}`; reviewed measurement revision \
-             `{}`.\n\n{}\n",
-            snapshot.date, snapshot.rust_revision, snapshot.review_revision, snapshot.method
+            "### {} - {}\n\n**{}**. Rust revision `{}`; reviewed measurement \
+             revision `{}`.\n\n{}\n",
+            snapshot.date,
+            snapshot.scope,
+            freshness,
+            snapshot.rust_revision,
+            snapshot.review_revision,
+            snapshot.method
         )
         .expect("write to string");
         writeln!(
@@ -444,8 +489,14 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
 
     let mut comparisons = String::new();
     for snapshot in &ledger.comparison_snapshots {
+        let freshness = if snapshot.current {
+            "Current production"
+        } else {
+            "Historical"
+        };
         let mut cards = String::new();
         for engine in &snapshot.engines {
+            let evidence_href = crate::html_universe::ledger_evidence_href(&engine.evidence);
             let relation = if engine.geometric_mean_ratio >= 1.0 {
                 format!("{:.2}× Rust lead", engine.geometric_mean_ratio)
             } else {
@@ -456,7 +507,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
                 "<a class=\"engine-card\" href=\"{}\"><span>{}</span><strong>{:.3}×</strong>\
                  <small>Rust/engine geometric mean</small><b>{}</b>\
                  <em>{}/{} cells won · {}</em></a>",
-                html_escape(&engine.evidence),
+                html_escape(&evidence_href),
                 html_escape(&engine.engine),
                 engine.geometric_mean_ratio,
                 html_escape(&relation),
@@ -468,10 +519,12 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
         }
         write!(
             comparisons,
-            "<section class=\"snapshot\"><div class=\"section-kicker\">Snapshot {}</div>\
-             <h2>Rust against the field</h2><p>{}</p><div class=\"engine-grid\">{}</div>\
+            "<section class=\"snapshot\"><div class=\"section-kicker\">{} · snapshot {}</div>\
+             <h2>{}</h2><p>{}</p><div class=\"engine-grid\">{}</div>\
              <p class=\"meta\">Rust <code>{}</code> · review <code>{}</code></p></section>",
+            html_escape(freshness),
             html_escape(&snapshot.date),
+            html_escape(&snapshot.scope),
             html_escape(&snapshot.method),
             cards,
             html_escape(short_revision(&snapshot.rust_revision)),
@@ -693,6 +746,18 @@ mod tests {
     #[test]
     fn checked_in_ledger_is_valid() {
         assert_eq!(validate(&ledger()), Ok(()));
+    }
+
+    #[test]
+    fn current_comparison_tracks_latest_merged_candidate() {
+        let mut ledger = ledger();
+        ledger.comparison_snapshots[0].rust_revision =
+            "0000000000000000000000000000000000000000".to_owned();
+        assert!(
+            validate(&ledger)
+                .expect_err("stale current comparison should fail")
+                .contains("does not match latest merged candidate")
+        );
     }
 
     #[test]

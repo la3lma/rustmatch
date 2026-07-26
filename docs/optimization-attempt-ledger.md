@@ -177,9 +177,20 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 
 ## Cross-engine evolution
 
-### Snapshot 2026-07-26
+### 2026-07-26 - H11 current-production admission overlap
 
-Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `d2a92174e4629aa33d04b636e469c7e41505c240`.
+**Current production snapshot**. Rust revision `bacd5c46d934cd5526dcab78af88e375b2f13370`; reviewed measurement revision `581980d524e8c083d89cf468d98c7cab06ff8776`.
+
+This current-production view uses exact H11 candidate medians for the scenarios covered by its frozen admission matrix and retained competitor values from the unchanged full B2 review. Where H11 measured two worker counts for one scenario, the higher measured H11 throughput is used. Coverage is deliberately limited to exact overlaps: nine Java rmatch scenarios, eight RegexSet scenarios, and eight Hyperscan scenarios. It is not a full-dataset rerun. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.
+
+| Engine | Contract | Cells won | Geometric-mean Rust/engine | Median | Range |
+|---|---|---:|---:|---:|---:|
+| [Java rmatch](experiments/h11-cross-engine-snapshot.md#java-rmatch) | same complete event contract; H11 overlap | 9/9 | 27.893x | 35.350x | 2.737x-63.846x |
+| [RegexSet](experiments/h11-cross-engine-snapshot.md#regexset) | different output contract; H11 overlap | 4/8 | 1.351x | 1.084x | 0.133x-7.963x |
+| [Hyperscan](experiments/h11-cross-engine-snapshot.md#hyperscan) | native-reference diagnostic; H11 overlap | 2/8 | 0.210x | 0.254x | 0.011x-1.206x |
+### 2026-07-26 - Full B2 baseline snapshot before H11
+
+**Historical snapshot**. Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `d2a92174e4629aa33d04b636e469c7e41505c240`.
 
 Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.
 

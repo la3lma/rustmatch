@@ -176,8 +176,16 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 <li><strong>Evidence:</strong> <a href="experiments/b2-h-0011-private-prefilter-recovery.html">experiments/b2-h-0011-private-prefilter-recovery.md</a></li>
 </ul>
 <h2>Cross-engine evolution</h2>
-<h3>Snapshot 2026-07-26</h3>
-<p>Rust revision <code>da755b0069c94d4da9db74a8778dd9932fc64671</code>; reviewed measurement revision <code>d2a92174e4629aa33d04b636e469c7e41505c240</code>.</p>
+<h3>2026-07-26 - H11 current-production admission overlap</h3>
+<p><strong>Current production snapshot</strong>. Rust revision <code>bacd5c46d934cd5526dcab78af88e375b2f13370</code>; reviewed measurement revision <code>581980d524e8c083d89cf468d98c7cab06ff8776</code>.</p>
+<p>This current-production view uses exact H11 candidate medians for the scenarios covered by its frozen admission matrix and retained competitor values from the unchanged full B2 review. Where H11 measured two worker counts for one scenario, the higher measured H11 throughput is used. Coverage is deliberately limited to exact overlaps: nine Java rmatch scenarios, eight RegexSet scenarios, and eight Hyperscan scenarios. It is not a full-dataset rerun. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.</p>
+<table><thead><tr><th>Engine</th><th>Contract</th><th style="text-align: right">Cells won</th><th style="text-align: right">Geometric-mean Rust/engine</th><th style="text-align: right">Median</th><th style="text-align: right">Range</th></tr></thead><tbody>
+<tr><td><a href="experiments/h11-cross-engine-snapshot.html#java-rmatch">Java rmatch</a></td><td>same complete event contract; H11 overlap</td><td style="text-align: right">9/9</td><td style="text-align: right">27.893x</td><td style="text-align: right">35.350x</td><td style="text-align: right">2.737x-63.846x</td></tr>
+<tr><td><a href="experiments/h11-cross-engine-snapshot.html#regexset">RegexSet</a></td><td>different output contract; H11 overlap</td><td style="text-align: right">4/8</td><td style="text-align: right">1.351x</td><td style="text-align: right">1.084x</td><td style="text-align: right">0.133x-7.963x</td></tr>
+<tr><td><a href="experiments/h11-cross-engine-snapshot.html#hyperscan">Hyperscan</a></td><td>native-reference diagnostic; H11 overlap</td><td style="text-align: right">2/8</td><td style="text-align: right">0.210x</td><td style="text-align: right">0.254x</td><td style="text-align: right">0.011x-1.206x</td></tr>
+</tbody></table>
+<h3>2026-07-26 - Full B2 baseline snapshot before H11</h3>
+<p><strong>Historical snapshot</strong>. Rust revision <code>da755b0069c94d4da9db74a8778dd9932fc64671</code>; reviewed measurement revision <code>d2a92174e4629aa33d04b636e469c7e41505c240</code>.</p>
 <p>Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.</p>
 <table><thead><tr><th>Engine</th><th>Contract</th><th style="text-align: right">Cells won</th><th style="text-align: right">Geometric-mean Rust/engine</th><th style="text-align: right">Median</th><th style="text-align: right">Range</th></tr></thead><tbody>
 <tr><td><a href="https://github.com/la3lma/rmatch-performance-measurements/blob/d2a92174e4629aa33d04b636e469c7e41505c240/work/b2-reviewed-v8/pre-review/tables/rust-vs-java-rmatch.csv">Java rmatch</a></td><td>same complete event contract</td><td style="text-align: right">38/38</td><td style="text-align: right">13.769x</td><td style="text-align: right">19.596x</td><td style="text-align: right">2.301x-32.062x</td></tr>

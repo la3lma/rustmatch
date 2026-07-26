@@ -242,7 +242,11 @@ reviewed B2 analysis are now complete. Their durable
 `docs/optimization-and-scale.md`. The generated
 [Optimization attempt ledger](optimization-attempt-ledger.md) retains every
 merged, investigated, rejected, and inconclusive attempt, an improvement-only progress chart, and the
-versioned Java rmatch, RegexSet, and Hyperscan scorecard. B2-H-0001 completed
+versioned Java rmatch, RegexSet, and Hyperscan scorecard. Its leading
+[H11 cross-engine snapshot](experiments/h11-cross-engine-snapshot.md) uses only
+exact current-production overlap and retains the wider pre-H11 B2 table as
+historical context. The ledger generator rejects a future merged optimization
+until its current comparison revision advances with it. B2-H-0001 completed
 with exact semantics but
 regressed both targets by about 28%; its shared-candidate revision is rejected
 and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the

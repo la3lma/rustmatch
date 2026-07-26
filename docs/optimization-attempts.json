@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "title": "Optimization attempt ledger",
   "last_reviewed": "2026-07-26",
   "policy_version": "G9-v2",
@@ -201,7 +201,52 @@
   ],
   "comparison_snapshots": [
     {
+      "current": true,
       "date": "2026-07-26",
+      "scope": "H11 current-production admission overlap",
+      "rust_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "review_revision": "581980d524e8c083d89cf468d98c7cab06ff8776",
+      "method": "This current-production view uses exact H11 candidate medians for the scenarios covered by its frozen admission matrix and retained competitor values from the unchanged full B2 review. Where H11 measured two worker counts for one scenario, the higher measured H11 throughput is used. Coverage is deliberately limited to exact overlaps: nine Java rmatch scenarios, eight RegexSet scenarios, and eight Hyperscan scenarios. It is not a full-dataset rerun. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.",
+      "engines": [
+        {
+          "engine": "Java rmatch",
+          "semantics": "same complete event contract; H11 overlap",
+          "cells": 9,
+          "rust_wins": 9,
+          "geometric_mean_ratio": 27.892858,
+          "median_ratio": 35.349886,
+          "minimum_ratio": 2.73695,
+          "maximum_ratio": 63.846272,
+          "evidence": "experiments/h11-cross-engine-snapshot.md#java-rmatch"
+        },
+        {
+          "engine": "RegexSet",
+          "semantics": "different output contract; H11 overlap",
+          "cells": 8,
+          "rust_wins": 4,
+          "geometric_mean_ratio": 1.350923,
+          "median_ratio": 1.084009,
+          "minimum_ratio": 0.133434,
+          "maximum_ratio": 7.962822,
+          "evidence": "experiments/h11-cross-engine-snapshot.md#regexset"
+        },
+        {
+          "engine": "Hyperscan",
+          "semantics": "native-reference diagnostic; H11 overlap",
+          "cells": 8,
+          "rust_wins": 2,
+          "geometric_mean_ratio": 0.209735,
+          "median_ratio": 0.253564,
+          "minimum_ratio": 0.011225,
+          "maximum_ratio": 1.20597,
+          "evidence": "experiments/h11-cross-engine-snapshot.md#hyperscan"
+        }
+      ]
+    },
+    {
+      "current": false,
+      "date": "2026-07-26",
+      "scope": "Full B2 baseline snapshot before H11",
       "rust_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
       "review_revision": "d2a92174e4629aa33d04b636e469c7e41505c240",
       "method": "Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.",
