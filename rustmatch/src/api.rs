@@ -486,26 +486,7 @@ impl Matcher {
         BeforeScan: Fn(usize) + Sync,
     {
         debug_assert!(self.partitions.len() > 1);
-        let shared_plan = if shared_candidate::is_eligible(
-            self.partitions.len(),
-            input.units().len(),
-            self.prefilter_enabled,
-            self.literal_prefilter_enabled,
-        ) {
-            let prefilters = self
-                .partitions
-                .iter()
-                .map(|partition| &partition.prefilter)
-                .collect::<Vec<_>>();
-            shared_candidate::plan(
-                &prefilters,
-                input.units(),
-                self.prefilter_enabled,
-                self.literal_prefilter_enabled,
-            )?
-        } else {
-            None
-        };
+        let shared_plan = self.shared_candidate_plan(input)?;
         thread::scope(|scope| {
             let mut handles = Vec::with_capacity(self.partitions.len() - 1);
             let mut spawn_error = None;
@@ -521,13 +502,15 @@ impl Matcher {
                     .name(format!("rustmatch-worker-{partition_index}"))
                     .spawn_scoped(scope, move || {
                         before_scan(partition_index);
-                        scan_partition(
-                            partition,
-                            input,
-                            self.prefilter_enabled,
-                            self.literal_prefilter_enabled,
-                            shared,
-                        )
+                        match shared {
+                            Some(shared) => scan_partition_shared(partition, input, shared),
+                            None => scan_partition(
+                                partition,
+                                input,
+                                self.prefilter_enabled,
+                                self.literal_prefilter_enabled,
+                            ),
+                        }
                     });
                 if let Ok(handle) = worker {
                     handles.push((partition_index, handle));
@@ -539,13 +522,15 @@ impl Matcher {
 
             let caller_result = if spawn_error.is_none() {
                 before_scan(0);
-                Some(scan_partition(
-                    &self.partitions[0],
-                    input,
-                    self.prefilter_enabled,
-                    self.literal_prefilter_enabled,
-                    shared_plan.as_ref().map(|plan| plan.partition(0)),
-                ))
+                Some(match shared_plan.as_ref().map(|plan| plan.partition(0)) {
+                    Some(shared) => scan_partition_shared(&self.partitions[0], input, shared),
+                    None => scan_partition(
+                        &self.partitions[0],
+                        input,
+                        self.prefilter_enabled,
+                        self.literal_prefilter_enabled,
+                    ),
+                })
             } else {
                 None
             };
@@ -587,6 +572,31 @@ impl Matcher {
                 .collect::<Vec<_>>();
             Ok(ParallelScanOutput::new(partitions))
         })
+    }
+
+    fn shared_candidate_plan(
+        &self,
+        input: &Utf16Text,
+    ) -> Result<Option<shared_candidate::SharedCandidatePlan>, Error> {
+        if !shared_candidate::is_eligible(
+            self.partitions.len(),
+            input.units().len(),
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+        ) {
+            return Ok(None);
+        }
+        let prefilters = self
+            .partitions
+            .iter()
+            .map(|partition| &partition.prefilter)
+            .collect::<Vec<_>>();
+        shared_candidate::plan(
+            &prefilters,
+            input.units(),
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+        )
     }
 
     #[cfg(feature = "benchmark-internals")]
@@ -678,50 +688,60 @@ fn scan_partition(
     input: &Utf16Text,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
-    shared: Option<SharedCandidate<'_>>,
 ) -> Result<PartitionScanOutput, Error> {
     let mut events = Vec::new();
     #[cfg(feature = "benchmark-internals")]
-    let stats = match shared {
-        Some(shared) => engine::scan_with_shared_candidates_and_stats(
-            &partition.database,
-            &partition.prefilter,
-            input,
-            partition.state_cache_budget,
-            shared,
-            |matched| events.push(matched),
-        )?,
-        None => engine::scan_with_stats(
-            &partition.database,
-            &partition.prefilter,
-            input,
-            partition.state_cache_budget,
-            prefilter_enabled,
-            literal_prefilter_enabled,
-            |matched| events.push(matched),
-        )?,
-    };
+    let stats = engine::scan_with_stats(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+        |matched| events.push(matched),
+    )?;
     #[cfg(not(feature = "benchmark-internals"))]
-    match shared {
-        Some(shared) => engine::scan_with_shared_candidates_and_stats(
-            &partition.database,
-            &partition.prefilter,
-            input,
-            partition.state_cache_budget,
-            shared,
-            |matched| events.push(matched),
-        )
-        .map(|_| ())?,
-        None => engine::scan(
-            &partition.database,
-            &partition.prefilter,
-            input,
-            partition.state_cache_budget,
-            prefilter_enabled,
-            literal_prefilter_enabled,
-            |matched| events.push(matched),
-        )?,
-    }
+    engine::scan(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+        |matched| events.push(matched),
+    )?;
+    Ok(PartitionScanOutput {
+        events,
+        #[cfg(feature = "benchmark-internals")]
+        stats,
+    })
+}
+
+fn scan_partition_shared(
+    partition: &MatcherPartition,
+    input: &Utf16Text,
+    shared: SharedCandidate<'_>,
+) -> Result<PartitionScanOutput, Error> {
+    let mut events = Vec::new();
+    #[cfg(feature = "benchmark-internals")]
+    let stats = engine::scan_with_shared_candidates_and_stats(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        shared,
+        |matched| events.push(matched),
+    )?;
+    #[cfg(not(feature = "benchmark-internals"))]
+    engine::scan_with_shared_candidates_and_stats(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        shared,
+        |matched| events.push(matched),
+    )
+    .map(|_| ())?;
     Ok(PartitionScanOutput {
         events,
         #[cfg(feature = "benchmark-internals")]
