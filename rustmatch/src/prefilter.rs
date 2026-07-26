@@ -622,6 +622,7 @@ impl LiteralPrefilter {
         }
     }
 
+    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn prefix_allows(&self, input: &[u16], start: usize) -> bool {
         let triple = &input[start..start + 3];
