@@ -622,6 +622,7 @@ impl LiteralPrefilter {
         }
     }
 
+    #[inline(always)]
     fn prefix_allows(&self, input: &[u16], start: usize) -> bool {
         let triple = &input[start..start + 3];
         if triple.iter().any(|&symbol| symbol >= 128) {
