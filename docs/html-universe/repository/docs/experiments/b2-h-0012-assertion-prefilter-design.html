@@ -1,0 +1,139 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0012: assertion-bearing conservative prefilter · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0012-assertion-prefilter-design.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0012-assertion-prefilter-design.md</div></header><main><h1>B2-H-0012: assertion-bearing conservative prefilter</h1>
+<p><strong>Status:</strong> frozen design; source implementation not yet measured</p>
+<p><strong>Baseline:</strong> <code>68e43fc</code> (<code>codex/optimization-scale</code>)</p>
+<p><strong>Decision policy:</strong> G9-v2</p>
+<h2>Observation</h2>
+<p>Rustmatch disables every prefilter when a compiled pattern database contains an
+assertion. The retained 1,000-pattern <code>\bwordNNNN\b</code> fixture therefore invokes
+the contextual NFA from every input start and takes roughly 76 seconds per scan
+over an 8 MiB ASCII corpus. In these patterns the leading word-boundary
+assertion consumes no input and the following literal is necessary at the same
+start position.</p>
+<h2>Hypothesis</h2>
+<p>For an assertion-bearing partition where every pattern has a structurally
+proven necessary literal at offset zero after supported leading zero-width
+nodes, the existing literal bitmap can conservatively remove impossible starts.
+Every retained start still runs through the unchanged contextual assertion
+engine, so the bitmap may add false positives but must not create false
+negatives.</p>
+<p>The target must improve by at least 5%. Every output count and normalized event
+digest must remain exact. A demonstrated regression blocks production
+admission; a loss above 3% is an automatic veto, and a repeatable loss from 2%
+through 3% requires investigation under G9-v2 without moving either threshold.</p>
+<h2>Semantic proof boundary</h2>
+<p>The candidate may:</p>
+<ol>
+<li>Step past leading <code>Assertion</code> and <code>Epsilon</code> HIR nodes because they consume
+zero UTF-16 units.</li>
+<li>Reuse the existing necessary-prefix proof and false-positive-only literal
+bitmap after those nodes.</li>
+<li>Pass only the bitmap's ascending start positions to the existing contextual
+assertion verifier.</li>
+</ol>
+<p>The candidate may not:</p>
+<ol>
+<li>Treat predicates, optional consuming expressions, nullable repetitions, or
+unsupported zero-width constructs as transparent.</li>
+<li>Use the context-free start table for an assertion-bearing database.</li>
+<li>Route an assertion-bearing partition through H11 shared candidates or the
+assertion-free shared semantic engine.</li>
+<li>Cache contextual assertion closure under the context-free state-cache key.</li>
+<li>Change parser semantics, match selection, pattern IDs, event order, public
+API behavior, prefilter thresholds, H11 thresholds, or benchmark code.</li>
+</ol>
+<p>If one pattern in a partition lacks a proven literal of at least three UTF-16
+units, the whole assertion partition retains the existing all-start path.
+Inputs below the existing one-Mi-unit threshold also retain the existing path.</p>
+<h2>Implementation boundary</h2>
+<p>Allowed source paths:</p>
+<ul>
+<li><code>rustmatch/src/engine.rs</code></li>
+<li><code>rustmatch/src/prefilter.rs</code></li>
+</ul>
+<p>Allowed test paths:</p>
+<ul>
+<li><code>rustmatch/src/engine.rs</code></li>
+<li><code>rustmatch/src/prefilter.rs</code></li>
+<li><code>rustmatch/src/tests.rs</code></li>
+</ul>
+<p>The <code>Prefilter</code> records whether its literal proof belongs to an
+assertion-bearing database. Such a filter can plan private candidates but must
+return no <code>SharedLiteralFilter</code>. <code>scan_with_assertions</code> accepts an explicit
+ascending start iterator. The ordinary assertion-free dispatch remains
+structurally unchanged.</p>
+<h2>Correctness gates</h2>
+<p>Before timing:</p>
+<ul>
+<li>focused necessary-prefix tests cover leading boundary and line assertions,
+epsilon, trailing assertions, alternation, nullable prefixes, predicates,
+and unfilterable mixed sets;</li>
+<li>direct assertion-engine tests prove that an explicit candidate iterator
+produces the same events as all starts for word-boundary, non-boundary,
+line-start, line-end, empty, adjacent, and non-ASCII contexts;</li>
+<li>assertion-bearing prefilters cannot expose an H11 shared filter;</li>
+<li>the complete locked workspace suite passes with all features;</li>
+<li>formatting and Clippy with warnings denied pass.</li>
+</ul>
+<p>Every timed baseline/candidate pair additionally requires identical pattern and
+corpus hashes, exact event count, and exact normalized event digest.</p>
+<h2>Frozen performance matrix</h2>
+<p>The admission matrix uses six balanced <code>AB, BA, AB, BA, AB, BA</code> pairs per cell.
+Each process performs two warmups and retains five scans. Primary throughput is
+Mbit/s for an already prepared matcher. Process wall time, preparation time,
+peak RSS, prefilter path, bypass reason, admissions, candidate starts, starts
+scanned/skipped, assertion bypasses, requested workers, and actual partitions
+are retained diagnostics.</p>
+<p>Targets:</p>
+<ul>
+<li>1,000 sparse word-boundary patterns, 1 MiB, one worker.</li>
+<li>1,000 sparse word-boundary patterns, 1 MiB, two workers.</li>
+<li>1,000 sparse word-boundary patterns, 2 MiB, one worker.</li>
+</ul>
+<p>Neighbors and semantic guards:</p>
+<ul>
+<li>500 sparse word-boundary patterns, 1 MiB, one worker.</li>
+<li>256 mixed boundary/line-assertion patterns with adversarial contexts, 1 MiB,
+one worker.</li>
+<li>1,000 dense word-boundary patterns, 1 MiB, one worker; the density bypass
+must remain conservative.</li>
+<li>1,000 assertion-bearing patterns with one unfilterable member, 1 MiB, one
+worker; the all-start fallback must remain active.</li>
+<li>1,000 sparse word-boundary patterns below 1 MiB, one worker; the input-size
+fallback must remain active.</li>
+</ul>
+<p>Broader regression guards:</p>
+<ul>
+<li>1,000 sparse assertion-free literals, 1 MiB, one worker.</li>
+<li>10,000 sparse assertion-free literals, 50 MiB, sixteen workers; H11 remains
+eligible and exact.</li>
+<li>10,000 Wuthering literals, 8 MiB, sixty-four workers.</li>
+</ul>
+<p>The 8 MiB assertion fixture remains a scale confirmation after the full frozen
+matrix passes. It does not replace any target or relax the six-pair rule.</p>
+<h2>Stop and admission rules</h2>
+<p>Stop and retain the attempt if any semantic test fails, an assertion-bearing
+filter reaches H11, a target fails the 5% floor, a guard has a demonstrated
+regression, the 3% automatic veto fires, or host contamination occurs.</p>
+<p>Merge only the exact measured candidate revision after all gates pass. A passed
+candidate updates the optimization attempt ledger, current cross-engine
+comparison, roadmap, and HTML universe. A rejected or inconclusive candidate
+updates the same retained lab history but is excluded from the merged
+improvement graph.</p>
+</main><footer>Generated from <code>docs/experiments/b2-h-0012-assertion-prefilter-design.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
