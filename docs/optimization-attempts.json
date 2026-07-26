@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "title": "Optimization attempt ledger",
+  "last_reviewed": "2026-07-26",
+  "policy": "Correctness and exact event semantics are prerequisites. A repeatable regression above 3% on any declared guard is an automatic rejection. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. Rejected diagnostics and prototypes remain in the ledger and lab notebook, but never enter the production source tree.",
+  "attempts": [
+    {
+      "id": "I6",
+      "name": "Bounded lazy deterministic-state cache",
+      "date": "2026-07-18",
+      "status": "merged",
+      "baseline_revision": "9ef1b17cc6a865f44920c7c4f74f4a44b0b2c8f4",
+      "candidate_revision": "406c1f5294b8797fbc47eb0c37342244426c8a9f",
+      "summary": "Materialize deterministic transitions lazily behind a bounded cache while retaining exact NFA fallback when the budget fills.",
+      "result": "On the 10,000-pattern Wuthering comparison, median scan time fell from 45.014 s to 32.827 ms with identical 153,971 events and digest. Focused gates improved 98.25%-99.67%; the assertion bypass improved 6.46%.",
+      "tradeoffs": "Peak RSS rose by 4.64 MiB. A 16,384-state opt-in budget was 18.1% faster than 8,192 states on one 8 MiB case, while 32,768 states eliminated fallback but was slower than 16,384.",
+      "decision": "Merged. Exact semantics and every declared positive and guard threshold passed.",
+      "evidence": "evidence/i6/406c1f5/README.md",
+      "progress": {
+        "workload": "Wuthering, 10k patterns, 675259 B",
+        "baseline_millis": 45014.0,
+        "candidate_millis": 32.827
+      }
+    },
+    {
+      "id": "I7",
+      "name": "Conservative start prefilter",
+      "date": "2026-07-18",
+      "status": "merged",
+      "baseline_revision": "284571996b343041d374f2620905f32d63dbafdc",
+      "candidate_revision": "37f69819d9231fb99d747d4ae48034204657c1f2",
+      "summary": "Use compact exact-prefix tables and false-positive-only hash bitsets to skip impossible start positions before semantic verification.",
+      "result": "Focused scans improved 27.47%-86.18%. Wuthering improved 35.79%, 27.08%, and 15.36% at 1,000, 5,000, and 10,000 patterns with exact event equality.",
+      "tradeoffs": "The 10,000-pattern build cost rose from 7.673 ms to 17.261 ms. Sparse Aho-Corasick-style and anchored-trie prototypes were profiled, found slower, and removed.",
+      "decision": "Merged only the compact conservative filter. The semantic engine remains authoritative.",
+      "evidence": "evidence/i7/37f6981/README.md",
+      "progress": {
+        "workload": "Wuthering, 10k patterns, 8 MiB",
+        "baseline_millis": 296.844,
+        "candidate_millis": 251.244
+      }
+    },
+    {
+      "id": "I8",
+      "name": "Explicit parallel pattern partitions",
+      "date": "2026-07-18",
+      "status": "merged",
+      "baseline_revision": "f7a5e95588b96653f8cf3cb2445c6c17f571c4fe",
+      "candidate_revision": "ef6117368cd70b23fcfede1b26525c5f5366f53a",
+      "summary": "Partition the pattern database across scoped workers, retain partition-local state, then deliver the exact merged event sequence.",
+      "result": "On the 10,000-pattern, 8 MiB Wuthering gate, one worker took 249.801 ms and the repeated eight-worker winner took 99.635 ms, a 2.51x throughput speedup and 60.11% time reduction.",
+      "tradeoffs": "Scaling plateaued at 6-12 workers and degraded after 12. Eight workers were 23.6x slower on the smallest short-input guard. Every worker traverses the corpus, memory rises, and callback delivery remains serial.",
+      "decision": "Merged as explicit opt-in parallelism; the public default remains one worker.",
+      "evidence": "evidence/i8/ef61173/README.md",
+      "progress": {
+        "workload": "Wuthering, 10k patterns, 8 MiB, 1 to 8 workers",
+        "baseline_millis": 249.801,
+        "candidate_millis": 99.635
+      }
+    },
+    {
+      "id": "B2-H-0001",
+      "name": "Shared candidate-start scan",
+      "date": "2026-07-25",
+      "status": "rejected",
+      "baseline_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
+      "candidate_revision": "1c489ea46c2ef5d48634f2dc8017b56f7415d4f7",
+      "summary": "Replace repeated partition-local literal candidate scans with one immutable shared candidate-start plan.",
+      "result": "Aggregate cycles, instructions, and cache references fell roughly 70%, but both six-worker targets regressed about 28%. Guards regressed 5%-42.6%, triggering the automatic veto.",
+      "tradeoffs": "Candidate planning and prefix admission moved onto the serial critical path. The useful idea would require parallel production or pipelining rather than a serial union.",
+      "decision": "Rejected and not admitted despite lower aggregate machine work.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-25-b2-h-0001-shared-candidate-starts.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0002",
+      "name": "Persistent worker pool",
+      "date": "2026-07-25",
+      "status": "rejected",
+      "baseline_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
+      "candidate_revision": "a0477c0d32c8e6a98ed008d92b648a73c1ffa588",
+      "summary": "Measure whether per-scan thread creation and joining justify a persistent worker executor.",
+      "result": "Lifecycle plus join was 2.4618% of scan time, with worker spawn only 0.0320%. Two workers were 2.3466% slower than one.",
+      "tradeoffs": "Most measured join time was a symptom of the slowest worker tail, not removable executor overhead.",
+      "decision": "Diagnostic rejected; no pool implementation or production candidate was created.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-25-b2-h-0002-worker-lifecycle.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0003",
+      "name": "Load-aware pattern partitioning",
+      "date": "2026-07-25",
+      "status": "rejected",
+      "baseline_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
+      "candidate_revision": "1085667916e863604742830a75a3480c97fde97b",
+      "summary": "Measure removable worker skew and search for a stable compile-time predictor before implementing weighted pattern partitions.",
+      "result": "Median removable skew was only 1.7699% at eight workers and 1.4288% at twelve. No stable predictor emerged; twelve-worker throughput was 0.8273% lower.",
+      "tradeoffs": "The worker tail exists, but its recoverable ceiling is below the 5% burden and partition identity is unstable.",
+      "decision": "Diagnostic rejected; no load-balancing candidate was created.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-25-b2-h-0003-partition-balance.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0005",
+      "name": "Adaptive deterministic-cache budget",
+      "date": "2026-07-26",
+      "status": "rejected",
+      "baseline_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
+      "candidate_revision": "dd6db6704cbedefb539210f10d4fff451fc30d46",
+      "summary": "Double the total cache budget at the 16- and 24-worker endpoints to test whether deterministic fallback explains the scaling collapse.",
+      "result": "Fallback fell 5.25% and 5.43%, but throughput changed only +0.4319% at 16 workers and -0.8344% at 24. Hardware cache-miss rate worsened 25.92% and 19.79%.",
+      "tradeoffs": "Peak RSS increased about 1.5%-1.7%; reducing fallback did not recover the retained 44.34% 16-to-24-worker throughput loss.",
+      "decision": "Diagnostic rejected; no adaptive cache policy or production candidate was created.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-26-b2-h-0005-cache-budget-v2.md",
+      "progress": null
+    }
+  ],
+  "comparison_snapshots": [
+    {
+      "date": "2026-07-26",
+      "rust_revision": "da755b0069c94d4da9db74a8778dd9932fc64671",
+      "review_revision": "7d4591518a6018eb1ffa3fd1e8b2885d4b505756",
+      "method": "Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.",
+      "engines": [
+        {
+          "engine": "Java rmatch",
+          "semantics": "same complete event contract",
+          "cells": 38,
+          "rust_wins": 38,
+          "geometric_mean_ratio": 13.768948,
+          "median_ratio": 19.595616,
+          "minimum_ratio": 2.30143,
+          "maximum_ratio": 32.061976,
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-java-rmatch.csv"
+        },
+        {
+          "engine": "RegexSet",
+          "semantics": "different output contract",
+          "cells": 35,
+          "rust_wins": 15,
+          "geometric_mean_ratio": 0.46321,
+          "median_ratio": 0.751472,
+          "minimum_ratio": 0.005783,
+          "maximum_ratio": 2.673008,
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-regexset-diagnostic.csv"
+        },
+        {
+          "engine": "Hyperscan",
+          "semantics": "native-reference diagnostic",
+          "cells": 39,
+          "rust_wins": 8,
+          "geometric_mean_ratio": 0.128216,
+          "median_ratio": 0.127427,
+          "minimum_ratio": 0.006285,
+          "maximum_ratio": 4.797955,
+          "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-native-reference-diagnostic.csv"
+        }
+      ]
+    }
+  ],
+  "future_candidates": [
+    {
+      "priority": 1,
+      "id": "B2-H-0004",
+      "name": "Dense-output buffering and delivery",
+      "status": "authorized diagnostic",
+      "why": "Dense-output scaling retains only 59.49% throughput from 16 to 32 workers, while discovery, vector growth, join, merge, callback delivery, and allocations have not been separated.",
+      "next_test": "Exact-digest phase and allocation instrumentation plus a no-callback consumer; production batching is forbidden unless the repeatable critical-path opportunity is at least 5%.",
+      "expected_value": "8% estimated target gain"
+    },
+    {
+      "priority": 2,
+      "id": "FUTURE-MEMORY",
+      "name": "Shared-memory traffic and duplicated corpus traversal",
+      "status": "unreviewed",
+      "why": "Workers repeatedly traverse the complete corpus and high-worker throughput collapses without enough cache-fallback, lifecycle, or skew cost to explain it.",
+      "next_test": "Measure bytes, bandwidth saturation, LLC behavior, and per-byte cycles under physical-core-only and SMT worker sweeps before designing a different partition axis.",
+      "expected_value": "Potentially broad, but high design risk"
+    },
+    {
+      "priority": 3,
+      "id": "FUTURE-PLACEMENT",
+      "name": "Core placement, SMT, and scheduler migration",
+      "status": "unreviewed",
+      "why": "The 16-to-24-worker collapse may coincide with SMT or shared-cache topology rather than algorithmic imbalance.",
+      "next_test": "Repeat a bounded worker sweep with pinned physical cores, sibling SMT threads, and migration counters on the frozen host.",
+      "expected_value": "Low code cost if an execution policy can be selected safely"
+    },
+    {
+      "priority": 4,
+      "id": "FUTURE-LAYOUT",
+      "name": "Transition-table and scratch-state locality",
+      "status": "unreviewed",
+      "why": "A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity.",
+      "next_test": "Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch.",
+      "expected_value": "Moderate possible gain with contained semantics risk"
+    },
+    {
+      "priority": 5,
+      "id": "FUTURE-ASSERT",
+      "name": "Assertion-heavy specialized scan path",
+      "status": "unreviewed",
+      "why": "I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter.",
+      "next_test": "Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures.",
+      "expected_value": "Large narrow-workload upside"
+    },
+    {
+      "priority": 6,
+      "id": "FUTURE-LITERATURE",
+      "name": "Specialized multi-pattern literal algorithm",
+      "status": "unreviewed",
+      "why": "RegexSet and Hyperscan leads are largest in sparse or zero-output literal regimes, where specialized automata and vectorized literal search are structurally advantaged.",
+      "next_test": "Evaluate an exact-event Aho-Corasick or SIMD literal-only backend behind a strict workload classifier; do not reuse the rejected I7 trie prefilter design.",
+      "expected_value": "High upside, high implementation and maintenance cost"
+    }
+  ]
+}

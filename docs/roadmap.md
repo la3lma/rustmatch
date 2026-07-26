@@ -233,7 +233,11 @@ campaign and before the B2 gate was adopted. They are historical evidence, not
 precedent for bypassing the current sequence. The stable-host B1 campaign and
 reviewed B2 analysis are now complete. Their durable
 [Optimization and scale synthesis](optimization-and-scale.md) is maintained at
-`docs/optimization-and-scale.md`. B2-H-0001 completed with exact semantics but
+`docs/optimization-and-scale.md`. The generated
+[Optimization attempt ledger](optimization-attempt-ledger.md) retains every
+accepted and rejected attempt, an improvement-only progress chart, and the
+versioned Java rmatch, RegexSet, and Hyperscan scorecard. B2-H-0001 completed
+with exact semantics but
 regressed both targets by about 28%; its shared-candidate revision is rejected
 and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the
 median, so no persistent-pool candidate was authorized. B2-H-0003 then measured

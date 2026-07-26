@@ -1,5 +1,7 @@
 //! Repository maintenance commands for rustmatch.
 
+mod optimization_ledger;
+
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -152,15 +154,17 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
         Some("bench-smoke") => run_benchmark_smoke(),
         Some("ci") => run_quality_gate(),
         Some("evidence") => run_evidence_summary(),
+        Some("optimization-ledger") => optimization_ledger::render(),
         Some("oracle") => run_java_oracle(),
         Some("roadmap") => render_roadmap(),
+        Some("verify-optimization-ledger") => optimization_ledger::verify(),
         Some(other) => Err(format!("unknown command `{other}`; run `cargo xtask help`")),
     }
 }
 
 fn print_usage() {
     println!(
-        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask oracle\n    cargo xtask roadmap"
+        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask optimization-ledger\n    cargo xtask oracle\n    cargo xtask roadmap\n    cargo xtask verify-optimization-ledger"
     );
 }
 
@@ -189,6 +193,8 @@ fn run_quality_gate() -> Result<(), String> {
         }
     }
 
+    eprintln!("==> generated optimization ledger freshness");
+    optimization_ledger::verify()?;
     run_evidence_summary()
 }
 
