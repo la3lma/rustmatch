@@ -701,12 +701,13 @@ mod tests {
         let points = progress_points(&ledger);
         assert_eq!(
             points.iter().map(|point| point.label).collect::<Vec<_>>(),
-            ["I6", "I7", "I8"]
+            ["I6", "I7", "I8", "B2-H-0011"]
         );
         let svg = render_svg(&points).expect("chart should render");
         assert!(!svg.contains("B2-H-0001"));
         assert!(!svg.contains("B2-H-0005"));
         assert!(!svg.contains("B2-H-0009"));
+        assert!(!svg.contains("B2-H-0010"));
     }
 
     #[test]

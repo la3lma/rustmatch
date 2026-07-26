@@ -14,7 +14,7 @@ Correctness and exact event semantics remain prerequisites. A demonstrated guard
 - Inconclusive: evidence cannot establish the required target gain, regression, or causal direction.
 - Only merged attempts enter the efficiency-progress graph. Every outcome retains its measurements and lab note.
 
-G9-v2 refines the learning disposition without changing historical measurements or admission decisions. B2-H-0009 was rejected and not admitted under G9-v1. Its instrumentation-neutral successor B2-H-0010 was also rejected after three inactive paths crossed the unchanged three-percent veto; the mechanism remains under G9-v2 causal investigation because all intended targets improved by 118%-710%.
+G9-v2 refines the learning disposition without changing historical measurements or admission decisions. B2-H-0009 remained rejected under G9-v1, and B2-H-0010 remained rejected after three inactive paths crossed the unchanged three-percent veto. Their unusually large opposing effects triggered causal follow-up rather than threshold relaxation. B2-H-0011 then repaired the diagnosed private-path compiler boundary, passed the unchanged matrix without a demonstrated regression, and merged as the first completed G9-v2 recovery.
 
 ## Merged-improvement progress
 
@@ -27,6 +27,7 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 | I6 | Wuthering, 10k patterns, 675259 B | 1371.25x | 1371.25x |
 | I7 | Wuthering, 10k patterns, 8 MiB | 1.18x | 1620.13x |
 | I8 | Wuthering, 10k patterns, 8 MiB, 1 to 8 workers | 2.51x | 4061.92x |
+| B2-H-0011 | Sparse literals, 10k patterns, 50 MiB, 24 workers | 7.96x | 32325.08x |
 
 ## Attempt ledger
 
@@ -162,6 +163,18 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Decision:** The exact H10 artifact is rejected, unmerged, and excluded from progress by the unchanged three-percent veto. The shared-candidate mechanism remains investigate because its 2.18x-8.10x target ratios oppose large regressions on dormant paths; next compare the actual guard symbols, callers, placement, and profiles across baseline, H9, and H10 before authorizing another implementation.
 - **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/1795c527e82b07738e5669ead9e878775cd8e1e6/docs/lab-notebook/2026-07-26-b2-h-0010-shared-candidate-isolation.md](https://github.com/la3lma/rmatch-performance-measurements/blob/1795c527e82b07738e5669ead9e878775cd8e1e6/docs/lab-notebook/2026-07-26-b2-h-0010-shared-candidate-isolation.md)
 
+### B2-H-0011 - Shared candidate recovery with private prefilter inlining
+
+- **Date:** 2026-07-26
+- **Outcome:** `merged`
+- **Baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+- **Candidate:** `bacd5c46d934cd5526dcab78af88e375b2f13370`
+- **Mechanism:** Retain H10's parallel shared-candidate architecture, then restore the baseline private scanner's compiler shape by forcing the tiny literal-prefix predicate back into the per-start hot loop.
+- **Measured result:** Exact semantics and all eleven frozen cells passed. The four primary targets improved 116.181%-695.703%; the strongest sparse 24-worker gate reached 7.96x baseline throughput. H10's three vetoing inactive paths recovered from -20.120% to -24.928% into +0.641% to +1.956% improvements.
+- **Tradeoffs and caveats:** The accepted artifact is the complete four-commit architecture plus repair, not the final annotation in isolation. Wuthering was +6.803% in aggregate but order-sensitive (+9.287% AB, +0.053% BA), so it is not claimed as a portable gain. Three pre-measurement windows were rejected and retained without creating timing receipts.
+- **Decision:** Accepted under the unchanged G9-v2 matrix and merged as exact measured source in merge commit de33ea16673d179c5878045b44ec5e4eefa970f7. No demonstrated regression, unresolved negative, automatic veto, or opposed signal remained.
+- **Evidence:** [experiments/b2-h-0011-private-prefilter-recovery.md](experiments/b2-h-0011-private-prefilter-recovery.md)
+
 ## Cross-engine evolution
 
 ### Snapshot 2026-07-26
@@ -180,11 +193,10 @@ Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ra
 
 | Priority | Hypothesis | Status | Why it remains plausible | Next discriminating test | Expected value |
 |---:|---|---|---|---|---|
-| 1 | **FUTURE-GUARD-PATH - Shared-candidate inactive-path causal microscope** | active investigation | H10 preserved 2.18x-8.10x target ratios but regressed three paths that never activated shared planning by 20.12%-24.93%. The selected private-symbol isolation proxy passed, while one other inactive workload remained neutral. This localizes the unknown cost to path-sensitive scan codegen, caller placement, or cache and branch behavior rather than shared-plan execution. | Identify the exact hot symbols and call chains for sparse 8 MiB, dense 8 MiB, and one-worker zero-output guards; compare baseline, H9, and H10 maps, mnemonics, addresses, pages, and external perf profiles. Authorize a separately compiled boundary or explicit inactive fast path only if this evidence establishes the cause. | Very high upside with a now-narrow causal question; no source candidate until the dormant-path regression is explained |
-| 2 | **B2-H-0006 - Exact input-parallel scanning** | further measurement | Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership. | Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation. | High theoretical upside, currently blocked on semantic design |
-| 3 | **FUTURE-LAYOUT - Transition-table and scratch-state locality** | unreviewed | A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity. | Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch. | Moderate possible gain with contained semantics risk |
-| 4 | **FUTURE-ASSERT - Assertion-heavy specialized scan path** | unreviewed | I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter. | Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures. | Large narrow-workload upside |
-| 5 | **FUTURE-LITERATURE - Specialized multi-pattern literal algorithm** | unreviewed | RegexSet and Hyperscan leads are largest in sparse or zero-output literal regimes, where specialized automata and vectorized literal search are structurally advantaged. | Evaluate an exact-event Aho-Corasick or SIMD literal-only backend behind a strict workload classifier; do not reuse the rejected I7 trie prefilter design. | High upside, high implementation and maintenance cost |
+| 1 | **B2-H-0006 - Exact input-parallel scanning** | further measurement | Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership. | Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation. | High theoretical upside, currently blocked on semantic design |
+| 2 | **FUTURE-LAYOUT - Transition-table and scratch-state locality** | unreviewed | A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity. | Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch. | Moderate possible gain with contained semantics risk |
+| 3 | **FUTURE-ASSERT - Assertion-heavy specialized scan path** | unreviewed | I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter. | Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures. | Large narrow-workload upside |
+| 4 | **FUTURE-LITERATURE - Specialized multi-pattern literal algorithm** | unreviewed | RegexSet and Hyperscan leads are largest in sparse or zero-output literal regimes, where specialized automata and vectorized literal search are structurally advantaged. | Evaluate an exact-event Aho-Corasick or SIMD literal-only backend behind a strict workload classifier; do not reuse the rejected I7 trie prefilter design. | High upside, high implementation and maintenance cost |
 
 ## Regeneration
 

@@ -6,13 +6,13 @@
 
 **Implementation increments complete:** **10/12**
 
-**Active:** the shared-candidate mechanism remains `investigate`; exact
-`B2-H-0009` and `B2-H-0010` artifacts are rejected and unmerged
+**Active:** `B2-H-0011` has passed G9-v2 and merged as exact measured source;
+H9 and H10 remain rejected historical artifacts
 
-**Next evidence goal:** compare the actual inactive guard symbols, callers,
-placement, and external profiles across baseline, H9, and H10; begin no new
-implementation until that causal microscope justifies and B2 freezes exactly
-one successor
+**Next evidence goal:** perform a fresh post-H11 B2 ranking before freezing any
+new optimization; the highest-ranked remaining direction is exact
+input-parallel scanning, but its event-order and boundary construction must be
+proved before implementation
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -292,9 +292,20 @@ one-worker zero-output guard by 20.120% to 24.928%; none of those cells created
 the shared planner, and all crossed the unchanged three-percent veto. H10 is
 therefore rejected and unmerged. Preparation and RSS were neutral, while an
 inactive Wuthering guard also remained neutral, so the open question is now
-path-sensitive scan codegen, placement, or cache/branch behavior. The next
-work is symbol-accurate and profile-backed diagnosis of those actual guard
-paths, not another source candidate or a changed threshold.
+path-sensitive scan codegen, placement, or cache/branch behavior.
+
+That diagnosis found the concrete cause: H10 outlined the tiny
+`LiteralPrefilter::prefix_allows` predicate inside the per-input-start private
+hot loop, consuming 85.32% of sampled one-worker instructions. `B2-H-0011`
+retained the shared architecture and restored that predicate's baseline
+inlining shape. Under the unchanged eleven-cell G9-v2 matrix, all four primary
+targets improved 116.181%-695.703%, while H10's three vetoing private paths
+recovered to +0.641%-1.956%. Exact measured candidate `bacd5c46` passed
+correctness, order, static, host, and regression checks and merged without
+source modification as `de33ea1`. The
+[retained H11 summary](experiments/b2-h-0011-private-prefilter-recovery.md)
+records the matrix and evidence hashes. H9 and H10 remain rejected and excluded
+from the merged-improvement graph.
 
 ## Milestone ledger
 
@@ -330,8 +341,8 @@ and use-case evidence bundle pass from a clean checkout.
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
-| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0010. H9 and H10 are rejected with no production merge; their 2.18x-8.35x shared-candidate target ratios keep the mechanism `investigate` under G9-v2 |
-| G9 | Existing-Rustmatch candidate gate | Active: causal diagnosis | B2-H-0010 preserved exact semantics and improved every primary target 118.381%-709.958%, but three dormant paths regressed 20.120%-24.928% and crossed the unchanged veto. The next gate is a baseline/H9/H10 symbol and external-profile microscope of those actual paths; no successor implementation is authorized yet |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source |
+| G9 | Existing-Rustmatch candidate gate | Complete for B2-H-0011 | H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate `bacd5c46`. Any next optimization requires a fresh B2 authorization |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |

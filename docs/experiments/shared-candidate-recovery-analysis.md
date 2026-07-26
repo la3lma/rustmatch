@@ -1,34 +1,36 @@
 # Shared candidate recovery analysis
 
-**Status:** `investigate`; no successor implementation is authorized
+**Status:** resolved; `B2-H-0011` accepted and merged
 
-**Predecessor:** `B2-H-0009`
+**Sequence:** `B2-H-0009` -> `B2-H-0010` -> `B2-H-0011`
 
-**Production baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+**Measured baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+
+**Exact accepted candidate:** `bacd5c46d934cd5526dcab78af88e375b2f13370`
 
 ## Executive conclusion
 
-The shared-candidate line should continue. H9 preserved exact event semantics
-and improved every primary target by 122.143% to 734.672%. Its strongest target
-ran 8.35 times as fast and used substantially less peak memory. The algorithm
-removed the intended bottleneck: every pattern partition no longer traversed
-the complete corpus to rediscover the same possible starts.
+The shared-candidate line succeeded in H11. H9 first preserved exact event
+semantics and improved every primary target by 122.143% to 734.672%, but a
+2.00249% private-path regression correctly blocked that exact artifact. H10
+removed the instrumentation confound and retained 118.381%-709.958% target
+gains, but exposed three much larger 20.120%-24.928% regressions on inactive
+paths. Profiles then identified an outlined literal-prefix predicate inside
+the per-input-start private hot loop.
 
-The rejected candidate mixed that algorithm with candidate-only measurement
-instrumentation in the timed executable. `main` and all four direct
-one-partition scanner specializations moved by exactly `0x1cf0` bytes even
-though every scanner retained its baseline size. Static control builds show
-that removing the H9-only harness and library diagnostics recovers `0x1540`,
-about 73% of that displacement. The rejected one-worker guard never executed
-the shared planner.
+H11 retained H10's shared architecture and forced that tiny predicate back
+inline. The unchanged eleven-cell matrix then improved every private fallback
+by 0.641%-1.956% while preserving 116.181%-695.703% primary gains. Its strongest
+target reached 7.96 times baseline throughput. Exact measured source
+`bacd5c46` merged as `de33ea1`.
 
-This is a strong instrumentation and code-layout confound. It does not prove
-that removing the extra fields will eliminate the 2.00249% regression. The
-exact candidate remains correctly rejected and unmerged under its frozen
-`G9-v1` ruling. Under the later
-[`G9-v2` decision policy](../optimization-decision-policy.md), the mechanism is
-`investigate`: the contrast obligates a substantially narrower and more
-principled successor than padding or a wholesale algorithm rewrite.
+This result preserves every historical decision. H9 and H10 remain rejected
+and absent from the progress graph. Their unusually large opposing effects
+created a causal obligation under the later
+[`G9-v2` decision policy](../optimization-decision-policy.md); they did not
+relax a threshold or average away a regression. The full accepted result is
+retained in the
+[H11 evidence summary](b2-h-0011-private-prefilter-recovery.md).
 
 ## What H9 established
 
@@ -133,9 +135,9 @@ candidate must remove the confound and pass the same guard. H9 itself remains
 rejected and unmerged; the shared-candidate mechanism remains under
 investigation.
 
-## Recommended successor
+## Frozen successor design used by H10
 
-The first successor should be an **instrumentation-neutral, pipeline-isolated
+The first successor was an **instrumentation-neutral, pipeline-isolated
 shared-candidate candidate**, not an immediate crate split.
 
 ### 1. Preserve the timed harness
@@ -181,9 +183,9 @@ behind a small generic adapter is the next structural option. That is a larger
 change because dynamic callback dispatch can affect dense-output workloads, so
 it should not be bundled into the first successor.
 
-## Frozen-gate proposal
+## Frozen gate used by the recovery sequence
 
-A future B2 review may authorize exactly one successor with these stages:
+The B2 review authorized successors with these stages:
 
 1. **Static preflight**
    - baseline remains the measured production revision;
@@ -211,6 +213,37 @@ A future B2 review may authorize exactly one successor with these stages:
 The preflight is a cost-saving stage, not a weaker gate. A passing preflight
 does not admit code; the complete matrix remains mandatory.
 
+## H10 diagnosis and H11 repair
+
+H10 implemented the isolated architecture and passed its static proxy. It
+preserved exact semantics and improved the four intended targets by
+118.381%-709.958%. However, sparse and dense 8 MiB fallbacks and the
+one-worker zero-output guard regressed 20.120%-24.928%. None activated shared
+planning, and all crossed the unchanged three-percent veto.
+
+Symbol-accurate profiles resolved the apparent contradiction. H10 caused LLVM
+to outline `LiteralPrefilter::prefix_allows`; the one-worker candidate spent
+85.32% of sampled instructions in that call. Baseline and H9 had kept the
+predicate inside `scan_starts`. This was a separable compiler-boundary cost,
+not work required by shared candidate construction.
+
+H11 reconstructed H10 from the measured baseline and added
+`#[inline(always)]` to that pure private predicate. A corrected six-sample
+counter gate showed private-path instruction growth of only 1.76%-2.00% and
+retained the eligible target's 88.32% instruction reduction. The full frozen
+matrix then produced:
+
+| Result class | H11 range |
+|---|---:|
+| Four primary targets | +116.181% to +695.703% |
+| Three neighbors and semantic guards | +156.007% to +405.356% |
+| H10's three vetoing private paths | +0.641% to +1.956% |
+| Wuthering control | +6.803% aggregate; no negative order stratum |
+
+No demonstrated regression, unresolved negative, opposed signal, or automatic
+veto remained. The exact four-commit candidate passed the full workspace suite
+inside the guarded window and after its destination merge.
+
 ## Approaches explicitly rejected
 
 - Do not average away a regression because the target gain is large.
@@ -225,12 +258,13 @@ does not admit code; the complete matrix remains mandatory.
 Those ideas either hide the failure, overfit the measured executable, or make
 the next result impossible to attribute.
 
-## Recommendation
+## Final disposition
 
-Review and freeze the instrumentation-neutral successor first. It is the
-smallest change that directly tests the newly identified confound while
-preserving H9's demonstrated algorithm. Keep the internal-crate boundary as a
-ranked fallback, not as speculative complexity in the first retry.
+Admit only exact H11 candidate `bacd5c46`; it is the complete shared-candidate
+architecture plus the private inlining repair, not a one-line optimization in
+isolation. H9 and H10 remain rejected historical evidence and stay outside the
+merged-improvement graph.
 
-Until that review occurs, production remains unchanged and H9 remains absent
-from the merged-improvement graph.
+Future optimization work requires a fresh reviewed hypothesis and frozen
+matrix. H11 authorizes no threshold change and no speculative planner pooling,
+shard tuning, input partitioning, or new literal algorithm.
