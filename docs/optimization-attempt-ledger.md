@@ -104,27 +104,39 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Decision:** Diagnostic rejected; no adaptive cache policy or production candidate was created.
 - **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-26-b2-h-0005-cache-budget-v2.md](https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/docs/lab-notebook/2026-07-26-b2-h-0005-cache-budget-v2.md)
 
+### B2-H-0004 - Dense-output buffering and callback delivery
+
+- **Date:** 2026-07-26
+- **Outcome:** `rejected`
+- **Baseline:** `da755b0069c94d4da9db74a8778dd9932fc64671`
+- **Candidate:** `f30869b87ab7d568c4b3f7a257f9f1e75c59713c`
+- **Mechanism:** Separate dense event discovery, vector growth, assembly, hashing, and external callback delivery before implementing exact-capacity buffering or batching.
+- **Measured result:** Callback omission changed median scan time by -0.16% at 16 workers and +0.08% at 32, with both 95% intervals spanning zero. Vector growth consumed only 0.033-0.078 ms; the zero-output control passed.
+- **Tradeoffs and caveats:** The diagnostic preserved all 500,000 events and exact digest. Maximum partition scan time rose from 128.43 ms to 216.43 ms from 16 to 32 workers, while callback throughput retained 60.28%, pointing away from delivery and toward discovery or shared-resource pressure.
+- **Decision:** Diagnostic rejected; no event-buffering, callback-batching, profiling, or production candidate was created.
+- **Evidence:** [https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/docs/lab-notebook/2026-07-26-b2-h-0004-event-delivery.md)
+
 ## Cross-engine evolution
 
 ### Snapshot 2026-07-26
 
-Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `7d4591518a6018eb1ffa3fd1e8b2885d4b505756`.
+Rust revision `da755b0069c94d4da9db74a8778dd9932fc64671`; reviewed measurement revision `ac3a2303f3b8543018e0c4e12381ec48b734a963`.
 
 Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ratios. Java rmatch shares Rustmatch's full event contract. RegexSet and Hyperscan use different output contracts, so their ratios are diagnostic references rather than fairness claims.
 
 | Engine | Contract | Cells won | Geometric-mean Rust/engine | Median | Range |
 |---|---|---:|---:|---:|---:|
-| [Java rmatch](https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-java-rmatch.csv) | same complete event contract | 38/38 | 13.769x | 19.596x | 2.301x-32.062x |
-| [RegexSet](https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-regexset-diagnostic.csv) | different output contract | 15/35 | 0.463x | 0.751x | 0.006x-2.673x |
-| [Hyperscan](https://github.com/la3lma/rmatch-performance-measurements/blob/7d4591518a6018eb1ffa3fd1e8b2885d4b505756/work/b2-reviewed-v6/pre-review/tables/rust-vs-native-reference-diagnostic.csv) | native-reference diagnostic | 8/39 | 0.128x | 0.127x | 0.006x-4.798x |
+| [Java rmatch](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-java-rmatch.csv) | same complete event contract | 38/38 | 13.769x | 19.596x | 2.301x-32.062x |
+| [RegexSet](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-regexset-diagnostic.csv) | different output contract | 15/35 | 0.463x | 0.751x | 0.006x-2.673x |
+| [Hyperscan](https://github.com/la3lma/rmatch-performance-measurements/blob/ac3a2303f3b8543018e0c4e12381ec48b734a963/work/b2-reviewed-v7/pre-review/tables/rust-vs-native-reference-diagnostic.csv) | native-reference diagnostic | 8/39 | 0.128x | 0.127x | 0.006x-4.798x |
 
 ## Plausible future optimizations
 
 | Priority | Hypothesis | Status | Why it remains plausible | Next discriminating test | Expected value |
 |---:|---|---|---|---|---|
-| 1 | **B2-H-0004 - Dense-output buffering and delivery** | authorized diagnostic | Dense-output scaling retains only 59.49% throughput from 16 to 32 workers, while discovery, vector growth, join, merge, callback delivery, and allocations have not been separated. | Exact-digest phase and allocation instrumentation plus a no-callback consumer; production batching is forbidden unless the repeatable critical-path opportunity is at least 5%. | 8% estimated target gain |
-| 2 | **FUTURE-MEMORY - Shared-memory traffic and duplicated corpus traversal** | unreviewed | Workers repeatedly traverse the complete corpus and high-worker throughput collapses without enough cache-fallback, lifecycle, or skew cost to explain it. | Measure bytes, bandwidth saturation, LLC behavior, and per-byte cycles under physical-core-only and SMT worker sweeps before designing a different partition axis. | Potentially broad, but high design risk |
-| 3 | **FUTURE-PLACEMENT - Core placement, SMT, and scheduler migration** | unreviewed | The 16-to-24-worker collapse may coincide with SMT or shared-cache topology rather than algorithmic imbalance. | Repeat a bounded worker sweep with pinned physical cores, sibling SMT threads, and migration counters on the frozen host. | Low code cost if an execution policy can be selected safely |
+| 1 | **FUTURE-MEMORY - Shared-memory traffic and duplicated corpus traversal** | next review target | Workers repeatedly traverse the complete corpus; high-worker throughput collapses while lifecycle, skew, cache fallback, vector growth, and callback delivery are all too small to explain it. | Review and freeze a diagnostic measuring bandwidth saturation, LLC behavior, per-byte cycles, and summed worker scan cost before designing a different partition axis. | Potentially broad, but high design risk |
+| 2 | **FUTURE-PLACEMENT - Core placement, SMT, and scheduler migration** | next review target | The 16-to-24-worker collapse may coincide with SMT or shared-cache topology rather than algorithmic imbalance. | Review and freeze a no-source-change sweep with pinned physical cores, sibling SMT threads, and migration counters on the frozen host. | Low code cost if an execution policy can be selected safely |
+| 3 | **B2-H-0006 - Exact input-parallel scanning** | further measurement | Changing the partition axis could avoid one full corpus traversal per pattern partition, but complete occurrence enumeration makes boundaries and overlap substantially harder than DFA membership. | Develop and review an exact construction for unbounded regexes, assertions, zero-width events, duplicate suppression, and deterministic event ordering before any implementation. | High theoretical upside, currently blocked on semantic design |
 | 4 | **FUTURE-LAYOUT - Transition-table and scratch-state locality** | unreviewed | A larger cache reduced fallback but increased hardware misses, suggesting representation and locality may matter more than capacity. | Profile cache-line use and compare bounded structure-of-arrays or narrower index layouts in a diagnostic branch. | Moderate possible gain with contained semantics risk |
 | 5 | **FUTURE-ASSERT - Assertion-heavy specialized scan path** | unreviewed | I7's assertion bypass remained roughly 76 seconds and cannot use the current start prefilter. | Separate anchor and boundary costs, then test a conservative assertion-aware start filter against adversarial UTF-16 fixtures. | Large narrow-workload upside |
 | 6 | **FUTURE-LITERATURE - Specialized multi-pattern literal algorithm** | unreviewed | RegexSet and Hyperscan leads are largest in sparse or zero-output literal regimes, where specialized automata and vectorized literal search are structurally advantaged. | Evaluate an exact-event Aho-Corasick or SIMD literal-only backend behind a strict workload classifier; do not reuse the rejected I7 trie prefilter design. | High upside, high implementation and maintenance cost |
