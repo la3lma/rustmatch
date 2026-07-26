@@ -9,9 +9,10 @@
 **Active:** none; `B2-H-0009` is terminally rejected and G9 requires fresh
 review
 
-**Next evidence goal:** review the structurally isolated shared-candidate
-follow-up suggested by `B2-H-0009`; begin no implementation until B2 authorizes
-and freezes exactly one new hypothesis
+**Next evidence goal:** review the
+[instrumentation-neutral shared-candidate successor](experiments/shared-candidate-recovery-analysis.md)
+suggested by `B2-H-0009`; begin no implementation until B2 authorizes and
+freezes exactly one new hypothesis
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -265,7 +266,17 @@ fast. The unchanged zero-output private fallback nevertheless regressed
 2.00249% with all six pairs negative. The strict no-regression gate therefore
 rejected the candidate and admitted no code. Its measured algorithmic upside
 supports fresh review of a structurally isolated successor, not benchmark-
-specific padding or an automatic retry.
+
+The subsequent
+[recovery analysis](experiments/shared-candidate-recovery-analysis.md) found a
+narrower first step. `main` and every direct private scanner moved by exactly
+`0x1cf0` bytes, while the rejected one-worker guard never executed the shared
+planner. Static controls recover `0x1540`, about 73% of that displacement, by
+removing candidate-only diagnostics and leave a `0x7b0` shared-code residual.
+The recommended successor therefore keeps the timed harness byte-identical to
+baseline, moves phase diagnostics to a separate non-timed artifact, and
+separates whole private and shared dispatch pipelines. A new internal crate is
+the ranked fallback only if that bounded candidate still fails.
 
 ## Milestone ledger
 
@@ -302,7 +313,7 @@ and use-case evidence bundle pass from a clean checkout.
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
 | B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven terminal experiments through B2-H-0009, and the hash-bound [Optimization and scale synthesis](optimization-and-scale.md); H9 is rejected with no production merge |
-| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; review and freeze exactly one successor before implementation, retain the no-regression and absolute 3% vetoes, and preserve a lab note for every outcome |
+| G9 | Existing-Rustmatch candidate gate | Available: fresh review required | B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the [recovery analysis](experiments/shared-candidate-recovery-analysis.md) recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor, while retaining every no-regression veto |
 | I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
 | I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |

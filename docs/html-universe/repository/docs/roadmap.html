@@ -12,9 +12,10 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 <p><strong>Implementation increments complete:</strong> <strong>10/12</strong></p>
 <p><strong>Active:</strong> none; <code>B2-H-0009</code> is terminally rejected and G9 requires fresh
 review</p>
-<p><strong>Next evidence goal:</strong> review the structurally isolated shared-candidate
-follow-up suggested by <code>B2-H-0009</code>; begin no implementation until B2 authorizes
-and freezes exactly one new hypothesis</p>
+<p><strong>Next evidence goal:</strong> review the
+<a href="experiments/shared-candidate-recovery-analysis.html">instrumentation-neutral shared-candidate successor</a>
+suggested by <code>B2-H-0009</code>; begin no implementation until B2 authorizes and
+freezes exactly one new hypothesis</p>
 <p>This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
@@ -81,8 +82,17 @@ target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
 fast. The unchanged zero-output private fallback nevertheless regressed
 2.00249% with all six pairs negative. The strict no-regression gate therefore
 rejected the candidate and admitted no code. Its measured algorithmic upside
-supports fresh review of a structurally isolated successor, not benchmark-
-specific padding or an automatic retry.</p>
+supports fresh review of a structurally isolated successor, not benchmark-</p>
+<p>The subsequent
+<a href="experiments/shared-candidate-recovery-analysis.html">recovery analysis</a> found a
+narrower first step. <code>main</code> and every direct private scanner moved by exactly
+<code>0x1cf0</code> bytes, while the rejected one-worker guard never executed the shared
+planner. Static controls recover <code>0x1540</code>, about 73% of that displacement, by
+removing candidate-only diagnostics and leave a <code>0x7b0</code> shared-code residual.
+The recommended successor therefore keeps the timed harness byte-identical to
+baseline, moves phase diagnostics to a separate non-timed artifact, and
+separates whole private and shared dispatch pipelines. A new internal crate is
+the ranked fallback only if that bounded candidate still fails.</p>
 <h2>Milestone ledger</h2>
 <p>The graph is intentionally conservative. A milestone changes to <code>Active</code>
 only after implementation or fixture work exists and at least one named
@@ -115,7 +125,7 @@ and use-case evidence bundle pass from a clean checkout.</p>
 <tr><td>I9</td><td>Benchmark integration</td><td>Complete</td><td>Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the <a href="evidence/i9/fdd5efa/README.html">I9 evidence package</a></td></tr>
 <tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
 <tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed nine-entry registry, seven terminal experiments through B2-H-0009, and the hash-bound <a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a>; H9 is rejected with no production merge</td></tr>
-<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Available: fresh review required</td><td>B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; review and freeze exactly one successor before implementation, retain the no-regression and absolute 3% vetoes, and preserve a lab note for every outcome</td></tr>
+<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Available: fresh review required</td><td>B2-H-0009 proved 2.22x-8.35x primary-target speedups but failed its unchanged private fallback guard at -2.00249%; the <a href="experiments/shared-candidate-recovery-analysis.html">recovery analysis</a> recommends an instrumentation-neutral timed artifact and separate private/shared pipelines as the first successor, while retaining every no-regression veto</td></tr>
 <tr><td>I10</td><td>Hardening</td><td>Planned</td><td>Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit</td></tr>
 <tr><td>I11</td><td>Release preparation</td><td>Planned</td><td>Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete</td></tr>
 <tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>

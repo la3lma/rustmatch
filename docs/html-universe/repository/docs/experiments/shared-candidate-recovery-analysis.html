@@ -1,0 +1,215 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shared candidate recovery analysis · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/shared-candidate-recovery-analysis.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/shared-candidate-recovery-analysis.md</div></header><main><h1>Shared candidate recovery analysis</h1>
+<p><strong>Status:</strong> design review; no successor implementation is authorized</p>
+<p><strong>Predecessor:</strong> <code>B2-H-0009</code></p>
+<p><strong>Production baseline:</strong> <code>da755b0069c94d4da9db74a8778dd9932fc64671</code></p>
+<h2>Executive conclusion</h2>
+<p>The shared-candidate line should continue. H9 preserved exact event semantics
+and improved every primary target by 122.143% to 734.672%. Its strongest target
+ran 8.35 times as fast and used substantially less peak memory. The algorithm
+removed the intended bottleneck: every pattern partition no longer traversed
+the complete corpus to rediscover the same possible starts.</p>
+<p>The rejected candidate mixed that algorithm with candidate-only measurement
+instrumentation in the timed executable. <code>main</code> and all four direct
+one-partition scanner specializations moved by exactly <code>0x1cf0</code> bytes even
+though every scanner retained its baseline size. Static control builds show
+that removing the H9-only harness and library diagnostics recovers <code>0x1540</code>,
+about 73% of that displacement. The rejected one-worker guard never executed
+the shared planner.</p>
+<p>This is a strong instrumentation and code-layout confound. It does not prove
+that removing the extra fields will eliminate the 2.00249% regression, so the
+candidate remains correctly rejected. It does identify a substantially
+narrower and more principled successor than padding or a wholesale algorithm
+rewrite.</p>
+<h2>What H9 established</h2>
+<p>H9 used one union literal filter and one candidate bitmap. Eight scoped workers
+filled disjoint bitmap word ranges without locks. The semantic workers then
+retained only candidates allowed by their own partition's necessary prefixes
+before invoking the unchanged verifier.</p>
+<p>The canonical six-pair results were:</p>
+<table><thead><tr><th>Frozen cell</th><th style="text-align: right">Median throughput effect</th></tr></thead><tbody>
+<tr><td>Sparse 50 MiB, 16 workers</td><td style="text-align: right">+395.281%</td></tr>
+<tr><td>Sparse 50 MiB, 24 workers</td><td style="text-align: right">+734.672%</td></tr>
+<tr><td>Dense 50 MiB, 16 workers</td><td style="text-align: right">+122.143%</td></tr>
+<tr><td>Dense 50 MiB, 32 workers</td><td style="text-align: right">+322.926%</td></tr>
+<tr><td>Sparse 7,500-pattern neighbor</td><td style="text-align: right">+423.523%</td></tr>
+<tr><td>Dense 5,000-pattern neighbor</td><td style="text-align: right">+166.256%</td></tr>
+<tr><td>Mixed-regex semantic guard</td><td style="text-align: right">+438.742%</td></tr>
+</tbody></table>
+<p>The sparse 24-worker baseline traversed approximately 1.258 billion aggregate
+partition starts. The candidate traversed approximately 52.5 million input
+starts once, then filtered the 55,748 union candidates inside the relevant
+semantic partitions. Target peak RSS improved by 47% to 98%.</p>
+<p>This is not a marginal result that depends on a favorable summary statistic.
+All six pairs favored the candidate on all four primary targets.</p>
+<h2>Why H9 was still rejected</h2>
+<p>The zero-output 50 MiB, one-worker guard regressed 2.00249%, with all six pairs
+negative. That crossed the frozen two-percent demonstrated-regression boundary.
+The separate absolute three-percent veto did not fire, but the stricter
+no-regression rule was sufficient.</p>
+<p>This guard has one partition. H9 cannot compile a shared union for fewer than
+16 partitions and cannot plan shared candidates for inputs below 32 MiB. The
+guard therefore executed the private path, not the new algorithm.</p>
+<p>The mitigation sequence is informative:</p>
+<table><thead><tr><th>Candidate step</th><th style="text-align: right">Mean zero-guard time change in retained smoke evidence</th></tr></thead><tbody>
+<tr><td>Private scan isolation</td><td style="text-align: right">+39.103%</td></tr>
+<tr><td>Private diagnostics isolation</td><td style="text-align: right">+41.327%</td></tr>
+<tr><td>Original private literal loop restored</td><td style="text-align: right">+34.506%</td></tr>
+<tr><td>Shared predicate code generation separated</td><td style="text-align: right">+2.117%</td></tr>
+<tr><td>Inactive allocation removed</td><td style="text-align: right">+2.055%</td></tr>
+<tr><td>Final guarded matrix</td><td style="text-align: right">+2.00249% throughput regression</td></tr>
+</tbody></table>
+<p>Separating shared-only predicate code generation removed most of the inactive
+regression. The remaining failure was much smaller but still real under the
+frozen rule.</p>
+<h2>Timed-harness layout finding</h2>
+<p>The final candidate changed <code>rustmatch-bench/src/main.rs</code> only to add four
+shared-plan fields to <code>CacheDiagnosticsReceipt</code> and populate them from
+<code>ScanDiagnostics</code>. The receipt derives <code>Clone</code>, <code>Deserialize</code>, and <code>Serialize</code>,
+so those source lines generated substantially more executable code. The
+library also added corresponding <code>ScanDiagnostics</code> fields and conversion
+plumbing.</p>
+<p>The baseline and candidate symbol inventories show one uniform insertion before
+the direct scanner block:</p>
+<table><thead><tr><th>Symbol</th><th style="text-align: right">Baseline address</th><th style="text-align: right">Candidate address</th><th style="text-align: right">Delta</th><th style="text-align: right">Size unchanged</th></tr></thead><tbody>
+<tr><td><code>main</code></td><td style="text-align: right"><code>0x140910</code></td><td style="text-align: right"><code>0x142600</code></td><td style="text-align: right"><code>0x1cf0</code></td><td style="text-align: right">yes</td></tr>
+<tr><td><code>scan_with_stats&lt;rust_events&gt;</code></td><td style="text-align: right"><code>0x140a30</code></td><td style="text-align: right"><code>0x142720</code></td><td style="text-align: right"><code>0x1cf0</code></td><td style="text-align: right"><code>0x3340</code></td></tr>
+<tr><td><code>scan_with_stats&lt;rust_native_ids&gt;</code></td><td style="text-align: right"><code>0x143d70</code></td><td style="text-align: right"><code>0x145a60</code></td><td style="text-align: right"><code>0x1cf0</code></td><td style="text-align: right"><code>0x3527</code></td></tr>
+<tr><td><code>scan_with_stats&lt;rust_event_summary&gt;</code></td><td style="text-align: right"><code>0x1472a0</code></td><td style="text-align: right"><code>0x148f90</code></td><td style="text-align: right"><code>0x1cf0</code></td><td style="text-align: right"><code>0x3850</code></td></tr>
+<tr><td><code>scan_with_stats&lt;harness_event_count&gt;</code></td><td style="text-align: right"><code>0x14aaf0</code></td><td style="text-align: right"><code>0x14c7e0</code></td><td style="text-align: right"><code>0x1cf0</code></td><td style="text-align: right"><code>0x2fd0</code></td></tr>
+</tbody></table>
+<p><code>harness-run</code>, including the rejected guard, times
+<code>harness_event_count</code>. Shared diagnostics are collected outside the timed
+iterations. They nevertheless changed the timed function's placement.</p>
+<p>Binary comparison also found the final private partition specialization had
+the same <code>0x55e4</code> size and the same 4,341-instruction mnemonic sequence as the
+baseline. Its differing bytes were relocation operands.</p>
+<p>Two Rust 1.97 Linux static control builds removed diagnostics without running
+timing:</p>
+<table><thead><tr><th>Build</th><th style="text-align: right"><code>main</code> address</th><th style="text-align: right">Delta from baseline</th></tr></thead><tbody>
+<tr><td>Baseline</td><td style="text-align: right"><code>0x140910</code></td><td style="text-align: right"><code>0x0</code></td></tr>
+<tr><td>Full H9</td><td style="text-align: right"><code>0x142600</code></td><td style="text-align: right"><code>0x1cf0</code></td></tr>
+<tr><td>H9 without four harness receipt fields</td><td style="text-align: right"><code>0x141100</code></td><td style="text-align: right"><code>0x7f0</code></td></tr>
+<tr><td>H9 without harness or library shared diagnostics</td><td style="text-align: right"><code>0x1410c0</code></td><td style="text-align: right"><code>0x7b0</code></td></tr>
+</tbody></table>
+<p>The diagnostic pipeline therefore accounts for <code>0x1540</code> of the <code>0x1cf0</code>
+uniform shift. The shared implementation still contributes a residual
+<code>0x7b0</code>, so instrumentation neutrality is necessary but may not be sufficient.
+The direct scanner sizes remained identical in both controls.</p>
+<p>These facts establish a measurement confound, not a causal acquittal. A fresh
+candidate must remove the confound and pass the same guard. H9 itself remains
+rejected.</p>
+<h2>Recommended successor</h2>
+<p>The first successor should be an <strong>instrumentation-neutral, pipeline-isolated
+shared-candidate candidate</strong>, not an immediate crate split.</p>
+<h3>1. Preserve the timed harness</h3>
+<p><code>rustmatch-bench/src/main.rs</code> must be byte-for-byte identical to the production
+baseline for the timed artifact. Candidate-specific receipt fields, Serde
+schema changes, commands, and conversion code are forbidden in that artifact.</p>
+<p>Shared-phase evidence should come from a separately identified diagnostic
+artifact or external profiling:</p>
+<ul>
+<li>a diagnostic-only feature or executable may expose shared-plan timing;</li>
+<li>the diagnostic artifact must never supply admission timing;</li>
+<li>Linux <code>perf</code>, thread names, symbol inventories, and internal tests can prove
+parallel construction without changing the timed harness;</li>
+<li>the diagnostic and timed artifact hashes must both be retained.</li>
+</ul>
+<h3>2. Separate whole private and shared pipelines</h3>
+<p>The inactive path should not branch inside a modified common
+<code>scan_partition</code>. Preserve the baseline private helper's signature and body,
+and add a distinct shared helper:</p>
+<ul>
+<li>private eligibility failure calls the original private orchestration;</li>
+<li>shared eligibility success calls separate shared orchestration;</li>
+<li><code>scan_partition</code> remains the baseline private function;</li>
+<li><code>scan_partition_shared</code> owns shared candidate filtering;</li>
+<li>shared planner, bitmap, predicates, and diagnostics live in separate modules.</li>
+</ul>
+<p>The decision between whole pipelines happens before semantic workers start.
+This is source-level isolation and is independently reviewable.</p>
+<h3>3. Escalate only if necessary</h3>
+<p>If the instrumentation-neutral candidate still moves or regresses the private
+path, terminate that experiment. A later, separately reviewed hypothesis may
+move the union filter, bitmap, and sharding implementation into an unpublished
+internal workspace crate. That crate should accept primitive slices and return
+an owned bitmap; it should not receive callbacks or semantic-engine types.</p>
+<p>If a crate boundary is still insufficient, a monomorphic private scan core
+behind a small generic adapter is the next structural option. That is a larger
+change because dynamic callback dispatch can affect dense-output workloads, so
+it should not be bundled into the first successor.</p>
+<h2>Frozen-gate proposal</h2>
+<p>A future B2 review may authorize exactly one successor with these stages:</p>
+<ol>
+<li><strong>Static preflight</strong>
+<ul>
+<li>baseline remains the measured production revision;</li>
+<li>the timed <code>rustmatch-bench/src/main.rs</code> hash matches baseline;</li>
+<li>no candidate-specific diagnostics exist in the timed artifact;</li>
+<li>private scanner sizes and mnemonic sequences are compared;</li>
+<li>both timed and diagnostic artifact identities are retained.</li>
+</ul>
+</li>
+<li><strong>Correctness</strong>
+<ul>
+<li>locked workspace tests and doctests pass;</li>
+<li>shared/private equality tests cover sparse, dense, mixed-regex, Unicode,
+assertion, and fallback activation boundaries;</li>
+<li>all timed receipts retain exact event counts and normalized digests.</li>
+</ul>
+</li>
+<li><strong>Discriminating preflight</strong>
+<ul>
+<li>run the frozen zero-output guard with balanced AB/BA order;</li>
+<li>do not edit or retune after seeing that result;</li>
+<li>terminate on any demonstrated regression.</li>
+</ul>
+</li>
+<li><strong>Complete admission matrix</strong>
+<ul>
+<li>rerun all H9 primary targets, neighbors, semantic guards, and fallbacks;</li>
+<li>retain the five-percent target floor, two-percent demonstrated-regression
+boundary, and absolute three-percent veto;</li>
+<li>merge only if every target and guard passes.</li>
+</ul>
+</li>
+</ol>
+<p>The preflight is a cost-saving stage, not a weaker gate. A passing preflight
+does not admit code; the complete matrix remains mandatory.</p>
+<h2>Approaches explicitly rejected</h2>
+<ul>
+<li>Do not relax the regression rule because the target gain is large.</li>
+<li>Do not pad or reorder functions until one benchmark happens to pass.</li>
+<li>Do not omit the zero-output or small-input guards.</li>
+<li>Do not time a candidate-only receipt schema against the baseline schema.</li>
+<li>Do not merge the optimization disabled by default and claim the feature-off
+binary as evidence for the feature-on path.</li>
+<li>Do not combine planner pooling, pipelining, shard-count tuning, or a new
+literal algorithm with the recovery candidate.</li>
+</ul>
+<p>Those ideas either hide the failure, overfit the measured executable, or make
+the next result impossible to attribute.</p>
+<h2>Recommendation</h2>
+<p>Review and freeze the instrumentation-neutral successor first. It is the
+smallest change that directly tests the newly identified confound while
+preserving H9's demonstrated algorithm. Keep the internal-crate boundary as a
+ranked fallback, not as speculative complexity in the first retry.</p>
+<p>Until that review occurs, production remains unchanged and H9 remains absent
+from the merged-improvement graph.</p>
+</main><footer>Generated from <code>docs/experiments/shared-candidate-recovery-analysis.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
