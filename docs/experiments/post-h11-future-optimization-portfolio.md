@@ -7,6 +7,20 @@
 
 **Review date:** 2026-07-26
 
+## H12 outcome update
+
+The original rank-one opportunity was measured as
+[B2-H-0012](b2-h-0012-assertion-prefilter-result.md). Its semantic mechanism
+passed exactly and sparse assertion targets reached roughly 185 to 385 times
+baseline throughput. The artifact did not merge: Wuthering regressed 3.038%
+and assertion preparation regressed 11.16% to 22.32%.
+
+The portfolio therefore replaces the original rank-one implementation with a
+bounded recovery: isolate assertion dispatch behind a stable compiler boundary
+and reduce filter-build cost while preserving the proven prefix algorithm.
+The remaining ranks are unchanged pending that recovery because H12 increased,
+rather than reduced, confidence in the underlying opportunity.
+
 ## Executive conclusion
 
 There is no single remaining optimization that dominates every workload.
@@ -115,7 +129,7 @@ learn whether the premise is true.
 
 | Rank | Candidate | Opportunity | Confidence | Breadth | Cost | Risk | Why this position |
 |---:|---|---|---|---|---|---|---|
-| 1 | Assertion-bearing conservative prefilter | Very high | High | Narrow | Medium-low | Medium | Source-proven 76-second cliff; reuses false-positive-only I7 machinery and unchanged semantic verification |
+| 1 | Assertion-dispatch isolation and prefilter recovery | Very high | Very high | Narrow | Medium | Medium | H12 proved 185x-385x exact target gains; successor must remove a separable 3.038% inactive Wuthering loss and reduce preparation cost |
 | 2 | Partition-aware H11 candidate routing | Medium-high | Medium | Medium | Medium | Low-medium | Explicit H11 successor; removes per-candidate probes across 16-32 partitions without changing matching semantics |
 | 3 | SIMD shared candidate discovery | High | Medium | Medium | Medium-high | Medium | Directly replaces H11's scalar corpus pass and targets the largest Hyperscan literal gaps |
 | 4 | Exact literal-only backend | Very high | Medium | Medium | High | High | Can bypass NFA/cache verification entirely on a strict literal subset; dense and zero-output gaps justify the cost |
@@ -128,7 +142,7 @@ learn whether the premise is true.
 ```mermaid
 flowchart TD
     H11["H11 production baseline"] --> D0["Shared phase + path diagnostic"]
-    D0 --> A["1 · assertion-bearing prefilter"]
+    D0 --> A["1 · assertion dispatch recovery"]
     D0 --> R["2 · partition-aware routing"]
     D0 --> S["3 · SIMD candidate discovery"]
     S --> L["4 · exact literal backend"]
@@ -146,6 +160,12 @@ flowchart TD
 ## Candidate assessments
 
 ### 1. Assertion-bearing conservative prefilter
+
+**Measured ruling.** H12 validated this mechanism but failed admission. All
+targets and correctness gates passed; Wuthering crossed the automatic veto
+even though it cannot execute the assertion path. See the
+[retained result](b2-h-0012-assertion-prefilter-result.md). The active rank-one
+item is now recovery and isolation, not a rerun of the rejected artifact.
 
 **Mechanism.** Today `Prefilter::compile` returns immediately when any
 assertion is present. For a pattern such as `\bword0001\b`, however, the
@@ -167,11 +187,12 @@ assertions from consuming or optional prefixes. Boundary and line-anchor
 adversaries, UTF-16 isolated surrogates, input edges, alternation, repeated
 assertions, and mixed databases need exact multiset parity.
 
-**Next evidence.** Freeze a diagnostic-only candidate that enables the current
-literal bitmap for the existing assertion-bypass fixture and reports candidate
-density, assertion-NFA time, retained bytes, and exact event identity. Target
-gain remains at least 5%; every assertion-free and unfilterable guard must
-remain on its byte-identical path.
+**Next evidence.** Freeze a new successor that retains the exact literal
+candidate semantics while placing assertion planning behind one non-generic or
+separately compiled boundary. Before timing, require ordinary-path symbol
+size, mnemonic, alignment, caller, and focused counter evidence, then profile
+and reduce filter construction cost. Target gain remains at least 5%; every
+assertion-free and unfilterable guard must pass the unchanged numeric gates.
 
 ### 2. Partition-aware H11 candidate routing
 
@@ -319,11 +340,12 @@ the selector needs its own boundary and misclassification guards.
 
 ## Recommended program
 
-1. Add one benchmark-only phase diagnostic reusable by ranks 1, 2, 3, 5, 6,
-   and 8. It must not alter production behavior.
-2. Freeze the assertion-bearing prefilter as the next causal experiment because
-   it already has a source-proven target and a strict fallback boundary.
-3. Use the same diagnostic to decide whether routing or SIMD owns more of H11's
+1. Freeze the H12 assertion-dispatch isolation recovery with an ordinary-path
+   binary-shape gate and preparation profile; do not reuse the rejected
+   artifact as production source.
+2. Retain the full H12 semantic, fallback, H11, and Wuthering matrix under a
+   new authorization without changing thresholds.
+3. Use the shared phase diagnostic to decide whether routing or SIMD owns more of H11's
    remaining large-literal critical path. Do not combine them.
 4. Prototype the exact-literal backend only after the lightweight H11
    successors, unless its isolated microbenchmark demonstrates a much larger

@@ -6,14 +6,15 @@
 
 **Implementation increments complete:** **10/12**
 
-**Active:** `B2-H-0011` has passed G9-v2 and merged as exact measured source;
-H9 and H10 remain rejected historical artifacts
+**Active:** `B2-H-0012` is retained for investigation but not admitted; H11
+remains the exact production baseline
 
-**Next evidence goal:** freeze a diagnostic-only assertion-bearing conservative
-prefilter. The [post-H11 portfolio review](experiments/post-h11-future-optimization-portfolio.md)
-ranks it above partition-aware H11 routing, SIMD candidate discovery, an exact
-literal backend, and exact input parallelism because it targets a source-proven
-76-second all-start path with a smaller, false-positive-only change
+**Next evidence goal:** freeze an assertion-dispatch isolation successor that
+preserves H12's 185x-to-385x sparse-target gains while restoring Wuthering and
+reducing assertion preparation cost. The
+[H12 result](experiments/b2-h-0012-assertion-prefilter-result.md) identifies a
+plausibly separable compiler/layout regression on a guard that cannot execute
+the new assertion path
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -325,15 +326,21 @@ headroom before a benchmark-only full-database prototype is justified.
 The broader
 [post-H11 future optimization portfolio](experiments/post-h11-future-optimization-portfolio.md)
 reviews every currently known open direction and the negative evidence that
-closes earlier mechanisms. It promotes conservative necessary-literal
-prefiltering for assertion-bearing databases to the next experiment: the
-retained 1,000-pattern `\bword…\b` fixture currently disables every prefilter
-and spends roughly 76 seconds scanning all starts over 8 MiB. The proposed
-diagnostic steps only past supported leading zero-width assertions during
-necessary-literal analysis; the existing assertion-aware semantic engine
-remains authoritative. H11 routing and SIMD candidate discovery rank next.
-B2-H-0006 moves to rank five because its semantics are now sound but its
-incremental post-H11 headroom is unproven.
+closes earlier mechanisms. Its first-ranked assertion-bearing prefilter has now
+been measured as [B2-H-0012](experiments/b2-h-0012-assertion-prefilter-result.md).
+The semantic and algorithmic prediction passed spectacularly: sparse targets
+reached roughly 185 to 385 times baseline throughput with exact events. The
+artifact did not merge because the unrelated Wuthering guard regressed 3.038%
+and assertion preparation regressed 11.16% to 22.32%.
+
+H12 therefore advances to a bounded recovery rather than production. Binary
+inspection shows five candidate-only sink-specialized assertion functions and
+changed ordinary scanner size and placement, while Wuthering cannot execute
+the assertion code path. The next experiment must isolate that dispatch behind
+a stable compiler boundary and profile filter construction. H11 routing and
+SIMD candidate discovery remain next after this recovery. B2-H-0006 stays at
+rank five because its semantics are sound but its incremental post-H11
+headroom remains unproven.
 
 ## Milestone ledger
 

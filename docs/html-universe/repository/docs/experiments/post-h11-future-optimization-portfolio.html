@@ -11,6 +11,17 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 <p><strong>Reviewed production baseline:</strong> H11 exact measured source
 <code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
 <p><strong>Review date:</strong> 2026-07-26</p>
+<h2>H12 outcome update</h2>
+<p>The original rank-one opportunity was measured as
+<a href="b2-h-0012-assertion-prefilter-result.html">B2-H-0012</a>. Its semantic mechanism
+passed exactly and sparse assertion targets reached roughly 185 to 385 times
+baseline throughput. The artifact did not merge: Wuthering regressed 3.038%
+and assertion preparation regressed 11.16% to 22.32%.</p>
+<p>The portfolio therefore replaces the original rank-one implementation with a
+bounded recovery: isolate assertion dispatch behind a stable compiler boundary
+and reduce filter-build cost while preserving the proven prefix algorithm.
+The remaining ranks are unchanged pending that recovery because H12 increased,
+rather than reduced, confidence in the underlying opportunity.</p>
 <h2>Executive conclusion</h2>
 <p>There is no single remaining optimization that dominates every workload.
 H11 changed the shape of the problem:</p>
@@ -104,7 +115,7 @@ risk.</li>
 research project can rank below a modest diagnostic when it costs much more to
 learn whether the premise is true.</p>
 <table><thead><tr><th style="text-align: right">Rank</th><th>Candidate</th><th>Opportunity</th><th>Confidence</th><th>Breadth</th><th>Cost</th><th>Risk</th><th>Why this position</th></tr></thead><tbody>
-<tr><td style="text-align: right">1</td><td>Assertion-bearing conservative prefilter</td><td>Very high</td><td>High</td><td>Narrow</td><td>Medium-low</td><td>Medium</td><td>Source-proven 76-second cliff; reuses false-positive-only I7 machinery and unchanged semantic verification</td></tr>
+<tr><td style="text-align: right">1</td><td>Assertion-dispatch isolation and prefilter recovery</td><td>Very high</td><td>Very high</td><td>Narrow</td><td>Medium</td><td>Medium</td><td>H12 proved 185x-385x exact target gains; successor must remove a separable 3.038% inactive Wuthering loss and reduce preparation cost</td></tr>
 <tr><td style="text-align: right">2</td><td>Partition-aware H11 candidate routing</td><td>Medium-high</td><td>Medium</td><td>Medium</td><td>Medium</td><td>Low-medium</td><td>Explicit H11 successor; removes per-candidate probes across 16-32 partitions without changing matching semantics</td></tr>
 <tr><td style="text-align: right">3</td><td>SIMD shared candidate discovery</td><td>High</td><td>Medium</td><td>Medium</td><td>Medium-high</td><td>Medium</td><td>Directly replaces H11's scalar corpus pass and targets the largest Hyperscan literal gaps</td></tr>
 <tr><td style="text-align: right">4</td><td>Exact literal-only backend</td><td>Very high</td><td>Medium</td><td>Medium</td><td>High</td><td>High</td><td>Can bypass NFA/cache verification entirely on a strict literal subset; dense and zero-output gaps justify the cost</td></tr>
@@ -114,9 +125,14 @@ learn whether the premise is true.</p>
 <tr><td style="text-align: right">8</td><td>Fused persistent planning and semantic phases</td><td>Low-medium</td><td>Low</td><td>Medium</td><td>High</td><td>Medium-high</td><td>A pool alone is refuted; only barrier/data-movement fusion could make this a materially new mechanism</td></tr>
 <tr><td style="text-align: right">9</td><td>Adaptive workload-path selector</td><td>Compound</td><td>Dependency-blocked</td><td>Broad</td><td>Medium</td><td>High</td><td>Selection adds no speed itself and must wait for independently proven alternative paths</td></tr>
 </tbody></table>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/1a6ee0e00411959cd7f073fb917de73417f46f4350e4d76cfae25ec2f803d469.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/1a6ee0e00411959cd7f073fb917de73417f46f4350e4d76cfae25ec2f803d469.svg" alt="Ranking method diagram"></a><figcaption>Ranking method · <a href="../../../assets/mermaid/1a6ee0e00411959cd7f073fb917de73417f46f4350e4d76cfae25ec2f803d469.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/d832cde3eed16c850cfac226758f2857f5bd46cb4af7008d41a7698c6b30a74a.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/d832cde3eed16c850cfac226758f2857f5bd46cb4af7008d41a7698c6b30a74a.svg" alt="Ranking method diagram"></a><figcaption>Ranking method · <a href="../../../assets/mermaid/d832cde3eed16c850cfac226758f2857f5bd46cb4af7008d41a7698c6b30a74a.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Candidate assessments</h2>
 <h3>1. Assertion-bearing conservative prefilter</h3>
+<p><strong>Measured ruling.</strong> H12 validated this mechanism but failed admission. All
+targets and correctness gates passed; Wuthering crossed the automatic veto
+even though it cannot execute the assertion path. See the
+<a href="b2-h-0012-assertion-prefilter-result.html">retained result</a>. The active rank-one
+item is now recovery and isolation, not a rerun of the rejected artifact.</p>
 <p><strong>Mechanism.</strong> Today <code>Prefilter::compile</code> returns immediately when any
 assertion is present. For a pattern such as <code>\bword0001\b</code>, however, the
 leading assertion consumes no input and the literal still begins at the
@@ -134,11 +150,12 @@ patterns remain on the current fallback.</p>
 assertions from consuming or optional prefixes. Boundary and line-anchor
 adversaries, UTF-16 isolated surrogates, input edges, alternation, repeated
 assertions, and mixed databases need exact multiset parity.</p>
-<p><strong>Next evidence.</strong> Freeze a diagnostic-only candidate that enables the current
-literal bitmap for the existing assertion-bypass fixture and reports candidate
-density, assertion-NFA time, retained bytes, and exact event identity. Target
-gain remains at least 5%; every assertion-free and unfilterable guard must
-remain on its byte-identical path.</p>
+<p><strong>Next evidence.</strong> Freeze a new successor that retains the exact literal
+candidate semantics while placing assertion planning behind one non-generic or
+separately compiled boundary. Before timing, require ordinary-path symbol
+size, mnemonic, alignment, caller, and focused counter evidence, then profile
+and reduce filter construction cost. Target gain remains at least 5%; every
+assertion-free and unfilterable guard must pass the unchanged numeric gates.</p>
 <h3>2. Partition-aware H11 candidate routing</h3>
 <p><strong>Mechanism.</strong> Compile a global mapping from each conservative prefix bucket to
 an eligible partition bitmask or compact partition list. During shared
@@ -254,11 +271,12 @@ the selector needs its own boundary and misclassification guards.</p>
 </tbody></table>
 <h2>Recommended program</h2>
 <ol>
-<li>Add one benchmark-only phase diagnostic reusable by ranks 1, 2, 3, 5, 6,
-and 8. It must not alter production behavior.</li>
-<li>Freeze the assertion-bearing prefilter as the next causal experiment because
-it already has a source-proven target and a strict fallback boundary.</li>
-<li>Use the same diagnostic to decide whether routing or SIMD owns more of H11's
+<li>Freeze the H12 assertion-dispatch isolation recovery with an ordinary-path
+binary-shape gate and preparation profile; do not reuse the rejected
+artifact as production source.</li>
+<li>Retain the full H12 semantic, fallback, H11, and Wuthering matrix under a
+new authorization without changing thresholds.</li>
+<li>Use the shared phase diagnostic to decide whether routing or SIMD owns more of H11's
 remaining large-literal critical path. Do not combine them.</li>
 <li>Prototype the exact-literal backend only after the lightweight H11
 successors, unless its isolated microbenchmark demonstrates a much larger

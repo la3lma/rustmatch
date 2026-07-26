@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0012 assertion prefilter result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0012-assertion-prefilter-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0012-assertion-prefilter-result.md</div></header><main><h1>B2-H-0012 assertion prefilter result</h1>
+<p><strong>Outcome:</strong> investigate; not admitted and not merged</p>
+<p><strong>Machine disposition:</strong> rejected under G9-v2</p>
+<p><strong>Production baseline remains:</strong> <code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<h2>Result at a glance</h2>
+<p>H12 proved that assertion-bearing pattern sets can safely use conservative
+literal candidates. It also failed the unchanged keeper gate.</p>
+<table><thead><tr><th>Frozen cell</th><th style="text-align: right">Baseline Mbit/s</th><th style="text-align: right">H12 Mbit/s</th><th style="text-align: right">Median effect</th><th>Direction</th></tr></thead><tbody>
+<tr><td>boundary 1,000, 1 MiB, one worker</td><td style="text-align: right">0.981</td><td style="text-align: right">195.210</td><td style="text-align: right">+19,745.379%</td><td>6/6 positive</td></tr>
+<tr><td>boundary 1,000, 1 MiB, two workers</td><td style="text-align: right">2.128</td><td style="text-align: right">393.188</td><td style="text-align: right">+18,421.004%</td><td>6/6 positive</td></tr>
+<tr><td>boundary 1,000, 2 MiB, one worker</td><td style="text-align: right">0.983</td><td style="text-align: right">378.253</td><td style="text-align: right">+38,435.392%</td><td>6/6 positive</td></tr>
+<tr><td>boundary 500, 1 MiB neighbor</td><td style="text-align: right">1.969</td><td style="text-align: right">380.469</td><td style="text-align: right">+19,223.628%</td><td>6/6 positive</td></tr>
+<tr><td>mixed assertion adversary</td><td style="text-align: right">5.599</td><td style="text-align: right">4,029.000</td><td style="text-align: right">+72,035.393%</td><td>6/6 positive</td></tr>
+<tr><td>below-threshold 512 KiB guard</td><td style="text-align: right">0.982</td><td style="text-align: right">0.981</td><td style="text-align: right">-0.133%</td><td>3/6 positive</td></tr>
+<tr><td>dense assertion guard</td><td style="text-align: right">1.815</td><td style="text-align: right">1.824</td><td style="text-align: right">+0.431%</td><td>6/6 positive</td></tr>
+<tr><td>unfilterable assertion guard</td><td style="text-align: right">0.974</td><td style="text-align: right">0.982</td><td style="text-align: right">+0.922%</td><td>5/6 positive</td></tr>
+<tr><td>ordinary literal guard</td><td style="text-align: right">4,630.570</td><td style="text-align: right">4,640.926</td><td style="text-align: right">+0.307%</td><td>4/6 positive</td></tr>
+<tr><td>H11 shared guard</td><td style="text-align: right">21,538.240</td><td style="text-align: right">21,552.446</td><td style="text-align: right">-0.270%</td><td>3/6 positive</td></tr>
+<tr><td>Wuthering guard</td><td style="text-align: right">1,454.076</td><td style="text-align: right">1,423.118</td><td style="text-align: right">-3.038%</td><td>0/6 positive</td></tr>
+</tbody></table>
+<p>The target ratios are approximately 199, 185, and 385 times baseline
+throughput. The adversarial neighbor is approximately 720 times baseline.
+Every event count and normalized digest matched exactly.</p>
+<h2>Why it did not merge</h2>
+<p>The Wuthering guard crossed the frozen three-percent automatic veto:</p>
+<ul>
+<li>primary scan throughput: <code>-3.037813%</code>, six of six pairs negative;</li>
+<li>process wall time: <code>-3.479505%</code>, six of six pairs negative.</li>
+</ul>
+<p>Assertion preparation also regressed <code>11.160835%</code> through <code>22.315753%</code> because
+H12 proves and compiles a filter instead of immediately bypassing prefilter
+construction. Two small RSS effects crossed three percent. Those are real
+costs even though the scan savings dominate total elapsed time on the targets.</p>
+<p>The decision does not relax or reinterpret the frozen thresholds. Exact
+candidate <code>169c47c0c1360dbbf4653834bd144d9a66a14093</code> is not production code and
+does not enter the accepted-progress graph.</p>
+<h2>Causal assessment</h2>
+<p>Wuthering contains no assertions and cannot execute H12's new candidate path.
+The candidate emits five sink-specialized <code>scan_with_assertion_plan</code>
+functions and changes the size and placement of ordinary <code>scan_with_stats</code>
+specializations. The leading hypothesis is therefore separable compiler or
+hot-layout interference, not an inherent cost of filtering assertion starts.</p>
+<p>The preparation loss has a different cause: H12 deliberately does additional
+prefix analysis and literal-filter construction. A successor must address
+both mechanisms rather than hiding preparation work in another measured
+phase.</p>
+<h2>Recommended successor</h2>
+<p>Freeze a new assertion-dispatch isolation hypothesis:</p>
+<ol>
+<li>Preserve H12's conservative prefix proof and exact private candidates.</li>
+<li>Move assertion planning behind one non-generic or separately compiled
+boundary so ordinary scanner code and placement remain stable.</li>
+<li>Require byte, mnemonic, size, alignment, and focused counter evidence for
+the Wuthering ordinary path before the full timing matrix.</li>
+<li>Profile filter construction and reduce its absolute preparation cost.</li>
+<li>Reuse every H12 correctness, fallback, ordinary, H11, and Wuthering guard
+under a new authorization without changing thresholds.</li>
+</ol>
+<p>This is a recovery hypothesis, not authorization to implement or merge.</p>
+<h2>Evidence identity</h2>
+<ul>
+<li>Design:
+<a href="b2-h-0012-assertion-prefilter-design.html">B2-H-0012 frozen design</a></li>
+<li>Accepted H11 baseline:
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></li>
+<li>Exact measured candidate:
+<code>169c47c0c1360dbbf4653834bd144d9a66a14093</code></li>
+<li>Candidate patch SHA-256:
+<code>4929818ed5c4d9aa0deabab2f3e24d7712d88f4ede471ca5540bede8c13df5d8</code></li>
+<li>Frozen experiment revision:
+<code>4a26837af3d90f3238ccb021ea9a3925113f8d00</code></li>
+<li>Authorization SHA-256:
+<code>2f04f2f14e0fbab65fe1772e621c4f656bd54e55df5e155ae0cd10458baae2d7</code></li>
+<li>Frozen contract v4 SHA-256:
+<code>191281864d2b601b27f492e2ceaf83dd5031a299312cc5a97cb060a605e3bdde</code></li>
+<li>Measurements SHA-256:
+<code>4fd7cdf4c0f3404c8dc09ae6c8ee9e9d3c4cdf45dc35b7c2dd83aaa2a478233b</code></li>
+<li>Window state SHA-256:
+<code>f5581fde7dd831a56fac153b81c27608bc725190471a4917ddbebae7a31480ef</code></li>
+<li>Host receipt SHA-256:
+<code>deb1fe54f15b29929f8f17c19cf4d0cd7143bc4c9f7c34982eb939e471c16d25</code></li>
+<li>Service snapshot SHA-256:
+<code>e0939ad461c6f7dba32f73d75ce109d066c8135e41b835510a7e9a24f113e62c</code></li>
+<li>Machine summary SHA-256:
+<code>fb809462d80d9fc7ee42df23d5f7134bca40aab36e7072c38780962737aa033f</code></li>
+<li>Final measurement review commit:
+<code>3f948d3</code></li>
+</ul>
+<p>The full machine evaluation, lab note, raw receipts, and every superseded
+window remain in the measurement repository. The successful window ran for
+49 minutes 42 seconds on an exclusive, GPU-idle Agogo host and restored all
+managed services cleanly.</p>
+</main><footer>Generated from <code>docs/experiments/b2-h-0012-assertion-prefilter-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

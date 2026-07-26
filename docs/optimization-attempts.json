@@ -197,6 +197,20 @@
         "baseline_millis": 160.850894926,
         "candidate_millis": 20.212271917
       }
+    },
+    {
+      "id": "B2-H-0012",
+      "name": "Assertion-bearing conservative literal prefilter",
+      "date": "2026-07-26",
+      "status": "investigate",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "169c47c0c1360dbbf4653834bd144d9a66a14093",
+      "summary": "Step past only leading zero-width assertions while proving necessary literal prefixes, then use a private candidate bitmap without exposing assertion filters to H11 shared planning.",
+      "result": "Exact semantics and all three targets passed. Sparse assertion targets improved 18,421%-38,435% (about 185x-385x baseline), and the mixed adversary improved 72,035% (about 721x). The unrelated Wuthering guard regressed 3.038%, with all six pairs negative, and assertion preparation regressed 11.161%-22.316%.",
+      "tradeoffs": "The scan algorithm removes almost all impossible assertion starts and has exceptional upside, but filter proof and construction add preparation cost. Wuthering cannot execute the assertion path; candidate-only sink-specialized assertion functions changed ordinary scanner size and placement, making code-generation or hot-layout interference the leading regression hypothesis.",
+      "decision": "Machine-rejected by the unchanged three-percent veto and not merged. Classified investigate under G9-v2 because the enormous target gains oppose a plausibly separable inactive-path regression. The next successor must isolate assertion dispatch, preserve ordinary scanner shape, and reduce preparation cost under a fresh frozen contract.",
+      "evidence": "experiments/b2-h-0012-assertion-prefilter-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -291,11 +305,11 @@
     {
       "priority": 1,
       "id": "FUTURE-ASSERT",
-      "name": "Assertion-bearing conservative prefilter",
-      "status": "reviewed; next experiment",
-      "why": "Assertion-bearing databases currently disable every prefilter. The retained 1,000-pattern boundary fixture scans all starts and takes roughly 76 seconds over 8 MiB even though each consuming literal begins at the same start after a zero-width assertion.",
-      "next_test": "Freeze a diagnostic-only candidate that extracts necessary literals past supported leading zero-width assertions, builds the existing false-positive-only candidate bitmap, and leaves assertion-aware semantic verification unchanged.",
-      "expected_value": "Very high narrow-workload opportunity, high evidence confidence, medium-low cost, medium semantic risk",
+      "name": "Assertion-dispatch isolation and prefilter recovery",
+      "status": "H12 investigated; recovery design pending",
+      "why": "H12 proved exact sparse assertion gains of roughly 185x-385x, but its artifact crossed the unchanged veto on a Wuthering path that cannot execute assertion candidates. Candidate-only sink specializations changed ordinary scanner size and placement, while filter construction added 11%-22% preparation cost.",
+      "next_test": "Freeze one non-generic or separately compiled assertion-dispatch successor. Require ordinary-path binary-shape and focused-counter parity before timing, profile filter construction, and rerun every H12 target and guard unchanged.",
+      "expected_value": "Very high narrow-workload opportunity, very high mechanism confidence, medium recovery cost and regression risk",
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {

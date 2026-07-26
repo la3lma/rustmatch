@@ -1,5 +1,10 @@
 # B2-H-0012: assertion-bearing conservative prefilter
 
+> **Measured outcome:** investigate; machine-rejected and not merged. The
+> sparse targets improved approximately 185x to 385x, but Wuthering regressed
+> 3.038% and crossed the unchanged automatic veto. See the
+> [retained result](b2-h-0012-assertion-prefilter-result.md).
+
 **Status:** frozen design; source implementation not yet measured
 
 **Baseline:** `68e43fc` (`codex/optimization-scale`)
