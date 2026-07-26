@@ -682,7 +682,7 @@ impl LiteralPrefilter {
     }
 }
 
-fn ascii_triple_index(first: u16, second: u16, third: u16) -> usize {
+pub(crate) fn ascii_triple_index(first: u16, second: u16, third: u16) -> usize {
     (usize::from(first) << 14) | (usize::from(second) << 7) | usize::from(third)
 }
 
@@ -690,7 +690,7 @@ fn prefix_key(first: u16, second: u16, third: u16) -> u64 {
     u64::from(first) << 32 | u64::from(second) << 16 | u64::from(third)
 }
 
-fn prefix_hash_index(prefix: &[u16], bit_count: usize) -> usize {
+pub(crate) fn prefix_hash_index(prefix: &[u16], bit_count: usize) -> usize {
     let mut hash = 0xcbf2_9ce4_8422_2325_u64;
     for &symbol in prefix {
         hash ^= u64::from(symbol);
@@ -708,7 +708,7 @@ pub(crate) struct CandidateBitmap {
 }
 
 impl CandidateBitmap {
-    fn new(bit_len: usize) -> Self {
+    pub(crate) fn new(bit_len: usize) -> Self {
         Self {
             words: vec![0; bit_len.div_ceil(64)],
             start_count: 0,
@@ -743,7 +743,15 @@ impl CandidateBitmap {
         }
     }
 
-    fn retained_bytes(&self) -> usize {
+    pub(crate) fn words_mut(&mut self) -> &mut [u64] {
+        &mut self.words
+    }
+
+    pub(crate) const fn set_count(&mut self, start_count: usize) {
+        self.start_count = start_count;
+    }
+
+    pub(crate) fn retained_bytes(&self) -> usize {
         self.words.capacity() * size_of::<u64>()
     }
 }
@@ -775,7 +783,7 @@ fn set_bit(words: &mut [u64], bit: usize) {
     words[bit / 64] |= 1_u64 << (bit % 64);
 }
 
-fn contains_bit(words: &[u64], bit: usize) -> bool {
+pub(crate) fn contains_bit(words: &[u64], bit: usize) -> bool {
     words[bit / 64] & (1_u64 << (bit % 64)) != 0
 }
 

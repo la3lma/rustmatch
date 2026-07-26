@@ -5,7 +5,10 @@ use std::panic;
 use std::thread;
 
 use crate::Error;
-use crate::prefilter::{Prefilter, SharedLiteralFilter};
+use crate::prefilter::{
+    CandidateBitmap, Prefilter, SharedLiteralFilter, ascii_triple_index, contains_bit,
+    prefix_hash_index,
+};
 
 #[cfg(not(test))]
 const MIN_SHARED_PARTITION_COUNT: usize = 16;
@@ -62,17 +65,18 @@ pub(crate) fn plan(
         return Ok(None);
     }
 
-    let mut candidates = SharedCandidateBitmap::new(input.len());
+    let mut candidates = CandidateBitmap::new(input.len());
+    let candidate_words = candidates.words_mut();
     let shard_count = MAX_SHARED_PLAN_SHARDS
         .min(partitions.len())
-        .min(candidates.words.len())
+        .min(candidate_words.len())
         .max(1);
-    let words_per_shard = candidates.words.len().div_ceil(shard_count);
+    let words_per_shard = candidate_words.len().div_ceil(shard_count);
     let candidate_count = thread::scope(|scope| {
         let union = &union;
         let mut handles = Vec::with_capacity(shard_count);
         let mut spawn_error = None;
-        for (shard_index, words) in candidates.words.chunks_mut(words_per_shard).enumerate() {
+        for (shard_index, words) in candidate_words.chunks_mut(words_per_shard).enumerate() {
             let first_word = shard_index * words_per_shard;
             if let Ok(handle) = thread::Builder::new()
                 .name(format!("rustmatch-candidate-{shard_index}"))
@@ -104,7 +108,7 @@ pub(crate) fn plan(
         }
         spawn_error.map_or(Ok(count), Err)
     })?;
-    candidates.start_count = candidate_count;
+    candidates.set_count(candidate_count);
     Ok(Some(SharedCandidatePlan {
         candidates,
         shared_retained_bytes: union.retained_bytes(),
@@ -113,7 +117,7 @@ pub(crate) fn plan(
 
 #[derive(Debug)]
 pub(crate) struct SharedCandidatePlan {
-    candidates: SharedCandidateBitmap,
+    candidates: CandidateBitmap,
     shared_retained_bytes: usize,
 }
 
@@ -129,7 +133,7 @@ impl SharedCandidatePlan {
 
 #[derive(Clone, Copy)]
 pub(crate) struct SharedCandidate<'a> {
-    candidates: &'a SharedCandidateBitmap,
+    candidates: &'a CandidateBitmap,
     account_storage: bool,
     extra_retained_bytes: usize,
 }
@@ -278,78 +282,6 @@ fn scan_word_slice(
         admissions = admissions.saturating_add(1);
     }
     admissions
-}
-
-fn ascii_triple_index(first: u16, second: u16, third: u16) -> usize {
-    (usize::from(first) << 14) | (usize::from(second) << 7) | usize::from(third)
-}
-
-fn prefix_hash_index(prefix: &[u16], bit_count: usize) -> usize {
-    let mut hash = 0xcbf2_9ce4_8422_2325_u64;
-    for &symbol in prefix {
-        hash ^= u64::from(symbol);
-        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
-    }
-    let masked = hash & u64::try_from(bit_count - 1).expect("filter size fits u64");
-    usize::try_from(masked).expect("masked filter index fits usize")
-}
-
-fn contains_bit(words: &[u64], bit: usize) -> bool {
-    words[bit / 64] & (1_u64 << (bit % 64)) != 0
-}
-
-#[derive(Debug)]
-struct SharedCandidateBitmap {
-    words: Vec<u64>,
-    start_count: usize,
-}
-
-impl SharedCandidateBitmap {
-    fn new(bit_len: usize) -> Self {
-        Self {
-            words: vec![0; bit_len.div_ceil(64)],
-            start_count: 0,
-        }
-    }
-
-    const fn count(&self) -> usize {
-        self.start_count
-    }
-
-    fn iter(&self) -> SharedCandidateIter<'_> {
-        SharedCandidateIter {
-            words: self.words.iter().enumerate(),
-            current: 0,
-            word_base: 0,
-        }
-    }
-
-    fn retained_bytes(&self) -> usize {
-        self.words.capacity() * size_of::<u64>()
-    }
-}
-
-struct SharedCandidateIter<'a> {
-    words: std::iter::Enumerate<std::slice::Iter<'a, u64>>,
-    current: u64,
-    word_base: usize,
-}
-
-impl Iterator for SharedCandidateIter<'_> {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if self.current != 0 {
-                let bit = self.current.trailing_zeros() as usize;
-                self.current &= self.current - 1;
-                return Some(self.word_base + bit);
-            }
-            let (word_index, word) = self.words.next()?;
-            self.current = *word;
-            self.word_base = word_index * 64;
-        }
-    }
 }
 
 #[cfg(test)]
