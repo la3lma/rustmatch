@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-07-26",
+  "last_reviewed": "2026-07-27",
   "policy_version": "G9-v2",
   "policy_effective_date": "2026-07-26",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes admission. A demonstrated regression above 2% through 3% requires investigation: the candidate is not merged, receives no progress credit, and must produce a retained causal follow-up. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement.",
@@ -211,6 +211,20 @@
       "decision": "Machine-rejected by the unchanged three-percent veto and not merged. Classified investigate under G9-v2 because the enormous target gains oppose a plausibly separable inactive-path regression. The next successor must isolate assertion dispatch, preserve ordinary scanner shape, and reduce preparation cost under a fresh frozen contract.",
       "evidence": "experiments/b2-h-0012-assertion-prefilter-result.md",
       "progress": null
+    },
+    {
+      "id": "B2-H-0013",
+      "name": "Assertion prefilter dispatch and construction recovery",
+      "date": "2026-07-27",
+      "status": "investigate",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "fb836900c7ef8a872da44638c6f626a7547c7487",
+      "summary": "Retain H12's exact assertion-candidate algorithm behind one non-generic scanner, a stack prefix value, used-width literal tables, and assertion-private metadata.",
+      "result": "Exact semantics and all three focused assertion targets passed. The 1,000-pattern boundary improved 22,567.445% (226.67x), the 500-pattern neighbor improved 21,516.882% (216.17x), and the mixed adversary improved 72,625.754% (727.26x). Wuthering regressed 5.791% with all six pairs negative, and assertion preparation regressed 5.862%-13.359%.",
+      "tradeoffs": "Five H12 assertion-plan copies totaling 17,776 bytes became one 2,512-byte function, but the ordinary scanner still changed shape and total text grew. Prefix proof still retained a 32-unit value although the private filter consumes at most five units, leaving a concrete construction-cost recovery untried.",
+      "decision": "Machine-rejected by the unchanged focused veto and stopped before the full matrix. Not merged and excluded from progress. Classified investigate because exact 216x-727x gains remain opposed by two narrower, plausibly separable inactive-path and construction mechanisms.",
+      "evidence": "experiments/b2-h-0013-assertion-prefilter-recovery-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -306,11 +320,11 @@
       "priority": 1,
       "id": "FUTURE-ASSERT",
       "name": "Assertion-dispatch isolation and prefilter recovery",
-      "status": "H12 investigated; recovery design pending",
-      "why": "H12 proved exact sparse assertion gains of roughly 185x-385x, but its artifact crossed the unchanged veto on a Wuthering path that cannot execute assertion candidates. Candidate-only sink specializations changed ordinary scanner size and placement, while filter construction added 11%-22% preparation cost.",
-      "next_test": "Freeze one non-generic or separately compiled assertion-dispatch successor. Require ordinary-path binary-shape and focused-counter parity before timing, profile filter construction, and rerun every H12 target and guard unchanged.",
-      "expected_value": "Very high narrow-workload opportunity, very high mechanism confidence, medium recovery cost and regression risk",
-      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+      "status": "H13 investigated; narrower H14 recovery requires fresh review",
+      "why": "H13 preserved exact 216x-727x assertion gains and removed H12's assertion-plan monomorphizations, but Wuthering still regressed 5.791% and repeated preparation regressed 5.862%-13.359%. Static evidence shows the ordinary scanner still changed shape, while prefix proof retained 32 units for a filter that consumes at most five.",
+      "next_test": "Freeze a five-unit assertion prefix representation plus a cold or separately compiled assertion entry. Require ordinary scanner and caller shape parity before reusing H13's focused target, preparation, Wuthering, and H11-shared gates unchanged.",
+      "expected_value": "Very high narrow-workload opportunity, very high algorithm confidence, low-medium recovery cost, and medium compiler-layout risk",
+      "evidence": "experiments/b2-h-0013-assertion-prefilter-recovery-result.md"
     },
     {
       "priority": 2,
