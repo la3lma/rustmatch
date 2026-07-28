@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-07-27",
+  "last_reviewed": "2026-07-28",
   "policy_version": "G9-v2",
   "policy_effective_date": "2026-07-26",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes admission. A demonstrated regression above 2% through 3% requires investigation: the candidate is not merged, receives no progress credit, and must produce a retained causal follow-up. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement.",
@@ -225,6 +225,90 @@
       "decision": "Machine-rejected by the unchanged focused veto and stopped before the full matrix. Not merged and excluded from progress. Classified investigate because exact 216x-727x gains remain opposed by two narrower, plausibly separable inactive-path and construction mechanisms.",
       "evidence": "experiments/b2-h-0013-assertion-prefilter-recovery-result.md",
       "progress": null
+    },
+    {
+      "id": "B2-H-0014",
+      "name": "Assertion recovery stack",
+      "date": "2026-07-27",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "0c20ed79ae595c731e6d981ad1b57ef5f1087f76",
+      "summary": "Combine a compact assertion-prefix sidecar, single-hash transactional registration, a smaller assertion-private table, one-pass HIR metadata, and physically separate ordinary and assertion scanners.",
+      "result": "Exact assertion targets improved about 185x-425x and the adversarial neighbor about 736x. Wuthering scan regressed 6.432%, Wuthering wall regressed 4.284%, and multiple preparation and RSS guards crossed the unchanged veto.",
+      "tradeoffs": "The inactive assertion-free Wuthering failure implicated code-generation coupling, binary layout, or shared-path shape rather than the candidate filter itself. Isolated preparation microscopes also opposed the formal fresh-process results.",
+      "decision": "Machine-rejected by the unchanged G9-v2 matrix and not merged. The mechanism remained investigate because the exceptional scan signal had plausible separable blockers.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-27-b2-h-0014-assertion-recovery-stack.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0015",
+      "name": "Ordinary-path reinlining diagnostic",
+      "date": "2026-07-27",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "81dbbf682afd3126b109019be4ef12eeebf10ecc",
+      "summary": "Make assertion metadata pay-for-use and re-inline the ordinary path to test whether H14's inactive Wuthering regression was removable by restoring the former hot-path shape.",
+      "result": "The focused Wuthering gate still regressed 7.10%, refuting ordinary-path reinlining as a sufficient repair before a formal matrix was authorized.",
+      "tradeoffs": "This was a retained non-admission discriminator, not a formal production candidate. It narrowed the compiler-shape hypothesis toward the shared scanner specialization boundary.",
+      "decision": "Rejected at the focused gate, not merged, and superseded by H16's concrete non-inlined shared scanner.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-27-b2-h-0014-assertion-recovery-stack.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0016",
+      "name": "Shared scanner specialization recovery",
+      "date": "2026-07-27",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "68c007763d21de253e49c611b198868abc745d3b",
+      "summary": "Retain conservative private assertion candidates while making metadata pay-for-use and moving shared scanning behind a concrete, non-inlined event-vector boundary.",
+      "result": "Assertion targets improved about 187x-428x and the adversarial neighbor about 721x. Ordinary scan paths recovered near H11, but target preparation regressed 4.607%-5.747%, boundary-500 preparation regressed 12.159%, and Wuthering wall/RSS strata vetoed.",
+      "tradeoffs": "The candidate recovered H14's main inactive scan blocker. Later cold-process diagnostics did not reproduce Wuthering secondary vetoes but could not waive the clean formal observations.",
+      "decision": "Machine-rejected by the unchanged G9-v2 matrix and not merged. The narrowed remaining opportunity moved to construction metadata.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-27-b2-h-0016-shared-specialization-recovery.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0017",
+      "name": "Simple HIR metadata recovery",
+      "date": "2026-07-27",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "9fa5f9d95eb1021c3edd54fe36b44a821026c5b8",
+      "summary": "Accumulate normalized simple-sequence HIR metadata directly to retain H16's assertion scan mechanism while reducing repeated construction work.",
+      "result": "Assertion targets improved about 189x-428x and the adversarial neighbor about 721x. Ordinary, shared, and Wuthering blockers recovered, but preparation still regressed 3.936%-7.651% on several cells and adversarial RSS regressed 3.149%.",
+      "tradeoffs": "The same matcher reported opposing preparation effects across cells that differed only in corpus or worker request, revealing launch, allocator, cache-state, or measurement coupling without invalidating the formal vetoes.",
+      "decision": "Machine-rejected by the unchanged G9-v2 matrix and not merged. The next step became an independent preparation and allocation audit rather than another speculative source tweak.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-27-b2-h-0017-simple-metadata-recovery.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0018",
+      "name": "Adaptive assertion-filter footprint",
+      "date": "2026-07-28",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "3e184314daf64e76dee44cae0c452e856967f161",
+      "summary": "Right-size the assertion five-prefix hash from H17's fixed 32 KiB payload to an 8-32 KiB power-of-two range based on raw filterable-prefix rows.",
+      "result": "Exact targets improved about 188x-429x and the adversarial neighbor about 745x. The target filter shrank from 32,824 to 8,248 bytes, but five cells retained preparation vetoes and two cells retained peak-RSS vetoes.",
+      "tradeoffs": "H18 removed exactly 24,576 compile-allocation bytes on the 500- and 1,000-pattern fixtures, yet formal construction did not consistently recover. The boundary fixtures contained only one unique five-unit prefix despite hundreds of raw rows.",
+      "decision": "Machine-rejected by the unchanged G9-v2 matrix and not merged. The unique-prefix observation authorized only a bounded multifidelity diagnostic, not another full run.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-28-b2-h-0018-adaptive-filter-recovery.md",
+      "progress": null
+    },
+    {
+      "id": "B2-H-0019",
+      "name": "Inline exact single-prefix recovery",
+      "date": "2026-07-28",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "6baf8b1b66badf79657f679dd5351a293c2d12d9",
+      "summary": "Store exactly one unique ASCII five-unit assertion prefix in a packed u64 with no heap allocation, falling back to H18's adaptive hash on a second distinct key.",
+      "result": "L2 roughly halved target lookup time and removed the five-prefix allocation. Guarded L3 retained about 220x scan speedups and shrank target retained state from 8,248 to 64 bytes, but boundary-500 preparation remained 12.774% slower than H11.",
+      "tradeoffs": "A four-key inline predecessor was rejected at L2 for doubling adversarial lookup time. Exact-one-key H19 improved memory but did not improve whole-matcher preparation, falsifying filter payload allocation as the preparation bottleneck.",
+      "decision": "Diagnostically refuted before formal G9, not merged, and excluded from progress. The next discriminator must phase matcher construction rather than tune another storage threshold.",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-28-b2-h-0019-inline-prefix-recovery.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -319,12 +403,12 @@
     {
       "priority": 1,
       "id": "FUTURE-ASSERT",
-      "name": "Assertion-dispatch isolation and prefilter recovery",
-      "status": "H13 investigated; narrower H14 recovery requires fresh review",
-      "why": "H13 preserved exact 216x-727x assertion gains and removed H12's assertion-plan monomorphizations, but Wuthering still regressed 5.791% and repeated preparation regressed 5.862%-13.359%. Static evidence shows the ordinary scanner still changed shape, while prefix proof retained 32 units for a filter that consumes at most five.",
-      "next_test": "Freeze a five-unit assertion prefix representation plus a cold or separately compiled assertion entry. Require ordinary scanner and caller shape parity before reusing H13's focused target, preparation, Wuthering, and H11-shared gates unchanged.",
-      "expected_value": "Very high narrow-workload opportunity, very high algorithm confidence, low-medium recovery cost, and medium compiler-layout risk",
-      "evidence": "experiments/b2-h-0013-assertion-prefilter-recovery-result.md"
+      "name": "Phase-resolved assertion construction recovery",
+      "status": "H19 diagnostic refuted filter-allocation cause; phase audit required",
+      "why": "H14-H19 repeatedly preserve roughly 185x-745x exact assertion scan gains. H16 and H17 recovered inactive scan blockers, while H18 and H19 reduced the target filter from 32,824 to 8,248 and then 64 bytes without recovering boundary-500 preparation. The remaining cost is outside the final filter payload.",
+      "next_test": "Instrument repeated in-process H11, H18, and H19 matcher construction into parse/HIR metadata, assertion-prefix sidecar, NFA compile, prefilter compile, and final assembly phases with counted allocations. Authorize a new source candidate only if one phase reproduces the H11 penalty and offers a separable repair.",
+      "expected_value": "Very high narrow-workload reward, very high scan-mechanism confidence, medium diagnostic cost, and currently unknown construction-repair cost",
+      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-28-b2-h-0019-inline-prefix-recovery.md"
     },
     {
       "priority": 2,
