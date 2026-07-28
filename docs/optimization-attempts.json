@@ -310,6 +310,20 @@
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/3de2e7c9cf957b7ffa859f46418c0864f8b85601/docs/lab-notebook/2026-07-28-post-h19-construction-phase-audit.md",
       "original_evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/209ad09073888300d6c1fb118c1b7b05bb7640f9/docs/lab-notebook/2026-07-28-b2-h-0019-inline-prefix-recovery.md",
       "progress": null
+    },
+    {
+      "id": "B2-H-0020",
+      "name": "Strict common-prefix assertion recovery",
+      "date": "2026-07-28",
+      "status": "investigate",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "730cec6492ff2356f53b368e214e5e8dfd78bbb9",
+      "summary": "Build an assertion-only candidate scanner only when every pattern in a partition proves the same first five ASCII symbols, store that prefix in one packed u64, and preserve exact H11 fallback for every uncertain or ineligible partition.",
+      "result": "All three formal targets passed at about 200.49x, 230.79x, and 461.79x baseline throughput. Every primary guard was neutral or faster and correctness was exact, but preparation vetoed in two target cells and Wuthering: the candidate-before-baseline strata were -13.472%, -13.723%, and -3.540%.",
+      "tradeoffs": "H20 narrowed H18's multiple construction and RSS failures to three preparation-only vetoes and added no wall-time or RSS veto. Wuthering cannot execute the new assertion path, so its order-only loss points to residual launch, cache-state, allocator, binary-layout, or measurement coupling; that signal does not waive the unchanged gate.",
+      "decision": "Machine-rejected and not merged. Classified investigate under G9-v2 because exact two-to-three-order target gains oppose a narrow, plausibly separable preparation failure. H11 remains production and H20 is excluded from the progress graph.",
+      "evidence": "experiments/b2-h-0020-strict-common-prefix-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -404,12 +418,12 @@
     {
       "priority": 1,
       "id": "FUTURE-ASSERT",
-      "name": "Phase-resolved assertion construction recovery",
-      "status": "phase audit complete; no H20 source candidate authorized",
-      "why": "H14-H19 repeatedly preserve roughly 185x-745x exact assertion scan gains, but the 13,500-build phase audit did not localize H19's preserved formal preparation penalty. Boundary-500 retained a smaller +5.394% diagnostic delta, boundary-1000 retained only +1.799%, and no single phase met the frozen scale and contribution rule.",
-      "next_test": "Run a timer-free and allocator-free repeated-construction comparison of exact H11 and H19 artifacts. Escalate to binary-layout controls only if the uninstrumented lane reproduces a stable penalty; otherwise classify the one-build-per-process formal preparation delta as process or harness variance.",
-      "expected_value": "Very high narrow-workload scan reward, high mechanism confidence, low diagnostic cost, but low confidence that another source-level construction tweak can reach the 5% keeper threshold",
-      "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/3de2e7c9cf957b7ffa859f46418c0864f8b85601/docs/lab-notebook/2026-07-28-post-h19-construction-phase-audit.md"
+      "name": "Construction-neutral strict assertion-prefix recovery",
+      "status": "H20 formal investigate; successor discriminator required",
+      "why": "H20 passed every exact target at roughly 200x-462x, improved every assertion control, and left all primary fallback guards neutral or faster. Its failure surface is now only preparation: two assertion target vetoes appeared solely in the candidate-before-baseline order, while an order-only Wuthering veto occurred on a path that cannot execute the new algorithm.",
+      "next_test": "Derive the packed prefix during an existing pattern traversal and preserve an observably identical H11 construction and code-layout path for every ineligible partition. Before another formal matrix, require a timer-free phase counter, allocation parity, binary-path identity, and balanced fresh-process construction discriminator to show no persistent loss in either launch order.",
+      "expected_value": "Very high narrow-workload scan reward, very high mechanism confidence, low diagnostic cost, medium implementation risk, and materially improved but still uncertain admission probability",
+      "evidence": "experiments/b2-h-0020-strict-common-prefix-result.md"
     },
     {
       "priority": 2,
