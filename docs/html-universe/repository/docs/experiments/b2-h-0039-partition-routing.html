@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0039 partition-aware candidate routing · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0039-partition-routing.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0039-partition-routing.md</div></header><main><h1>B2-H-0039 partition-aware candidate routing</h1>
+<p><strong>Decision:</strong> rejected before full G9; not merged</p>
+<p><strong>Production baseline:</strong> H11
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<p><strong>Candidate:</strong> <code>3bad489ad3bc3221f1cf1e269fd95a885b3f17f5</code></p>
+<p><strong>Review date:</strong> 2026-07-29</p>
+<h2>Question</h2>
+<p>H11 scans the input once to produce a union candidate bitmap, but every
+semantic partition still applies its private prefix predicate to every union
+candidate. H39 asked whether computing a partition mask once per candidate
+could preserve exact matching while removing enough repeated routing work to
+justify the additional representation.</p>
+<p>H24 remains pinned separately. H39 was the highest-ranked independent
+opportunity after H25-H38 closed the current H24 recovery route.</p>
+<h2>Headroom gate</h2>
+<p>An instrumentation-only diagnostic measured the removable private-prefix
+routing phase before production code was authorized. Sparse 10,000-pattern
+cells exposed only 3.607%-4.084% routing share and failed the frozen five
+percent headroom floor. Dense cells exposed:</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Routing / complete scan</th><th style="text-align: right">Pairs above 5%</th></tr></thead><tbody>
+<tr><td>Dense, 16 workers</td><td style="text-align: right">8.383%</td><td style="text-align: right">6/6</td></tr>
+<tr><td>Dense, 32 workers</td><td style="text-align: right">11.425%</td><td style="text-align: right">6/6</td></tr>
+</tbody></table>
+<p>All 48 diagnostic receipts preserved exact event and digest identity. The
+dense result authorized one bounded candidate; it did not authorize admission.</p>
+<h2>Candidate</h2>
+<p>The exact candidate:</p>
+<ul>
+<li>retained H11 for sparse inputs, more than 32 partitions, and unsupported
+coordinates;</li>
+<li>used a 64 KiB density sample to select dense eligible inputs;</li>
+<li>compiled compact prefix-to-<code>u32</code> partition-mask tables;</li>
+<li>emitted ordered <code>(u32 start, u32 mask)</code> route entries in the existing
+parallel candidate scan;</li>
+<li>retained the exact per-partition NFA as semantic authority.</li>
+</ul>
+<p>The complete workspace tests, doctests, formatting, and warning-free Clippy
+passed. The focused screen also proved exact activation: dense route storage
+was 5,574,800 bytes for 696,850 starts, exactly eight bytes per start, while
+both sparse artifacts retained the unchanged 6,553,600-byte bitmap.</p>
+<h2>Frozen focused result</h2>
+<p>The guarded screen completed 72 fresh processes and 216 raw result files with
+exact correctness, no host violation, and complete service restoration.</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Scan</th><th style="text-align: right">Wall</th><th style="text-align: right">Peak RSS</th><th>Ruling</th></tr></thead><tbody>
+<tr><td>Dense, 16 workers</td><td style="text-align: right">+4.894%</td><td style="text-align: right">+5.243%</td><td style="text-align: right">-0.914%</td><td>Missed the frozen 5% scan target by 0.106 percentage points</td></tr>
+<tr><td>Dense, 32 workers</td><td style="text-align: right"><strong>+9.529%</strong></td><td style="text-align: right"><strong>+9.134%</strong></td><td style="text-align: right">-0.571%</td><td>Target passed; all 6 scan pairs positive</td></tr>
+<tr><td>Sparse, 16 workers</td><td style="text-align: right">+0.805%</td><td style="text-align: right">-0.633%</td><td style="text-align: right">-0.016%</td><td>Bypass guard passed</td></tr>
+<tr><td>Sparse, 24 workers</td><td style="text-align: right">-0.286%</td><td style="text-align: right">-0.002%</td><td style="text-align: right">+0.012%</td><td>Bypass guard passed</td></tr>
+<tr><td>Ordinary, 1 worker</td><td style="text-align: right">+0.031%</td><td style="text-align: right">-0.361%</td><td style="text-align: right">+0.517%</td><td>Guard passed</td></tr>
+<tr><td>Wuthering, 64 workers</td><td style="text-align: right"><strong>-3.822%</strong></td><td style="text-align: right"><strong>-3.456%</strong></td><td style="text-align: right">+1.403%</td><td>Automatic regression veto</td></tr>
+</tbody></table>
+<p>The dense mechanism is real: both dense cells improved in all six scan pairs.
+The Wuthering loss is also real enough for the unchanged policy: scan was
+negative in five of six pairs and wall was negative in all six, with both
+launch orders negative. Wuthering cannot activate the new route path, so the
+loss is most likely an inactive-path binary-layout or code-generation effect.
+That causal interpretation is useful research evidence, but it does not waive
+a demonstrated guard regression.</p>
+<h2>Decision</h2>
+<p>H39 is rejected before the full G9 matrix for two independent reasons:</p>
+<ol>
+<li>dense-16 missed its frozen target;</li>
+<li>Wuthering scan and process wall crossed the unchanged three-percent
+automatic veto.</li>
+</ol>
+<p>The candidate is not merged and H11 remains production. The result should not
+be described as a failed idea: compact routing retained 4.894%-9.529% dense
+scan gains and reduced dense scan-local candidate storage by 14.93%. It is
+instead a failed production artifact under the current gate.</p>
+<p>A successor is not the next active experiment. Revisit routing only if a
+materially different representation or stable isolation method can preserve
+the dense gain while supplying independent evidence against inactive-path
+regression. Do not tune the frozen density threshold or waive the guard.
+SIMD shared candidate discovery is now the highest-ranked independent
+candidate.</p>
+<h2>Retained evidence</h2>
+<ul>
+<li>Focused plan SHA-256:
+<code>bd941a78d609d9ec88e7dfb22b8b4f19523246395ccf375d9292427b25db8145</code></li>
+<li>Focused summary SHA-256:
+<code>e5acb80477af4462eb4e344a3358f39987216e41d01a9472e3ff007a576244ed</code></li>
+<li>Focused window-state SHA-256:
+<code>9a04f30de7b329444dd42ac9d3b11b2eb731e29844ed6908c47de390977ca5e5</code></li>
+<li>Focused evidence archive SHA-256:
+<code>1832d432b644e968201e693695b04a423bf1c546dc34745e15f51be20b7a1e83</code></li>
+<li>Headroom evidence archive SHA-256:
+<code>5599e7ade5d8bbbdbea9df9cbc1757872558811126f8183121fd3509eef418c3</code></li>
+<li>Measurement decision commit:
+<code>a910125</code></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/b2-h-0039-partition-routing.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

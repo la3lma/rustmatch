@@ -464,6 +464,20 @@
       "decision": "Stage one failed and the one-shot contract forbade stage two or benchmark-informed BOLT tuning. No merge.",
       "evidence": "experiments/b2-h-0026-terminal-memory-layout-recovery.md#h38-final-separation",
       "progress": null
+    },
+    {
+      "id": "B2-H-0039",
+      "name": "Density-aware partition route masks",
+      "date": "2026-07-29",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "3bad489ad3bc3221f1cf1e269fd95a885b3f17f5",
+      "summary": "Route dense H11 union candidates through compact partition masks while preserving the exact per-partition verifier and the unchanged sparse bitmap path.",
+      "result": "Dense scan improved 4.894% at 16 workers and 9.529% at 32 workers, with all six pairs positive in both cells. Dense scan-local candidate storage fell 14.93%. The inactive Wuthering guard regressed 3.822% in scan and 3.456% in process wall.",
+      "tradeoffs": "The routing mechanism is causally useful on dense inputs, but dense-16 missed its frozen five-percent target by 0.106 percentage points. Wuthering cannot activate routing, yet its repeatable inactive-path regression exceeded the unchanged three-percent veto and cannot be waived as a layout artifact.",
+      "decision": "Rejected before full G9; no merge. H11 remains production. Retain H39 as positive dense-routing evidence and revisit only with a materially different stable representation or isolation method.",
+      "evidence": "experiments/b2-h-0039-partition-routing.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -557,26 +571,6 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "FUTURE-ASSERT",
-      "name": "Construction-neutral strict assertion-prefix recovery",
-      "status": "H20 formal investigate; successor discriminator required",
-      "why": "H20 passed every exact target at roughly 200x-462x, improved every assertion control, and left all primary fallback guards neutral or faster. Its failure surface is now only preparation: two assertion target vetoes appeared solely in the candidate-before-baseline order, while an order-only Wuthering veto occurred on a path that cannot execute the new algorithm.",
-      "next_test": "Derive the packed prefix during an existing pattern traversal and preserve an observably identical H11 construction and code-layout path for every ineligible partition. Before another formal matrix, require a timer-free phase counter, allocation parity, binary-path identity, and balanced fresh-process construction discriminator to show no persistent loss in either launch order.",
-      "expected_value": "Very high narrow-workload scan reward, very high mechanism confidence, low diagnostic cost, medium implementation risk, and materially improved but still uncertain admission probability",
-      "evidence": "experiments/b2-h-0020-strict-common-prefix-result.md"
-    },
-    {
-      "priority": 2,
-      "id": "FUTURE-ROUTE",
-      "name": "Partition-aware H11 candidate routing",
-      "status": "reviewed successor; phase diagnostic pending",
-      "why": "Every H11 semantic partition still probes every union candidate, while only about 1.6%-1.7% more semantic starts than candidates survive across all partitions. A global prefix-to-partition route can remove repeated probes without changing the verifier.",
-      "next_test": "Measure union discovery, partition-prefix routing, semantic verification, and worker tails. Prototype a compact route mask or list only if routing exposes at least 5% removable target time.",
-      "expected_value": "Medium-high opportunity, medium confidence, medium cost, low-medium correctness risk",
-      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
-    },
-    {
-      "priority": 3,
       "id": "FUTURE-SIMD",
       "name": "SIMD shared candidate discovery",
       "status": "literature-supported; phase prototype pending",
@@ -586,7 +580,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 4,
+      "priority": 2,
       "id": "FUTURE-LITERAL-EXACT",
       "name": "Exact literal-only backend",
       "status": "reviewed research prototype",
@@ -596,7 +590,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 5,
+      "priority": 3,
       "id": "B2-H-0006",
       "name": "Exact input-parallel semantic scanning",
       "status": "semantic design reviewed; phase diagnostic pending",
@@ -606,7 +600,7 @@
       "evidence": "experiments/b2-h-0006-input-parallel-design.md"
     },
     {
-      "priority": 6,
+      "priority": 4,
       "id": "FUTURE-LAYOUT",
       "name": "Transition-table and scratch-state locality",
       "status": "profiling required",
@@ -616,7 +610,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 7,
+      "priority": 5,
       "id": "FUTURE-BITPARALLEL",
       "name": "General bit-parallel regex execution",
       "status": "strategic research track",
@@ -626,7 +620,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 8,
+      "priority": 6,
       "id": "FUTURE-PHASE-FUSION",
       "name": "Fused persistent planning and semantic phases",
       "status": "dormant pending new phase evidence",
@@ -636,7 +630,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 9,
+      "priority": 7,
       "id": "FUTURE-SELECTOR",
       "name": "Adaptive workload-path selector",
       "status": "dependency-blocked",
@@ -644,6 +638,26 @@
       "next_test": "Wait for at least two independently admitted paths, then freeze classifier boundaries and adversarial near-boundary guards without retuning historical series.",
       "expected_value": "Compound portfolio value, but no independent opportunity and high misclassification regression risk",
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
+    },
+    {
+      "priority": 8,
+      "id": "FUTURE-ROUTE",
+      "name": "Partition-aware H11 candidate routing",
+      "status": "evaluated as H39; rejected under frozen focused screen",
+      "why": "H39 proved 8.383%-11.425% dense routing headroom and retained 4.894%-9.529% dense scan gains, but dense-16 missed its target and the inactive Wuthering guard crossed the automatic scan and wall vetoes.",
+      "next_test": "Do not retune H39. Reopen only with a materially different stable representation or isolation method that can preserve dense gains while supplying independent evidence against inactive-path regression.",
+      "expected_value": "Measured medium-high dense opportunity, high mechanism confidence, but low near-term admission probability and medium-high inactive-path regression risk",
+      "evidence": "experiments/b2-h-0039-partition-routing.md"
+    },
+    {
+      "priority": 9,
+      "id": "FUTURE-ASSERT",
+      "name": "Pinned H24 assertion-prefix opportunity",
+      "status": "pinned research hold after H38; no active implementation",
+      "why": "H24 retained about 200x-406x exact target gains and improved preparation 15.39%-45.30%. A 144-process discriminator did not reproduce its original 2.360% RSS order signal, but H25-H38 failed to produce a materially distinct candidate that retained the gains and passed every unchanged guard.",
+      "next_test": "Do not repeat or tune H24-H38. Reopen only with materially new evidence: an independently justified stable production-layout policy or a genuinely different construction representation, followed by exact binary-path, semantic, and unchanged numeric gates.",
+      "expected_value": "Exceptional narrow-workload reward remains proven, but the currently justified recovery route is exhausted and admission probability is low without new evidence",
+      "evidence": "experiments/b2-h-0026-terminal-memory-layout-recovery.md"
     }
   ]
 }

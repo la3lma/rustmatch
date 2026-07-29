@@ -1,25 +1,42 @@
 # Post-H11 future optimization portfolio
 
-**Status:** reviewed portfolio; no implementation authorized
+**Status:** H24 assertion opportunity pinned; H39 routing rejected; SIMD active
 
 **Reviewed production baseline:** H11 exact measured source
 `bacd5c46d934cd5526dcab78af88e375b2f13370`
 
-**Review date:** 2026-07-26
+**Review date:** 2026-07-29
 
-## H12 outcome update
+## H24-H38 pin update
 
-The original rank-one opportunity was measured as
-[B2-H-0012](b2-h-0012-assertion-prefilter-result.md). Its semantic mechanism
-passed exactly and sparse assertion targets reached roughly 185 to 385 times
-baseline throughput. The artifact did not merge: Wuthering regressed 3.038%
-and assertion preparation regressed 11.16% to 22.32%.
+The assertion-prefix mechanism remains an exceptional opportunity: H24 retained
+roughly 200x-406x target scan gains and improved preparation 15.39%-45.30%.
+A 144-process follow-up did not reproduce H24's original 2.360% peak-RSS order
+signal. H25-H38 nevertheless failed to produce a materially distinct artifact
+that retained H24's gains and passed every unchanged guard. The
+[H26-H38 recovery review](b2-h-0026-terminal-memory-layout-recovery.md) closes
+the current construction/layout route without merge.
 
-The portfolio therefore replaces the original rank-one implementation with a
-bounded recovery: isolate assertion dispatch behind a stable compiler boundary
-and reduce filter-build cost while preserving the proven prefix algorithm.
-The remaining ranks are unchanged pending that recovery because H12 increased,
-rather than reduced, confidence in the underlying opportunity.
+H24 is therefore **pinned, not abandoned**. It remains visible as retained
+research evidence but is not the active next experiment. Reopening it requires
+materially new evidence, such as an independently justified stable production
+layout policy or a genuinely different construction representation; repeating
+or tuning the rejected artifacts is not authorized.
+
+## H39 routing result
+
+[B2-H-0039 partition-aware routing](b2-h-0039-partition-routing.md) exposed
+8.383%-11.425% removable routing share on dense targets, then retained
+4.894%-9.529% dense scan gains in a bounded exact candidate. It did not pass
+the frozen production screen: dense-16 missed the five-percent target by
+0.106 percentage points, while the inactive Wuthering guard regressed 3.822%
+in scan and 3.456% in process wall. Both exceeded the unchanged automatic
+veto. H39 is rejected before full G9 and H11 remains production.
+
+The route mechanism remains positive evidence, not an active retry. Reopen it
+only with a materially different stable representation or isolation method;
+do not tune the frozen threshold or waive the guard. SIMD shared candidate
+discovery is now the highest-ranked independent candidate.
 
 ## Executive conclusion
 
@@ -38,21 +55,21 @@ H11 changed the shape of the problem:
   with input parallelism.
 - Assertion-bearing pattern sets still disable every prefilter. The retained
   1,000-pattern `\bword…\b` guard scans all starts and takes roughly 76 seconds
-  over 8 MiB. That is the clearest currently known high-upside, bounded-cost
-  opportunity.
+  over 8 MiB. H24 proved the opportunity but its current recovery route is
+  pinned after H38.
 
 The recommended experiment order is therefore:
 
-1. conservative assertion-bearing literal prefiltering;
-2. partition-aware routing of H11 shared candidates;
-3. SIMD candidate discovery;
-4. an exact literal-only backend;
-5. exact input-parallel semantic scanning, after its post-H11 phase gate;
-6. transition and scratch locality;
-7. a general bit-parallel engine research track;
-8. fused persistent phases, only with new evidence; and
-9. a workload selector only after at least two alternative paths have passed
-   independently.
+1. SIMD candidate discovery;
+2. an exact literal-only backend;
+3. exact input-parallel semantic scanning, after its post-H11 phase gate;
+4. transition and scratch locality;
+5. a general bit-parallel engine research track;
+6. fused persistent phases, only with new evidence;
+7. a workload selector only after at least two alternative paths have passed
+   independently;
+8. partition-aware routing, only after materially new isolation evidence; and
+9. the pinned H24 assertion opportunity, only after materially new evidence.
 
 This order is a decision about the **next unit of evidence**, not a claim that
 rank one has the greatest theoretical ceiling. It favors measured opportunity,
@@ -129,37 +146,37 @@ learn whether the premise is true.
 
 | Rank | Candidate | Opportunity | Confidence | Breadth | Cost | Risk | Why this position |
 |---:|---|---|---|---|---|---|---|
-| 1 | Assertion-dispatch isolation and prefilter recovery | Very high | Very high | Narrow | Medium | Medium | H12 proved 185x-385x exact target gains; successor must remove a separable 3.038% inactive Wuthering loss and reduce preparation cost |
-| 2 | Partition-aware H11 candidate routing | Medium-high | Medium | Medium | Medium | Low-medium | Explicit H11 successor; removes per-candidate probes across 16-32 partitions without changing matching semantics |
-| 3 | SIMD shared candidate discovery | High | Medium | Medium | Medium-high | Medium | Directly replaces H11's scalar corpus pass and targets the largest Hyperscan literal gaps |
-| 4 | Exact literal-only backend | Very high | Medium | Medium | High | High | Can bypass NFA/cache verification entirely on a strict literal subset; dense and zero-output gaps justify the cost |
-| 5 | Exact input-parallel semantic scanning | High | Medium-low | Broad | High | High | Semantics are resolved, but H11 already captured the original repeated-traversal opportunity on eligible cells |
-| 6 | Transition-table and scratch locality | Medium | Medium-low | Broad | Medium-high | Medium-high | H5 proves capacity is not the answer; a measured representation hypothesis is still missing |
-| 7 | General bit-parallel regex engine | Very high | Low | Broad subset | Very high | Very high | Literature and Hyperscan establish a credible ceiling, but exact Rustmatch event semantics make this a research program |
-| 8 | Fused persistent planning and semantic phases | Low-medium | Low | Medium | High | Medium-high | A pool alone is refuted; only barrier/data-movement fusion could make this a materially new mechanism |
-| 9 | Adaptive workload-path selector | Compound | Dependency-blocked | Broad | Medium | High | Selection adds no speed itself and must wait for independently proven alternative paths |
+| 1 | SIMD shared candidate discovery | High | Medium | Medium | Medium-high | Medium | Directly replaces H11's scalar corpus pass and targets the largest Hyperscan literal gaps |
+| 2 | Exact literal-only backend | Very high | Medium | Medium | High | High | Can bypass NFA/cache verification entirely on a strict literal subset; dense and zero-output gaps justify the cost |
+| 3 | Exact input-parallel semantic scanning | High | Medium-low | Broad | High | High | Semantics are resolved, but H11 already captured the original repeated-traversal opportunity on eligible cells |
+| 4 | Transition-table and scratch locality | Medium | Medium-low | Broad | Medium-high | Medium-high | H5 proves capacity is not the answer; a measured representation hypothesis is still missing |
+| 5 | General bit-parallel regex engine | Very high | Low | Broad subset | Very high | Very high | Literature and Hyperscan establish a credible ceiling, but exact Rustmatch event semantics make this a research program |
+| 6 | Fused persistent planning and semantic phases | Low-medium | Low | Medium | High | Medium-high | A pool alone is refuted; only barrier/data-movement fusion could make this a materially new mechanism |
+| 7 | Adaptive workload-path selector | Compound | Dependency-blocked | Broad | Medium | High | Selection adds no speed itself and must wait for independently proven alternative paths |
+| 8 | Partition-aware H11 candidate routing | Medium-high | High | Medium | Medium | Medium-high | H39 proved dense gains but failed its target and the inactive Wuthering guard; revisit only with materially new isolation evidence |
+| 9 | Pinned H24 assertion-prefix opportunity | Very high | Very high | Narrow | High | Medium-high | H24 proved 200x-406x gains, but H25-H38 exhausted the current construction/layout recovery route |
 
 ```mermaid
 flowchart TD
     H11["H11 production baseline"] --> D0["Shared phase + path diagnostic"]
-    D0 --> A["1 · assertion dispatch recovery"]
-    D0 --> R["2 · partition-aware routing"]
-    D0 --> S["3 · SIMD candidate discovery"]
-    S --> L["4 · exact literal backend"]
-    D0 --> I["5 · exact input parallelism"]
-    D0 --> C["6 · transition/scratch locality"]
-    L --> B["7 · general bit-parallel research"]
-    R --> F["8 · fused persistent phases"]
-    A --> X["9 · adaptive selector"]
+    D0 --> S["1 · SIMD candidate discovery"]
+    S --> L["2 · exact literal backend"]
+    D0 --> I["3 · exact input parallelism"]
+    D0 --> C["4 · transition/scratch locality"]
+    L --> B["5 · general bit-parallel research"]
+    S --> F["6 · fused persistent phases"]
+    S --> X["7 · adaptive selector"]
+    D0 -. materially new isolation .-> R["8 · partition-aware routing"]
+    D0 -. materially new evidence .-> A["9 · pinned H24 assertion opportunity"]
     R --> X
-    S --> X
+    A --> X
     L --> X
     I --> X
 ```
 
 ## Candidate assessments
 
-### 1. Assertion-bearing conservative prefilter
+### 9. Pinned assertion-bearing conservative prefilter
 
 **Measured ruling.** H12 validated this mechanism but failed admission. All
 targets and correctness gates passed; Wuthering crossed the automatic veto
@@ -187,14 +204,19 @@ assertions from consuming or optional prefixes. Boundary and line-anchor
 adversaries, UTF-16 isolated surrogates, input edges, alternation, repeated
 assertions, and mixed databases need exact multiset parity.
 
-**Next evidence.** Freeze a new successor that retains the exact literal
-candidate semantics while placing assertion planning behind one non-generic or
-separately compiled boundary. Before timing, require ordinary-path symbol
-size, mnemonic, alignment, caller, and focused counter evidence, then profile
-and reduce filter construction cost. Target gain remains at least 5%; every
-assertion-free and unfilterable guard must pass the unchanged numeric gates.
+**Next evidence.** None is currently authorized. Reopen only after materially
+new evidence supplies a stable production-layout policy or a genuinely new
+construction representation. Any successor still requires ordinary-path
+binary identity, exact semantics, and every unchanged numeric gate.
 
-### 2. Partition-aware H11 candidate routing
+### 8. Partition-aware H11 candidate routing
+
+**Measured ruling.** H39 passed its diagnostic headroom gate and retained real
+dense gains, but failed its immutable focused production screen. Dense-16
+improved 4.894%, below the five-percent target; dense-32 improved 9.529%.
+The inactive Wuthering guard regressed 3.822% in scan and 3.456% in wall, with
+both order strata negative. See the
+[retained H39 result](b2-h-0039-partition-routing.md).
 
 **Mechanism.** Compile a global mapping from each conservative prefix bucket to
 an eligible partition bitmask or compact partition list. During shared
@@ -211,12 +233,11 @@ partition masks as the first shared-path successor.
 fan candidates out, and materializing per-partition vectors can trade probes
 for allocation and writes. Non-ASCII inputs must remain conservative.
 
-**Next evidence.** First add phase counters for union discovery, partition
-prefix probes, semantic verification, and worker tails. Authorize a routing
-prototype only if removable routing time exceeds 5% on at least one declared
-target.
+**Next evidence.** None is currently authorized. Reopen only if a materially
+different representation or stable isolation method can preserve the dense
+gain without inactive-path regression. The unchanged target and veto remain.
 
-### 3. SIMD shared candidate discovery
+### 1. SIMD shared candidate discovery
 
 **Mechanism.** Replace the scalar `UnionLiteralFilter::allows_start` loop with
 portable vectorized UTF-16 prefix detection, retaining a scalar fallback and
@@ -241,7 +262,7 @@ semantic engine, across sparse, dense, zero-output, short-input, non-ASCII, and
 one-worker controls. Continue only when the phase-level gain can produce at
 least 5% end-to-end headroom.
 
-### 4. Exact literal-only backend
+### 2. Exact literal-only backend
 
 **Mechanism.** Under a strict classifier, compile databases containing only
 exact consuming literals into a multi-pattern automaton that emits all
@@ -267,7 +288,7 @@ literal corpus family, compare exact event multisets and preparation cost, and
 measure sparse, dense, zero-output, and Wuthering cells before discussing
 production integration.
 
-### 5. Exact input-parallel semantic scanning
+### 3. Exact input-parallel semantic scanning
 
 The [B2-H-0006 design review](b2-h-0006-input-parallel-design.md) resolves its
 semantic blocker by assigning disjoint **start positions**, not input slices,
@@ -278,7 +299,7 @@ The next step stays Stage P from that review. A full-database prototype is
 justified only if semantic work, repeated routing, or worker tails expose at
 least 5% removable headroom after H11.
 
-### 6. Transition-table and scratch locality
+### 4. Transition-table and scratch locality
 
 H5 showed that simply enlarging the deterministic cache is counterproductive:
 fallback fell modestly, throughput did not improve materially, and hardware
@@ -291,7 +312,7 @@ No one layout is yet evidence-ranked. The next action is a cache-line and
 working-set profile tied to concrete structures. A broad rewrite without that
 profile would be untestable optimization folklore.
 
-### 7. General bit-parallel regex engine
+### 5. General bit-parallel regex engine
 
 Hyperscan reports SIMD bit representations for finite-automata state and
 multi-string shift-or matching. The literature also contains multicore
@@ -305,7 +326,7 @@ surface: longest match per pattern and start, complete overlap enumeration,
 assertions, UTF-16 predicates, terminal identity, large state sets, fallback,
 and memory bounds. It belongs in a research branch after lower-cost paths.
 
-### 8. Fused persistent planning and semantic phases
+### 6. Fused persistent planning and semantic phases
 
 H2 rejects a persistent pool whose purpose is thread-spawn removal: spawn was
 0.0320%, and most join time represented actual worker-tail work. The only
@@ -317,7 +338,7 @@ That is a different mechanism, but there is no evidence yet that its removable
 phase cost exceeds 5%. It remains dormant until the common phase diagnostic
 shows such a barrier.
 
-### 9. Adaptive workload-path selector
+### 7. Adaptive workload-path selector
 
 A classifier may eventually choose among private scan, H11 shared candidates,
 assertion-prefilter, exact-literal, and input-parallel paths using immutable
@@ -340,20 +361,20 @@ the selector needs its own boundary and misclassification guards.
 
 ## Recommended program
 
-1. Freeze the H12 assertion-dispatch isolation recovery with an ordinary-path
-   binary-shape gate and preparation profile; do not reuse the rejected
-   artifact as production source.
-2. Retain the full H12 semantic, fallback, H11, and Wuthering matrix under a
-   new authorization without changing thresholds.
-3. Use the shared phase diagnostic to decide whether routing or SIMD owns more of H11's
-   remaining large-literal critical path. Do not combine them.
+1. Freeze an H11 candidate-discovery phase diagnostic and one portable SIMD
+   prototype contract. Keep routing, exact verification, and the scalar
+   fallback unchanged.
+2. Require phase-level headroom capable of producing at least five-percent
+   end-to-end gain before a production candidate.
+3. Retain sparse, dense, zero-output, short-input, non-ASCII, one-worker,
+   Wuthering, binary-path, and ISA-fallback guards without threshold changes.
 4. Prototype the exact-literal backend only after the lightweight H11
    successors, unless its isolated microbenchmark demonstrates a much larger
    end-to-end opportunity.
 5. Return to H-0006 only after Stage P; semantic feasibility alone is not
    performance evidence.
-6. Keep bit-parallel execution as a research track and the selector as a
-   dependency-blocked integration step.
+6. Revisit H39 or H24 only with materially new evidence; keep bit-parallel
+   execution as a research track and the selector dependency-blocked.
 
 Every experiment receives a retained lab note whether it improves, regresses,
 or is inconclusive. Only an exact candidate that passes correctness, its frozen
