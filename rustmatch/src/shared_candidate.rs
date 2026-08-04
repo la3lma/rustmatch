@@ -254,6 +254,10 @@ impl UnionLiteralFilter {
             + self.ascii_four_hash.len() * size_of::<u64>()
             + self.ascii_five_hash.len() * size_of::<u64>()
     }
+
+    const fn supports_avx2_five(&self) -> bool {
+        self.has_five && !self.has_three && !self.has_four
+    }
 }
 
 fn union_words(union: &mut [u64], partition: &[u64]) {
@@ -262,6 +266,8 @@ fn union_words(union: &mut [u64], partition: &[u64]) {
     }
 }
 
+#[allow(clippy::inline_always)]
+#[inline(always)]
 fn scan_word_slice(
     filter: &UnionLiteralFilter,
     input: &[u16],
@@ -269,6 +275,21 @@ fn scan_word_slice(
     words: &mut [u64],
 ) -> usize {
     let first_start = first_word.saturating_mul(64);
+    if filter.supports_avx2_five()
+        && let Some(admissions) =
+            rustmatch_simd::scan_five_hash_words(input, &filter.ascii_five_hash, first_start, words)
+    {
+        return admissions;
+    }
+    scan_word_slice_scalar(filter, input, first_start, words)
+}
+
+fn scan_word_slice_scalar(
+    filter: &UnionLiteralFilter,
+    input: &[u16],
+    first_start: usize,
+    words: &mut [u64],
+) -> usize {
     let end_start = first_start
         .saturating_add(words.len().saturating_mul(64))
         .min(input.len());

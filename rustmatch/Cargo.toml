@@ -11,5 +11,8 @@ publish = false
 [features]
 benchmark-internals = []
 
+[dependencies]
+rustmatch-simd = { path = "../rustmatch-simd" }
+
 [lints]
 workspace = true
