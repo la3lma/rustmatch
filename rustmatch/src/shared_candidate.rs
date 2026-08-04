@@ -266,6 +266,8 @@ fn union_words(union: &mut [u64], partition: &[u64]) {
     }
 }
 
+#[allow(clippy::inline_always)]
+#[inline(always)]
 fn scan_word_slice(
     filter: &UnionLiteralFilter,
     input: &[u16],
