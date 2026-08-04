@@ -90,7 +90,7 @@ rank one has the greatest theoretical ceiling. It favors measured opportunity,
 causal clarity, and reversible implementation over speculative maximum speed.</p>
 <h2>Evidence that controls the ranking</h2>
 <h3>The gaps are workload-specific</h3>
-<p>The <a href="h11-cross-engine-snapshot.html">current H11 comparison</a> reports:</p>
+<p>The <a href="h11-cross-engine-snapshot.html">then-current H11 comparison</a> reported:</p>
 <table><thead><tr><th>Workload</th><th style="text-align: right">Rust/Hyperscan</th><th style="text-align: right">Rust/RegexSet</th><th>Interpretation</th></tr></thead><tbody>
 <tr><td>Sparse literals, 10,000, 50 MiB</td><td style="text-align: right">0.118x</td><td style="text-align: right">5.382x</td><td>H11 is strong against RegexSet, but scalar candidate discovery remains far behind Hyperscan</td></tr>
 <tr><td>Dense literals, 5,000, 50 MiB</td><td style="text-align: right">0.326x</td><td style="text-align: right">0.133x</td><td>A specialized exact-literal path has a large observable target</td></tr>
@@ -335,7 +335,8 @@ target floor, every guard, and the unchanged regression veto may enter the
 production source tree.</p>
 <h2>Sources</h2>
 <ul>
-<li><a href="h11-cross-engine-snapshot.html">H11 current cross-engine snapshot</a></li>
+<li><a href="h42-cross-engine-snapshot.html">H42 current-production cross-engine snapshot</a></li>
+<li><a href="h11-cross-engine-snapshot.html">H11 historical cross-engine snapshot</a></li>
 <li><a href="b2-h-0006-input-parallel-design.html">B2-H-0006 exact input-parallel design</a></li>
 <li><a href="../evidence/i7/37f6981/README.html">I7 retained prefilter evidence</a></li>
 <li><a href="../evidence/i8/ef61173/README.html">I8 retained parallel-partition evidence</a></li>

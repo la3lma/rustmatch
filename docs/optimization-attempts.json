@@ -4,15 +4,16 @@
   "last_reviewed": "2026-08-04",
   "policy_version": "G9-v3",
   "policy_effective_date": "2026-08-04",
-  "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes admission. A demonstrated regression above 2% through 3% requires investigation: the candidate is not merged, receives no progress credit, and must produce a retained causal follow-up. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement.",
+  "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes certification. A demonstrated regression above 2% through 3% requires investigation and normally blocks merge. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. An explicit owner-authorized production exception may override the merge hold, but it never relabels the formal evidence as admission-eligible and must retain the adverse result and residual risk.",
   "policy_rules": [
-    "Merged: every correctness and admission gate passes; the production baseline advances.",
+    "Certified merge: every correctness and admission gate passes; the production baseline advances.",
+    "Owner-authorized merge exception: production may advance after an explicit owner decision despite an investigate result, but the formal disposition, unfavorable evidence, and known residual risk remain unchanged and visible.",
     "Investigate: a demonstrated guard regression is above 2% through 3%, or a reviewed high-discrepancy result contains unusually large opposing effects with plausible separable causes. No code is admitted and the baseline does not move.",
     "Rejected: correctness fails, a guard regression exceeds 3%, or evidence closes the mechanism without sufficient unresolved value. An automatic artifact veto does not erase a separately documented algorithmic signal.",
     "Inconclusive: evidence cannot establish the required target gain, regression, or causal direction.",
     "Only merged attempts enter the efficiency-progress graph. Every outcome retains its measurements and lab note."
   ],
-  "policy_history": "G9-v2 refined the learning disposition without changing historical measurements or admission decisions. B2-H-0009 remained rejected under G9-v1, and B2-H-0010 remained rejected after three inactive paths crossed the unchanged three-percent veto. Their unusually large opposing effects triggered causal follow-up rather than threshold relaxation. B2-H-0011 then repaired the diagnosed private-path compiler boundary, passed the unchanged matrix without a demonstrated regression, and merged as the first completed G9-v2 recovery. G9-v3 prospectively adds a calibrated adjacent AB/BA geometric crossover estimator with 15 cycles and a 13-of-15 directional requirement; it preserves the 2% investigation boundary, 3% veto, 5% target minimum, exact correctness gates, and every historical G9-v1/v2 ruling.",
+  "policy_history": "G9-v2 refined the learning disposition without changing historical measurements or admission decisions. B2-H-0009 remained rejected under G9-v1, and B2-H-0010 remained rejected after three inactive paths crossed the unchanged three-percent veto. Their unusually large opposing effects triggered causal follow-up rather than threshold relaxation. B2-H-0011 then repaired the diagnosed private-path compiler boundary, passed the unchanged matrix without a demonstrated regression, and merged as the first completed G9-v2 recovery. G9-v3 prospectively adds a calibrated adjacent AB/BA geometric crossover estimator with 15 cycles and a 13-of-15 directional requirement; it preserves the 2% investigation boundary, 3% veto, 5% target minimum, exact correctness gates, and every historical G9-v1/v2 ruling. B2-H-0042 formally remained investigate because Wuthering regressed 2.111%, then entered production through an explicit owner-authorized exception. That decision changed production state, not the retained formal classification.",
   "attempts": [
     {
       "id": "I6",
@@ -497,25 +498,72 @@
       "id": "B2-H-0042",
       "name": "Calibrated inline AVX2 shared candidate discovery",
       "date": "2026-08-04",
-      "status": "investigate",
+      "status": "merged",
       "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
       "candidate_revision": "c6f221bda8241123281aea8659dd56eeb8a13be0",
       "summary": "Recover H40's exact AVX2 candidate fill with an always-inlined dispatch boundary, then evaluate the exact artifact through the calibrated 30-pair G9-v3 crossover matrix.",
       "result": "All four targets passed with 15 of 15 positive cycles and scan gains of 30.305%-175.971%. Two neighbors and the mixed guard improved 43.986%-235.754%. Three other guards stayed inside noise, while Wuthering at 64 workers regressed 2.111% with 13 of 15 cycles negative.",
-      "tradeoffs": "Correctness, source and artifact provenance, workspace tests, host isolation, Docker/GPU cleanliness, and every secondary metric passed. Wuthering was only 0.111 percentage points beyond the unchanged investigation boundary and below the 3% veto, but its calibrated directional burden makes the signal real enough to block admission of this exact artifact.",
-      "decision": "Investigate; no merge and no baseline movement. Retain the exceptional target gains and causally separate inline dispatch, SIMD fill, and Wuthering code/cache layout under unchanged gates before proposing a successor.",
+      "tradeoffs": "Correctness, source and artifact provenance, workspace tests, host isolation, Docker/GPU cleanliness, and every secondary metric passed. Wuthering was 0.111 percentage points beyond the unchanged investigation boundary and below the 3% veto; its 13-of-15 negative directional burden remains a known production regression rather than being waived or relabeled.",
+      "decision": "Merged by explicit owner authorization as production exception deb227171dca1d584c11ade2573ed8c9478804fa. Formal G9-v3 remains investigate and optimization_admitted remains false; retain and pursue the Wuthering regression separately.",
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4/docs/lab-notebook/2026-08-04-b2-h-0042-formal-g9-v3.md",
-      "progress": null
+      "progress": {
+        "workload": "Diverse literals, 10k patterns, 50 MiB, 16 workers",
+        "baseline_millis": 19.528476,
+        "candidate_millis": 7.083
+      }
     }
   ],
   "comparison_snapshots": [
     {
       "current": true,
+      "date": "2026-08-04",
+      "scope": "H42 current-production exact formal overlap; owner-authorized merge",
+      "rust_revision": "c6f221bda8241123281aea8659dd56eeb8a13be0",
+      "review_revision": "046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4",
+      "method": "This current-production view uses exact H42 formal candidate medians for the same nine scenario groups covered by the H11 overlap snapshot and retained competitor values from the unchanged B2 review. Where H42 measured two worker counts for one scenario, the higher H42 throughput is used. It is not a full-dataset rerun. H42 entered production by owner-authorized exception while its formal G9-v3 disposition remains investigate. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.",
+      "engines": [
+        {
+          "engine": "Java rmatch",
+          "semantics": "same complete event contract; H42 overlap",
+          "cells": 9,
+          "rust_wins": 9,
+          "geometric_mean_ratio": 44.542665,
+          "median_ratio": 80.982886,
+          "minimum_ratio": 2.737934,
+          "maximum_ratio": 126.566136,
+          "evidence": "experiments/h42-cross-engine-snapshot.md#java-rmatch"
+        },
+        {
+          "engine": "RegexSet",
+          "semantics": "different output contract; H42 overlap",
+          "cells": 8,
+          "rust_wins": 4,
+          "geometric_mean_ratio": 2.287998,
+          "median_ratio": 1.086043,
+          "minimum_ratio": 0.193566,
+          "maximum_ratio": 27.15413,
+          "evidence": "experiments/h42-cross-engine-snapshot.md#regexset"
+        },
+        {
+          "engine": "Hyperscan",
+          "semantics": "native-reference diagnostic; H42 overlap",
+          "cells": 8,
+          "rust_wins": 2,
+          "geometric_mean_ratio": 0.308069,
+          "median_ratio": 0.40159,
+          "minimum_ratio": 0.011229,
+          "maximum_ratio": 3.636905,
+          "evidence": "experiments/h42-cross-engine-snapshot.md#hyperscan"
+        }
+      ]
+    },
+    {
+      "current": false,
       "date": "2026-07-26",
-      "scope": "H11 current-production admission overlap",
+      "scope": "Historical H11 production admission overlap",
       "rust_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
       "review_revision": "581980d524e8c083d89cf468d98c7cab06ff8776",
-      "method": "This current-production view uses exact H11 candidate medians for the scenarios covered by its frozen admission matrix and retained competitor values from the unchanged full B2 review. Where H11 measured two worker counts for one scenario, the higher measured H11 throughput is used. Coverage is deliberately limited to exact overlaps: nine Java rmatch scenarios, eight RegexSet scenarios, and eight Hyperscan scenarios. It is not a full-dataset rerun. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.",
+      "method": "This historical view uses exact H11 candidate medians for nine exact scenario groups and retained competitor values from the unchanged B2 review. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.",
       "engines": [
         {
           "engine": "Java rmatch",
@@ -671,9 +719,9 @@
       "priority": 8,
       "id": "FUTURE-SIMD",
       "name": "SIMD shared candidate discovery",
-      "status": "evaluated as H42; formal G9-v3 outcome investigate",
+      "status": "H42 merged by owner exception; Wuthering recovery remains",
       "why": "H42 passed every target at +30.305% to +175.971% with unanimous cycles and kept three inactive guards inside noise. The only blocker is a calibrated -2.111% Wuthering effect with 13 of 15 negative cycles, just beyond the unchanged 2% investigation boundary and below the 3% veto.",
-      "next_test": "Keep exact H42 immutable. Use same-layout causal variants to separate always-inlining from SIMD fill on Wuthering, then profile only if the negative phase persists. Re-enter review only with a materially distinct successor that retains target gains and brings Wuthering below 2% without threshold, fixture, or placement tuning.",
+      "next_test": "Keep exact H42 evidence immutable. Use same-layout causal variants to separate always-inlining from SIMD fill on Wuthering, then profile only if the negative phase persists. Merge a successor only after it preserves H42's target gains and brings Wuthering below 2% without threshold, fixture, or placement tuning.",
       "expected_value": "Measured very high target opportunity and high mechanism confidence, with a narrow moderate blocker and medium portability/layout risk",
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4/docs/lab-notebook/2026-08-04-b2-h-0042-formal-g9-v3.md"
     },

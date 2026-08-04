@@ -1,6 +1,6 @@
-# H11 current-production cross-engine snapshot
+# H11 historical production cross-engine snapshot
 
-**Status:** current, exact H11 admission overlap
+**Status:** historical; superseded by the owner-authorized H42 production merge
 
 **Rust revision:** `bacd5c46d934cd5526dcab78af88e375b2f13370`
 
@@ -9,8 +9,8 @@
 ## Purpose
 
 The optimization ledger's leading Java rmatch, RegexSet, and Hyperscan summary
-must follow the newest merged Rustmatch optimization. H11 changed the
-production baseline, so the pre-H11 `da755b00` summary is now historical.
+followed H11 until the owner-authorized H42 merge. This document now preserves
+the exact H11 historical overlap; the H42 snapshot is the current view.
 
 H11 did not rerun the complete 35-to-39-cell cross-engine dataset. Its frozen
 admission matrix did provide current Rust measurements for nine exact scenario

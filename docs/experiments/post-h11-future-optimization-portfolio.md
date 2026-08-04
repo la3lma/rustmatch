@@ -100,7 +100,7 @@ causal clarity, and reversible implementation over speculative maximum speed.
 
 ### The gaps are workload-specific
 
-The [current H11 comparison](h11-cross-engine-snapshot.md) reports:
+The [then-current H11 comparison](h11-cross-engine-snapshot.md) reported:
 
 | Workload | Rust/Hyperscan | Rust/RegexSet | Interpretation |
 |---|---:|---:|---|
@@ -415,7 +415,8 @@ production source tree.
 
 ## Sources
 
-- [H11 current cross-engine snapshot](h11-cross-engine-snapshot.md)
+- [H42 current-production cross-engine snapshot](h42-cross-engine-snapshot.md)
+- [H11 historical cross-engine snapshot](h11-cross-engine-snapshot.md)
 - [B2-H-0006 exact input-parallel design](b2-h-0006-input-parallel-design.md)
 - [I7 retained prefilter evidence](../evidence/i7/37f6981/README.md)
 - [I8 retained parallel-partition evidence](../evidence/i8/ef61173/README.md)
