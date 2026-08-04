@@ -58,7 +58,9 @@ pub(crate) fn plan(
     let union = UnionLiteralFilter::compile(&filters);
 
     let sample_len = input.len().min(DENSITY_SAMPLE_UNITS);
-    let sample_count = sample_candidate_count(&union, input, sample_len);
+    let sample_count = (0..sample_len)
+        .filter(|&start| union.allows_start(input, start))
+        .count();
     if sample_count.saturating_mul(2) >= sample_len {
         return Ok(None);
     }
@@ -278,17 +280,6 @@ fn scan_word_slice(
         return admissions;
     }
     scan_word_slice_scalar(filter, input, first_start, words)
-}
-
-fn sample_candidate_count(filter: &UnionLiteralFilter, input: &[u16], sample_len: usize) -> usize {
-    if filter.supports_avx2_five() && rustmatch_simd::avx2_available() {
-        let mut words = vec![0_u64; sample_len.div_ceil(64)];
-        return rustmatch_simd::scan_five_hash_words(input, &filter.ascii_five_hash, 0, &mut words)
-            .expect("AVX2 availability was checked before candidate sampling");
-    }
-    (0..sample_len)
-        .filter(|&start| filter.allows_start(input, start))
-        .count()
 }
 
 fn scan_word_slice_scalar(
