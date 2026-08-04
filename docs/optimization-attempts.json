@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-07-29",
+  "last_reviewed": "2026-08-04",
   "policy_version": "G9-v2",
   "policy_effective_date": "2026-07-26",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes admission. A demonstrated regression above 2% through 3% requires investigation: the candidate is not merged, receives no progress credit, and must produce a retained causal follow-up. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement.",
@@ -478,6 +478,20 @@
       "decision": "Rejected before full G9; no merge. H11 remains production. Retain H39 as positive dense-routing evidence and revisit only with a materially different stable representation or isolation method.",
       "evidence": "experiments/b2-h-0039-partition-routing.md",
       "progress": null
+    },
+    {
+      "id": "B2-H-0040",
+      "name": "Exact AVX2 shared candidate discovery",
+      "date": "2026-08-04",
+      "status": "rejected",
+      "baseline_revision": "bacd5c46d934cd5526dcab78af88e375b2f13370",
+      "candidate_revision": "843ebafe947fd8749c0f8e843af4ce480b40c3b4",
+      "summary": "Compute eight exact five-unit FNV candidate hashes per AVX2 step while preserving conservative non-ASCII admission, scalar fallback, and the unchanged exact per-partition verifier.",
+      "result": "The isolated kernel improved candidate-plan time 4.413x-4.641x. The bounded recovery improved all four target scans 22.937%-63.445% and process wall 19.519%-41.658%, with every target scan pair positive. The inactive Wuthering candidate-after stratum regressed 5.272% in scan and 3.321% in peak RSS.",
+      "tradeoffs": "The recovery kept H11 density sampling scalar, reproduced the accepted H11 build environment byte-for-byte, retained exact hot-function sizes and mnemonic sequences, and reduced total load-image growth to 24 bytes. Wuthering and the ordinary guard execute no SIMD, so the remaining veto is an inactive-path code-generation or process-layout cost rather than required kernel work.",
+      "decision": "Rejected before full G9; no merge. A further placement cycle would risk forbidden padding or benchmark-specific link tuning. Retain the exceptional target signal and revisit only with a generally applicable stable layout boundary or a materially different exact literal engine.",
+      "evidence": "experiments/b2-h-0040-simd-candidate-discovery.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -571,26 +585,16 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "FUTURE-SIMD",
-      "name": "SIMD shared candidate discovery",
-      "status": "literature-supported; phase prototype pending",
-      "why": "H11's union candidate scan still applies a scalar prefix predicate at each input start. Hyperscan's largest leads are sparse and zero-output literal scans, where vectorized multi-literal filtering is structurally advantaged.",
-      "next_test": "Isolate candidate-discovery time and compare one portable SIMD UTF-16 prefix scanner with the scalar H11 loop, retaining runtime feature detection and a byte-identical scalar fallback.",
-      "expected_value": "High literal-path opportunity, medium confidence, medium-high portability cost and regression risk",
-      "evidence": "experiments/post-h11-future-optimization-portfolio.md"
-    },
-    {
-      "priority": 2,
       "id": "FUTURE-LITERAL-EXACT",
       "name": "Exact literal-only backend",
-      "status": "reviewed research prototype",
-      "why": "A strict exact-literal backend can emit overlapping occurrences and pattern IDs directly, avoiding both prefilter candidate generation and NFA/cache verification. This is materially different from I7's rejected Aho-Corasick-style prefilter.",
-      "next_test": "Build a diagnostic raw-u16 multi-pattern automaton for exact consuming literals and measure exact event parity, build cost, retained bytes, sparse, dense, zero-output, and Wuthering behavior.",
+      "status": "next active diagnostic",
+      "why": "H40 proved that reducing literal candidate work can improve complete scans 22.9%-63.4%, while its separate SIMD crate still perturbed inactive artifacts. A strict exact-literal backend can emit overlapping occurrences and pattern IDs directly, eliminating both candidate generation and NFA/cache verification through a materially different whole-path boundary.",
+      "next_test": "Freeze a diagnostic raw-u16 multi-pattern automaton on assay-disjoint and established literal families. Require exact overlapping event parity, then measure construction, retained bytes, sparse, dense, zero-output, Wuthering, and inactive mixed-regex behavior before authorizing production integration.",
       "expected_value": "Very high literal-only upside, medium confidence, high implementation, memory, and maintenance risk",
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 3,
+      "priority": 2,
       "id": "B2-H-0006",
       "name": "Exact input-parallel semantic scanning",
       "status": "semantic design reviewed; phase diagnostic pending",
@@ -600,7 +604,7 @@
       "evidence": "experiments/b2-h-0006-input-parallel-design.md"
     },
     {
-      "priority": 4,
+      "priority": 3,
       "id": "FUTURE-LAYOUT",
       "name": "Transition-table and scratch-state locality",
       "status": "profiling required",
@@ -610,7 +614,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 5,
+      "priority": 4,
       "id": "FUTURE-BITPARALLEL",
       "name": "General bit-parallel regex execution",
       "status": "strategic research track",
@@ -620,7 +624,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 6,
+      "priority": 5,
       "id": "FUTURE-PHASE-FUSION",
       "name": "Fused persistent planning and semantic phases",
       "status": "dormant pending new phase evidence",
@@ -630,7 +634,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 7,
+      "priority": 6,
       "id": "FUTURE-SELECTOR",
       "name": "Adaptive workload-path selector",
       "status": "dependency-blocked",
@@ -640,7 +644,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 8,
+      "priority": 7,
       "id": "FUTURE-ROUTE",
       "name": "Partition-aware H11 candidate routing",
       "status": "evaluated as H39; rejected under frozen focused screen",
@@ -648,6 +652,16 @@
       "next_test": "Do not retune H39. Reopen only with a materially different stable representation or isolation method that can preserve dense gains while supplying independent evidence against inactive-path regression.",
       "expected_value": "Measured medium-high dense opportunity, high mechanism confidence, but low near-term admission probability and medium-high inactive-path regression risk",
       "evidence": "experiments/b2-h-0039-partition-routing.md"
+    },
+    {
+      "priority": 8,
+      "id": "FUTURE-SIMD",
+      "name": "SIMD shared candidate discovery",
+      "status": "evaluated as H40; rejected after bounded recovery",
+      "why": "H40 proved 4.413x-4.641x exact kernel speedup and retained 22.937%-63.445% complete-scan gains. Both compiled candidates nevertheless crossed unchanged inactive-path guards; the recovery already restored scalar sampling, exact accepted build provenance, and hot-function mnemonic identity.",
+      "next_test": "Do not retune H40 or tune function placement. Reopen only after a generally applicable stable production-layout boundary is independently justified, or reuse the kernel inside a materially different exact literal engine that must pass fresh unchanged guards.",
+      "expected_value": "Measured very high target opportunity and high mechanism confidence, but low near-term admission probability and medium-high portability/layout risk",
+      "evidence": "experiments/b2-h-0040-simd-candidate-discovery.md"
     },
     {
       "priority": 9,
