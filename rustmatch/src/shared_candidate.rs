@@ -58,9 +58,7 @@ pub(crate) fn plan(
     let union = UnionLiteralFilter::compile(&filters);
 
     let sample_len = input.len().min(DENSITY_SAMPLE_UNITS);
-    let sample_count = (0..sample_len)
-        .filter(|&start| union.allows_start(input, start))
-        .count();
+    let sample_count = sample_candidate_count(&union, input, sample_len);
     if sample_count.saturating_mul(2) >= sample_len {
         return Ok(None);
     }
@@ -254,6 +252,10 @@ impl UnionLiteralFilter {
             + self.ascii_four_hash.len() * size_of::<u64>()
             + self.ascii_five_hash.len() * size_of::<u64>()
     }
+
+    const fn supports_avx2_five(&self) -> bool {
+        self.has_five && !self.has_three && !self.has_four
+    }
 }
 
 fn union_words(union: &mut [u64], partition: &[u64]) {
@@ -269,6 +271,32 @@ fn scan_word_slice(
     words: &mut [u64],
 ) -> usize {
     let first_start = first_word.saturating_mul(64);
+    if filter.supports_avx2_five()
+        && let Some(admissions) =
+            rustmatch_simd::scan_five_hash_words(input, &filter.ascii_five_hash, first_start, words)
+    {
+        return admissions;
+    }
+    scan_word_slice_scalar(filter, input, first_start, words)
+}
+
+fn sample_candidate_count(filter: &UnionLiteralFilter, input: &[u16], sample_len: usize) -> usize {
+    if filter.supports_avx2_five() && rustmatch_simd::avx2_available() {
+        let mut words = vec![0_u64; sample_len.div_ceil(64)];
+        return rustmatch_simd::scan_five_hash_words(input, &filter.ascii_five_hash, 0, &mut words)
+            .expect("AVX2 availability was checked before candidate sampling");
+    }
+    (0..sample_len)
+        .filter(|&start| filter.allows_start(input, start))
+        .count()
+}
+
+fn scan_word_slice_scalar(
+    filter: &UnionLiteralFilter,
+    input: &[u16],
+    first_start: usize,
+    words: &mut [u64],
+) -> usize {
     let end_start = first_start
         .saturating_add(words.len().saturating_mul(64))
         .min(input.len());
