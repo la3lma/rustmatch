@@ -5,14 +5,15 @@
 > **Status: active implementation.** The vertically integrated semantic spine
 > now covers the documented rmatch 2.x consuming language, including UTF-16,
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
-> scale work has completed explicit parallel pattern partitioning; ordinary
-> cross-engine harness integration is next. This is a development prototype,
-> not a published crate.
+> scale work has completed the B1/B2 cross-engine campaign, and current
+> production includes the owner-authorized H42 exact SIMD scan path. This is a
+> development prototype, not a published crate.
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `10/12`
-> increments started and `10/12` complete. The B1 cross-engine campaign is
-> active.
+> increments started and `10/12` complete. Cross-engine measurement and B2
+> analysis are complete; optimization work continues under the measured
+> admission policy.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -32,6 +33,30 @@ but the Rust implementation should use Rust's strengths: ownership, explicit
 lifetimes, enums, dense integer-indexed storage, contiguous memory, fearless
 parallelism, and a small public API. This is not a Java-to-Rust transliteration
 project.
+
+## Current performance snapshot
+
+The latest exact overlap snapshot measures the current H42 production source
+(`c6f221b`) against retained, unchanged Java rmatch and Hyperscan results from
+the same benchmark scenarios. Ratios are Rustmatch throughput divided by the
+reference throughput.
+
+| Reference | Contract | Exact overlap | Rust wins | Geometric mean | Median | Range |
+|---|---|---:|---:|---:|---:|---:|
+| Java rmatch | Same complete event contract | 9 groups | 9/9 | **44.543x** | 80.983x | 2.738x-126.566x |
+| Hyperscan | Native-reference diagnostic | 8 groups | 2/8 | **0.308x (30.8%)** | 0.402x | 0.011x-3.637x |
+
+On the same overlap, H11 measured 27.893x Java rmatch and 0.210x Hyperscan, so
+the current source improves those geometric-mean ratios by 1.60x and 1.47x,
+respectively. Java rmatch is the directly comparable complete-event reference;
+Hyperscan uses different native semantics and is a useful performance ceiling,
+not a fairness claim.
+
+This is an exact nine-group admission-overlap update, not a new full-dataset
+rerun. H42's formal outcome remains `investigate` because its Wuthering guard
+was 2.111% below H11; it entered production through an explicit owner-authorized
+exception. See the [cell-level comparison, method, and retained
+receipts](docs/experiments/h42-cross-engine-snapshot.md).
 
 ## TL;DR
 
