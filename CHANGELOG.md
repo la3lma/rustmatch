@@ -38,6 +38,19 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   specialization, exhaustive ASCII boundary classification, and 28 pinned
   Java differential fixtures spanning line edges, composition, flags,
   non-ASCII input, and raw surrogates.
+- Lazy deterministic state caching, conservative start tables and literal
+  prefilters, exact pattern-partition parallelism, and runtime-detected AVX2
+  candidate discovery, each retained through correctness-gated performance
+  admission evidence.
+- A correctness-gated cross-engine benchmark campaign and reviewed comparison
+  against Java rmatch, RegexSet, and Hyperscan.
+- Explicit 256-level group-nesting rejection, generated semantic properties,
+  compiler/scan/oracle fuzz targets, a bounded cache/matcher soak, and a Miri
+  release lane.
+- Reproducible package rehearsal for `rustmatch` and `rustmatch-simd`, including
+  normalized-archive tests, documentation, and an external-consumer smoke.
+- A first-release compatibility matrix, public-API and versioning policy,
+  dependency/license/unsafe/panic audit, and release runbook.
 
 ### Changed
 

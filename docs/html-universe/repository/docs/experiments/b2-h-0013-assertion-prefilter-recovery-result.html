@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0013 assertion prefilter recovery result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0013-assertion-prefilter-recovery-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0013-assertion-prefilter-recovery-result.md</div></header><main><h1>B2-H-0013 assertion prefilter recovery result</h1>
+<p><strong>Outcome:</strong> investigate; not admitted and not merged</p>
+<p><strong>Machine disposition:</strong> rejected under G9-v2</p>
+<p><strong>Production baseline remains:</strong> <code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<h2>Result at a glance</h2>
+<p>H13 retained H12's exact assertion-candidate algorithm while replacing five
+sink-specialized assertion scanners with one non-generic function and reducing
+private-filter construction. The recovery preserved the exceptional target
+value, but failed the unchanged focused guardrails before the full matrix.</p>
+<table><thead><tr><th>Focused cell</th><th style="text-align: right">Median effect</th><th style="text-align: right">AB</th><th style="text-align: right">BA</th><th>Direction</th></tr></thead><tbody>
+<tr><td>assertion boundary, 1,000 patterns, 1 MiB, one worker</td><td style="text-align: right">+22,567.445%</td><td style="text-align: right">+22,699.159%</td><td style="text-align: right">+22,435.731%</td><td>6/6 positive</td></tr>
+<tr><td>assertion boundary, 500 patterns, 1 MiB, one worker</td><td style="text-align: right">+21,516.882%</td><td style="text-align: right">+21,437.331%</td><td style="text-align: right">+21,577.964%</td><td>6/6 positive</td></tr>
+<tr><td>mixed assertion adversary, 256 patterns, 1 MiB, one worker</td><td style="text-align: right">+72,625.754%</td><td style="text-align: right">+72,742.145%</td><td style="text-align: right">+71,932.032%</td><td>6/6 positive</td></tr>
+<tr><td>H11 shared, 10,000 patterns, 50 MiB, 16 workers</td><td style="text-align: right">+0.771%</td><td style="text-align: right">+0.465%</td><td style="text-align: right">+2.005%</td><td>4/6 positive</td></tr>
+<tr><td>Wuthering, 10,000 patterns, 8 MiB, 64 workers</td><td style="text-align: right"><strong>-5.791%</strong></td><td style="text-align: right"><strong>-4.454%</strong></td><td style="text-align: right"><strong>-7.129%</strong></td><td><strong>6/6 negative</strong></td></tr>
+</tbody></table>
+<p>The boundary target reached about 226.67 times baseline throughput and the
+adversary reached about 727.26 times baseline. Every event count and normalized
+digest matched exactly.</p>
+<h2>Why it did not merge</h2>
+<p>The Wuthering focused guard crossed the unchanged three-percent automatic veto
+in both order strata. H13's Wuthering loss was also larger than H12's
+<code>-3.038%</code>, so the proposed dispatch isolation did not repair the inactive-path
+regression.</p>
+<p>Repeated preparation remained slower:</p>
+<table><thead><tr><th>Assertion shape</th><th style="text-align: right">Baseline median</th><th style="text-align: right">H13 median</th><th style="text-align: right">Paired effect</th></tr></thead><tbody>
+<tr><td>boundary, 1,000 patterns</td><td style="text-align: right">841,338 ns</td><td style="text-align: right">923,183 ns</td><td style="text-align: right"><strong>-5.862%</strong></td></tr>
+<tr><td>boundary, 500 patterns</td><td style="text-align: right">414,710 ns</td><td style="text-align: right">483,455 ns</td><td style="text-align: right">-13.359%</td></tr>
+<tr><td>mixed adversary, 256 patterns</td><td style="text-align: right">214,872 ns</td><td style="text-align: right">250,625 ns</td><td style="text-align: right"><strong>-11.382%</strong></td></tr>
+</tbody></table>
+<p>The preregistered stop condition therefore fired. The unchanged eleven-cell
+matrix was not run, the candidate was not merged, and it receives no point in
+the accepted-efficiency graph.</p>
+<h2>What H13 taught us</h2>
+<p>The non-generic boundary removed H12's monomorphization problem, shrinking five
+assertion-plan functions totaling 17,776 bytes to one 2,512-byte function.
+That was not enough to preserve ordinary scanner shape: the
+<code>harness_event_count</code> specialization changed from 0x2fd0 bytes in H11 to
+0x2b41 bytes in H13, and total text grew by 25,688 bytes over H11.</p>
+<p>The construction recovery also stopped short of the useful horizon.
+<code>BoundedPrefix</code> retained the shared 32-unit maximum even though the
+assertion-private filter consumes no more than five units. H13 reduced H12's
+absolute extra construction work, but still copied and retained prefix state
+that this filter cannot query.</p>
+<h2>Recommended successor</h2>
+<p>A fresh H14 recovery should change only the two remaining measured mechanisms:</p>
+<ol>
+<li>Cap assertion prefix proof and storage at the filter's actual five-unit
+horizon, and direct-fill only the tables that can be queried.</li>
+<li>Put assertion dispatch behind a cold or separately compiled entry and
+require ordinary scanner and caller shape parity before focused timing.</li>
+</ol>
+<p>H14 must receive a fresh review, authorization, candidate revision, and frozen
+contract. It must reuse the same focused targets, preparation checks, Wuthering
+guard, H11-shared guard, and numerical thresholds. H13's source and receipts
+remain immutable.</p>
+<h2>Evidence identity</h2>
+<ul>
+<li>Accepted H11 baseline:
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></li>
+<li>Exact measured H13 candidate:
+<code>fb836900c7ef8a872da44638c6f626a7547c7487</code></li>
+<li>Candidate patch SHA-256:
+<code>ee82845d31f5cfe711e451dba6501c1f8d97bc23113e03444ad9108a3cb5e2b0</code></li>
+<li>Baseline artifact SHA-256:
+<code>64c1ca1886a949f7ad42c908963e6ca0c80b2506f3bf24ed858b27dd0df03f78</code></li>
+<li>Candidate artifact SHA-256:
+<code>5f4db1096f8555fcbed1fcfec18f85763a943d1d2d8cc2567be44b64b8731efd</code></li>
+<li>Frozen contract SHA-256:
+<code>a7a2eded46f3e73891992e64bd010e46bf83c811f0d645c307f6d76fa23e283d</code></li>
+<li>Authorization SHA-256:
+<code>342ae579b7b597b3d493a0456049904c7d998ce54f10179824f118509873d4b9</code></li>
+<li>Focused summary SHA-256:
+<code>0bdcff33c058d14ff57bf33492b67e0c195e48acd88bd68d22bdc5252e58eda6</code></li>
+<li>Window state SHA-256:
+<code>62dd3d791bdac7db21af8de9f6f292f52e99ac08e2cdeaf96bf9ae74433e2967</code></li>
+<li>Host receipt SHA-256:
+<code>be7ac7ddfe57b6139a0ba3a4e4d161706d3f1a49b3ddb770443d2b3d1a3bb605</code></li>
+<li>Service snapshot SHA-256:
+<code>fdc3a09ee1b0b81b30c4ca652e2bd36aad83455ab6c6077fe5b61e0e7b9215ab</code></li>
+<li>Machine result SHA-256:
+<code>3c72f03f58f1d35f5e9e73ba26a2d6519761d593ab595423d9c8013b70279dd0</code></li>
+<li>Lab note SHA-256:
+<code>dfdf5ce6f8310cd000485cf545aadddcac0273ff2540d81aa28f9f55c1576f38</code></li>
+<li>Final measurement review commit:
+<code>af8f4b7</code></li>
+</ul>
+<p>One login-contaminated preflight was rejected before timing and retained. The
+clean focused window ran for about ten minutes on exclusive, GPU-idle Agogo and
+retained 180 raw timing files.</p>
+</main><footer>Generated from <code>docs/experiments/b2-h-0013-assertion-prefilter-recovery-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

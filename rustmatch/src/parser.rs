@@ -5,6 +5,7 @@ use crate::predicate::SymbolPredicate;
 use crate::{Error, PatternFlags, PatternId, Utf16Span};
 
 const MAX_COUNTED_REPETITION: u16 = 1_000;
+const MAX_GROUP_NESTING: usize = 256;
 
 #[cfg(test)]
 pub(crate) fn parse(pattern_id: PatternId, source: &str) -> Result<HirPattern, Error> {
@@ -41,6 +42,7 @@ struct Parser<'a> {
     units: &'a [u16],
     index: usize,
     case_insensitive: bool,
+    group_depth: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -50,6 +52,7 @@ impl<'a> Parser<'a> {
             units,
             index: 0,
             case_insensitive,
+            group_depth: 0,
         }
     }
 
@@ -155,7 +158,16 @@ impl<'a> Parser<'a> {
             return Ok(Hir::Never);
         }
 
-        let expression = self.parse_alternation(true)?;
+        if self.group_depth == MAX_GROUP_NESTING {
+            return Err(Error::PatternNestingTooDeep {
+                pattern_id: self.pattern_id,
+                limit: MAX_GROUP_NESTING,
+            });
+        }
+        self.group_depth += 1;
+        let expression = self.parse_alternation(true);
+        self.group_depth -= 1;
+        let expression = expression?;
         if !self.current_is(b')') {
             return Err(invalid(self.pattern_id, start, self.units.len())?);
         }
@@ -488,7 +500,7 @@ const fn is_shorthand(unit: u16) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse, parse_with_flags};
+    use super::{MAX_GROUP_NESTING, parse, parse_with_flags};
     use crate::hir::{Assertion, Hir};
     use crate::predicate::SymbolPredicate;
     use crate::{Error, PatternFlags, PatternId};
@@ -603,6 +615,32 @@ mod tests {
         );
         assert!(exact_limit.is_ok());
         assert!(open_zero.is_ok());
+    }
+
+    #[test]
+    fn parser_returns_a_typed_error_beyond_the_group_nesting_limit() {
+        // Prepare
+        let pattern_id = PatternId::new(50);
+        let at_limit = format!(
+            "{}a{}",
+            "(".repeat(MAX_GROUP_NESTING),
+            ")".repeat(MAX_GROUP_NESTING)
+        );
+        let beyond_limit = format!("({at_limit})");
+
+        // Test
+        let accepted = parse(pattern_id, &at_limit);
+        let rejected = parse(pattern_id, &beyond_limit);
+
+        // Assert
+        assert!(accepted.is_ok());
+        assert!(matches!(
+            rejected,
+            Err(Error::PatternNestingTooDeep {
+                pattern_id: actual_id,
+                limit: MAX_GROUP_NESTING,
+            }) if actual_id == pattern_id
+        ));
     }
 
     #[test]

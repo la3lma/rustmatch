@@ -1,0 +1,224 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rustmatch implementation roadmap · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../roadmap.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/roadmap.md</div></header><main><h1>rustmatch implementation roadmap</h1>
+<p><strong>Last reviewed:</strong> 2026-08-05</p>
+<p><strong>Implementation increments started:</strong> <strong>12/12</strong></p>
+<p><strong>Implementation increments complete:</strong> <strong>12/12</strong></p>
+<p><strong>Active:</strong> no implementation increment; H42 remains the exact
+owner-authorized production source and <code>0.1.0</code> candidate <code>7305a24</code> has passed
+the complete prerelease gate</p>
+<p><strong>Next owner decision:</strong> review and merge draft PR #38, then separately
+authorize the irreversible release ceremony when desired. The
+<a href="pre-release-todo.html">prerelease checklist</a> is the authoritative ledger; every
+publication, tag, and GitHub-release action remains intentionally unchecked</p>
+<p>This page is the at-a-glance map from the completed product planning to a
+tested rustmatch release. The detailed requirements, architecture, use cases,
+evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
+This graph shows dependency and status; it does not replace those definitions.
+Roadmap IDs identify evidence-bearing milestones, not required one-to-one pull
+request boundaries. The README's bootstrap sequence favors small vertical PRs
+that keep the system executable.</p>
+<blockquote>
+<p><strong>Hard optimization rule:</strong> Results from Java rmatch, RegexSet, Hyperscan, or
+any other competitor can nominate a Rust experiment, but cannot advance an
+optimization milestone. The acceptance baseline is the frozen, existing
+Rustmatch production path, not the competitor. Every performance-motivated
+change must preserve results and show a positive Rustmatch improvement beyond
+a predeclared noise threshold. Only a fully passing candidate may merge.
+Investigated, neutral, inconclusive, rejected, or slower results leave the
+production baseline unchanged. The
+<a href="optimization-decision-policy.html">versioned decision policy</a> requires causal
+follow-up when large opposing effects expose a separable signal. Semantic
+extensions require correctness and applicable non-regression evidence, not a
+speedup.</p>
+</blockquote>
+<p>The system-level target is stronger than the admission rule for one change:
+rustmatch should ultimately exceed Java rmatch on representative workloads
+where both engines enumerate the same events. Strong absolute throughput is
+progress, but does not by itself satisfy that reference gate.</p>
+<h2>Dependency graph</h2>
+<p>Select any task or gate to jump to its detailed description in the README.
+Color carries status or role, so task boxes do not repeat state labels.
+Every task and gate begins with a unique symbolic short name. These IDs are
+stable references for commits, pull requests, evidence manifests, and roadmap
+discussion even when a task's wording or color changes.</p>
+<figure class="mermaid-diagram"><a href="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg" title="Open full-size SVG"><img src="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg">Open full-size SVG</a></figcaption></figure>
+<p>Solid arrows show required dependencies. Dotted arrows show evidence that
+accumulates across several increments; they are intentionally retained as a
+separate visual language from the execution path.</p>
+<p>I6 through I8 record bootstrap optimizations completed before the systematic B1
+campaign and before the B2 gate was adopted. They are historical evidence, not
+precedent for bypassing the current sequence. The stable-host B1 campaign and
+reviewed B2 analysis are now complete. Their durable
+<a href="../../../optimization-and-scale.md">Optimization and scale synthesis</a> is maintained at
+<code>docs/optimization-and-scale.md</code>. The generated
+<a href="optimization-attempt-ledger.html">Optimization attempt ledger</a> retains every
+merged, investigated, rejected, and inconclusive attempt, an improvement-only progress chart, and the
+versioned Java rmatch, RegexSet, and Hyperscan scorecard. Its leading
+<a href="experiments/h42-cross-engine-snapshot.html">H42 cross-engine snapshot</a> uses only
+exact current-production overlap and preserves H11 plus the wider pre-H11 B2
+table as historical context. H42 entered production by explicit owner
+authorization while its formal G9-v3 outcome remains <code>investigate</code>; the known
+2.111% Wuthering regression remains retained. The ledger generator rejects a
+future merged optimization until its current comparison revision advances with
+it. B2-H-0001 completed
+with exact semantics but
+regressed both targets by about 28%; its shared-candidate revision is rejected
+and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the
+median, so no persistent-pool candidate was authorized. B2-H-0003 then measured
+only 1.7699% and 1.4288% median removable partition skew, unstable slowest
+partitions, and no stable compile-time predictor. Its load-aware partitioning
+proposal is also rejected without production code. The refreshed review
+also rejects B2-H-0005: doubling the cache budget reduced fallback by about 5%
+at both endpoints, but paired throughput changed only +0.43% at sixteen workers
+and -0.83% at twenty-four workers while hardware cache-miss rate worsened by
+roughly 20% to 26%. No adaptive cache policy or diagnostic revision is
+admitted. B2-H-0004 then measured external callback omission at only -0.16%
+median scan-time opportunity at sixteen workers and +0.08% at thirty-two
+workers; event-vector growth consumed only 0.033-0.078 ms. Exact buffering and
+delivery batching are rejected without production code. B2-H-0008 then
+reproduced the sparse and dense high-worker collapses at -42.52% and -41.30%;
+logical input work scaled exactly with partitions while cache misses rose
+47.07% and 61.97%. Topology-aware placement recovered only 0.70% and 0.12%.
+That diagnostic admits no code, but the v11 review authorized exactly
+<code>B2-H-0009</code>: parallel shared candidate construction followed by
+partition-local prefix admission, with the existing private plan retained as
+fallback. H9 subsequently preserved exact semantics and improved every primary
+target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
+fast. The unchanged zero-output private fallback nevertheless regressed
+2.00249% with all six pairs negative. The strict no-regression gate therefore
+rejected the exact candidate under <code>G9-v1</code> and admitted no code. The later
+<a href="optimization-decision-policy.html"><code>G9-v2</code> decision policy</a> preserves that
+admission result while classifying the mechanism as <code>investigate</code>. Its measured
+algorithmic upside supports fresh review of a structurally isolated successor,
+not benchmark-specific tuning.</p>
+<p>The subsequent
+<a href="experiments/shared-candidate-recovery-analysis.html">recovery analysis</a> found a
+narrower first step. <code>main</code> and every direct private scanner moved by exactly
+<code>0x1cf0</code> bytes, while the rejected one-worker guard never executed the shared
+planner. Static controls recover <code>0x1540</code>, about 73% of that displacement, by
+removing candidate-only diagnostics and leave a <code>0x7b0</code> shared-code residual.
+The recommended successor therefore keeps the timed harness byte-identical to
+baseline, moves phase diagnostics to a separate non-timed artifact, and
+separates whole private and shared dispatch pipelines. A new internal crate is
+the ranked fallback only if that bounded candidate still fails.</p>
+<p>That successor became <code>B2-H-0010</code>. It passed the static proxy and preserved
+exact semantics while improving all four intended targets by 118.381% to
+709.958%. It nevertheless regressed sparse and dense 8 MiB fallbacks and the
+one-worker zero-output guard by 20.120% to 24.928%; none of those cells created
+the shared planner, and all crossed the unchanged three-percent veto. H10 is
+therefore rejected and unmerged. Preparation and RSS were neutral, while an
+inactive Wuthering guard also remained neutral, so the open question is now
+path-sensitive scan codegen, placement, or cache/branch behavior.</p>
+<p>That diagnosis found the concrete cause: H10 outlined the tiny
+<code>LiteralPrefilter::prefix_allows</code> predicate inside the per-input-start private
+hot loop, consuming 85.32% of sampled one-worker instructions. <code>B2-H-0011</code>
+retained the shared architecture and restored that predicate's baseline
+inlining shape. Under the unchanged eleven-cell G9-v2 matrix, all four primary
+targets improved 116.181%-695.703%, while H10's three vetoing private paths
+recovered to +0.641%-1.956%. Exact measured candidate <code>bacd5c46</code> passed
+correctness, order, static, host, and regression checks and merged without
+source modification as <code>de33ea1</code>. The
+<a href="experiments/b2-h-0011-private-prefilter-recovery.html">retained H11 summary</a>
+records the matrix and evidence hashes. H9 and H10 remain rejected and excluded
+from the merged-improvement graph.</p>
+<p>The subsequent
+<a href="experiments/b2-h-0006-input-parallel-design.html">B2-H-0006 semantic design review</a>
+resolves the old overlap blocker: input workers can own disjoint start-position
+ranges while reading the complete immutable input, so unbounded matches,
+assertions, duplicates, and unspecified callback ordering require no chunk
+reconciliation. It does not authorize code. H11 already performs one shared
+candidate pass and routes almost every retained candidate to one semantic
+partition, so H-0006 must first demonstrate at least 5% post-H11 phase
+headroom before a benchmark-only full-database prototype is justified.</p>
+<p>The broader
+<a href="experiments/post-h11-future-optimization-portfolio.html">post-H11 future optimization portfolio</a>
+reviews every currently known open direction and the negative evidence that
+closes earlier mechanisms. Its first-ranked assertion-bearing prefilter has now
+been measured as <a href="experiments/b2-h-0012-assertion-prefilter-result.html">B2-H-0012</a>.
+The semantic and algorithmic prediction passed spectacularly: sparse targets
+reached roughly 185 to 385 times baseline throughput with exact events. The
+artifact did not merge because the unrelated Wuthering guard regressed 3.038%
+and assertion preparation regressed 11.16% to 22.32%.</p>
+<p>H12 therefore advances to a bounded recovery rather than production. Binary
+inspection shows five candidate-only sink-specialized assertion functions and
+changed ordinary scanner size and placement, while Wuthering cannot execute
+the assertion code path. The next experiment must isolate that dispatch behind
+a stable compiler boundary and profile filter construction. H11 routing and
+SIMD candidate discovery remain next after this recovery. B2-H-0006 stays at
+rank five because its semantics are sound but its incremental post-H11
+headroom remains unproven.</p>
+<h2>Milestone ledger</h2>
+<p>The graph is intentionally conservative. A milestone changes to <code>Active</code>
+only after implementation or fixture work exists and at least one named
+evidence command runs. It changes to <code>Complete</code> only when its README exit criteria
+and use-case evidence bundle pass from a clean checkout.</p>
+<table><thead><tr><th>ID</th><th>Milestone</th><th>Status</th><th>Evidence needed for <code>Complete</code></th></tr></thead><tbody>
+<tr><td>P0</td><td>Product requirements and scope</td><td>Complete</td><td>PRD, goals, non-goals, requirements, and release criteria in README</td></tr>
+<tr><td>P1</td><td>Architecture and executable-spine strategy</td><td>Complete</td><td>Architecture, boundaries, ADR backlog, and vertical delivery strategy in README</td></tr>
+<tr><td>P2</td><td>Use-case evidence contracts</td><td>Complete</td><td>Evidence classes plus UC-0 through UC-12 proof requirements in README</td></tr>
+<tr><td>Q0</td><td>Documentation and Rust hygiene policy</td><td>Complete</td><td>Contribution standard defines formatting, linting, visibility, errors, unsafe, dependencies, rustdoc, tests, evidence IDs, and required checks</td></tr>
+<tr><td>Q1</td><td>Community health and repository governance</td><td>Complete</td><td>Conduct, security, support, governance, ownership, issue, pull-request, dependency, changelog, and citation policies are present and linked</td></tr>
+<tr><td>I0</td><td>Time-boxed semantic charter</td><td>Complete</td><td>Accepted UTF-16 and event ADRs, versioned fixture schema, exact Maven Central <code>no.rmz:rmatch:2.0.0-RC1</code> oracle, seven first-slice cases, deterministic golden results, and <code>cargo xtask ci</code> evidence</td></tr>
+<tr><td>F0</td><td>Fixture schema and Java oracle</td><td>Complete</td><td>Raw UTF-16 JSONL schema, structured rejection output, exact artifact checksum, two-run determinism, golden results, manifest hashes, and mandatory CI comparison</td></tr>
+<tr><td>W0</td><td>Cargo workspace and quality tooling</td><td>Complete</td><td>Rust 2024 workspace, pinned <code>1.97.0</code> toolchain, <code>1.85.0</code> MSRV lane, formatting, Clippy, tests, rustdoc, root quality command, and green GitHub Actions run</td></tr>
+<tr><td>A0</td><td>Minimal public API</td><td>Complete</td><td>Accepted ADR-0003, seven documented root types, compiled public example, typed errors, and one literal exercised through the complete private walking spine</td></tr>
+<tr><td>I1</td><td>Executable ASCII-literal spine</td><td>Complete</td><td>Public end-to-end literal matcher through real HIR, dense shared NFA, database, scan loop, sink, differential fixture, mandatory functional PR CI, coarse performance tripwire, benchmark smoke, and E0 evidence summary</td></tr>
+<tr><td>C0</td><td>Mandatory functional PR CI</td><td>Complete</td><td>Required GitHub quality gate runs formatting, Clippy, tests, Rustdoc, MSRV, the pinned Java oracle, all implemented differential tiers, and benchmark smoke</td></tr>
+<tr><td>B0</td><td>RegexSet-aware benchmark smoke</td><td>Complete</td><td>Correctness-gated RS-NATIVE set-membership and overlap-preserving RS-EVENTS lanes pass against pinned <code>regex</code> 1.13.1; systematic stable-machine scaling is deferred to X0/B1</td></tr>
+<tr><td>C1</td><td>Coarse CI performance tripwire</td><td>Complete</td><td>Deterministic 64-pattern/1 MiB correctness gate, seven-scan median receipt, same-runner base/head comparator, catastrophic-slowdown tests, one automatic reverse-order retry, retained artifacts, and three green hosted-runner calibration attempts</td></tr>
+<tr><td>E0</td><td>UC evidence summary command</td><td>Complete</td><td><code>cargo xtask evidence</code> runs the oracle, differential adapter, and benchmark smoke, then reports all UC-0 through UC-12 as partial or not started with named evidence</td></tr>
+<tr><td>I2</td><td>ASCII predicates</td><td>Complete</td><td>Dot, classes, ranges, negation, escapes, and six ASCII shorthands run through interned 128-bit predicates; exhaustive truth tables, bounded parser totality, a fuzz target, and 12 Java differential fixtures pass as <code>I2-E1</code></td></tr>
+<tr><td>I3</td><td>Alternation and grouping</td><td>Complete</td><td>Normalized recursive HIR, Thompson branching, nullable/minimum-length analysis, public composition fixtures, epsilon-closure invariants, bounded HIR/NFA property comparison, and 17 pinned Java cases pass as <code>I3-E1</code></td></tr>
+<tr><td>I4</td><td>Repetition and longest match</td><td>Complete</td><td>Unary and counted repetition run through normalized HIR and Thompson NFA loops; public overlap, ambiguity, nullable-loop, 1,000-bound, property, and recovery tests pass; 29 pinned Java cases pass as <code>I4-E1</code>; full repository and performance gates are green</td></tr>
+<tr><td>I5</td><td>UTF-16, flags, and assertions</td><td>Complete</td><td>Raw UTF-16, non-ASCII predicates, prefix/typed flags, a reproducible 65,536-entry Java case table, and 23 differential cases pass as <code>I5-E1</code>; NFA-native line anchors and ASCII word boundaries, exhaustive boundary classification, assertion adversaries, and 28 differential cases pass as <code>I5-E2</code>; assertion-free scans retain a separate hot path</td></tr>
+<tr><td>S0</td><td>Documented rmatch 2.x semantic parity gate</td><td>Complete</td><td>The complete documented consuming-language suite passes through the public Rust API against the pinned Java <code>2.0.0-RC1</code> oracle; pure zero-width rejection remains the explicit documented product difference</td></tr>
+<tr><td>I6</td><td>Lazy deterministic-state cache</td><td>Complete</td><td>Native ARM optimized/baseline equality, exact pressure fallback, 4.64 MiB measured RSS cost, focused positive gates, Wuthering/no-match scaling, cache sweep, and profile analysis retained as <code>I6-P1</code>/<code>I6-B1</code></td></tr>
+<tr><td>C2</td><td>Wuthering Heights CI performance tripwire</td><td>Complete</td><td>PR #16 reproduced exact 74,604-event equality on GitHub Linux x64 and measured 39.953 s versus 25.726 ms; broad threshold, reverse-order retry, and retained receipt upload are active on future PRs</td></tr>
+<tr><td>I7</td><td>Safe prefilter</td><td>Complete</td><td>Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as <code>I7-P1</code>/<code>I7-B1</code></td></tr>
+<tr><td>I8</td><td>Parallel partitions</td><td>Complete</td><td>Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the <a href="evidence/i8/ef61173/README.html">I8 evidence package</a></td></tr>
+<tr><td>I9</td><td>Benchmark integration</td><td>Complete</td><td>Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the <a href="evidence/i9/fdd5efa/README.html">I9 evidence package</a></td></tr>
+<tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
+<tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source</td></tr>
+<tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Complete for B2-H-0011</td><td>H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate <code>bacd5c46</code>. Any next optimization requires a fresh B2 authorization</td></tr>
+<tr><td>I10</td><td>Hardening</td><td>Complete</td><td>Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass</td></tr>
+<tr><td>I11</td><td>Release preparation</td><td>Complete</td><td>Frozen candidate <code>7305a24</code> passes exact package, consumer, documentation, compatibility, changelog, runbook, Linux/macOS/Windows, MSRV, AArch64, Miri, Java differential, hosted tripwire, and designated-host performance gates; raw receipts and archive hashes are retained</td></tr>
+<tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>
+</tbody></table>
+<h2>Status update protocol</h2>
+<p>Yellow means that a task's declared prerequisites are satisfied and the task
+can be started. It does not mean that the roadmap has selected that task as the
+next or most important work. When several tasks are yellow, the next task is a
+separate decision based on current value, risk reduction, evidence needs,
+available capacity, and explicit maintainer direction. Starting the selected
+task changes it to orange; the remaining executable candidates stay yellow.</p>
+<p>When work begins or a gate is completed:</p>
+<ol>
+<li>Keep the node's symbolic short name stable. New tasks and gates must receive
+a unique short name before they are added.</li>
+<li>Change the node's Mermaid class to <code>available</code>, <code>active</code>, <code>complete</code>, or
+<code>blocked</code> as appropriate; node labels remain free of repeated status prose.</li>
+<li>Update the milestone ledger with a link to the durable evidence.</li>
+<li>Update the summary counts at the top of this page and in the README link.</li>
+<li>Verify that the node still links to its detailed README description.</li>
+<li>Commit the roadmap update with the implementation or evidence that justifies
+it, not as an unsupported progress claim.</li>
+</ol>
+<p>The roadmap status is evidence-driven. Code volume, elapsed time, and a green
+unit test for one disconnected layer do not by themselves move a box forward.</p>
+</main><footer>Generated from <code>docs/roadmap.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

@@ -1,0 +1,96 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0020 strict common-prefix result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0020-strict-common-prefix-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0020-strict-common-prefix-result.md</div></header><main><h1>B2-H-0020 strict common-prefix result</h1>
+<h2>Decision</h2>
+<p>Outcome: <code>investigate</code></p>
+<p>Exact candidate <code>730cec6492ff2356f53b368e214e5e8dfd78bbb9</code> is
+machine-rejected and is not merged. Production remains exact H11 revision
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code>.</p>
+<p>This is not a threshold exception. G9-v2 permits a human <code>investigate</code>
+classification when a machine-rejected artifact contains a retained
+high-discrepancy opposed-effect signal. The candidate receives no admission or
+progress credit.</p>
+<h2>Mechanism</h2>
+<p>H20 enables a private assertion candidate scanner only when an
+assertion-bearing partition has at least 256 patterns and every pattern proves
+the same first five ASCII symbols after leading assertions and epsilon
+transitions. That prefix fits in one packed <code>u64</code>; no prefix table or filter
+allocation is retained.</p>
+<p>The scan can only propose starts. Exact NFA verification remains authoritative.
+Any mixed, short, optional, non-ASCII, case-insensitive, predicate, ordinary,
+or otherwise uncertain partition follows exact H11 behavior.</p>
+<h2>Formal result</h2>
+<p>The guarded G9-v2 window completed all 11 frozen cells, 66 balanced AB/BA
+pairs, and 531 retained raw files. Every functional test, event count, and
+normalized event digest passed.</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Throughput effect</th><th style="text-align: right">Candidate/baseline</th><th style="text-align: right">Direction</th></tr></thead><tbody>
+<tr><td>Boundary 1000, 1 MiB, 1 worker</td><td style="text-align: right">+22978.782%</td><td style="text-align: right">230.79x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Boundary 1000, 1 MiB, 2 workers</td><td style="text-align: right">+19949.365%</td><td style="text-align: right">200.49x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Boundary 1000, 2 MiB, 1 worker</td><td style="text-align: right">+46078.729%</td><td style="text-align: right">461.79x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Boundary 500 neighbor</td><td style="text-align: right">+22610.050%</td><td style="text-align: right">227.10x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Mixed assertion adversary</td><td style="text-align: right">+10.622%</td><td style="text-align: right">1.11x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>512 KiB bypass</td><td style="text-align: right">+11.695%</td><td style="text-align: right">1.12x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Dense assertion guard</td><td style="text-align: right">+9.101%</td><td style="text-align: right">1.09x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Unfilterable assertion guard</td><td style="text-align: right">+12.203%</td><td style="text-align: right">1.12x</td><td style="text-align: right">6/6 positive</td></tr>
+<tr><td>Ordinary literals</td><td style="text-align: right">+0.325%</td><td style="text-align: right">1.00x</td><td style="text-align: right">inside noise</td></tr>
+<tr><td>H11 shared path</td><td style="text-align: right">+0.774%</td><td style="text-align: right">1.01x</td><td style="text-align: right">inside noise</td></tr>
+<tr><td>Wuthering</td><td style="text-align: right">+4.507%</td><td style="text-align: right">1.05x</td><td style="text-align: right">positive, below target floor</td></tr>
+</tbody></table>
+<p>No primary-throughput, process-wall, or peak-RSS metric vetoed. Three
+preparation measurements crossed the unchanged order-stratified ceiling:</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Aggregate preparation</th><th style="text-align: right">Baseline then candidate</th><th style="text-align: right">Candidate then baseline</th></tr></thead><tbody>
+<tr><td>Boundary 1000, 1 MiB, 1 worker</td><td style="text-align: right">-6.617%</td><td style="text-align: right">-0.115%</td><td style="text-align: right">-13.472%</td></tr>
+<tr><td>Boundary 1000, 2 MiB, 1 worker</td><td style="text-align: right">-7.091%</td><td style="text-align: right">+1.798%</td><td style="text-align: right">-13.723%</td></tr>
+<tr><td>Wuthering</td><td style="text-align: right">-2.431%</td><td style="text-align: right">-1.602%</td><td style="text-align: right">-3.540%</td></tr>
+</tbody></table>
+<p>The exact result-evaluation SHA-256 is
+<code>5722e0f3c35cdd3baba43091f9abd9442aa3dc2407844cace75002a47370a4ca</code>.
+The canonical lab-note SHA-256 is
+<code>04636a0320273fb556a19d2c17b6ab95100b692ad730d0f241e6cf5e171dcb56</code>.
+The measurement manifest, also retained as the outer stage log, has SHA-256
+<code>8220414776eed6a5affce61faa32f57cb4a5a2d6c93f46fd43ab6e49c74e4f63</code>.</p>
+<h2>Interpretation</h2>
+<p>H20 validates the scan mechanism more strongly than any predecessor while
+narrowing H18's failure surface from multiple construction and RSS vetoes to
+three preparation-only vetoes. The target regressions are concentrated in one
+launch order. Wuthering cannot execute the new assertion code, so its order-only
+preparation loss implicates residual binary layout, launch, allocator,
+cache-state, or measurement coupling rather than the prefix algorithm itself.</p>
+<p>Those distinctions are valuable causal evidence, but they do not make H20
+admissible. Either target preparation veto is sufficient to block the exact
+artifact under the unchanged rules.</p>
+<h2>Next discriminator</h2>
+<p>A successor should derive the packed prefix while patterns are already being
+traversed, avoiding H20's second proof walk, and should preserve an observably
+identical H11 construction and code-layout path for every ineligible
+partition.</p>
+<p>Before another formal run:</p>
+<ol>
+<li>Compare exact H11, H20, and one successor with timer-free phase counters.</li>
+<li>Require allocation parity and no extra traversal on ordinary and Wuthering
+fallback construction.</li>
+<li>Verify relevant H11 fallback symbols, sizes, instruction streams, and
+alignment.</li>
+<li>Run balanced fresh-process construction in both launch orders.</li>
+<li>Stop before G9 unless no preparation loss persists and scan/event parity is
+unchanged.</li>
+</ol>
+<p>The full retained machine summary and raw receipts remain in the benchmark
+evidence repository at commit
+<code>c9fd7f481386b9b5cf0458321a1b030bc008705d</code>.</p>
+</main><footer>Generated from <code>docs/experiments/b2-h-0020-strict-common-prefix-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

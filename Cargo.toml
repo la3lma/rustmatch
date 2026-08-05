@@ -1,5 +1,5 @@
 [workspace]
-members = ["rustmatch", "rustmatch-bench", "rustmatch-compat", "xtask"]
+members = ["rustmatch", "rustmatch-bench", "rustmatch-compat", "rustmatch-simd", "xtask"]
 resolver = "3"
 
 [workspace.package]

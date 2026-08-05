@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terminal-memory and scan-layout recovery · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0026-terminal-memory-layout-recovery.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0026-terminal-memory-layout-recovery.md</div></header><main><h1>Terminal-memory and scan-layout recovery</h1>
+<p><strong>Status:</strong> H22-H38 retained; no new merge; H11 remains production</p>
+<p>This review follows the assertion-prefix recovery from its last exceptional
+scan candidate through the final attempt to separate construction-memory gains
+from unrelated scan regressions. All thresholds, fixtures, order rules, and
+semantic requirements remained unchanged.</p>
+<h2>B2-H-0022 and H23</h2>
+<p>H22 derived strict assertion-prefix facts during NFA construction and stored
+five bytes in existing padding. Exact target scans improved about 203x, 203x,
+and 407x, while primary guards remained neutral. Boundary-500 preparation
+regressed 6.931% and vetoed admission.</p>
+<p>H23 tested whether folding the bounded prefix walk into recursive NFA
+construction would remove that cost. It did not: boundary-500 build time
+worsened 1.175% with 10 of 12 observations slower. H23 was rejected before a
+dense or formal run.</p>
+<h2>H24 and H25</h2>
+<p>H24 stored empty and singleton pending-edge lists inline and spilled only real
+branches. It retained roughly 200x-406x target scan gains and improved
+preparation across the entire formal matrix. One adversarial candidate-before
+peak-RSS stratum was 2.360% worse, so the frozen result remained
+<code>investigate</code>.</p>
+<p>H25 reduced temporary <code>PendingState</code> from 40 to 32 bytes through a nonzero
+terminal ordinal. Deterministic probes found 10.80%-14.31% fewer allocated
+bytes and 7.55%-8.45% lower peak live allocator bytes. The unrelated Wuthering
+scan nevertheless regressed 4.253% against H24, blocking formal G9.</p>
+<h2>H26 causal separation</h2>
+<p>Exact H26 revision
+<code>e0c33572fbb9ddd386da50151954d9b4ebb09a38</code> replaces the heap-backed terminal
+representation with an inline sentinel. Against exact H24
+<code>6cc6da3887555345f78b557cd47efdf92568bd21</code>:</p>
+<ul>
+<li>allocated bytes fell 14.30% on assertion boundary/adversarial shapes;</li>
+<li>allocated bytes fell 10.80% on ordinary literals;</li>
+<li>peak live allocator bytes fell 7.55%-8.45%;</li>
+<li>the 96,000-build construction repeat passed;</li>
+<li>retained immutable bytes and event semantics remained identical.</li>
+</ul>
+<p>Natural matched Wuthering was 3.269% slower. Static analysis found the same hot
+instructions shifted by 48 bytes because preceding unwind metadata shrank by
+48 bytes. A fixed-address, instruction-identical discriminator recovered H26
+to 0.535% faster, with both order strata inside two percent.</p>
+<p>Hardware counters reinforced that finding: natural H26 retired 0.15% fewer
+instructions but used 4.78% more cycles and delivered 4.71% lower IPC.
+Construction memory and scan work were therefore separated; binary placement,
+not the sentinel algorithm, caused the observed scan loss.</p>
+<h2>Recovery attempts</h2>
+<table><thead><tr><th>Attempt</th><th>Mechanism</th><th>Decisive result</th></tr></thead><tbody>
+<tr><td>H28</td><td>LLVM innermost-loop alignment</td><td>-1.781% scan aggregate; -3.492% candidate-before</td></tr>
+<tr><td>H30-H32</td><td>Source-level StartTable iterator reshaping</td><td>H32 -11.050% aggregate and about -11% in both strata</td></tr>
+<tr><td>H33-H35</td><td>Kernel, StartTable, and fallback isolation</td><td>Static gates found call/ABI traffic or unsuitable placement; no timing</td></tr>
+<tr><td>H36</td><td>Stable Rust PGO</td><td>V2 -25.357% scan; bounded v3 failed frozen path coverage before build</td></tr>
+<tr><td>H37</td><td>Matched ThinLTO</td><td>-4.358% scan aggregate; -5.960% candidate-before</td></tr>
+<tr><td>H38</td><td>Matched instrumented BOLT placement</td><td>+1.266% aggregate, but +4.044% first and -4.710% second</td></tr>
+</tbody></table>
+<p>The H32 artifact-mutation incident was caught by SHA-256 before timing; no
+affected measurement was admitted.</p>
+<h2>H38 final separation</h2>
+<p>H38 rebuilt exact H24 and H26 with relocations, instrumented each exactly once
+on the same assay-disjoint 64-worker StartTable workload, and applied one
+frozen BOLT 20.1.8 policy. It changed no host package, privileged profiler,
+sysctl, source, fixture, or threshold.</p>
+<p>BOLT independently produced the same production scan hot-fragment address
+(<code>0x60108e</code>), size (<code>0x210e</code>), and 64-byte phase (<code>14</code>) for both variants.
+<code>llvm-boltdiff</code> attributed 97.96% of execution to the production scan
+specialization in each profile and showed effectively identical hot-block and
+hot-edge distributions. H26's total instrumented trace differed by only
+0.001642%; the only content differences with measurable profile weight were
+construction functions at about 0.03%.</p>
+<p>The clean, exact Wuthering screen favored H26 by 1.266% in aggregate, but its
+scan result crossed from 4.044% faster when first to 4.710% slower when second.
+Process wall likewise regressed 4.048% in the candidate-after stratum. The
+frozen rule requires every aggregate and order stratum inside two percent.
+H38 therefore failed, and its one-shot contract prohibited stage two or
+benchmark-informed BOLT tuning.</p>
+<h2>Decision</h2>
+<p>No H22-H38 candidate is mergeable. The evidence is strong enough to state:</p>
+<ol>
+<li>The H26 memory gain is real.</li>
+<li>H26 does not add meaningful production scan work.</li>
+<li>The natural scan regression is code-placement sensitive rather than an
+intrinsic cost of the sentinel representation.</li>
+<li>No tested source, PGO, ThinLTO, or post-link policy produced a reproducible
+artifact that passed every unchanged order-stratum gate.</li>
+</ol>
+<p>H11 remains the production baseline. H26 should be revisited only after an
+independently justified, stable production hot-code placement policy exists,
+or after fresh-process screening can demonstrate order stability for that
+policy. The memory win is worth retaining as research evidence, but not at the
+cost of admitting a known unresolved guard failure.</p>
+</main><footer>Generated from <code>docs/experiments/b2-h-0026-terminal-memory-layout-recovery.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

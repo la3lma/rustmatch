@@ -48,6 +48,7 @@ mod nfa;
 mod parser;
 mod predicate;
 mod prefilter;
+mod shared_candidate;
 mod types;
 
 #[cfg(feature = "benchmark-internals")]

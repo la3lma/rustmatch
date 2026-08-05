@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Optimization decision policy · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../optimization-decision-policy.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/optimization-decision-policy.md</div></header><main><h1>Optimization decision policy</h1>
+<p><strong>Current version:</strong> <code>G9-v3</code></p>
+<p><strong>Effective for newly frozen experiments:</strong> 2026-08-04</p>
+<h2>Purpose</h2>
+<p>Rustmatch uses performance gates to force better engineering, not to make an
+arbitrary threshold look like a law of nature. The gates remain strict and
+stable across a test series, while the decision vocabulary distinguishes
+admission from learning.</p>
+<p>An optimization can therefore be valuable evidence without being eligible for
+formal certification. No average gain, competitor comparison, or appealing
+mechanism can offset a failed certification guard. A production owner may
+separately authorize an explicit risk exception, but that action does not turn
+the failed or investigated evidence into a certified pass.</p>
+<h2>Admission and learning are separate</h2>
+<p>The admission decision answers whether the exact candidate may enter the
+production baseline. The learning disposition answers what the evidence
+requires next.</p>
+<table><thead><tr><th>Disposition</th><th>Production code</th><th>Baseline</th><th>Required action</th></tr></thead><tbody>
+<tr><td><code>merged</code></td><td>admitted</td><td>advances</td><td>retain complete positive and guard evidence</td></tr>
+<tr><td><code>investigate</code></td><td>not admitted</td><td>unchanged</td><td>retain evidence and freeze the smallest causal follow-up</td></tr>
+<tr><td><code>rejected</code></td><td>not admitted</td><td>unchanged</td><td>retain the negative result; reopen only with materially new evidence</td></tr>
+<tr><td><code>inconclusive</code></td><td>not admitted</td><td>unchanged</td><td>retain uncertainty; improve measurement before making a causal claim</td></tr>
+</tbody></table>
+<p>An owner-authorized production exception is tracked separately from this
+formal disposition table. The source may be merged, but its machine
+disposition, human outcome, and <code>optimization_admitted</code> value remain unchanged.</p>
+<p>Only <code>merged</code> attempts enter the optimization-efficiency graph.</p>
+<h2>Numerical ruling</h2>
+<p>Correctness and exact event semantics are prerequisites.</p>
+<ol>
+<li>A repeatable guard regression greater than <strong>3%</strong> is an automatic
+certification veto for the exact candidate, regardless of gains elsewhere.</li>
+<li>A demonstrated guard regression greater than <strong>2%</strong> through <strong>3%</strong> produces
+<code>investigate</code>, not admission and not a terminal algorithmic rejection.</li>
+<li>Results at or below the frozen two-percent boundary still obey their
+predeclared noise, agreement, order-stability, and cell-specific rules.</li>
+<li>Added performance complexity should normally earn at least a repeatable
+<strong>5%</strong> target improvement. A smaller gain needs an explicit simplification
+or maintenance rationale and may not conceal a demonstrated regression.</li>
+<li>Correctness failure rejects the exact artifact. Incomplete or
+directionally unstable evidence is inconclusive.</li>
+</ol>
+<p>The two-percent investigation boundary and three-percent veto are evaluated per
+declared guard. Improvements elsewhere are never averaged against a regression.</p>
+<h2>Owner-authorized production exception</h2>
+<p>The repository owner may explicitly direct that an exact investigated artifact
+enter production after reviewing its complete retained evidence. This is a
+production-risk decision, not an admission result. Such an exception must:</p>
+<ul>
+<li>name the exact measured candidate and production merge;</li>
+<li>preserve the original machine disposition, human outcome, lab note, raw
+receipts, thresholds, and unfavorable cells;</li>
+<li>state the known residual regression in the current ledger and comparison;</li>
+<li>receive merged-production graph credit only because production actually
+advanced, with the graph labeling the exception; and</li>
+<li>leave a follow-up path for removing the accepted regression under unchanged
+formal gates.</li>
+</ul>
+<p><code>B2-H-0042</code> is the first such exception. Its formal result remains
+<code>investigate</code> with <code>optimization_admitted: false</code> because Wuthering regressed
+2.111% with 13 of 15 negative crossover cycles. Exact H42 entered production
+only through explicit owner authorization.</p>
+<h2>High-discrepancy signal</h2>
+<p>Large opposing effects are evidence about mechanism boundaries. When a
+candidate produces unusually large improvements in some cells and regressions
+in others, the review must examine:</p>
+<ul>
+<li>whether the fast and slow cells activate the same code path;</li>
+<li>workload dimensions that separate them, including input size, pattern count,
+density, worker count, output volume, and semantic family;</li>
+<li>binary-layout, instrumentation, preparation, memory, scheduling, and
+measurement confounders;</li>
+<li>whether a safe classifier or structural isolation can retain the gain; and</li>
+<li>the smallest experiment that distinguishes the leading cause from credible
+alternatives.</li>
+</ul>
+<p>A reviewer may assign <code>investigate</code> when this contrast contains a plausible,
+separable signal, including when an automatic veto rejects the exact artifact.
+That ruling cannot admit code, grant graph credit, weaken a guard, or authorize
+ad hoc tuning. It creates an obligation to retain the discrepancy and propose a
+bounded causal successor.</p>
+<h2>Versioning</h2>
+<p>Thresholds and rulings are frozen before candidate measurements. A future
+policy change receives a new version and effective date. Historical raw
+measurements, machine dispositions, and admission decisions are never rewritten
+to simulate consistency.</p>
+<p><code>B2-H-0009</code> remains rejected and unmerged under <code>G9-v1</code>. <code>G9-v2</code> added the
+learning disposition that its shared-candidate mechanism warrants
+investigation. The successor must pass the same two-percent, three-percent, and
+five-percent numeric gates; the new label does not grant H9 admission.</p>
+<p><code>G9-v3</code> prospectively adds the calibrated adjacent AB/BA geometric crossover
+estimator and directional-burden rule. It does not change the two-percent,
+three-percent, or five-percent thresholds and does not rewrite any G9-v1/v2
+result. The owner-exception mechanism records production governance separately
+from formal certification.</p>
+</main><footer>Generated from <code>docs/optimization-decision-policy.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

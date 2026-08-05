@@ -16,7 +16,7 @@ The sequence is mandatory:
    have produced them;
 4. record and review explicit hypotheses and discriminating experiments; and
 5. only then implement one bounded candidate at a time and repeat
-   **hypothesize, test, evaluate, accept or reject**.
+   **hypothesize, test, evaluate, and rule**.
 
 No optimization branch or production candidate may start before the B2 review
 gate is complete. Exploring data, writing analysis tools, and improving the
@@ -196,9 +196,12 @@ After the B2 review, and before implementing each candidate, record:
 - the proposed Rust-native mechanism and the evidence behind it;
 - target fixtures, worker modes, controls, and the primary metric;
 - exact output count and digest requirements;
+- the versioned
+  [optimization decision policy](../optimization-decision-policy.md);
 - the noise model and minimum meaningful improvement;
-- a guard-regression ceiling no greater than 3%, plus an evidence-based
-  rationale when the target improvement is below the usual 5%;
+- the fixed 2% investigation boundary and a guard-regression ceiling no greater
+  than 3%, plus an evidence-based rationale when the target improvement is
+  below the usual 5%;
 - the broader guard set, including neighboring pattern counts, both corpus
   sizes, density controls, Wuthering Heights, and relevant semantic families;
 - unacceptable regressions in scan time, preparation time, memory, latency,
@@ -227,9 +230,10 @@ For every candidate:
 3. **Evaluate:** inspect absolute values, scaling shape, profiles, process cost,
    memory, outliers, neighboring workloads, and alternative explanations. A
    threshold result without critical interpretation is incomplete.
-4. **Accept or reject:** retain production code only if every admission
-   condition below holds. Otherwise remove it from the production path and
-   preserve the experiment and its lesson.
+4. **Rule:** assign `merged`, `investigate`, `rejected`, or `inconclusive`.
+   Retain production code only if every admission condition below holds.
+   `investigate` is non-admission with a mandatory causal follow-up, not a
+   compromise merge.
 5. **Repeat:** update the hypothesis registry and choose the next experiment
    from the evidence now available. Do not stack an unproven optimization under
    another candidate.
@@ -255,23 +259,36 @@ A candidate enters the Rustmatch production path only when all of these hold:
 The numerical policy is deliberately asymmetric:
 
 - A repeatable guard regression greater than **3%** is an automatic rejection,
-  regardless of gains elsewhere.
-- A statistically distinguishable regression is not acceptable merely because
-  it is smaller than 3%; a result inside the predeclared noise band is
-  inconclusive rather than proof of non-regression.
+  of the exact artifact regardless of gains elsewhere.
+- A demonstrated guard regression greater than **2%** through **3%** requires
+  investigation. The candidate is not merged, the baseline remains unchanged,
+  and the complete evidence must nominate the smallest causal follow-up.
+- Results at or below the frozen two-percent boundary still obey their
+  predeclared noise, directional-agreement, order-stability, and cell-specific
+  rules; being numerically below 2% is not proof of non-regression.
 - Added optimization complexity should normally produce at least **5%**
   repeatable improvement on its target set. A smaller positive gain may be
   accepted for genuine simplification or removal of maintenance risk, but only
   with explicit rationale and no demonstrated guard regression.
 
+Admission and learning are deliberately separate. A large improvement in one
+cell never averages away a regression in another. At the same time, unusually
+large opposing effects are a causal signal. Reviewers must compare path
+activation, workload dimensions, instrumentation, binary layout, preparation,
+memory, scheduling, and credible alternatives. They may classify the mechanism
+as `investigate`, including after an automatic artifact veto, when a bounded
+successor can plausibly separate the gain from the loss. This grants no
+production code, graph credit, or threshold relaxation.
+
 RegexSet parity is neither necessary nor sufficient for admission. A candidate
 that remains slower than RegexSet may still be a good Rustmatch optimization if
 it demonstrably improves current Rustmatch. A candidate that beats RegexSet but
-does not improve current Rustmatch is rejected. Neutral, inconclusive, or slower
-candidates are removed from the production path and retained only as documented
-experiments.
+does not improve current Rustmatch is not admitted. Neutral, investigated,
+inconclusive, rejected, or slower candidates are removed from the production
+path and retained as documented experiments.
 
-Every attempt, including rejected and inconclusive candidates, receives a
+Every attempt, including investigated, rejected, and inconclusive candidates,
+receives a
 timestamped lab note using the benchmark repository's
 [`G9 template`](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/g9-optimization-lab-note-template.md).
 Negative results are retained so attractive slowdowns are not repeatedly

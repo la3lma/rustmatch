@@ -5,14 +5,17 @@
 > **Status: active implementation.** The vertically integrated semantic spine
 > now covers the documented rmatch 2.x consuming language, including UTF-16,
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
-> scale work has completed explicit parallel pattern partitioning; ordinary
-> cross-engine harness integration is next. This is a development prototype,
-> not a published crate.
+> scale work has completed the B1/B2 cross-engine campaign, and current
+> production includes the owner-authorized H42 exact SIMD scan path. The
+> `0.1.0` release candidate has passed prerelease verification; no crate has
+> been published.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `10/12`
-> increments started and `10/12` complete. The B1 cross-engine campaign is
-> active.
+> status](docs/roadmap.md). Planning is complete; implementation is at `12/12`
+> increments started and `12/12` complete. Cross-engine measurement, B2
+> analysis, hardening, and release preparation are complete; the
+> [prerelease checklist](docs/pre-release-todo.md) tracks the final package and
+> intentionally unexecuted release ceremony.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -32,6 +35,36 @@ but the Rust implementation should use Rust's strengths: ownership, explicit
 lifetimes, enums, dense integer-indexed storage, contiguous memory, fearless
 parallelism, and a small public API. This is not a Java-to-Rust transliteration
 project.
+
+## Current performance snapshot
+
+The latest exact overlap snapshot measures the current H42 production source
+(`c6f221b`) against retained, unchanged Java rmatch, Rust `regex::RegexSet`,
+and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
+throughput divided by the reference throughput, so values above `1.0x` favor
+Rustmatch.
+
+| Reference | Contract | Exact overlap | Rust wins | Geometric mean | Median | Range |
+|---|---|---:|---:|---:|---:|---:|
+| Java rmatch | Same complete event contract | 9 groups | 9/9 | **44.543x** | 80.983x | 2.738x-126.566x |
+| Rust `regex::RegexSet` | Different output contract | 8 groups | 4/8 | **2.288x** | 1.086x | 0.194x-27.154x |
+| Hyperscan | Native-reference diagnostic | 8 groups | 2/8 | **0.308x (30.8%)** | 0.402x | 0.011x-3.637x |
+
+The result is competitive rather than universal: Rustmatch wins every
+same-contract Java comparison, leads RegexSet on geometric mean while splitting
+the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
+two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
+RegexSet, and 0.210x Hyperscan, so the current source improves those
+geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
+the directly comparable complete-event reference. RegexSet and Hyperscan use
+different native semantics, so those measurements are useful performance
+references rather than fairness claims.
+
+This is an exact nine-group admission-overlap update, not a new full-dataset
+rerun. H42's formal outcome remains `investigate` because its Wuthering guard
+was 2.111% below H11; it entered production through an explicit owner-authorized
+exception. See the [cell-level comparison, method, and retained
+receipts](docs/experiments/h42-cross-engine-snapshot.md).
 
 ## TL;DR
 
@@ -210,7 +243,7 @@ executed together.
 
 ### Definition of success
 
-`rustmatch` is ready for a first stable release only when all of the following
+`rustmatch` is ready for a first public release only when all of the following
 are true:
 
 - The shared semantic suite passes against Java rmatch for supported syntax,
@@ -616,18 +649,21 @@ The implementation passes only when:
 - the complete scenario set reveals no unaccepted material regression; and
 - any selective activation rule is itself measured and reproducible.
 
-A repeatable guard regression above 3% is an automatic rejection. This is a
-ceiling, not permission to accept a smaller statistically distinguishable
-regression. Optimization-specific complexity should normally earn at least a
-5% repeatable improvement on its declared target set. A smaller positive result
-may be considered when the change also materially simplifies the code or
-removes maintenance risk, but never when the guard set demonstrates a real
-regression.
+A repeatable guard regression above 3% automatically rejects the exact
+artifact. A repeatable regression above 2% through 3% blocks admission and
+requires investigation under the versioned
+[optimization decision policy](docs/optimization-decision-policy.md). These are
+not regression budgets: any demonstrated regression blocks admission.
+Optimization-specific complexity should normally earn at least a 5% repeatable
+improvement on its declared target set. A smaller positive result may be
+considered when the change also materially simplifies the code or removes
+maintenance risk, but never when the guard set demonstrates a real regression.
 
-A neutral, inconclusive, or slower result fails the optimization gate. The
-experiment may be retained as a useful lab note, but the code is removed or
-left disabled outside the production path. A local win accompanied by losses
-elsewhere may justify a narrowly activated path only when the activation
+A neutral, inconclusive, investigated, rejected, or slower result fails the
+admission gate. Its evidence and lab note remain part of the project, but the
+code is removed or left disabled outside the production path. Large opposing
+effects require causal review; a local win accompanied by losses elsewhere may
+justify a successor or narrowly activated path only when the activation
 criterion is explicit, safe, and independently measured.
 
 Pass/fail is not performance analysis. Every admitted optimization must also
@@ -2445,9 +2481,13 @@ broader regression. Improvements outside the original target are welcome.
 RegexSet parity is neither required nor sufficient. The complete workflow and
 exit criteria are in the
 [`B2/G9 protocol`](docs/experiments/b2-competitor-win-optimization.md).
-The non-negotiable default policy rejects any repeatable guard regression above
-3%, normally asks optimization complexity to earn at least a 5% target gain,
-and retains a lab note for every accepted, rejected, or inconclusive attempt.
+The versioned
+[`G9-v2` decision policy](docs/optimization-decision-policy.md) automatically
+vetoes admission for any repeatable guard regression above 3%, classifies a
+demonstrated regression above 2% through 3% as `investigate`, normally asks
+optimization complexity to earn at least a 5% target gain, and retains a lab
+note for every merged, investigated, rejected, or inconclusive attempt. An
+investigation admits no code and does not advance the baseline.
 The retained campaign, automatic analysis, qualitative-review, and
 hypothesis-authorization artifacts are produced by the
 [`rmatch-performance-measurements` B2 workflow](https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md).

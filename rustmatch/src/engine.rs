@@ -9,6 +9,10 @@ use crate::{Error, Match, Utf16Span, Utf16Text};
 
 pub(crate) const DEFAULT_STATE_CACHE_BUDGET: usize = 8_192;
 
+#[path = "shared_engine.rs"]
+mod shared;
+pub(crate) use shared::scan_with_shared_candidates_and_stats;
+
 pub(crate) fn scan(
     database: &PatternDatabase,
     prefilter: &Prefilter,

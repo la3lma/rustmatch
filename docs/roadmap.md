@@ -1,14 +1,19 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-07-18
+**Last reviewed:** 2026-08-05
 
-**Implementation increments started:** **10/12**
+**Implementation increments started:** **12/12**
 
-**Implementation increments complete:** **10/12**
+**Implementation increments complete:** **12/12**
 
-**Active:** **B1 - Correctness-gated cross-engine receipts and thread sweeps**
+**Active:** no implementation increment; H42 remains the exact
+owner-authorized production source and `0.1.0` candidate `7305a24` has passed
+the complete prerelease gate
 
-**Available for execution:** none while B1 is active
+**Next owner decision:** review and merge draft PR #38, then separately
+authorize the irreversible release ceremony when desired. The
+[prerelease checklist](pre-release-todo.md) is the authoritative ledger; every
+publication, tag, and GitHub-release action remains intentionally unchecked
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -23,9 +28,13 @@ that keep the system executable.
 > optimization milestone. The acceptance baseline is the frozen, existing
 > Rustmatch production path, not the competitor. Every performance-motivated
 > change must preserve results and show a positive Rustmatch improvement beyond
-> a predeclared noise threshold. Neutral, inconclusive, or slower results fail
-> the gate. Semantic extensions require correctness and applicable
-> non-regression evidence, not a speedup.
+> a predeclared noise threshold. Only a fully passing candidate may merge.
+> Investigated, neutral, inconclusive, rejected, or slower results leave the
+> production baseline unchanged. The
+> [versioned decision policy](optimization-decision-policy.md) requires causal
+> follow-up when large opposing effects expose a separable signal. Semantic
+> extensions require correctness and applicable non-regression evidence, not a
+> speedup.
 
 The system-level target is stronger than the admission rule for one change:
 rustmatch should ultimately exceed Java rmatch on representative workloads
@@ -174,10 +183,11 @@ flowchart TB
     class L6 blocked;
 
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
-    class B1 active;
-    class X0,H1,R1,R2 evidence;
-    class G9,I10,I11 gate;
-    class B2,H2,H3,R3,REL planned;
+    class B1,B2 complete;
+    class X0 evidence;
+    class H1,H2,H3,R1,R2,R3,I10,I11 complete;
+    class G9 gate;
+    class REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -227,9 +237,112 @@ separate visual language from the execution path.
 
 I6 through I8 record bootstrap optimizations completed before the systematic B1
 campaign and before the B2 gate was adopted. They are historical evidence, not
-precedent for bypassing the current sequence. No new post-B1 optimization may
-start until B1 is complete and a reviewed B2-H hypothesis explicitly authorizes
-the bounded G9 experiment.
+precedent for bypassing the current sequence. The stable-host B1 campaign and
+reviewed B2 analysis are now complete. Their durable
+[Optimization and scale synthesis](optimization-and-scale.md) is maintained at
+`docs/optimization-and-scale.md`. The generated
+[Optimization attempt ledger](optimization-attempt-ledger.md) retains every
+merged, investigated, rejected, and inconclusive attempt, an improvement-only progress chart, and the
+versioned Java rmatch, RegexSet, and Hyperscan scorecard. Its leading
+[H42 cross-engine snapshot](experiments/h42-cross-engine-snapshot.md) uses only
+exact current-production overlap and preserves H11 plus the wider pre-H11 B2
+table as historical context. H42 entered production by explicit owner
+authorization while its formal G9-v3 outcome remains `investigate`; the known
+2.111% Wuthering regression remains retained. The ledger generator rejects a
+future merged optimization until its current comparison revision advances with
+it. B2-H-0001 completed
+with exact semantics but
+regressed both targets by about 28%; its shared-candidate revision is rejected
+and not admitted. B2-H-0002 measured only 2.4618% lifecycle plus join at the
+median, so no persistent-pool candidate was authorized. B2-H-0003 then measured
+only 1.7699% and 1.4288% median removable partition skew, unstable slowest
+partitions, and no stable compile-time predictor. Its load-aware partitioning
+proposal is also rejected without production code. The refreshed review
+also rejects B2-H-0005: doubling the cache budget reduced fallback by about 5%
+at both endpoints, but paired throughput changed only +0.43% at sixteen workers
+and -0.83% at twenty-four workers while hardware cache-miss rate worsened by
+roughly 20% to 26%. No adaptive cache policy or diagnostic revision is
+admitted. B2-H-0004 then measured external callback omission at only -0.16%
+median scan-time opportunity at sixteen workers and +0.08% at thirty-two
+workers; event-vector growth consumed only 0.033-0.078 ms. Exact buffering and
+delivery batching are rejected without production code. B2-H-0008 then
+reproduced the sparse and dense high-worker collapses at -42.52% and -41.30%;
+logical input work scaled exactly with partitions while cache misses rose
+47.07% and 61.97%. Topology-aware placement recovered only 0.70% and 0.12%.
+That diagnostic admits no code, but the v11 review authorized exactly
+`B2-H-0009`: parallel shared candidate construction followed by
+partition-local prefix admission, with the existing private plan retained as
+fallback. H9 subsequently preserved exact semantics and improved every primary
+target by 122.143% to 734.672%; the sparse 24-worker target ran 8.35 times as
+fast. The unchanged zero-output private fallback nevertheless regressed
+2.00249% with all six pairs negative. The strict no-regression gate therefore
+rejected the exact candidate under `G9-v1` and admitted no code. The later
+[`G9-v2` decision policy](optimization-decision-policy.md) preserves that
+admission result while classifying the mechanism as `investigate`. Its measured
+algorithmic upside supports fresh review of a structurally isolated successor,
+not benchmark-specific tuning.
+
+The subsequent
+[recovery analysis](experiments/shared-candidate-recovery-analysis.md) found a
+narrower first step. `main` and every direct private scanner moved by exactly
+`0x1cf0` bytes, while the rejected one-worker guard never executed the shared
+planner. Static controls recover `0x1540`, about 73% of that displacement, by
+removing candidate-only diagnostics and leave a `0x7b0` shared-code residual.
+The recommended successor therefore keeps the timed harness byte-identical to
+baseline, moves phase diagnostics to a separate non-timed artifact, and
+separates whole private and shared dispatch pipelines. A new internal crate is
+the ranked fallback only if that bounded candidate still fails.
+
+That successor became `B2-H-0010`. It passed the static proxy and preserved
+exact semantics while improving all four intended targets by 118.381% to
+709.958%. It nevertheless regressed sparse and dense 8 MiB fallbacks and the
+one-worker zero-output guard by 20.120% to 24.928%; none of those cells created
+the shared planner, and all crossed the unchanged three-percent veto. H10 is
+therefore rejected and unmerged. Preparation and RSS were neutral, while an
+inactive Wuthering guard also remained neutral, so the open question is now
+path-sensitive scan codegen, placement, or cache/branch behavior.
+
+That diagnosis found the concrete cause: H10 outlined the tiny
+`LiteralPrefilter::prefix_allows` predicate inside the per-input-start private
+hot loop, consuming 85.32% of sampled one-worker instructions. `B2-H-0011`
+retained the shared architecture and restored that predicate's baseline
+inlining shape. Under the unchanged eleven-cell G9-v2 matrix, all four primary
+targets improved 116.181%-695.703%, while H10's three vetoing private paths
+recovered to +0.641%-1.956%. Exact measured candidate `bacd5c46` passed
+correctness, order, static, host, and regression checks and merged without
+source modification as `de33ea1`. The
+[retained H11 summary](experiments/b2-h-0011-private-prefilter-recovery.md)
+records the matrix and evidence hashes. H9 and H10 remain rejected and excluded
+from the merged-improvement graph.
+
+The subsequent
+[B2-H-0006 semantic design review](experiments/b2-h-0006-input-parallel-design.md)
+resolves the old overlap blocker: input workers can own disjoint start-position
+ranges while reading the complete immutable input, so unbounded matches,
+assertions, duplicates, and unspecified callback ordering require no chunk
+reconciliation. It does not authorize code. H11 already performs one shared
+candidate pass and routes almost every retained candidate to one semantic
+partition, so H-0006 must first demonstrate at least 5% post-H11 phase
+headroom before a benchmark-only full-database prototype is justified.
+
+The broader
+[post-H11 future optimization portfolio](experiments/post-h11-future-optimization-portfolio.md)
+reviews every currently known open direction and the negative evidence that
+closes earlier mechanisms. Its first-ranked assertion-bearing prefilter has now
+been measured as [B2-H-0012](experiments/b2-h-0012-assertion-prefilter-result.md).
+The semantic and algorithmic prediction passed spectacularly: sparse targets
+reached roughly 185 to 385 times baseline throughput with exact events. The
+artifact did not merge because the unrelated Wuthering guard regressed 3.038%
+and assertion preparation regressed 11.16% to 22.32%.
+
+H12 therefore advances to a bounded recovery rather than production. Binary
+inspection shows five candidate-only sink-specialized assertion functions and
+changed ordinary scanner size and placement, while Wuthering cannot execute
+the assertion code path. The next experiment must isolate that dispatch behind
+a stable compiler boundary and profile filter construction. H11 routing and
+SIMD candidate discovery remain next after this recovery. B2-H-0006 stays at
+rank five because its semantics are sound but its incremental post-H11
+headroom remains unproven.
 
 ## Milestone ledger
 
@@ -264,11 +377,11 @@ and use-case evidence bundle pass from a clean checkout.
 | I7 | Safe prefilter | Complete | Exact on/off equality, structural proof adversaries, explicit assertion/density/size/unfilterable paths, bounded storage, accepted compact-filter ADR, native focused gates, 1,000/5,000/10,000-pattern Wuthering gains, build accounting, rejected prototypes, and profile analysis retained as `I7-P1`/`I7-B1` |
 | I8 | Parallel partitions | Complete | Exact parity and lifecycle gates, unchanged total cache budget, protected one-worker path, complete native 1/2/3/4/6/8/12/18/24 sweep, 60.09% positive 10,000-pattern gain with 0.04% repeat drift, short-input and default-path guards, memory accounting, and profiles in the [I8 evidence package](evidence/i8/ef61173/README.md) |
 | I9 | Benchmark integration | Complete | Exact-SHA archive and pinned container, ASCII/UTF-16 equivalence, NFA/single/eight-partition parity, strict validation, six retained receipts, and ordinary plot support are documented in the [I9 evidence package](evidence/i9/fdd5efa/README.md) |
-| B1 | Cross-engine receipts and thread sweeps | Active | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) and exact harness now implement correctness-gated 1,000/2,500/5,000/7,500/10,000-pattern campaigns, density and cache-pressure controls, explicit semantic lanes, complete worker sweeps, confirmation, a 20-role core profile scale with validated counters, and a self-contained report archive; authoritative stable-host receipts and critical interpretation remain outstanding |
-| B2 | Full-dataset analysis and reviewed hypotheses | Planned | After B1 completes, the entire traceable dataset is examined quantitatively and qualitatively before optimization begins; major regimes, cliffs, anomalies, crossovers, and competitor wins receive reasoned dispositions, and a reviewed registry turns plausible mechanisms into bounded experiments or documented non-candidates |
-| G9 | Existing-Rustmatch candidate gate | Planned | Every tried candidate preserves exact results and is admitted only with reproducible, noise-aware evidence that it improves the frozen existing Rustmatch baseline on its declared target set without an unacceptable broader regression; competitor parity is not the admission criterion |
-| I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
-| I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
+| B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
+| B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source |
+| G9 | Existing-Rustmatch candidate gate | Complete for B2-H-0011 | H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate `bacd5c46`. Any next optimization requires a fresh B2 authorization |
+| I10 | Hardening | Complete | Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass |
+| I11 | Release preparation | Complete | Frozen candidate `7305a24` passes exact package, consumer, documentation, compatibility, changelog, runbook, Linux/macOS/Windows, MSRV, AArch64, Miri, Java differential, hosted tripwire, and designated-host performance gates; raw receipts and archive hashes are retained |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
 
 ## Status update protocol

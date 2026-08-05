@@ -1,0 +1,358 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Post-H11 future optimization portfolio · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/post-h11-future-optimization-portfolio.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/post-h11-future-optimization-portfolio.md</div></header><main><h1>Post-H11 future optimization portfolio</h1>
+<p><strong>Status:</strong> H24 pinned; H39 and H40 rejected; exact literal backend next</p>
+<p><strong>Reviewed production baseline:</strong> H11 exact measured source
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<p><strong>Review date:</strong> 2026-08-04</p>
+<h2>H24-H38 pin update</h2>
+<p>The assertion-prefix mechanism remains an exceptional opportunity: H24 retained
+roughly 200x-406x target scan gains and improved preparation 15.39%-45.30%.
+A 144-process follow-up did not reproduce H24's original 2.360% peak-RSS order
+signal. H25-H38 nevertheless failed to produce a materially distinct artifact
+that retained H24's gains and passed every unchanged guard. The
+<a href="b2-h-0026-terminal-memory-layout-recovery.html">H26-H38 recovery review</a> closes
+the current construction/layout route without merge.</p>
+<p>H24 is therefore <strong>pinned, not abandoned</strong>. It remains visible as retained
+research evidence but is not the active next experiment. Reopening it requires
+materially new evidence, such as an independently justified stable production
+layout policy or a genuinely different construction representation; repeating
+or tuning the rejected artifacts is not authorized.</p>
+<h2>H39 routing result</h2>
+<p><a href="b2-h-0039-partition-routing.html">B2-H-0039 partition-aware routing</a> exposed
+8.383%-11.425% removable routing share on dense targets, then retained
+4.894%-9.529% dense scan gains in a bounded exact candidate. It did not pass
+the frozen production screen: dense-16 missed the five-percent target by
+0.106 percentage points, while the inactive Wuthering guard regressed 3.822%
+in scan and 3.456% in process wall. Both exceeded the unchanged automatic
+veto. H39 is rejected before full G9 and H11 remains production.</p>
+<p>The route mechanism remains positive evidence, not an active retry. Reopen it
+only with a materially different stable representation or isolation method;
+do not tune the frozen threshold or waive the guard.</p>
+<h2>H40 SIMD result</h2>
+<p><a href="b2-h-0040-simd-candidate-discovery.html">B2-H-0040 exact SIMD candidate discovery</a>
+proved unusually strong algorithmic value. Its exact isolated AVX2 kernel was
+4.413x-4.641x faster than scalar candidate planning. The bounded production
+recovery retained 22.937%-63.445% scan gains and 19.519%-41.658% wall gains on
+all four targets, with every target pair positive.</p>
+<p>H40 still failed its unchanged production screen. The inactive Wuthering
+candidate-after stratum regressed 5.272% in scan and 3.321% in peak RSS, while
+the ordinary candidate-before wall stratum regressed 2.266%. Neither guard
+executes SIMD. The recovery already restored scalar sampling, exact accepted
+build provenance, and private hot-function mnemonic identity. H40 is therefore
+rejected before full G9 rather than retuned into benchmark-specific placement.</p>
+<p>SIMD remains valuable retained research evidence, but it is no longer the
+active next experiment. Reopen it only with a generally applicable stable
+production-layout boundary or inside a materially different exact literal
+engine. The exact literal-only backend is now the highest-ranked independent
+candidate.</p>
+<h2>Executive conclusion</h2>
+<p>There is no single remaining optimization that dominates every workload.
+H11 changed the shape of the problem:</p>
+<ul>
+<li>Rustmatch now beats Java rmatch on all nine current same-contract overlap
+cells, by a 27.893x geometric mean.</li>
+<li>Rustmatch is competitive with RegexSet overall, but still loses sharply on
+some dense and zero-output literal cells.</li>
+<li>Rustmatch reaches 0.210x Hyperscan's geometric-mean throughput on the eight
+current overlap cells. The largest gaps are literal-heavy; Rustmatch already
+wins the retained mixed-regex and Wuthering cells.</li>
+<li>H11 removed most repeated literal-corpus traversal on eligible large inputs,
+reducing the incremental case for immediately replacing pattern parallelism
+with input parallelism.</li>
+<li>Assertion-bearing pattern sets still disable every prefilter. The retained
+1,000-pattern <code>\bword…\b</code> guard scans all starts and takes roughly 76 seconds
+over 8 MiB. H24 proved the opportunity but its current recovery route is
+pinned after H38.</li>
+</ul>
+<p>The recommended experiment order is therefore:</p>
+<ol>
+<li>an exact literal-only backend;</li>
+<li>exact input-parallel semantic scanning, after its post-H11 phase gate;</li>
+<li>transition and scratch locality;</li>
+<li>a general bit-parallel engine research track;</li>
+<li>fused persistent phases, only with new evidence;</li>
+<li>a workload selector only after at least two alternative paths have passed
+independently;</li>
+<li>partition-aware routing, only after materially new isolation evidence;</li>
+<li>SIMD candidate discovery, only after a general layout boundary or inside a
+materially different exact literal engine; and</li>
+<li>the pinned H24 assertion opportunity, only after materially new evidence.</li>
+</ol>
+<p>This order is a decision about the <strong>next unit of evidence</strong>, not a claim that
+rank one has the greatest theoretical ceiling. It favors measured opportunity,
+causal clarity, and reversible implementation over speculative maximum speed.</p>
+<h2>Evidence that controls the ranking</h2>
+<h3>The gaps are workload-specific</h3>
+<p>The <a href="h11-cross-engine-snapshot.html">then-current H11 comparison</a> reported:</p>
+<table><thead><tr><th>Workload</th><th style="text-align: right">Rust/Hyperscan</th><th style="text-align: right">Rust/RegexSet</th><th>Interpretation</th></tr></thead><tbody>
+<tr><td>Sparse literals, 10,000, 50 MiB</td><td style="text-align: right">0.118x</td><td style="text-align: right">5.382x</td><td>H11 is strong against RegexSet, but scalar candidate discovery remains far behind Hyperscan</td></tr>
+<tr><td>Dense literals, 5,000, 50 MiB</td><td style="text-align: right">0.326x</td><td style="text-align: right">0.133x</td><td>A specialized exact-literal path has a large observable target</td></tr>
+<tr><td>Zero-output literals, 10,000, 50 MiB</td><td style="text-align: right">0.011x</td><td style="text-align: right">0.758x</td><td>Fast rejection and vectorized scanning matter more than event delivery</td></tr>
+<tr><td>Mixed regex, 10,000, 50 MiB</td><td style="text-align: right">1.067x</td><td style="text-align: right">7.963x</td><td>A wholesale general-engine replacement is not the first priority</td></tr>
+<tr><td>Wuthering literals, 10,000, 8 MiB</td><td style="text-align: right">1.206x</td><td style="text-align: right">0.620x</td><td>No one literal strategy wins every corpus</td></tr>
+</tbody></table>
+<p>Competitor ratios nominate experiments; they do not admit production code.
+RegexSet and Hyperscan also expose different output contracts, so their results
+are diagnostic opportunity signals rather than Rustmatch acceptance gates.</p>
+<h3>H11 moved the bottleneck</h3>
+<p>H11 builds one union candidate bitmap with at most eight input shards. Every
+pattern partition then iterates those candidates and applies its private
+necessary-prefix test before running the unchanged semantic engine. In the
+four retained 50 MiB H11 target cells, total semantic starts were only
+1.016x-1.017x the union candidate count.</p>
+<p>That is excellent selectivity, but it leaves two separable costs:</p>
+<ol>
+<li>every semantic partition still probes every union candidate; and</li>
+<li>union candidate discovery still executes a scalar per-start prefix test.</li>
+</ol>
+<p>Partition-aware routing attacks the first cost. SIMD candidate discovery
+attacks the second. They must be tested separately so a result has a causal
+interpretation.</p>
+<h3>Several attractive mechanisms are already closed</h3>
+<p>The retained B2 diagnostics found:</p>
+<ul>
+<li>thread spawn itself consumed only 0.0320% of scan time; lifecycle plus join
+was 2.4618%, mostly the slower worker's tail;</li>
+<li>removable static partition skew was only 1.7699% at eight workers and
+1.4288% at twelve, with no stable predictor;</li>
+<li>external callback cost and vector growth were far below 1%, despite a large
+event buffer;</li>
+<li>doubling cache budget reduced fallback by about 5% but changed throughput by
+only +0.43% and -0.83%, while cache-miss rate rose 25.92% and 19.79%.</li>
+</ul>
+<p>Persistent pools, load-aware pattern partitioning, event batching, and larger
+caches therefore stay closed unless a successor changes the mechanism rather
+than merely retuning the rejected design.</p>
+<h2>Ranking method</h2>
+<p>The ratings are deliberately ordinal:</p>
+<ul>
+<li><strong>Opportunity</strong> estimates end-to-end speedup potential in the workloads that
+actually activate the path.</li>
+<li><strong>Confidence</strong> measures how directly retained source, profile, and benchmark
+evidence supports the mechanism.</li>
+<li><strong>Breadth</strong> is the portion of Rustmatch workloads likely to benefit.</li>
+<li><strong>Cost</strong> includes implementation, testing, portability, and maintenance.</li>
+<li><strong>Risk</strong> combines semantic, regression, memory, and performance-selection
+risk.</li>
+</ul>
+<p>The order is reviewed judgment, not a pseudo-precise formula. A high-ceiling
+research project can rank below a modest diagnostic when it costs much more to
+learn whether the premise is true.</p>
+<table><thead><tr><th style="text-align: right">Rank</th><th>Candidate</th><th>Opportunity</th><th>Confidence</th><th>Breadth</th><th>Cost</th><th>Risk</th><th>Why this position</th></tr></thead><tbody>
+<tr><td style="text-align: right">1</td><td>Exact literal-only backend</td><td>Very high</td><td>Medium</td><td>Medium</td><td>High</td><td>High</td><td>H40 proves large literal-path headroom; a whole exact backend can remove both candidate generation and NFA/cache verification behind a materially different boundary</td></tr>
+<tr><td style="text-align: right">2</td><td>Exact input-parallel semantic scanning</td><td>High</td><td>Medium-low</td><td>Broad</td><td>High</td><td>High</td><td>Semantics are resolved, but H11 already captured the original repeated-traversal opportunity on eligible cells</td></tr>
+<tr><td style="text-align: right">3</td><td>Transition-table and scratch locality</td><td>Medium</td><td>Medium-low</td><td>Broad</td><td>Medium-high</td><td>Medium-high</td><td>H5 proves capacity is not the answer; a measured representation hypothesis is still missing</td></tr>
+<tr><td style="text-align: right">4</td><td>General bit-parallel regex engine</td><td>Very high</td><td>Low</td><td>Broad subset</td><td>Very high</td><td>Very high</td><td>Literature and Hyperscan establish a credible ceiling, but exact Rustmatch event semantics make this a research program</td></tr>
+<tr><td style="text-align: right">5</td><td>Fused persistent planning and semantic phases</td><td>Low-medium</td><td>Low</td><td>Medium</td><td>High</td><td>Medium-high</td><td>A pool alone is refuted; only barrier/data-movement fusion could make this a materially new mechanism</td></tr>
+<tr><td style="text-align: right">6</td><td>Adaptive workload-path selector</td><td>Compound</td><td>Dependency-blocked</td><td>Broad</td><td>Medium</td><td>High</td><td>Selection adds no speed itself and must wait for independently proven alternative paths</td></tr>
+<tr><td style="text-align: right">7</td><td>Partition-aware H11 candidate routing</td><td>Medium-high</td><td>High</td><td>Medium</td><td>Medium</td><td>Medium-high</td><td>H39 proved dense gains but failed its target and the inactive Wuthering guard; revisit only with materially new isolation evidence</td></tr>
+<tr><td style="text-align: right">8</td><td>SIMD shared candidate discovery</td><td>Very high</td><td>High</td><td>Medium</td><td>Medium-high</td><td>Medium-high</td><td>H40 retained 22.9%-63.4% target gains but exhausted its bounded inactive-layout recovery; reopen only through a general boundary or a different exact engine</td></tr>
+<tr><td style="text-align: right">9</td><td>Pinned H24 assertion-prefix opportunity</td><td>Very high</td><td>Very high</td><td>Narrow</td><td>High</td><td>Medium-high</td><td>H24 proved 200x-406x gains, but H25-H38 exhausted the current construction/layout recovery route</td></tr>
+</tbody></table>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/c7d0dd7449d6d629c9a27d9dd8f9106397696b42e1c60a5115621b8c97550a5e.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/c7d0dd7449d6d629c9a27d9dd8f9106397696b42e1c60a5115621b8c97550a5e.svg" alt="Ranking method diagram"></a><figcaption>Ranking method · <a href="../../../assets/mermaid/c7d0dd7449d6d629c9a27d9dd8f9106397696b42e1c60a5115621b8c97550a5e.svg">Open full-size SVG</a></figcaption></figure>
+<h2>Candidate assessments</h2>
+<h3>9. Pinned assertion-bearing conservative prefilter</h3>
+<p><strong>Measured ruling.</strong> H12 validated this mechanism but failed admission. All
+targets and correctness gates passed; Wuthering crossed the automatic veto
+even though it cannot execute the assertion path. See the
+<a href="b2-h-0012-assertion-prefilter-result.html">retained result</a>. The active rank-one
+item is now recovery and isolation, not a rerun of the rejected artifact.</p>
+<p><strong>Mechanism.</strong> Today <code>Prefilter::compile</code> returns immediately when any
+assertion is present. For a pattern such as <code>\bword0001\b</code>, however, the
+leading assertion consumes no input and the literal still begins at the
+pattern's start. Necessary-literal analysis can conservatively step past
+leading zero-width assertions, build the existing candidate plan, and pass
+only candidate starts to the unchanged assertion-aware NFA engine. The
+prefilter remains false-positive-only and never creates an event.</p>
+<p><strong>Why it leads.</strong> The exact retained fixture is both expensive and structurally
+simple: 1,000 boundary-delimited literals, 8 MiB, all-start scan, roughly
+76 seconds. A strict first experiment can require every pattern to have a
+structurally proven literal immediately after supported leading assertions.
+Alternation, optional prefixes, unknown offsets, and mixed unfilterable
+patterns remain on the current fallback.</p>
+<p><strong>Main risks.</strong> Necessary-literal extraction must distinguish zero-width
+assertions from consuming or optional prefixes. Boundary and line-anchor
+adversaries, UTF-16 isolated surrogates, input edges, alternation, repeated
+assertions, and mixed databases need exact multiset parity.</p>
+<p><strong>Next evidence.</strong> None is currently authorized. Reopen only after materially
+new evidence supplies a stable production-layout policy or a genuinely new
+construction representation. Any successor still requires ordinary-path
+binary identity, exact semantics, and every unchanged numeric gate.</p>
+<h3>7. Partition-aware H11 candidate routing</h3>
+<p><strong>Measured ruling.</strong> H39 passed its diagnostic headroom gate and retained real
+dense gains, but failed its immutable focused production screen. Dense-16
+improved 4.894%, below the five-percent target; dense-32 improved 9.529%.
+The inactive Wuthering guard regressed 3.822% in scan and 3.456% in wall, with
+both order strata negative. See the
+<a href="b2-h-0039-partition-routing.html">retained H39 result</a>.</p>
+<p><strong>Mechanism.</strong> Compile a global mapping from each conservative prefix bucket to
+an eligible partition bitmask or compact partition list. During shared
+candidate discovery, attach the route once, then give each semantic partition
+only its candidate stream. The exact semantic engine still verifies every
+admitted start.</p>
+<p><strong>Why it ranks highly.</strong> Current H11 gives each of 16-32 partitions the complete
+union candidate iterator even though only about 1.6%-1.7% more semantic starts
+than candidates survive in total. The H10/H11 review explicitly identified
+partition masks as the first shared-path successor.</p>
+<p><strong>Main risks.</strong> A dense mask table can cost several MiB, hash collisions can
+fan candidates out, and materializing per-partition vectors can trade probes
+for allocation and writes. Non-ASCII inputs must remain conservative.</p>
+<p><strong>Next evidence.</strong> None is currently authorized. Reopen only if a materially
+different representation or stable isolation method can preserve the dense
+gain without inactive-path regression. The unchanged target and veto remain.</p>
+<h3>8. SIMD shared candidate discovery</h3>
+<p><strong>Measured ruling.</strong> H40 passed its isolated headroom gate and retained exact
+22.937%-63.445% complete-scan gains in a bounded recovery. It failed the
+unchanged focused production screen when the inactive Wuthering
+candidate-after stratum regressed 5.272% in scan and 3.321% in peak RSS. The
+ordinary candidate-before wall stratum also crossed the investigation
+boundary. See the
+<a href="b2-h-0040-simd-candidate-discovery.html">retained H40 result</a>.</p>
+<p><strong>Mechanism.</strong> Replace the scalar <code>UnionLiteralFilter::allows_start</code> loop with
+portable vectorized UTF-16 prefix detection, retaining a scalar fallback and
+the exact semantic verifier. Keep ISA-specific implementations isolated and
+selected by runtime feature detection.</p>
+<p>The <code>aho-corasick</code> packed searcher documents that vectorized multi-substring
+search can be much faster than Aho-Corasick for small pattern sets, while also
+documenting architecture and pattern-count limits. Hyperscan's published FDR
+design combines SIMD multi-string shift-or filtering with exact verification.
+Those designs support the direction, not a plug-compatible implementation:
+Rustmatch has UTF-16 code-unit input, thousands of patterns, and different
+event semantics.</p>
+<p><strong>Main risks.</strong> Pattern bucketing, lane tails, unaligned ranges, non-ASCII
+conservatism, x86-64/aarch64 parity, and scalar-fallback codegen all need
+guards. The H11 history makes inactive-path binary shape a first-class
+regression risk.</p>
+<p><strong>Next evidence.</strong> None is currently authorized. Do not retune H40 or tune
+function placement. Reopen only after a generally applicable stable
+production-layout boundary is independently justified, or reuse the exact
+kernel inside a materially different exact literal engine that must pass fresh
+unchanged guards.</p>
+<h3>1. Exact literal-only backend</h3>
+<p><strong>Mechanism.</strong> Under a strict classifier, compile databases containing only
+exact consuming literals into a multi-pattern automaton that emits all
+overlapping occurrences and caller pattern IDs directly. Fixed literal length
+makes the longest match for one pattern and start unambiguous; duplicate text
+still maps to each distinct caller ID.</p>
+<p>This is materially different from I7's rejected sparse Aho-Corasick-style
+<strong>prefilter</strong>. That prototype paid trie candidate-generation cost and then
+entered the semantic engine. A true literal backend replaces both phases for
+eligible databases. The maintained <code>aho-corasick</code> implementation demonstrates
+linear multi-pattern automata, overlapping-match support, and multiple
+space/time representations, but its byte-oriented API is not directly
+Rustmatch's raw UTF-16 contract.</p>
+<p><strong>Main risks.</strong> Raw UTF-16 symbols, duplicates, overlapping results, flags,
+memory growth, build time, output-heavy behavior, and dependency policy make
+this a substantial feature. The initial classifier should exclude assertions,
+predicates, alternation, repetition, and case-insensitive syntax.</p>
+<p><strong>Next evidence.</strong> This is now the active rank-one diagnostic. Freeze a raw-u16
+exact-literal backend on assay-disjoint and established literal families,
+compare exact overlapping event multisets and preparation cost, and measure
+sparse, dense, zero-output, Wuthering, and inactive mixed-regex cells before
+discussing production integration.</p>
+<h3>2. Exact input-parallel semantic scanning</h3>
+<p>The <a href="b2-h-0006-input-parallel-design.html">B2-H-0006 design review</a> resolves its
+semantic blocker by assigning disjoint <strong>start positions</strong>, not input slices,
+to workers that retain access to the complete immutable input. It remains
+blocked on post-H11 opportunity and worker-local scratch/cache economics.</p>
+<p>The next step stays Stage P from that review. A full-database prototype is
+justified only if semantic work, repeated routing, or worker tails expose at
+least 5% removable headroom after H11.</p>
+<h3>3. Transition-table and scratch locality</h3>
+<p>H5 showed that simply enlarging the deterministic cache is counterproductive:
+fallback fell modestly, throughput did not improve materially, and hardware
+miss rates rose sharply. The remaining credible direction is representation,
+not capacity: narrower indices, hot/cold table separation, structure-of-arrays
+layouts, generation-stamped scratch, or state ordering by observed transition
+frequency.</p>
+<p>No one layout is yet evidence-ranked. The next action is a cache-line and
+working-set profile tied to concrete structures. A broad rewrite without that
+profile would be untestable optimization folklore.</p>
+<h3>4. General bit-parallel regex engine</h3>
+<p>Hyperscan reports SIMD bit representations for finite-automata state and
+multi-string shift-or matching. The literature also contains multicore
+AVX-accelerated bit-parallel multi-pattern algorithms. A Rustmatch successor
+could represent a bounded NFA state set in machine or SIMD words and advance
+many states without pointer-heavy edge traversal.</p>
+<p>This has strategic upside, especially if exact-literal specialization proves
+the value of a second engine. It also has the largest semantic and engineering
+surface: longest match per pattern and start, complete overlap enumeration,
+assertions, UTF-16 predicates, terminal identity, large state sets, fallback,
+and memory bounds. It belongs in a research branch after lower-cost paths.</p>
+<h3>5. Fused persistent planning and semantic phases</h3>
+<p>H2 rejects a persistent pool whose purpose is thread-spawn removal: spawn was
+0.0320%, and most join time represented actual worker-tail work. The only
+credible successor would keep workers alive <strong>and</strong> fuse candidate discovery,
+routing, and semantic consumption to remove a measured barrier or intermediate
+materialization.</p>
+<p>That is a different mechanism, but there is no evidence yet that its removable
+phase cost exceeds 5%. It remains dormant until the common phase diagnostic
+shows such a barrier.</p>
+<h3>6. Adaptive workload-path selector</h3>
+<p>A classifier may eventually choose among private scan, H11 shared candidates,
+assertion-prefilter, exact-literal, and input-parallel paths using immutable
+compiled features plus input size and candidate density. It must not be built
+first. Each path needs independent correctness and performance evidence, and
+the selector needs its own boundary and misclassification guards.</p>
+<h2>Closed and watch-list directions</h2>
+<table><thead><tr><th>Direction</th><th>Current ruling</th></tr></thead><tbody>
+<tr><td>Persistent pool for spawn avoidance</td><td>Closed by H2; spawn share was 0.0320%</td></tr>
+<tr><td>Static load-aware pattern partitioning</td><td>Closed by H3; removable skew stayed below 2% with no stable predictor</td></tr>
+<tr><td>Event callback/buffer speed optimization</td><td>Closed as a throughput path by H4; keep the 43.78 MiB buffer as a separate memory concern</td></tr>
+<tr><td>Larger or adaptive cache budget</td><td>Closed by H5; worse locality offset the small fallback reduction</td></tr>
+<tr><td>Reusing I7's sparse trie as another prefilter</td><td>Closed; candidate generation dominated the native profile</td></tr>
+<tr><td>More cores without changing work</td><td>Closed as a strategy; I8 and B1 show plateaus and reversals</td></tr>
+<tr><td>PGO, LTO, or broad inlining annotations</td><td>Not a standalone hypothesis; H11 requires binary-shape auditing for every hot-path candidate, not indiscriminate compiler directives</td></tr>
+<tr><td>Threshold or goalpost relaxation</td><td>Forbidden; G9-v2 changes learning disposition, not admission thresholds</td></tr>
+</tbody></table>
+<h2>Recommended program</h2>
+<ol>
+<li>Freeze a diagnostic exact-literal backend contract before production work.
+Bind raw UTF-16, duplicate IDs, overlapping events, build cost, retained
+bytes, and strict eligibility in advance.</li>
+<li>Require exact parity and phase-level headroom capable of at least five
+percent end-to-end gain before authorizing integration.</li>
+<li>Retain sparse, dense, zero-output, Wuthering, short-input, mixed-regex, and
+one-worker guards without threshold changes.</li>
+<li>Return to H-0006 only after Stage P; semantic feasibility alone is not
+performance evidence.</li>
+<li>Revisit H39, H40, or H24 only with materially new evidence. H40 specifically
+requires a generally applicable layout boundary or a different exact engine,
+not another placement-tuned SIMD artifact.</li>
+<li>Keep bit-parallel execution as a research track and the selector
+dependency-blocked until independently admitted alternatives exist.</li>
+</ol>
+<p>Every experiment receives a retained lab note whether it improves, regresses,
+or is inconclusive. Only an exact candidate that passes correctness, its frozen
+target floor, every guard, and the unchanged regression veto may enter the
+production source tree.</p>
+<h2>Sources</h2>
+<ul>
+<li><a href="h42-cross-engine-snapshot.html">H42 current-production cross-engine snapshot</a></li>
+<li><a href="h11-cross-engine-snapshot.html">H11 historical cross-engine snapshot</a></li>
+<li><a href="b2-h-0006-input-parallel-design.html">B2-H-0006 exact input-parallel design</a></li>
+<li><a href="../evidence/i7/37f6981/README.html">I7 retained prefilter evidence</a></li>
+<li><a href="../evidence/i8/ef61173/README.html">I8 retained parallel-partition evidence</a></li>
+<li><a href="../optimization-decision-policy.html">G9-v2 optimization decision policy</a></li>
+<li><a href="https://docs.rs/aho-corasick/latest/aho_corasick/"><code>aho-corasick</code> multi-pattern automaton documentation</a></li>
+<li><a href="https://docs.rs/aho-corasick/latest/aho_corasick/packed/"><code>aho-corasick</code> packed SIMD search documentation</a></li>
+<li><a href="https://www.usenix.org/system/files/nsdi19-wang-xiang.pdf">Hyperscan: A Fast Multi-pattern Regex Matcher</a></li>
+<li><a href="https://doi.org/10.1016/j.jpdc.2014.11.003">Kusudo, Ino, and Hagihara: bit-parallel multiple-pattern search</a></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/post-h11-future-optimization-portfolio.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

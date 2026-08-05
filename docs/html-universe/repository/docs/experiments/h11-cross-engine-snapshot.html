@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H11 historical production cross-engine snapshot · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h11-cross-engine-snapshot.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h11-cross-engine-snapshot.md</div></header><main><h1>H11 historical production cross-engine snapshot</h1>
+<p><strong>Status:</strong> historical; superseded by the owner-authorized H42 production merge</p>
+<p><strong>Rust revision:</strong> <code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<p><strong>Production merge:</strong> <code>de33ea16673d179c5878045b44ec5e4eefa970f7</code></p>
+<h2>Purpose</h2>
+<p>The optimization ledger's leading Java rmatch, RegexSet, and Hyperscan summary
+followed H11 until the owner-authorized H42 merge. This document now preserves
+the exact H11 historical overlap; the H42 snapshot is the current view.</p>
+<p>H11 did not rerun the complete 35-to-39-cell cross-engine dataset. Its frozen
+admission matrix did provide current Rust measurements for nine exact scenario
+groups. This snapshot compares those H11 medians with retained competitor
+measurements for the same scenarios. It is the newest valid comparison, but it
+is intentionally labeled as an <strong>admission-overlap snapshot</strong>, not a
+full-dataset rerun.</p>
+<h2>Summary</h2>
+<p>Ratios are Rust throughput divided by competitor throughput:</p>
+<table><thead><tr><th>Engine</th><th>Contract</th><th style="text-align: right">Exact overlap</th><th style="text-align: right">Rust wins</th><th style="text-align: right">Geometric mean</th><th style="text-align: right">Median</th><th style="text-align: right">Range</th></tr></thead><tbody>
+<tr><td>Java rmatch</td><td>Same complete event contract</td><td style="text-align: right">9</td><td style="text-align: right">9</td><td style="text-align: right">27.893x</td><td style="text-align: right">35.350x</td><td style="text-align: right">2.737x-63.846x</td></tr>
+<tr><td>RegexSet</td><td>Different output contract</td><td style="text-align: right">8</td><td style="text-align: right">4</td><td style="text-align: right">1.351x</td><td style="text-align: right">1.084x</td><td style="text-align: right">0.133x-7.963x</td></tr>
+<tr><td>Hyperscan</td><td>Native-reference diagnostic</td><td style="text-align: right">8</td><td style="text-align: right">2</td><td style="text-align: right">0.210x</td><td style="text-align: right">0.254x</td><td style="text-align: right">0.011x-1.206x</td></tr>
+</tbody></table>
+<p>This is materially newer but narrower than the retained full B2 snapshot.
+Cross-snapshot geometric means must not be treated as a longitudinal
+apples-to-apples speedup because their scenario sets differ.</p>
+<h2>Method</h2>
+<ul>
+<li>Rust values are exact candidate metric medians from the accepted H11
+evaluation. Where H11 measured two worker counts for one scenario, this
+summary uses the higher measured H11 throughput.</li>
+<li>Competitor values are the retained midpoint throughputs from the unchanged
+B2-v12 comparison tables. Competitor artifacts, fixtures, and contracts did
+not change during H11.</li>
+<li>No pre-H11 Rust throughput is relabeled as H11.</li>
+<li>Missing competitor scenarios are omitted rather than estimated.</li>
+<li>Java rmatch is a same-event-contract comparison. RegexSet reports native set
+membership, and Hyperscan remains a native-reference diagnostic.</li>
+</ul>
+<p>The accepted H11 evaluation SHA-256 is
+<code>88fefc2df13334380812a59352c517980105ec4458cf412e2298a1283799edf0</code>.
+The retained competitor table SHA-256 values are:</p>
+<ul>
+<li>Java rmatch:
+<code>40787d5cb83b00bb11a7c92d461f0426b23ce3e9cebb8a0b4f2bda2ff4956be1</code></li>
+<li>RegexSet:
+<code>3384831f82e827e1f578a4f9aaa7f89782d926cc2caddd09373580e4fcab9284</code></li>
+<li>Hyperscan:
+<code>62e685b53c0c7af83825a785e76c2300d3bb088875320828fe522bfaac7790f3</code></li>
+</ul>
+<p>The full H11 measurement note is retained in the measurement repository at
+<a href="https://github.com/la3lma/rmatch-performance-measurements/blob/581980d524e8c083d89cf468d98c7cab06ff8776/docs/lab-notebook/2026-07-26-b2-h-0011-private-prefilter-inlining.md"><code>581980d</code></a>.
+The pre-H11 full-dataset review remains frozen at measurement revision
+<code>d2a92174e4629aa33d04b636e469c7e41505c240</code>.</p>
+<h2>Java rmatch</h2>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">H11 Mbit/s</th><th style="text-align: right">Java Mbit/s</th><th style="text-align: right">Rust/Java</th></tr></thead><tbody>
+<tr><td>Diverse literals, 10,000, 50 MiB</td><td style="text-align: right">21,140.011</td><td style="text-align: right">518.621</td><td style="text-align: right">40.762x</td></tr>
+<tr><td>Diverse literals, 10,000, 8 MiB</td><td style="text-align: right">4,002.389</td><td style="text-align: right">213.026</td><td style="text-align: right">18.788x</td></tr>
+<tr><td>Diverse literals, 7,500, 50 MiB</td><td style="text-align: right">22,702.110</td><td style="text-align: right">559.081</td><td style="text-align: right">40.606x</td></tr>
+<tr><td>Dense literals, 10,000, 50 MiB</td><td style="text-align: right">7,918.385</td><td style="text-align: right">132.195</td><td style="text-align: right">59.899x</td></tr>
+<tr><td>Dense literals, 10,000, 8 MiB</td><td style="text-align: right">3,388.217</td><td style="text-align: right">105.485</td><td style="text-align: right">32.120x</td></tr>
+<tr><td>Dense literals, 5,000, 50 MiB</td><td style="text-align: right">9,307.434</td><td style="text-align: right">145.779</td><td style="text-align: right">63.846x</td></tr>
+<tr><td>Zero-output literals, 10,000, 50 MiB</td><td style="text-align: right">5,458.975</td><td style="text-align: right">1,994.547</td><td style="text-align: right">2.737x</td></tr>
+<tr><td>Mixed regex, 10,000, 50 MiB</td><td style="text-align: right">23,428.283</td><td style="text-align: right">662.754</td><td style="text-align: right">35.350x</td></tr>
+<tr><td>Wuthering literals, 10,000, 8 MiB</td><td style="text-align: right">1,528.531</td><td style="text-align: right">55.279</td><td style="text-align: right">27.651x</td></tr>
+</tbody></table>
+<h2>RegexSet</h2>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">H11 Mbit/s</th><th style="text-align: right">RegexSet Mbit/s</th><th style="text-align: right">Rust/RegexSet</th></tr></thead><tbody>
+<tr><td>Diverse literals, 10,000, 50 MiB</td><td style="text-align: right">21,140.011</td><td style="text-align: right">3,927.589</td><td style="text-align: right">5.382x</td></tr>
+<tr><td>Diverse literals, 7,500, 50 MiB</td><td style="text-align: right">22,702.110</td><td style="text-align: right">4,205.039</td><td style="text-align: right">5.399x</td></tr>
+<tr><td>Dense literals, 10,000, 50 MiB</td><td style="text-align: right">7,918.385</td><td style="text-align: right">14,606.483</td><td style="text-align: right">0.542x</td></tr>
+<tr><td>Dense literals, 10,000, 8 MiB</td><td style="text-align: right">3,388.217</td><td style="text-align: right">2,402.802</td><td style="text-align: right">1.410x</td></tr>
+<tr><td>Dense literals, 5,000, 50 MiB</td><td style="text-align: right">9,307.434</td><td style="text-align: right">69,753.058</td><td style="text-align: right">0.133x</td></tr>
+<tr><td>Zero-output literals, 10,000, 50 MiB</td><td style="text-align: right">5,458.975</td><td style="text-align: right">7,202.698</td><td style="text-align: right">0.758x</td></tr>
+<tr><td>Mixed regex, 10,000, 50 MiB</td><td style="text-align: right">23,428.283</td><td style="text-align: right">2,942.209</td><td style="text-align: right">7.963x</td></tr>
+<tr><td>Wuthering literals, 10,000, 8 MiB</td><td style="text-align: right">1,528.531</td><td style="text-align: right">2,464.900</td><td style="text-align: right">0.620x</td></tr>
+</tbody></table>
+<h2>Hyperscan</h2>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">H11 Mbit/s</th><th style="text-align: right">Hyperscan Mbit/s</th><th style="text-align: right">Rust/Hyperscan</th></tr></thead><tbody>
+<tr><td>Diverse literals, 10,000, 50 MiB</td><td style="text-align: right">21,140.011</td><td style="text-align: right">179,401.330</td><td style="text-align: right">0.118x</td></tr>
+<tr><td>Diverse literals, 10,000, 8 MiB</td><td style="text-align: right">4,002.389</td><td style="text-align: right">39,696.035</td><td style="text-align: right">0.101x</td></tr>
+<tr><td>Dense literals, 10,000, 50 MiB</td><td style="text-align: right">7,918.385</td><td style="text-align: right">21,413.355</td><td style="text-align: right">0.370x</td></tr>
+<tr><td>Dense literals, 10,000, 8 MiB</td><td style="text-align: right">3,388.217</td><td style="text-align: right">18,719.555</td><td style="text-align: right">0.181x</td></tr>
+<tr><td>Dense literals, 5,000, 50 MiB</td><td style="text-align: right">9,307.434</td><td style="text-align: right">28,539.015</td><td style="text-align: right">0.326x</td></tr>
+<tr><td>Zero-output literals, 10,000, 50 MiB</td><td style="text-align: right">5,458.975</td><td style="text-align: right">486,317.545</td><td style="text-align: right">0.011x</td></tr>
+<tr><td>Mixed regex, 10,000, 50 MiB</td><td style="text-align: right">23,428.283</td><td style="text-align: right">21,967.340</td><td style="text-align: right">1.067x</td></tr>
+<tr><td>Wuthering literals, 10,000, 8 MiB</td><td style="text-align: right">1,528.531</td><td style="text-align: right">1,267.470</td><td style="text-align: right">1.206x</td></tr>
+</tbody></table>
+<h2>Freshness invariant</h2>
+<p>The ledger generator requires exactly one current comparison snapshot, requires
+that snapshot to appear first, and requires its Rust revision to equal the
+latest merged optimization's measured candidate revision. A future accepted
+optimization therefore makes the ledger stale until a new exact overlap or
+full-dataset comparison is supplied. Historical snapshots remain visible
+below the current one.</p>
+</main><footer>Generated from <code>docs/experiments/h11-cross-engine-snapshot.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

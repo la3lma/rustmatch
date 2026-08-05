@@ -1,0 +1,313 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2/G9 experiment: full-dataset analysis, hypotheses, and Rustmatch admission · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-competitor-win-optimization.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-competitor-win-optimization.md</div></header><main><h1>B2/G9 experiment: full-dataset analysis, hypotheses, and Rustmatch admission</h1>
+<h2>Status</h2>
+<p>Planned after B1. This protocol does not alter the frozen B1 campaign, its
+runner, or its interpretation. B1 supplies the complete retained evidence. B2
+examines that evidence before any optimization work begins. G9 then decides
+whether a bounded candidate is better than the existing Rustmatch
+implementation.</p>
+<p>The sequence is mandatory:</p>
+<ol>
+<li>complete and validate the test series;</li>
+<li>examine the complete dataset quantitatively and automatically;</li>
+<li>examine the results qualitatively and reason about the processes that could
+have produced them;</li>
+<li>record and review explicit hypotheses and discriminating experiments; and</li>
+<li>only then implement one bounded candidate at a time and repeat
+<strong>hypothesize, test, evaluate, and rule</strong>.</li>
+</ol>
+<p>No optimization branch or production candidate may start before the B2 review
+gate is complete. Exploring data, writing analysis tools, and improving the
+measurement or reporting harness are not optimization candidates, but they must
+not change or reinterpret the frozen B1 measurements.</p>
+<p>The executable B1/B2 evidence workflow lives in the private-until-published
+<a href="https://github.com/la3lma/rmatch-performance-measurements"><code>rmatch-performance-measurements</code></a>
+repository. Its
+<a href="https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md"><code>B2 analysis protocol</code></a>
+generates the evidence audit and automatic tables, requires a structured human
+qualitative review, binds a critical review to exact hashes, and emits a
+reviewed <code>review-manifest.json</code>. This document remains the Rustmatch-side
+contract; the benchmark repository supplies the retained evidence and
+authorization artifact.</p>
+<h2>Baseline and purpose</h2>
+<p>RegexSet is a diagnostic competitor. Its wins identify workloads where
+Rustmatch deserves closer inspection, especially after worker confirmation and
+semantic classification. RegexSet is not the optimization baseline, and
+matching or beating it is not the condition for accepting code. Competitor wins
+are one important part of B2, not the organizing principle for the analysis.</p>
+<p>The full B1 dataset is the subject of B2. That includes workloads where
+Rustmatch wins, loses, crosses over, scales unexpectedly, saturates early,
+incurs high preparation or process cost, produces many events, or disagrees
+with a simple performance model. Apparently strong results require scrutiny as
+well as weak ones: an unexplained win may expose a task difference, a reporting
+error, or a useful mechanism.</p>
+<p>For each later candidate experiment, the baseline is the exact Rustmatch
+production revision that exists before the candidate is implemented. That
+revision, build profile, toolchain, lockfile, host state, fixture hashes, worker
+counts, warm-up policy, measurement boundary, and result digest are frozen
+before candidate timing. Later Rustmatch improvements become the baseline for
+still later experiments; an older convenient baseline may not be reused to
+manufacture a win.</p>
+<h2>B2-A: evidence integrity and completeness</h2>
+<p>Before interpreting performance:</p>
+<ol>
+<li>Prove that every required campaign point, confirmation, cache-pressure
+control, and profile is present or has an explicit disposition.</li>
+<li>Verify revision, fixture, plan, image, toolchain, host, command, output count,
+digest, timing-boundary, and service-isolation identities from retained
+receipts rather than filenames or memory.</li>
+<li>Keep provisional measurements visibly separate from confirmed measurements.
+Never silently substitute a partial worker sweep for a declared optimum.</li>
+<li>Keep native set-membership results separate from complete match-event
+enumeration. State exactly what every engine is asked to compute.</li>
+<li>Audit failures, retries, exclusions, outliers, and missing cells. Exclusion
+requires a recorded reason and must not be chosen because a result is
+inconvenient.</li>
+<li>Regenerate the principal tables and plots from raw retained receipts. The
+analysis is not ready if a result cannot be traced back to its inputs.</li>
+</ol>
+<h2>B2-Q: quantitative and automatic analysis</h2>
+<p>Analyze the entire valid dataset, not only aggregate winners. The regenerable
+analysis must include at least:</p>
+<ul>
+<li>absolute scan throughput and time, preparation cost, whole-process effort,
+memory, output volume, and validated profile counters where available;</li>
+<li>adjacent pattern-count slopes and scaling across 1,000, 2,500, 5,000, 7,500,
+and 10,000 patterns rather than interpolation across distant endpoints;</li>
+<li>corpus-size effects, cache-pressure effects, and the interaction between
+pattern count and corpus size;</li>
+<li>sparse/dense sensitivity, match-event density, and the cost of complete event
+delivery;</li>
+<li>worker speedup, parallel efficiency, retained throughput, selected optima,
+early saturation, oversubscription, and partition imbalance;</li>
+<li>preparation-versus-scan tradeoffs and the distinction between measured scan
+speed and total machine effort;</li>
+<li>crossovers, discontinuities, cliffs, non-monotonic behavior, heavy tails,
+unstable rankings, and anomalous cells;</li>
+<li>patterns shared by related workloads, using clustering or automated anomaly
+detection where it clarifies rather than obscures the raw measurements; and</li>
+<li>uncertainty, repetition drift, effect sizes, and sensitivity to the chosen
+noise threshold.</li>
+</ul>
+<p>Summary ratios may nominate questions, but they may not hide intermediate
+cliffs or asymmetric work. Every automatic finding must link to the underlying
+receipts and be reproducible by a checked-in command or script. Negative and
+unexpected results are retained.</p>
+<h2>B2-L: qualitative and causal analysis</h2>
+<p>Numbers describe behavior; they do not by themselves identify a mechanism. For
+each major scaling regime, crossover, cliff, anomaly, competitor advantage, and
+unexpected Rustmatch advantage:</p>
+<ol>
+<li>Inspect the exact workload, retained profiles, implementation path, output
+contract, and relevant Rustmatch architecture.</li>
+<li>Explain the plausible process behind the observation in concrete terms, such
+as candidate-start volume, transition-cache behavior, state-set hashing,
+event construction, partition balance, synchronization, allocation, memory
+locality, or bandwidth.</li>
+<li>Record credible alternative explanations and confounders, including task
+asymmetry, warm-up, preparation boundaries, worker selection, cache state,
+event density, scheduling, and measurement noise.</li>
+<li>Distinguish observation, inference, and demonstrated mechanism. A compelling
+story is still a hypothesis until a discriminating experiment supports it.</li>
+<li>Compare related cells and controls to test whether the explanation is
+consistent with the rest of the dataset, not merely one attractive ratio.</li>
+</ol>
+<p>Competitor implementations, earlier Rustmatch work, profiles, external advice,
+and lab notes may suggest mechanisms. They are sources of hypotheses, not
+evidence that an optimization works in Rustmatch.</p>
+<h2>B2-H: hypothesis registry and experiment design</h2>
+<p>Turn the combined quantitative and qualitative review into a ranked hypothesis
+registry. Each entry records:</p>
+<ul>
+<li>a stable identifier and the precise observation it addresses;</li>
+<li>the proposed mechanism and credible alternatives;</li>
+<li>supporting and conflicting evidence;</li>
+<li>target cells, neighboring controls, semantic guard cases, and expected
+directional results;</li>
+<li>the exact current-Rustmatch baseline to be frozen if implementation begins;</li>
+<li>the primary metric, noise model, minimum meaningful improvement, and stop
+condition;</li>
+<li>correctness, memory, preparation, latency, and broader-regression guards;</li>
+<li>estimated impact, confidence, implementation cost, complexity, and risk; and</li>
+<li>a disposition: experiment candidate, further measurement needed, explained
+without code, duplicate mechanism, or documented non-candidate.</li>
+</ul>
+<p>Rank experiments by expected value, not by how interesting they are to
+implement. Prefer the smallest experiment that can distinguish the proposed
+mechanism from alternatives. A zero-match control, density sweep,
+pattern-count neighbor, cache-pressure fixture, one-worker comparison, or
+instrumented no-output path is often more informative than immediately changing
+the production engine.</p>
+<h2>B2 review gate</h2>
+<p>Optimization work may begin only after a review confirms that:</p>
+<ol>
+<li>B2-A has established a complete, traceable evidence base;</li>
+<li>B2-Q covers the entire dataset with regenerable quantitative outputs;</li>
+<li>B2-L gives a reasoned disposition to every material regime, crossover,
+cliff, anomaly, and competitor win;</li>
+<li>observations, inferences, and demonstrated mechanisms are clearly separated;</li>
+<li>the B2-H registry contains ranked, bounded, falsifiable experiments with
+controls and stop conditions; and</li>
+<li>the reviewed analysis and registry are committed and linked from the
+roadmap.</li>
+</ol>
+<p>If the review exposes missing or ambiguous evidence, return to measurement or
+analysis. Do not fill the gap with an implementation guess.</p>
+<p>Passing review is represented by a committed benchmark-repository
+<code>review-manifest.json</code>, not by an informal statement. Before an optimization
+branch starts, verify and record:</p>
+<ul>
+<li>the exact benchmark-repository commit containing the reviewed archive;</li>
+<li>the SHA-256 of <code>review-manifest.json</code>;</li>
+<li>that its pre-review evidence, qualitative analysis, hypothesis registry, and
+critical-review hashes validate;</li>
+<li>that <code>optimization_authorized</code> is <code>true</code>; and</li>
+<li>that the selected stable B2-H ID appears in <code>authorized_hypotheses</code>.</li>
+</ul>
+<p>Authorization is per hypothesis. A passing B2 review does not authorize an
+unlisted idea, and a listed idea still has to satisfy the current-Rustmatch G9
+admission gate below.</p>
+<h2>Candidate experiment contract</h2>
+<p>After the B2 review, and before implementing each candidate, record:</p>
+<ul>
+<li>the hypothesis-registry identifier;</li>
+<li>the benchmark-repository review commit and reviewed-manifest SHA-256 that
+authorize that identifier;</li>
+<li>the exact existing Rustmatch baseline revision and artifact identity;</li>
+<li>the proposed Rust-native mechanism and the evidence behind it;</li>
+<li>target fixtures, worker modes, controls, and the primary metric;</li>
+<li>exact output count and digest requirements;</li>
+<li>the versioned
+<a href="../optimization-decision-policy.html">optimization decision policy</a>;</li>
+<li>the noise model and minimum meaningful improvement;</li>
+<li>the fixed 2% investigation boundary and a guard-regression ceiling no greater
+than 3%, plus an evidence-based rationale when the target improvement is
+below the usual 5%;</li>
+<li>the broader guard set, including neighboring pattern counts, both corpus
+sizes, density controls, Wuthering Heights, and relevant semantic families;</li>
+<li>unacceptable regressions in scan time, preparation time, memory, latency,
+fallback behavior, or another scenario; and</li>
+<li>the stop condition and any proposed selective activation rule; and</li>
+<li>the timestamped lab-note path that will retain every outcome.</li>
+</ul>
+<p>Prior art from RegexSet, Java rmatch, Hyperscan, or another engine may inspire
+the mechanism. The Rust implementation must still fit Rustmatch's semantics and
+architecture; copying a representation because it is successful elsewhere is
+not evidence that it belongs here.</p>
+<p>Each hypothesis should normally use its own branch or pull request and retain
+both successful and rejected receipts. Several tiny mechanical commits may
+support one hypothesis, but unrelated optimization ideas must not be bundled in
+a way that prevents attribution.</p>
+<h2>G9 experiment loop and candidate admission gate</h2>
+<p>For every candidate:</p>
+<ol>
+<li><strong>Hypothesize:</strong> select one reviewed B2-H entry and freeze its baseline,
+expected result, controls, guards, and stop condition.</li>
+<li><strong>Test:</strong> implement one bounded mechanism, pass semantic correctness, then
+collect repeated and reverse-order base/candidate evidence.</li>
+<li><strong>Evaluate:</strong> inspect absolute values, scaling shape, profiles, process cost,
+memory, outliers, neighboring workloads, and alternative explanations. A
+threshold result without critical interpretation is incomplete.</li>
+<li><strong>Rule:</strong> assign <code>merged</code>, <code>investigate</code>, <code>rejected</code>, or <code>inconclusive</code>.
+Retain production code only if every admission condition below holds.
+<code>investigate</code> is non-admission with a mandatory causal follow-up, not a
+compromise merge.</li>
+<li><strong>Repeat:</strong> update the hypothesis registry and choose the next experiment
+from the evidence now available. Do not stack an unproven optimization under
+another candidate.</li>
+</ol>
+<p>A candidate enters the Rustmatch production path only when all of these hold:</p>
+<ol>
+<li>Baseline and candidate produce the same required event count and normalized
+digest on every correctness-gated comparison.</li>
+<li>They use the same fixture bytes, pattern set, host allocation, build mode,
+worker request, warm-up policy, repetitions, and timing boundary.</li>
+<li>Repeated and reverse-order receipts show a positive improvement beyond the
+predeclared noise threshold over the frozen <strong>existing Rustmatch</strong> baseline
+on the declared target set.</li>
+<li>The broader guard set contains no unaccepted material regression. A narrow
+win may justify a selective path only when its activation rule is safe,
+explicit, independently measured, and itself covered by correctness tests.</li>
+<li>Preparation cost, process wall effort, peak memory, and profile changes are
+reported beside scan throughput rather than hidden behind it.</li>
+<li>The result is critically interpreted: absolute times, scaling shape,
+outliers, mechanism evidence, limits, and alternative explanations are
+discussed.</li>
+</ol>
+<p>The numerical policy is deliberately asymmetric:</p>
+<ul>
+<li>A repeatable guard regression greater than <strong>3%</strong> is an automatic rejection,
+of the exact artifact regardless of gains elsewhere.</li>
+<li>A demonstrated guard regression greater than <strong>2%</strong> through <strong>3%</strong> requires
+investigation. The candidate is not merged, the baseline remains unchanged,
+and the complete evidence must nominate the smallest causal follow-up.</li>
+<li>Results at or below the frozen two-percent boundary still obey their
+predeclared noise, directional-agreement, order-stability, and cell-specific
+rules; being numerically below 2% is not proof of non-regression.</li>
+<li>Added optimization complexity should normally produce at least <strong>5%</strong>
+repeatable improvement on its target set. A smaller positive gain may be
+accepted for genuine simplification or removal of maintenance risk, but only
+with explicit rationale and no demonstrated guard regression.</li>
+</ul>
+<p>Admission and learning are deliberately separate. A large improvement in one
+cell never averages away a regression in another. At the same time, unusually
+large opposing effects are a causal signal. Reviewers must compare path
+activation, workload dimensions, instrumentation, binary layout, preparation,
+memory, scheduling, and credible alternatives. They may classify the mechanism
+as <code>investigate</code>, including after an automatic artifact veto, when a bounded
+successor can plausibly separate the gain from the loss. This grants no
+production code, graph credit, or threshold relaxation.</p>
+<p>RegexSet parity is neither necessary nor sufficient for admission. A candidate
+that remains slower than RegexSet may still be a good Rustmatch optimization if
+it demonstrably improves current Rustmatch. A candidate that beats RegexSet but
+does not improve current Rustmatch is not admitted. Neutral, investigated,
+inconclusive, rejected, or slower candidates are removed from the production
+path and retained as documented experiments.</p>
+<p>Every attempt, including investigated, rejected, and inconclusive candidates,
+receives a
+timestamped lab note using the benchmark repository's
+<a href="https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/g9-optimization-lab-note-template.md"><code>G9 template</code></a>.
+Negative results are retained so attractive slowdowns are not repeatedly
+reimplemented without new evidence.</p>
+<h2>Exit criteria</h2>
+<p>B2 completes only when the full-dataset analysis and review gate are complete.
+In particular:</p>
+<ol>
+<li>evidence integrity and campaign completeness are demonstrated;</li>
+<li>the quantitative report covers every valid workload and major scaling
+dimension;</li>
+<li>every material regime, crossover, cliff, anomaly, and confirmed
+RegexSet-winning cell has a reasoned disposition;</li>
+<li>qualitative analysis relates the measurements to plausible processes and
+records alternatives and confounders;</li>
+<li>the reviewed hypothesis registry identifies the next bounded experiments as
+well as documented non-candidates; and</li>
+<li>no optimization candidate was started before this evidence was committed and
+reviewed.</li>
+</ol>
+<p>G9 completes for an implemented candidate only when:</p>
+<ol>
+<li>it has a frozen current-Rustmatch baseline and a reproducible
+base/candidate evidence bundle;</li>
+<li>accepted code passes every admission condition and broader guard;</li>
+<li>rejected code leaves no enabled production-path complexity; and</li>
+<li>every outcome has a retained lab note; and</li>
+<li>the roadmap, registry, and critical B1/B2 report link to the retained result.</li>
+</ol>
+</main><footer>Generated from <code>docs/experiments/b2-competitor-win-optimization.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

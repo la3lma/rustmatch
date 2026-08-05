@@ -1,5 +1,8 @@
 //! Repository maintenance commands for rustmatch.
 
+mod html_universe;
+mod optimization_ledger;
+
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -89,13 +92,13 @@ const QUALITY_STEPS: &[QualityStep] = &[
         toolchain: None,
     },
     QualityStep {
-        label: "parser fuzz format",
+        label: "fuzz target format",
         args: &["fmt", "--manifest-path", "fuzz/Cargo.toml", "--", "--check"],
         rustdoc_flags: None,
         toolchain: None,
     },
     QualityStep {
-        label: "parser fuzz target",
+        label: "fuzz targets",
         args: &[
             "clippy",
             "--manifest-path",
@@ -139,6 +142,16 @@ fn main() -> ExitCode {
 }
 
 fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
+    let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .ok_or_else(|| "xtask manifest must be inside the repository".to_owned())?;
+    env::set_current_dir(repository_root).map_err(|error| {
+        format!(
+            "could not enter repository root {}: {error}",
+            repository_root.display()
+        )
+    })?;
+
     let command = args.next();
     if args.next().is_some() {
         return Err("expected exactly one command; run `cargo xtask help`".to_owned());
@@ -152,15 +165,17 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
         Some("bench-smoke") => run_benchmark_smoke(),
         Some("ci") => run_quality_gate(),
         Some("evidence") => run_evidence_summary(),
+        Some("optimization-ledger") => optimization_ledger::render(),
         Some("oracle") => run_java_oracle(),
         Some("roadmap") => render_roadmap(),
+        Some("verify-optimization-ledger") => optimization_ledger::verify(),
         Some(other) => Err(format!("unknown command `{other}`; run `cargo xtask help`")),
     }
 }
 
 fn print_usage() {
     println!(
-        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask oracle\n    cargo xtask roadmap"
+        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask optimization-ledger\n    cargo xtask oracle\n    cargo xtask roadmap\n    cargo xtask verify-optimization-ledger"
     );
 }
 
@@ -189,6 +204,8 @@ fn run_quality_gate() -> Result<(), String> {
         }
     }
 
+    eprintln!("==> generated optimization ledger freshness");
+    optimization_ledger::verify()?;
     run_evidence_summary()
 }
 

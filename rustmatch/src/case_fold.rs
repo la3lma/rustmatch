@@ -6,7 +6,7 @@ const ENTRY_COUNT: usize = 65_536;
 const TABLE_BYTES: usize = HEADER_BYTES + ENTRY_COUNT * BYTES_PER_ENTRY;
 const TABLE: &[u8; TABLE_BYTES] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/../compat/expected/java-21-case-fold-v1.bin"
+    "/data/java-21-case-fold-v1.bin"
 ));
 
 pub(crate) fn lower_upper(symbol: u16) -> (u16, u16) {

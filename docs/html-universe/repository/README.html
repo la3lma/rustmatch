@@ -1,0 +1,2380 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>rustmatch · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../index.html">rustmatch evidence</a><div><a href="../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../index.html">HTML universe</a><a href="../../../README.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">README.md</div></header><main><h1>rustmatch</h1>
+<p><a href="../../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" /></a></p>
+<blockquote>
+<p><strong>Status: active implementation.</strong> The vertically integrated semantic spine
+now covers the documented rmatch 2.x consuming language, including UTF-16,
+flags, anchors, and boundaries, with pinned Java evidence. Optimization and
+scale work has completed the B1/B2 cross-engine campaign, and current
+production includes the owner-authorized H42 exact SIMD scan path. The
+<code>0.1.0</code> release candidate has passed prerelease verification; no crate has
+been published.</p>
+</blockquote>
+<blockquote>
+<p><strong>Roadmap:</strong> <a href="docs/roadmap.html">See the implementation dependency graph and current
+status</a>. Planning is complete; implementation is at <code>12/12</code>
+increments started and <code>12/12</code> complete. Cross-engine measurement, B2
+analysis, hardening, and release preparation are complete; the
+<a href="docs/pre-release-todo.html">prerelease checklist</a> tracks the final package and
+intentionally unexecuted release ceremony.</p>
+</blockquote>
+<blockquote>
+<p><strong>Engineering standards:</strong> <a href="CONTRIBUTING.html">Documentation, Rust hygiene, testing, and pull-
+request expectations</a> are part of the product contract.</p>
+</blockquote>
+<blockquote>
+<p><strong>Project participation:</strong> <a href="CONTRIBUTING.html">Contributing</a> -
+<a href="CODE_OF_CONDUCT.html">Code of Conduct</a> - <a href="SECURITY.html">Security</a> -
+<a href="SUPPORT.html">Support</a> - <a href="GOVERNANCE.html">Governance</a></p>
+</blockquote>
+<p><code>rustmatch</code> is intended to be a native Rust implementation of the rmatch idea:
+register many regular expressions once, compile them into shared matching
+machinery, and scan large text inputs without running an independent full
+search for every pattern.</p>
+<p>The goal is semantic compatibility, not source-code similarity. The Java
+implementation is the behavioral reference and an important source of lessons,
+but the Rust implementation should use Rust's strengths: ownership, explicit
+lifetimes, enums, dense integer-indexed storage, contiguous memory, fearless
+parallelism, and a small public API. This is not a Java-to-Rust transliteration
+project.</p>
+<h2>Current performance snapshot</h2>
+<p>The latest exact overlap snapshot measures the current H42 production source
+(<code>c6f221b</code>) against retained, unchanged Java rmatch, Rust <code>regex::RegexSet</code>,
+and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
+throughput divided by the reference throughput, so values above <code>1.0x</code> favor
+Rustmatch.</p>
+<table><thead><tr><th>Reference</th><th>Contract</th><th style="text-align: right">Exact overlap</th><th style="text-align: right">Rust wins</th><th style="text-align: right">Geometric mean</th><th style="text-align: right">Median</th><th style="text-align: right">Range</th></tr></thead><tbody>
+<tr><td>Java rmatch</td><td>Same complete event contract</td><td style="text-align: right">9 groups</td><td style="text-align: right">9/9</td><td style="text-align: right"><strong>44.543x</strong></td><td style="text-align: right">80.983x</td><td style="text-align: right">2.738x-126.566x</td></tr>
+<tr><td>Rust <code>regex::RegexSet</code></td><td>Different output contract</td><td style="text-align: right">8 groups</td><td style="text-align: right">4/8</td><td style="text-align: right"><strong>2.288x</strong></td><td style="text-align: right">1.086x</td><td style="text-align: right">0.194x-27.154x</td></tr>
+<tr><td>Hyperscan</td><td>Native-reference diagnostic</td><td style="text-align: right">8 groups</td><td style="text-align: right">2/8</td><td style="text-align: right"><strong>0.308x (30.8%)</strong></td><td style="text-align: right">0.402x</td><td style="text-align: right">0.011x-3.637x</td></tr>
+</tbody></table>
+<p>The result is competitive rather than universal: Rustmatch wins every
+same-contract Java comparison, leads RegexSet on geometric mean while splitting
+the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
+two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
+RegexSet, and 0.210x Hyperscan, so the current source improves those
+geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
+the directly comparable complete-event reference. RegexSet and Hyperscan use
+different native semantics, so those measurements are useful performance
+references rather than fairness claims.</p>
+<p>This is an exact nine-group admission-overlap update, not a new full-dataset
+rerun. H42's formal outcome remains <code>investigate</code> because its Wuthering guard
+was 2.111% below H11; it entered production through an explicit owner-authorized
+exception. See the <a href="docs/experiments/h42-cross-engine-snapshot.html">cell-level comparison, method, and retained
+receipts</a>.</p>
+<h2>TL;DR</h2>
+<h3>What we are building</h3>
+<ul>
+<li>A pure Rust, Apache-2.0-licensed many-pattern regular-expression engine.</li>
+<li>A matcher with the same supported syntax and match-selection semantics as
+rmatch 2.x.</li>
+<li>A Rust-native API for building an immutable pattern database and reusing it
+across large inputs.</li>
+<li>A benchmark adapter that participates in the same correctness-gated,
+receipt-producing campaigns as Java rmatch, RE2/J, Java regex, and
+Hyperscan.</li>
+<li>An implementation designed from the data layout inward, not a mechanical
+port of Java classes.</li>
+</ul>
+<h3>What "compatible" means</h3>
+<p>For the canonical compatibility input mode, Java rmatch and rustmatch must:</p>
+<ol>
+<li>Accept and reject the same documented pattern language.</li>
+<li>Produce the same multiset of <code>(pattern_id, start, end)</code> match events.</li>
+<li>Report the longest match for each pattern and input start position.</li>
+<li>Report matches from every eligible start position, including overlapping
+and nested matches.</li>
+<li>Use half-open <code>[start, end)</code> offsets.</li>
+<li>Apply the same ASCII definitions for shorthand classes and word boundaries,
+and the same Java single-UTF-16-unit case mapping.</li>
+<li>Preserve the same build-then-scan lifecycle and failure boundaries where
+those are observable to callers.</li>
+</ol>
+<p>Callback order is intentionally unspecified in both implementations and is not
+part of compatibility. Rust API spelling and type structure are also not
+expected to resemble Java API spelling.</p>
+<p>There is one non-negotiable wrinkle: Java <code>char</code> and <code>String</code> positions are
+UTF-16 code units, while Rust <code>str</code> is UTF-8. Exact parity therefore requires a
+canonical UTF-16 compatibility input and UTF-16 offsets. The first stable API
+must expose that fact honestly. An ergonomic UTF-8 facade may be added, but it
+must not quietly relabel byte offsets as Java-compatible offsets.</p>
+<h3>Initial API</h3>
+<p>The first public surface is deliberately smaller than the eventual convenience
+API. It is implemented as follows:</p>
+<pre><code class="language-rust">use rustmatch::{MatcherBuilder, PatternId, Utf16Text};
+
+let mut builder = MatcherBuilder::new();
+builder.add(PatternId::new(1), "cat")?;
+builder.add(PatternId::new(2), "dog")?;
+
+let matcher = builder.build()?;
+let input = Utf16Text::from("cat and dog");
+
+matcher.scan(&amp;input, |hit| {
+    println!(
+        "pattern={} span={:?}",
+        hit.pattern_id(),
+        hit.span(),
+    );
+})?;
+</code></pre>
+<p>The public types are <code>MatcherBuilder</code>, <code>Matcher</code>, <code>PatternId</code>, <code>PatternFlags</code>,
+<code>Utf16Text</code>, <code>Match</code>, <code>Utf16Span</code>, and one non-exhaustive <code>Error</code> type. The
+methods cover construction, plain or flagged pattern registration, build,
+scan, bounded state-cache configuration, explicit pattern-partition worker
+configuration, and read-only accessors. The cache
+defaults to 8,192 scan-local deterministic states; setting
+<code>MatcherBuilder::state_cache_budget(0)</code> selects the exact NFA path. Filling a
+nonzero budget also falls back to that path rather than dropping work.
+<code>MatcherBuilder::worker_count(1)</code> is the default direct path. Larger values
+partition patterns deterministically, scan those partitions on scoped threads,
+join them, and deliver callbacks serially on the caller thread. The best count
+depends on the machine, pattern set, corpus, and match density; rustmatch does
+not encode one benchmark machine's optimum as a universal heuristic.
+<code>PatternId</code> is a <code>u32</code>-backed domain type;
+positions remain <code>u64</code> UTF-16 coordinates; and <code>Utf16Text</code> owns its exact
+<code>Vec&lt;u16&gt;</code>. Parser, HIR, NFA, state, cache, worker, and sink
+implementation types stay private. Borrowed or custom inputs, iterators, async
+APIs, fallible callbacks, runtime pattern mutation, and other tuning knobs are
+deferred until a concrete use case earns them. Cache counters remain available
+only to repository tooling behind the non-default <code>benchmark-internals</code>
+feature and are not part of the supported application API.</p>
+<p>The lifecycle is explicit:</p>
+<pre><code class="language-text">register patterns -&gt; build immutable matcher -&gt; scan one or more inputs
+</code></pre>
+<p>No pattern mutation occurs while a compiled matcher is in use. A changed rule
+set produces a new matcher.</p>
+<h3>Current support contract</h3>
+<p>The executable spine currently has this deliberately small contract:</p>
+<table><thead><tr><th>Area</th><th>Current behavior</th></tr></thead><tbody>
+<tr><td>Patterns</td><td>Accept one or more non-empty patterns made from UTF-16 literals, dot, character classes, ranges, supported escapes, ASCII shorthand classes, alternation, plain or non-capturing groups, greedy repetition, prefix <code>i</code>/<code>s</code> flags, line anchors, and ASCII word boundaries. Reject scoped flags, lazy quantifiers, possessive quantifiers, and patterns that can only match zero width.</td></tr>
+<tr><td>Input</td><td>Accept any finite sequence of UTF-16 code units, including empty input and isolated surrogates. Rust strings are encoded once; <code>Utf16Text::from_units</code> preserves raw units.</td></tr>
+<tr><td>Pattern identity</td><td>Require a unique caller-supplied <code>PatternId</code>. The same literal may be registered under different IDs; a duplicate ID is an error.</td></tr>
+<tr><td>Matches</td><td>For every pattern and every input start position, report the longest match from that start. Report matches at all starts, including overlaps. Alternatives may give one pattern several possible lengths.</td></tr>
+<tr><td>Event identity</td><td>A match consists of its <code>PatternId</code> and span. Equal text registered under different IDs produces distinct events.</td></tr>
+<tr><td>Coordinates</td><td>Report zero-based, half-open UTF-16 spans <code>[start, end)</code>. A supplementary Unicode scalar therefore occupies two engine positions.</td></tr>
+<tr><td>Ordering</td><td>Callback order is unspecified. Compatibility tests compare normalized event multisets, not callback order.</td></tr>
+<tr><td>Failure boundary</td><td>Reject an invalid pattern during registration or build. Return an error if an input position cannot fit the public coordinate type. Expected user errors do not panic.</td></tr>
+<tr><td>Lifecycle</td><td>Build an immutable matcher, then scan any number of inputs. Changing the pattern set requires a new matcher.</td></tr>
+<tr><td>Parallelism</td><td>Default to one direct worker. An explicit larger worker count partitions patterns, preserves the event multiset, buffers multi-worker events, joins all scoped workers, and delivers callbacks serially.</td></tr>
+</tbody></table>
+<p>The current pattern syntax is deliberately explicit:</p>
+<ul>
+<li><code>.</code> matches one UTF-16 code unit, including newline and isolated surrogates.</li>
+<li><code>[abc]</code>, <code>[a-z]</code>, <code>[^abc]</code>, and unions of literals, ranges, and supported
+class escapes compile to one UTF-16 predicate. Empty <code>[]</code> matches nothing;
+<code>[^]</code> matches every UTF-16 code unit.</li>
+<li><code>\d</code> is <code>0-9</code>; <code>\w</code> is <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>, and <code>_</code>; <code>\s</code> is space, tab,
+newline, vertical tab, form feed, and carriage return. <code>\D</code>, <code>\W</code>, and <code>\S</code>
+complement those ASCII member sets over the complete UTF-16 domain.</li>
+<li>Escaped metacharacters are literals. <code>\n</code>, <code>\t</code>, <code>\r</code>, and <code>\f</code> are the
+supported control escapes. Inside a class, <code>\\</code>, <code>\]</code>, <code>\[</code>, <code>\-</code>, <code>\^</code>,
+the control escapes, and lowercase <code>\d</code>, <code>\w</code>, and <code>\s</code> are supported.</li>
+<li><code>a|b</code> selects between alternatives. Parentheses group composition;
+<code>(ab)</code> and <code>(?:ab)</code> are equivalent because rustmatch does not capture.</li>
+<li><code>?</code>, <code>*</code>, <code>+</code>, <code>{m}</code>, <code>{m,n}</code>, and <code>{m,}</code> greedily repeat the immediately
+preceding atom or group. Counted bounds may not exceed 1,000; <code>{0}</code> and
+<code>{0,0}</code> are rejected, while <code>{0,}</code> is the unbounded zero-minimum form.</li>
+<li>A leading <code>(?i)</code> enables Java-compatible, single-UTF-16-unit case folding;
+<code>(?s)</code> is accepted as a no-op because dot always includes newline. <code>(?is)</code>
+and <code>(?si)</code> combine them. <code>PatternFlags::CASE_INSENSITIVE</code> provides the same
+compile-time behavior without rewriting programmatically assembled text.</li>
+<li><code>^</code> constrains a consuming path to input or line start, and <code>$</code> constrains it
+to input or line end. <code>\b</code> and <code>\B</code> test boundaries using the same ASCII
+word-character definition as <code>\w</code>. Assertions are NFA edges, not post-hoc
+filters; assertion-free pattern sets use a separate scan specialization.</li>
+<li>A leading or interior empty alternative is an epsilon branch. As in the
+pinned Java contract, a trailing empty alternative is ignored and an empty
+group matches nothing. Rustmatch deliberately rejects a pattern that can
+only produce a zero-width match.</li>
+</ul>
+<p>The fixtures cover literals and overlapping starts, all predicate families,
+ASCII boundary values and newlines, class negation and ranges, literal and
+control escapes, branching and nested grouping shapes, empty alternatives,
+greedy and counted repetition, quantifier binding, longest-match ambiguity,
+raw and supplementary UTF-16, non-ASCII classes, exhaustive Java 21 case-map
+provenance, prefix and typed flags, and malformed registration cases.
+The assertion tier adds input and line edges, groups, alternatives, flags,
+ASCII/non-ASCII boundaries, raw surrogates, phase adversaries, and explicit
+pure-zero-width rejection.</p>
+<h3>Development strategy: an executable spine first</h3>
+<p>The implementation began deliberately narrow but architecturally real. The
+literal bootstrap, ASCII predicates, branching composition, and repetition
+increments all execute the intended end-to-end path:</p>
+<pre><code class="language-text">public builder
+    -&gt; minimal parser and HIR
+    -&gt; shared dense NFA compiler
+    -&gt; immutable pattern database
+    -&gt; production-shaped scan engine
+    -&gt; longest-match event tracking
+    -&gt; public match sink
+    -&gt; oracle and benchmark adapters
+</code></pre>
+<p>This is not a temporary substring loop. It is the first, least capable version
+of the final system. Every later increment broadens or accelerates this running
+system while preserving end-to-end tests. At no planned point should the
+project contain several sophisticated horizontal layers that have never been
+executed together.</p>
+<h3>Definition of success</h3>
+<p><code>rustmatch</code> is ready for a first public release only when all of the following
+are true:</p>
+<ul>
+<li>The shared semantic suite passes against Java rmatch for supported syntax,
+rejected syntax, edge cases, and generated cases.</li>
+<li>The Rust adapter passes the benchmark repository's correctness gate before
+any timing is retained.</li>
+<li>The implementation has no known input-dependent panics for valid public API
+use.</li>
+<li>The hot scan path performs no per-character heap allocation after warm-up.</li>
+<li>Single-threaded and parallel behavior are documented and tested.</li>
+<li>The public crate surface is small, documented, and does not expose compiler
+or automaton internals as accidental extension points.</li>
+<li>Every published performance claim links to reproducible receipts containing
+exact versions, inputs, hashes, machine information, and thread settings.</li>
+</ul>
+<h3>Non-goals</h3>
+<ul>
+<li>Recreating Java package structure or class hierarchy.</li>
+<li>Becoming a drop-in replacement for PCRE, <code>java.util.regex</code>, Rust <code>regex</code>,
+RE2, or Hyperscan.</li>
+<li>Supporting captures, backreferences, lookaround, or every regex dialect.</li>
+<li>Beating Hyperscan merely because both projects scan multiple patterns.</li>
+<li>Claiming streaming support before retention, lookback, and offset behavior
+have been specified and tested.</li>
+<li>Using <code>unsafe</code> as a substitute for a measured design.</li>
+</ul>
+<hr />
+<h2>Product requirements document</h2>
+<h3>Document metadata</h3>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>
+<tr><td>Product</td><td><code>rustmatch</code></td></tr>
+<tr><td>Status</td><td>Proposed</td></tr>
+<tr><td>License</td><td>Apache License 2.0</td></tr>
+<tr><td>Behavioral reference</td><td>Maven Central <code>no.rmz:rmatch:2.0.0-RC1</code></td></tr>
+<tr><td>Primary implementation language</td><td>Rust 2024 edition</td></tr>
+<tr><td>Bootstrap toolchain</td><td>Rust <code>1.97.0</code>, pinned for development and primary CI</td></tr>
+<tr><td>Minimum supported Rust version</td><td>Rust <code>1.85.0</code>, the first Rust 2024 release</td></tr>
+<tr><td>Primary workload</td><td>Many patterns reused over large text buffers</td></tr>
+<tr><td>Primary quality order</td><td>Correctness, semantic parity, predictability, performance</td></tr>
+</tbody></table>
+<h3>Background</h3>
+<p>Conventional regex APIs are usually organized around one compiled expression
+matching one input. That is excellent for the common case, but it creates a
+poor scaling shape when an application must apply thousands of expressions to
+the same large corpus. A straightforward loop repeatedly traverses the same
+input, once per expression.</p>
+<p>Java rmatch explores a different tradeoff. It registers a set of regular
+expressions, compiles shared finite-automaton machinery, and scans the corpus
+through a many-pattern pipeline. Recent exploratory measurements suggest that
+this becomes useful as pattern sets and corpora grow, even though specialized
+native engines still establish a much higher performance ceiling.</p>
+<p>Rust is a natural language for a second implementation because the problem is
+dominated by representation, locality, controlled allocation, and safe
+parallel reads. A native Rust implementation can preserve the idea and
+semantics while reconsidering every internal choice.</p>
+<h3>Problem statement</h3>
+<p>Rust users do not currently have an implementation of rmatch's exact
+many-pattern semantics that can be tested against the Java implementation and
+inserted into the existing cross-engine benchmark harness. Reusing Java
+through JNI would preserve code but not produce a native Rust engine, would
+complicate deployment, and would conceal rather than answer the interesting
+implementation questions.</p>
+<p>We need a Rust-native library that:</p>
+<ul>
+<li>handles large, reusable pattern sets as one compiled database;</li>
+<li>reports the same matches as Java rmatch on its documented language;</li>
+<li>scales from a single worker to explicitly configured parallel execution;</li>
+<li>exposes enough input abstraction for future specialized buffers without
+making the ordinary string case awkward;</li>
+<li>can be measured fairly beside Java rmatch in the existing benchmark system.</li>
+</ul>
+<h3>Product principles</h3>
+<ol>
+<li><strong>Semantics are a specification, not an anecdote.</strong> Compatibility is
+established by shared fixtures and differential tests.</li>
+<li><strong>Correctness precedes timing.</strong> A fast run with the wrong match count is a
+rejected run.</li>
+<li><strong>Java optimizations are hypotheses, not evidence.</strong> We will try ideas that
+worked in Java rmatch, but each one must prove a positive performance effect
+in the Rust implementation before it is admitted as an optimization.</li>
+<li><strong>Build the executable spine first.</strong> The earliest matcher is narrow but
+uses the intended compiler, database, engine, event, and test boundaries.</li>
+<li><strong>Rust-native does not mean Rust-different.</strong> Internal design should be
+idiomatic Rust, while observable matching behavior remains compatible.</li>
+<li><strong>Pay for what is used.</strong> Assertions, Unicode handling, prefilters, and
+parallel execution must not impose their full cost on patterns that do not
+need them.</li>
+<li><strong>Immutable after build.</strong> Compilation and scanning are separate phases.</li>
+<li><strong>No accidental public architecture.</strong> Dense state tables, compiler stages,
+caches, and diagnostics stay private unless users have a demonstrated need.</li>
+<li><strong>Receipts over adjectives.</strong> Performance descriptions must be backed by
+versioned, reproducible evidence.</li>
+<li><strong>Safe Rust first.</strong> Any <code>unsafe</code> block requires a measured benefit, a
+documented invariant, focused tests, and independent review.</li>
+<li><strong>Neat for comprehension.</strong> Code, documentation, tests, fixtures, and
+evidence should be easy for humans and machines to navigate and verify.
+This favors clarity and explicitness, not ornamental abstraction or churn.</li>
+</ol>
+<h3>Goals</h3>
+<h4>G-1: Semantic compatibility</h4>
+<p>Implement the rmatch 2.x syntax and match-selection contract, including
+overlap, longest-per-start behavior, line anchors, word boundaries, and the
+documented ASCII-oriented character rules.</p>
+<h4>G-2: A native Rust product</h4>
+<p>Offer an API that feels normal to a Rust developer: builders, immutable
+compiled values, typed identifiers, explicit errors, borrowed input where
+possible, no global mutable engine state, and clear <code>Send</code>/<code>Sync</code> behavior.</p>
+<h4>G-3: Competitive many-pattern throughput</h4>
+<p>Build an architecture that can exploit shared automata, dense memory, literal
+prefiltering, cache reuse, and pattern partitioning. Performance targets are
+gates against regressions and against the Java reference, not promises made
+before measurements exist.</p>
+<h4>G-4: Shared empirical infrastructure</h4>
+<p>Add rustmatch to
+<a href="https://github.com/la3lma/rmatch-performance-measurements">rmatch-performance-measurements</a>
+using the same generated fixtures, containers, correctness checks, timing
+boundaries, and receipt schema.</p>
+<h4>G-5: Maintainability</h4>
+<p>Keep the semantic model, compiler, execution engine, and optimization layers
+separable enough that each can be tested without relying on incidental internal
+state.</p>
+<h3>Non-goals and deferred scope</h3>
+<table><thead><tr><th>Item</th><th>Disposition</th></tr></thead><tbody>
+<tr><td>Capture groups and extraction</td><td>Not in the rmatch 2.x contract</td></tr>
+<tr><td>Backreferences</td><td>Excluded; not regular-language machinery</td></tr>
+<tr><td>Lookahead and lookbehind</td><td>Deferred and not compatibility promises</td></tr>
+<tr><td>Lazy or possessive quantifiers</td><td>Deferred</td></tr>
+<tr><td>Atomic groups</td><td>Deferred</td></tr>
+<tr><td>Unicode property classes</td><td>Deferred</td></tr>
+<tr><td>Locale-sensitive or multi-code-point folding</td><td>Deferred</td></tr>
+<tr><td>Pure zero-width match reporting</td><td>Excluded from the 2.x contract</td></tr>
+<tr><td>Mid-pattern or scoped flags</td><td>Deferred</td></tr>
+<tr><td>Dynamic add/remove after build</td><td>Explicitly out of scope</td></tr>
+<tr><td>Unbounded streaming</td><td>Requires a separate retention and lookback design</td></tr>
+<tr><td>Stable automaton serialization</td><td>Potential later feature, not a first-release gate</td></tr>
+<tr><td>C ABI, Python bindings, or WebAssembly API</td><td>Potential later projects</td></tr>
+</tbody></table>
+<h3>Users and jobs to be done</h3>
+<h4>Application developer</h4>
+<p>Wants to register hundreds to tens of thousands of rules, scan large inputs,
+receive pattern identity and spans, and avoid understanding automata internals.</p>
+<h4>Systems developer</h4>
+<p>Wants explicit control over parallelism, memory behavior, buffer ownership, and
+failure propagation. May provide a specialized input implementation.</p>
+<h4>rmatch maintainer</h4>
+<p>Wants a second implementation that catches specification ambiguity and
+behavioral bugs through differential testing.</p>
+<h4>Performance researcher</h4>
+<p>Wants a named, reproducible rustmatch engine lane in the cross-engine harness,
+with compile time, scan time, throughput, memory, match counts, and exact
+provenance.</p>
+<h4>Contributor</h4>
+<p>Wants a staged architecture, local correctness tests, focused benchmarks, and
+clear rules for when an optimization is acceptable.</p>
+<h3>Functional requirements</h3>
+<table><thead><tr><th>ID</th><th>Requirement</th><th>Acceptance signal</th></tr></thead><tbody>
+<tr><td>FR-001</td><td>Register a pattern with a stable caller-provided pattern ID</td><td>The ID is returned with every event from that registration</td></tr>
+<tr><td>FR-002</td><td>Register many patterns before build</td><td>Pattern count is limited by resources, not a small API ceiling</td></tr>
+<tr><td>FR-003</td><td>Build an immutable reusable matcher</td><td>Scanning cannot mutate the registered pattern set</td></tr>
+<tr><td>FR-004</td><td>Scan a canonical UTF-16-compatible input</td><td>Match offsets agree with Java rmatch on all shared fixtures</td></tr>
+<tr><td>FR-005</td><td>Report half-open spans</td><td>Every hit has <code>start &lt;= end</code> and slices the intended text</td></tr>
+<tr><td>FR-006</td><td>Report longest match per pattern and start</td><td><code>a+</code> over <code>aaa</code> reports <code>[0,3)</code>, <code>[1,3)</code>, <code>[2,3)</code></td></tr>
+<tr><td>FR-007</td><td>Preserve independent pattern identity</td><td><code>a</code> and <code>ab</code> may both report at the same start</td></tr>
+<tr><td>FR-008</td><td>Preserve distinct registrations</td><td>Distinct IDs or handlers remain distinguishable even for equal pattern text</td></tr>
+<tr><td>FR-009</td><td>Support the documented syntax table</td><td>Shared positive fixtures pass</td></tr>
+<tr><td>FR-010</td><td>Reject malformed and unsupported syntax at registration/build time</td><td>Shared negative fixtures fail before scanning</td></tr>
+<tr><td>FR-011</td><td>Remain usable after a rejected registration</td><td>A later valid registration can still be built</td></tr>
+<tr><td>FR-012</td><td>Support explicit single-thread execution</td><td>Results match the reference event multiset</td></tr>
+<tr><td>FR-013</td><td>Support explicit parallel pattern partitioning</td><td>Results match the single-thread event multiset</td></tr>
+<tr><td>FR-014</td><td>Propagate sink/callback failures</td><td>The scan returns the original or a documented wrapper error</td></tr>
+<tr><td>FR-015</td><td>Permit repeated scans with one compiled matcher</td><td>Results remain stable across inputs and repetitions</td></tr>
+<tr><td>FR-016</td><td>Expose a custom read-only input trait</td><td>External implementations can provide indexed symbols safely</td></tr>
+<tr><td>FR-017</td><td>Materialize ordinary Rust strings conveniently</td><td>The common path requires no custom trait implementation</td></tr>
+<tr><td>FR-018</td><td>Emit benchmark-runner JSON</td><td>Output can be archived as a standard benchmark receipt</td></tr>
+<tr><td>FR-019</td><td>Keep every implementation increment executable end to end</td><td>Each merged capability is exercised from public builder through match event</td></tr>
+</tbody></table>
+<h3>Supported syntax baseline</h3>
+<p>The initial target is the documented Java rmatch 2.x surface:</p>
+<table><thead><tr><th>Family</th><th>Syntax and behavior</th></tr></thead><tbody>
+<tr><td>Literals</td><td>Exact sequences</td></tr>
+<tr><td>Composition</td><td>Concatenation and `a</td></tr>
+<tr><td>Repetition</td><td><code>?</code>, <code>*</code>, <code>+</code>, <code>{m}</code>, <code>{m,n}</code>, <code>{m,}</code></td></tr>
+<tr><td>Groups</td><td><code>(ab)</code> and <code>(?:ab)</code>, grouping only, no captures</td></tr>
+<tr><td>Any symbol</td><td><code>.</code> includes newline</td></tr>
+<tr><td>Classes</td><td><code>[abc]</code>, ranges, and negated classes</td></tr>
+<tr><td>Shorthands</td><td>ASCII <code>\d</code>, <code>\w</code>, <code>\s</code> and complements</td></tr>
+<tr><td>Anchors</td><td><code>^</code> at input/line start, <code>$</code> at input/line end</td></tr>
+<tr><td>Boundaries</td><td>ASCII <code>\b</code> and <code>\B</code></td></tr>
+<tr><td>Flags</td><td>Prefix <code>(?i)</code>, <code>(?s)</code>, combinations, and typed case-insensitive option</td></tr>
+<tr><td>Escapes</td><td>Supported literal and control escapes from the reference contract</td></tr>
+</tbody></table>
+<p>Counted repetition is capped at 1,000 expanded repetitions unless a later
+joint specification revision changes both implementations.</p>
+<h3>Match semantics</h3>
+<p>The compatibility oracle compares normalized events. For a set of registered
+patterns <code>P</code> and input <code>I</code>, an event is:</p>
+<pre><code class="language-text">(pattern_id, start_utf16, end_utf16)
+</code></pre>
+<p>For every pattern and every input start position:</p>
+<ol>
+<li>Consider all legal consuming paths from that start.</li>
+<li>If one or more paths accept, choose the greatest end position.</li>
+<li>Emit one event for that pattern ID and start position.</li>
+<li>Do not suppress events merely because another event overlaps or contains
+them.</li>
+</ol>
+<p>Rustmatch rejects patterns that can only match zero width. The Java reference
+accepts those patterns but emits no events; the fixture suite records this as
+the one explicit product difference. Assertions may constrain a consuming
+match.</p>
+<p>The event multiset is normative. Delivery order is not.</p>
+<h3>Character and offset model</h3>
+<p>This is the first architectural decision that must be recorded formally.</p>
+<p>Java rmatch consumes Java <code>char</code> values. Therefore its symbols and offsets are
+UTF-16 code units, not Unicode scalar values and not UTF-8 bytes. A supplementary
+Unicode character is two symbols to the Java engine.</p>
+<p>The proposed canonical model is:</p>
+<ul>
+<li><code>Symbol = u16</code>.</li>
+<li><code>Position = u64</code> counting UTF-16 code units.</li>
+<li>Pattern text is parsed as UTF-16 code units, not as Rust Unicode scalar
+values. This preserves Java atom and quantifier behavior even around
+supplementary characters.</li>
+<li>The ordinary builder accepts <code>&amp;str</code> and encodes it to canonical UTF-16 before
+parsing. A lower-level UTF-16 pattern entry point may admit isolated surrogate
+units for exhaustive compatibility testing.</li>
+<li><code>Utf16Text</code> owns or borrows a stable sequence of <code>u16</code> symbols.</li>
+<li><code>Utf16Text::from</code> implements <code>From&lt;&amp;str&gt;</code> and encodes a Rust string to UTF-16
+once, outside the scan timing boundary.</li>
+<li>Match spans are UTF-16 spans and can always be decoded through the input.</li>
+<li>ASCII corpora have identical byte and UTF-16 offsets, which keeps the current
+benchmark scenarios straightforward.</li>
+</ul>
+<p>An optional UTF-8-native facade may later maintain a checked mapping between
+UTF-16 compatibility positions and UTF-8 byte ranges. If introduced, it must
+make the coordinate system visible in types, for example <code>Utf16Span</code> versus
+<code>ByteSpan</code>. No API may return an unqualified integer offset whose unit is
+ambiguous.</p>
+<h3>Public API requirements</h3>
+<p>The eventual public crate should expose concepts, not implementation layers:</p>
+<ul>
+<li><code>MatcherBuilder</code></li>
+<li><code>Matcher</code></li>
+<li><code>PatternId</code></li>
+<li><code>PatternFlags</code></li>
+<li><code>Match</code> or <code>MatchEvent</code></li>
+<li><code>Utf16Text</code> and/or a carefully named compatibility input type</li>
+<li>a read-only <code>Input</code> trait</li>
+<li>parse/build/scan error types</li>
+<li>an explicit parallelism configuration</li>
+</ul>
+<p>It should not expose:</p>
+<ul>
+<li>NFA or DFA node implementations;</li>
+<li>state-set caches;</li>
+<li>parser event handlers;</li>
+<li>prefilter internals;</li>
+<li>partition worker types;</li>
+<li>graph-printing helpers;</li>
+<li>storage arenas or node IDs other than diagnostic snapshots behind an
+unstable feature.</li>
+</ul>
+<h3>Non-functional requirements</h3>
+<table><thead><tr><th>ID</th><th>Requirement</th><th>Target or gate</th></tr></thead><tbody>
+<tr><td>NFR-001</td><td>Correctness</td><td>Zero known differential failures in supported syntax</td></tr>
+<tr><td>NFR-002</td><td>Memory safety</td><td>Safe Rust by default; Miri-clean tests for unsafe-free core</td></tr>
+<tr><td>NFR-003</td><td>Allocation</td><td>No per-symbol heap allocation in steady-state scan</td></tr>
+<tr><td>NFR-004</td><td>Determinism</td><td>Same normalized event multiset across worker counts</td></tr>
+<tr><td>NFR-005</td><td>Reuse</td><td>Compiled matcher can scan repeatedly without rebuilding</td></tr>
+<tr><td>NFR-006</td><td>Concurrency</td><td>Immutable matcher is shareable when sink/input contracts permit</td></tr>
+<tr><td>NFR-007</td><td>Error quality</td><td>Parse errors include source span and actionable reason</td></tr>
+<tr><td>NFR-008</td><td>Observability</td><td>Optional aggregate diagnostics without hot-path logging</td></tr>
+<tr><td>NFR-009</td><td>Documentation</td><td>Every public item has rustdoc and at least one end-to-end example</td></tr>
+<tr><td>NFR-010</td><td>Toolchain</td><td>Rust 2024; primary CI on pinned <code>1.97.0</code>; MSRV lane on <code>1.85.0</code></td></tr>
+<tr><td>NFR-011</td><td>Reproducibility</td><td>Published benchmark points have archived receipts</td></tr>
+<tr><td>NFR-012</td><td>Portability</td><td>Linux and macOS first; no architecture-specific correctness</td></tr>
+<tr><td>NFR-013</td><td>Dependency hygiene</td><td>Small dependency set, audited before releases</td></tr>
+<tr><td>NFR-014</td><td>Performance admission</td><td>Performance-motivated changes require a positive Rust result beyond predeclared noise; Java results alone and neutral outcomes fail the gate</td></tr>
+<tr><td>NFR-015</td><td>Architectural continuity</td><td>Early narrow implementations use final-shaped boundaries rather than throwaway matching paths</td></tr>
+<tr><td>NFR-016</td><td>Comprehensible engineering</td><td>Formatting, linting, rustdoc, visibility, errors, tests, task IDs, and evidence formats follow the enforced contribution standard</td></tr>
+</tbody></table>
+<h3>Performance requirements</h3>
+<p>The project begins without invented throughput promises. Performance will be
+specified as progressively stronger gates:</p>
+<ol>
+<li><strong>Complexity gate:</strong> no implementation path equivalent to scanning the
+complete corpus independently for every registered pattern.</li>
+<li><strong>Allocation gate:</strong> steady-state scan reuses scratch storage.</li>
+<li><strong>Regression gate:</strong> representative scenarios must not slow by more than the
+campaign's noise-aware threshold without an explicit tradeoff decision.</li>
+<li><strong>Reference gate:</strong> rustmatch should exceed Java rmatch on representative
+many-pattern workloads where both engines perform the same event-enumeration
+task. A result may be fast in absolute terms before this gate passes, but it
+is not yet fast enough for the project's intended destination.</li>
+<li><strong>Scaling gate:</strong> measure 1,000, 2,500, 5,000, 7,500, and 10,000 patterns on
+8 MiB and 50 MiB inputs, including thread sweeps.</li>
+<li><strong>Honesty gate:</strong> compile time, warm-up time, scan time, peak memory, match
+count, and total wall time remain separate metrics.</li>
+</ol>
+<p>Hyperscan remains a native reference ceiling, not a promise that rustmatch will
+match its specialized implementation or execution model.</p>
+<p>Within the Rust ecosystem, the first direct performance reference is
+<a href="https://docs.rs/regex/1.13.1/regex/struct.RegexSet.html"><code>regex::RegexSet</code></a>.
+It is an optimized one-pass many-pattern matcher, but its native result is the
+set of patterns that matched somewhere, not match locations. The early
+<a href="docs/benchmarking/regexset-comparison.html">B0 comparison contract</a> therefore
+defines one native set-membership lane and one complete-event lane. Both lanes
+validate results before retaining timings, separate compilation from scanning,
+and state plainly when one engine performs richer work.</p>
+<h3>Optimization admission gate</h3>
+<p>An optimization is any change proposed primarily to make compilation,
+scanning, allocation, memory use, or parallel throughput better. Lazy
+determinization, state-set representations, caches, prefilters, specialized
+collections, SIMD, <code>unsafe</code>, allocation strategies, and automatic parallelism
+all pass through this gate.</p>
+<p>Java rmatch, RegexSet, Hyperscan, and other engines are valuable prior art and
+diagnostic competitors. If an optimization worked there, or if a competitor
+wins a confirmed workload, that is a good reason to test a mechanism in Rust.
+It is not evidence that the mechanism improves Rustmatch. Different semantics,
+layouts, ownership, compiler optimizations, standard libraries, allocators, and
+runtime costs can reverse the result.</p>
+<p>The acceptance baseline is always the exact existing Rustmatch production
+revision frozen before the experiment. Competitor results nominate workloads
+and hypotheses; they do not replace a Rustmatch baseline/candidate comparison.</p>
+<p>Before implementing a performance idea, record:</p>
+<ol>
+<li>the mechanism and why it may help Rust;</li>
+<li>the workloads and metric it is intended to improve;</li>
+<li>the exact existing Rustmatch baseline revision and modes being compared;</li>
+<li>the campaign's noise model and minimum meaningful improvement;</li>
+<li>the regressions in build time, memory, latency, or other scenarios that
+would make the trade unacceptable; and</li>
+<li>the timestamped lab-note path that will retain the result whether the
+experiment succeeds, fails, or remains inconclusive.</li>
+</ol>
+<p>The implementation passes only when:</p>
+<ul>
+<li>optimized and baseline event results are identical;</li>
+<li>baseline and candidate use the same inputs, machine allocation, build mode,
+warm-up policy, and measurement boundaries;</li>
+<li>retained receipts show a positive improvement beyond the predeclared noise
+threshold for the intended workload;</li>
+<li>the complete scenario set reveals no unaccepted material regression; and</li>
+<li>any selective activation rule is itself measured and reproducible.</li>
+</ul>
+<p>A repeatable guard regression above 3% automatically rejects the exact
+artifact. A repeatable regression above 2% through 3% blocks admission and
+requires investigation under the versioned
+<a href="docs/optimization-decision-policy.html">optimization decision policy</a>. These are
+not regression budgets: any demonstrated regression blocks admission.
+Optimization-specific complexity should normally earn at least a 5% repeatable
+improvement on its declared target set. A smaller positive result may be
+considered when the change also materially simplifies the code or removes
+maintenance risk, but never when the guard set demonstrates a real regression.</p>
+<p>A neutral, inconclusive, investigated, rejected, or slower result fails the
+admission gate. Its evidence and lab note remain part of the project, but the
+code is removed or left disabled outside the production path. Large opposing
+effects require causal review; a local win accompanied by losses elsewhere may
+justify a successor or narrowly activated path only when the activation
+criterion is explicit, safe, and independently measured.</p>
+<p>Pass/fail is not performance analysis. Every admitted optimization must also
+explain the absolute times, output volume, scaling shape, memory tradeoff,
+cache or fallback behavior, profile hotspots, and limits on generalization.
+Diagnostic controls should separate competing explanations where practical;
+for example, a no-match corpus distinguishes pattern-set search cost from
+result delivery. A green threshold without this critical interpretation is an
+incomplete experiment.</p>
+<p>After B1, the complete retained dataset receives this treatment through the
+<a href="docs/experiments/b2-competitor-win-optimization.html"><code>B2/G9 full-dataset analysis and admission protocol</code></a>.
+Quantitative and qualitative analysis, followed by a reviewed hypothesis
+registry, must finish before optimization code begins. The resulting candidate
+may remain slower than RegexSet and still pass if it improves current Rustmatch.
+The benchmark repository's
+<a href="https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/post-assay-optimization-playbook.md"><code>post-assay optimization playbook</code></a>
+defines the ranked handoff and lab-notebook record used by that loop.
+Conversely, beating RegexSet cannot admit a change that fails to improve current
+Rustmatch.</p>
+<p>This hard positive-improvement requirement does <strong>not</strong> apply to semantic
+extensions such as richer supported regex syntax. Those changes are admitted
+for functionality and compatibility. They must pass correctness evidence and,
+when they touch a hot path, a non-regression budget, but they do not have to
+make existing patterns faster.</p>
+<h3>Testing and regression policy</h3>
+<p>Tests are part of the executable spine, not cleanup work after the engine is
+feature-complete. Every pull request must pass the required CI workflow before
+it can merge. Once the first workflow exists, <code>main</code> should be protected so a
+red or missing required check cannot be waived by habit.</p>
+<h4>Fast functional PR CI</h4>
+<p>The normal PR lane should be small, readable, and dependable enough to run on
+every change. It includes:</p>
+<ul>
+<li>formatting and Clippy with warnings denied;</li>
+<li>compilation of the workspace, examples, tests, and relevant feature sets;</li>
+<li>focused unit tests for parser, HIR, compiler, state sets, and error types;</li>
+<li>compact public end-to-end tests from builder through emitted match events;</li>
+<li>Java/Rust differential smoke fixtures for the syntax tier implemented so
+far;</li>
+<li>negative-path tests for rejected syntax, sink/input failures, limits, and
+lifecycle errors;</li>
+<li>rustdoc examples and the UC evidence-summary test.</li>
+</ul>
+<p>Functional tests should be pleasant to review: one behavior per test, small
+fixtures, exact expected events or errors, descriptive names, and explicit
+<code>Prepare</code>, <code>Test</code>, and <code>Assert</code> comments where the three stages are not already
+obvious. A PR with failing functional tests is not mergeable.</p>
+<h4>Coarse CI performance tripwire</h4>
+<p>CI is not the authoritative performance laboratory. Hosted runners are noisy,
+and a broad scenario campaign would be too slow for every PR. CI should still
+run one or a few short, deterministic scans to catch catastrophic mistakes
+such as accidentally rebuilding per character, disabling a cache, allocating
+inside the hot loop, or falling onto an obviously wrong path.</p>
+<p>The tripwire should:</p>
+<ul>
+<li>validate event count or event hash before considering timing;</li>
+<li>build base and PR revisions in the same job and release configuration;</li>
+<li>use the same generated fixture, container allocation, warm-up count, and
+measurement boundary;</li>
+<li>compare medians from several scans rather than one wall-clock sample;</li>
+<li>use a deliberately broad, versioned failure threshold; and</li>
+<li>rerun once before failing a PR for timing alone.</li>
+</ul>
+<p>The active Wuthering Heights policy requires the default one-worker path and
+fails only when the median slowdown exceeds 100% and the absolute regression is
+at least 50 ms. A possible failure is rerun in reverse order before the job is
+allowed to fail. This deliberately broad threshold is a smoke alarm, not
+evidence that a change is fast, neutral, or worthy of publication.</p>
+<p>A CI tripwire failure blocks the PR pending investigation and a stable-machine
+rerun. A CI tripwire pass does not satisfy the optimization admission gate.
+The generated literal <code>C1</code> lane catches broad hot-loop mistakes; the retained
+Wuthering Heights <code>C2</code> lane adds a realistic 5,000-pattern regression line with
+an 8 MiB deterministic corpus expansion, exact source and event digests, and a
+size above the full-prefilter activation threshold. Both use deliberately
+broad thresholds and retain base, candidate, and comparison receipts.</p>
+<h4>Authoritative external regression testing</h4>
+<p>Performance-sensitive work is tested outside hosted CI on a designated stable
+machine using the benchmark repository. Before such a change is accepted into
+<code>main</code>:</p>
+<ol>
+<li>Run the exact base and candidate revisions with correctness validation.</li>
+<li>Use the full applicable scenario set, not only the workload expected to
+improve.</li>
+<li>Retain individual measurements, environment metadata, versions, hashes,
+memory observations, and thread sweeps where relevant.</li>
+<li>Investigate any real regression, even when the coarse CI tripwire remained
+green.</li>
+<li>Reject or redesign the change unless its semantic value justifies a
+documented tradeoff, or its optimization claim passes the hard positive-
+improvement gate.</li>
+</ol>
+<p>This external campaign is the authoritative regression-management path. The CI
+tripwire exists to catch severe and unusual anomalies that escape it; CI does
+not replace it.</p>
+<h3>Documentation and Rust code hygiene</h3>
+<p>Rustmatch should be a <em>neat</em> project because comprehension is a correctness and
+maintenance feature. Neat does not mean maximizing the number of abstractions,
+reformatting working code for taste, or satisfying tools without judgment. It
+means that a person or an automated agent can identify the public contract,
+find the implementation, understand the invariants, run the evidence, and make
+a focused change without reconstructing hidden context.</p>
+<p>The binding details live in <a href="CONTRIBUTING.html">CONTRIBUTING.md</a>. The core rules
+are:</p>
+<ul>
+<li>use stable Rust, canonical <code>rustfmt</code>, and Clippy with warnings denied;</li>
+<li>keep visibility as narrow as possible and review every exported item as an
+API commitment;</li>
+<li>use domain types for pattern IDs, state IDs, positions, spans, flags, and
+configuration instead of ambiguous primitives;</li>
+<li>prefer explicit ownership and simple data flow over clever lifetime or trait
+machinery that has no demonstrated need;</li>
+<li>return typed, contextual errors for expected failures and reserve panics for
+documented internal invariant violations;</li>
+<li>forbid <code>unsafe</code> in the initial core and admit it later only through the
+safety and performance gates;</li>
+<li>document every public item, crate, and important module, including units,
+lifecycle, concurrency, errors, panics, and examples where relevant;</li>
+<li>comment invariants and reasons, not syntax that the code already states;</li>
+<li>keep tests small, deterministic, behavior-named, and exact about expected
+events or errors;</li>
+<li>avoid dead code, broad lint suppression, anonymous TODOs, and speculative
+extension points; and</li>
+<li>keep generated artifacts reproducible and machine-readable evidence
+versioned and schema-checked.</li>
+</ul>
+<p>The required PR workflow will enforce formatting, linting, compilation, tests,
+and rustdoc from the executable-spine increment onward. Dependency, license,
+security, unused-dependency, and semantic-version checks join the appropriate
+scheduled and release gates. A check may be suppressed only at the narrowest
+scope with a written reason; making CI green by globally weakening a rule is
+not acceptable.</p>
+<h3>Benchmark interoperability requirements</h3>
+<p>The rustmatch runner must consume the benchmark project's existing generated
+artifacts and emit one compact JSON object with at least:</p>
+<ul>
+<li>engine name and exact version or Git SHA;</li>
+<li>pattern count and preparation time;</li>
+<li>warm-up durations;</li>
+<li>scan durations and median;</li>
+<li>logical corpus throughput;</li>
+<li>observed matches per iteration;</li>
+<li>execution mode and worker count;</li>
+<li>process failure information.</li>
+</ul>
+<p>The surrounding harness owns container identity, host metadata, input hashes,
+expected counts, and receipt archival. A result is comparable only when input
+hashes agree and expected and observed match counts agree.</p>
+<h3>Release criteria</h3>
+<h4><code>0.1.0</code>: walking skeleton</h4>
+<ul>
+<li>Public builder and scan API exists.</li>
+<li>Literals, concatenation, and alternation work.</li>
+<li>Java oracle comparison runs in CI.</li>
+<li>No performance claim.</li>
+</ul>
+<h4><code>0.2.0</code>: semantic core</h4>
+<ul>
+<li>Quantifiers, groups, classes, flags, anchors, and boundaries implemented.</li>
+<li>Positive and negative syntax matrices pass.</li>
+<li>Property and fuzz testing active.</li>
+</ul>
+<h4><code>0.3.0</code>: engine architecture</h4>
+<ul>
+<li>Dense state representation and reusable scratch buffers.</li>
+<li>Lazy deterministic-state cache or another candidate only if Rust receipts
+pass the hard positive-improvement gate.</li>
+<li>Single-thread benchmark adapter accepted by the harness.</li>
+</ul>
+<h4><code>0.4.0</code>: optimized and parallel</h4>
+<ul>
+<li>Safe literal prefilter.</li>
+<li>Explicit pattern partitioning.</li>
+<li>Correctness parity across worker counts.</li>
+<li>Rust prefilter and parallelism receipts pass their predeclared positive-
+improvement gates; competitor results are not release evidence.</li>
+<li>Complete thread calibration receipts.</li>
+</ul>
+<h4><code>1.0.0</code>: stable compatibility release</h4>
+<ul>
+<li>Compatibility statement is backed by a versioned shared suite.</li>
+<li>Public API and MSRV are declared stable.</li>
+<li>Cross-engine benchmark campaign is reproducible.</li>
+<li>Security, dependency, documentation, and performance release gates pass.</li>
+</ul>
+<h3>Risks and mitigations</h3>
+<table><thead><tr><th>Risk</th><th>Consequence</th><th>Mitigation</th></tr></thead><tbody>
+<tr><td>UTF-16/UTF-8 ambiguity</td><td>False compatibility and unusable spans</td><td>Typed coordinate systems and a canonical UTF-16 oracle mode</td></tr>
+<tr><td>Match semantics misunderstood</td><td>Plausible but wrong output</td><td>Golden fixtures plus differential event-multiset tests</td></tr>
+<tr><td>Object model copied from Java</td><td>Poor locality and unidiomatic API</td><td>Architecture around dense IDs and arrays before porting behavior</td></tr>
+<tr><td>Premature optimization</td><td>Complex wrong engine</td><td>Walking skeleton, reference interpreter, then measured optimization</td></tr>
+<tr><td>Competitor optimization copied on reputation</td><td>Rust complexity without a Rustmatch benefit</td><td>Treat Java rmatch, RegexSet, Hyperscan, and other results as hypotheses; require correctness-gated existing-Rustmatch baseline/candidate receipts and a positive result beyond noise</td></tr>
+<tr><td>Unsafe prefilter skips matches</td><td>Silent false negatives</td><td>Prefilter must prove necessity; differential bypass tests</td></tr>
+<tr><td>Parallel callbacks differ</td><td>Nondeterminism or races</td><td>Normalize events in tests; explicit <code>Send</code>/<code>Sync</code> sink contracts</td></tr>
+<tr><td>DFA state explosion</td><td>Unbounded memory</td><td>Lazy construction, budgets, metrics, and NFA fallback policy</td></tr>
+<tr><td>Counted expansion blow-up</td><td>Build-time memory spikes</td><td>Enforce shared cap and fail early</td></tr>
+<tr><td>Benchmark overfitting</td><td>Misleading claims</td><td>Several families, sizes, densities, corpora, and retained receipts</td></tr>
+<tr><td>Dependency drift</td><td>Supply-chain or MSRV surprises</td><td>Minimal dependencies, lockfile, audit, and release checklist</td></tr>
+<tr><td>Specification drift between repos</td><td>Implementations diverge</td><td>Versioned semantic fixtures consumed by both projects</td></tr>
+</tbody></table>
+<h3>Open product decisions</h3>
+<p>These require ADRs before their associated implementation lands. The initial
+API has already selected an owned <code>Utf16Text</code> and callback-based scan; borrowed
+inputs and iterators remain possible later additions rather than bootstrap
+requirements.</p>
+<ol>
+<li>Should a later convenience API add borrowed inputs or a match iterator?</li>
+<li>Should parallel scanning invoke a shared concurrent sink or collect
+partition-local events and merge afterward?</li>
+<li>What is the maximum supported explicit worker count, if any?</li>
+<li>What state-cache budget and fallback behavior prevent pathological DFA
+growth?</li>
+<li>Is compiled pattern database serialization worth stabilizing after 1.0?</li>
+</ol>
+<hr />
+<h2>Architecture</h2>
+<h3>Architectural thesis</h3>
+<p>The Java implementation demonstrates that the semantics and the many-pattern
+pipeline work. Rustmatch should preserve those facts while changing the unit of
+design from communicating heap objects to compact immutable tables plus
+per-scan scratch state.</p>
+<p>The architecture has four hard boundaries:</p>
+<ol>
+<li><strong>Surface language:</strong> parse and validate the documented regex dialect.</li>
+<li><strong>Semantic compiler:</strong> turn syntax into a context-aware finite automaton.</li>
+<li><strong>Execution engine:</strong> scan input and produce the normative event multiset.</li>
+<li><strong>Optimization shell:</strong> accelerate safe cases without changing the semantic
+engine's answers.</li>
+</ol>
+<p>The unoptimized semantic path remains available in tests as an oracle. Every
+optimization must be bypassable so its output can be compared with that path.
+An optimization copied or adapted from Java remains outside the production
+path until rustmatch's own correctness-gated receipts pass the optimization
+admission gate. Architectural resemblance and Java benchmark history do not
+waive that requirement.</p>
+<h3>Executable spine</h3>
+<p>The implementation begins with a thin vertical slice through every important
+boundary. Its first language is intentionally tiny:</p>
+<ul>
+<li>pattern text is a non-empty sequence of 7-bit ASCII literal characters;</li>
+<li>input contains only 7-bit ASCII;</li>
+<li>no groups, alternation, classes, repetition, flags, or assertions;</li>
+<li>several patterns may be registered and share one synthetic NFA start;</li>
+<li>all eligible start positions and distinct pattern IDs are reported;</li>
+<li>spans use the final typed UTF-16 coordinate API, for which ASCII positions
+are numerically identical to byte positions.</li>
+</ul>
+<p>Despite those restrictions, the spine must use:</p>
+<ul>
+<li>the intended <code>MatcherBuilder</code>, <code>Matcher</code>, <code>PatternId</code>, input, span, and sink
+concepts;</li>
+<li>a minimal AST/HIR that can grow without changing the public API;</li>
+<li>Thompson-style NFA fragments represented by dense IDs and contiguous tables;</li>
+<li>an immutable pattern database;</li>
+<li>the real forward scan loop and reusable per-scan scratch ownership;</li>
+<li>normalized match events compared with Java rmatch;</li>
+<li>the same benchmark runner protocol planned for later releases.</li>
+</ul>
+<p>The spine deliberately omits lazy determinization, prefiltering, clever state
+sets, parallelism, broad syntax, and non-ASCII handling. Those are improvements
+to a working engine, not prerequisites for discovering whether the pieces fit.</p>
+<p>This creates an early integration ratchet: after the spine lands, no feature is
+complete when only its parser or compiler unit tests pass. It must be
+demonstrable through the public API, differential fixture, and, when relevant,
+the benchmark adapter.</p>
+<h3>System context</h3>
+<figure class="mermaid-diagram"><a href="../assets/mermaid/687a4d9849039eeac90264b40f6173a9e9d927487b25830fae698c3203e5fbf3.svg" title="Open full-size SVG"><img src="../assets/mermaid/687a4d9849039eeac90264b40f6173a9e9d927487b25830fae698c3203e5fbf3.svg" alt="System context diagram"></a><figcaption>System context · <a href="../assets/mermaid/687a4d9849039eeac90264b40f6173a9e9d927487b25830fae698c3203e5fbf3.svg">Open full-size SVG</a></figcaption></figure>
+<h3>Compile-time pipeline</h3>
+<pre><code class="language-text">pattern text + flags
+        |
+        v
+lexer/parser with source spans
+        |
+        v
+validated HIR
+        |
+        v
+normalization and bounded expansion
+        |
+        v
+Thompson-style epsilon NFA fragments
+        |
+        v
+shared NFA + terminal pattern sets
+        |
+        v
+static analyses and literal hints
+        |
+        v
+immutable PatternDatabase
+</code></pre>
+<h4>Parser</h4>
+<p>Use a hand-written recursive-descent or precedence parser over canonical UTF-16
+code units, with explicit source spans. The grammar is small enough that
+generator complexity is not justified. The parser returns a typed AST and
+never mutates automata directly.</p>
+<p>Important properties:</p>
+<ul>
+<li>Quantifiers bind to the preceding atom, not an accumulated literal run.</li>
+<li>Unsupported constructs are recognized deliberately and get a specific
+error, rather than falling through as surprising literals.</li>
+<li>Inline flags are accepted only in the documented prefix position.</li>
+<li>Escapes and character-class ranges have focused validation.</li>
+<li>Parse errors retain canonical UTF-16 spans. When the source was a Rust
+<code>&amp;str</code>, diagnostics map those spans back to UTF-8 byte ranges and display the
+offending fragment.</li>
+</ul>
+<h4>High-level intermediate representation</h4>
+<p>Normalize the AST into a smaller HIR:</p>
+<pre><code class="language-rust,ignore">enum Hir {
+    Empty,
+    Literal(Vec&lt;u16&gt;),
+    Class(CharClassId),
+    Any,
+    Concat(Vec&lt;Hir&gt;),
+    Alternate(Vec&lt;Hir&gt;),
+    Repeat { node: Box&lt;Hir&gt;, min: u16, max: Option&lt;u16&gt; },
+    Assert(Assertion),
+}
+</code></pre>
+<p>This is illustrative. The actual representation should use arenas once sizes
+justify them. HIR normalization should:</p>
+<ul>
+<li>flatten nested concatenations and alternations;</li>
+<li>combine adjacent literals;</li>
+<li>normalize flags into character predicates;</li>
+<li>enforce repetition bounds;</li>
+<li>compute nullable, minimum-length, and literal-hint properties;</li>
+<li>reject a pattern that can only produce a zero-width match.</li>
+</ul>
+<h4>NFA compiler</h4>
+<p>Use Thompson-style fragment construction because it is simple, auditable, and
+well suited to a regular-language subset. Each node receives a dense integer
+ID. Edges refer to IDs, not pointers or trait objects.</p>
+<p>Suggested logical edge kinds:</p>
+<pre><code class="language-rust,ignore">enum Edge {
+    Epsilon(StateId),
+    Consume { class: CharClassId, target: StateId },
+    Assert { kind: Assertion, target: StateId },
+}
+</code></pre>
+<p>The stored form should be structure-of-arrays or compact adjacency slices,
+chosen by measurement. Terminal states reference compact pattern-ID sets.</p>
+<p>Patterns join a shared synthetic start. The compiler records enough ownership
+metadata to partition patterns later without requiring runtime graph surgery.</p>
+<h4>Character classes</h4>
+<p>ASCII is the hot case and should have a direct representation. A candidate
+layout is:</p>
+<ul>
+<li>a 128-bit ASCII membership mask;</li>
+<li>sorted inclusive UTF-16 ranges for non-ASCII code units;</li>
+<li>a negation flag or normalized complemented ranges;</li>
+<li>precomputed class IDs shared across patterns.</li>
+</ul>
+<p>Do not assume that Rust <code>char</code> case operations match Java's single-<code>char</code>
+mapping. Compatibility folding needs a generated or explicitly verified
+UTF-16-code-unit mapping, with exhaustive tests over all 65,536 values.</p>
+<h3>Pattern database</h3>
+<p><code>PatternDatabase</code> is immutable after construction and owns:</p>
+<ul>
+<li>dense NFA tables;</li>
+<li>interned character classes;</li>
+<li>terminal pattern-ID sets;</li>
+<li>context-assertion metadata;</li>
+<li>safe literal hints;</li>
+<li>start-state acceleration tables;</li>
+<li>lazily initialized deterministic-state cache configuration;</li>
+<li>partition assignment metadata;</li>
+<li>diagnostic counters that do not affect results.</li>
+</ul>
+<p>It should be cheap to share through <code>Arc&lt;Matcher&gt;</code> only when sharing is needed;
+the API should not force an extra atomic reference count into every use.</p>
+<h3>Execution model</h3>
+<h4>Semantic baseline</h4>
+<p>The first correct engine should be a lock-step NFA interpreter with dense
+state sets. It is not expected to be the final fast engine. It is expected to
+be obviously correct and useful as an independent oracle for optimized paths.</p>
+<p>At each input position, the engine:</p>
+<ol>
+<li>Introduces a new candidate start when the start closure can consume the
+current symbol.</li>
+<li>Advances candidates already in flight.</li>
+<li>Evaluates context assertions using previous, current, and next symbols.</li>
+<li>Records the greatest accepting end for each pattern and start.</li>
+<li>Emits a result only when no path for that pattern/start can extend farther,
+or at end of input.</li>
+</ol>
+<p>The implementation must avoid a heap object per candidate. Candidate frontiers
+should use reusable vectors, generation-marked arrays, compact bitsets, or a
+measured hybrid.</p>
+<h4>Lazy determinization</h4>
+<p>The production direction is a lazy DFA-like cache over NFA state subsets:</p>
+<ul>
+<li>A deterministic state is a sorted dense set or bitset of NFA state IDs.</li>
+<li>Transitions are computed on demand and cached.</li>
+<li>The state key includes context only when assertion-sensitive closure depends
+on it.</li>
+<li>ASCII transitions use direct indexed tables after materialization.</li>
+<li>Non-ASCII transitions use compact maps or range dispatch.</li>
+<li>Cache size and hit/miss/state counts are observable.</li>
+<li>A budget prevents uncontrolled state growth; fallback remains semantically
+exact.</li>
+</ul>
+<p>Whether the final engine is best described as lazy DFA, tagged NFA, or a hybrid
+is an empirical decision. The semantic interfaces should permit alternatives.</p>
+<h4>Match tracking</h4>
+<p>The difficult output rule is not merely acceptance. The engine must retain the
+best end for each <code>(pattern_id, start)</code> until that candidate is unable to
+extend. A Rust-native design should avoid Java-style nested match objects.</p>
+<p>Candidate representations to prototype:</p>
+<ol>
+<li>A frontier per start with compact active-state and terminal-pattern sets.</li>
+<li>A ring of start slots whose storage is recycled once all paths die.</li>
+<li>Batched starts sharing the same deterministic state, with start-position
+vectors.</li>
+<li>Terminal deltas that update only pattern IDs newly final at a transition.</li>
+</ol>
+<p>Each prototype must pass the same oracle before performance comparison.</p>
+<h3>Assertions and context</h3>
+<p><code>^</code>, <code>$</code>, <code>\b</code>, and <code>\B</code> are zero-width assertions that constrain consuming
+matches. They belong in epsilon closure and terminal evaluation, not in a
+post-hoc filter.</p>
+<p>At position <code>i</code>, the engine can derive a small context class from:</p>
+<ul>
+<li>beginning/end of input;</li>
+<li>whether the previous symbol is newline;</li>
+<li>whether the next symbol is newline;</li>
+<li>whether adjacent symbols satisfy ASCII <code>\w</code>.</li>
+</ul>
+<p>Only states whose closure reaches assertion edges need context-sensitive cache
+keys. Pattern sets without assertions should retain the simpler hot path.</p>
+<h3>Literal prefilter</h3>
+<p>A literal prefilter may skip impossible start positions, but false negatives
+are never acceptable. The architecture therefore separates:</p>
+<ul>
+<li>extraction of a necessary literal and its offset constraints;</li>
+<li>proof that the hint is safe for the complete pattern;</li>
+<li>multi-literal scanning;</li>
+<li>mapping hits back to candidate starts and pattern IDs;</li>
+<li>the semantic engine, which verifies all candidates.</li>
+</ul>
+<p>The first implementation can run without a prefilter. Later work should begin
+with a simple native Aho-Corasick trie or another measured multi-literal
+structure. External crates may be evaluated, but adding one must not blur
+compatibility, licensing, or receipt provenance.</p>
+<p>Every prefiltered test must also run with prefiltering disabled and compare the
+complete normalized event multiset.</p>
+<h3>Parallelism</h3>
+<p>Java rmatch partitions patterns and lets each worker scan the same immutable
+input. Rustmatch should begin with the same coarse strategy because it is easy
+to reason about and benchmark-compatible:</p>
+<ol>
+<li>Assign patterns deterministically to <code>N</code> partitions.</li>
+<li>Build one immutable engine database per partition or one database with
+partition views, whichever measures better.</li>
+<li>Scan the same read-only input concurrently.</li>
+<li>Invoke a thread-safe sink or accumulate partition-local events.</li>
+<li>Return after every partition completes or a documented failure policy has
+resolved.</li>
+</ol>
+<p>The default worker heuristic is a convenience, not a performance truth. The
+API must permit explicit worker counts, and the benchmark harness must sweep
+them independently for each scenario. No low arbitrary cap should exclude
+high-core-count servers.</p>
+<p>Future work may partition inputs, states, or both, but only after boundary
+semantics and duplicate suppression are proven.</p>
+<h3>Input architecture</h3>
+<p>Internally, the compatibility input trait should express randomly addressable
+UTF-16 code units without requiring a total length:</p>
+<pre><code class="language-rust,ignore">pub trait Input: Sync {
+    fn symbol_at(&amp;self, position: u64) -&gt; Option&lt;u16&gt;;
+
+    fn decode(&amp;self, span: Utf16Span) -&gt; Result&lt;String, InputError&gt;;
+}
+</code></pre>
+<p>This sketch leaves room for:</p>
+<ul>
+<li>owned UTF-16 text;</li>
+<li>borrowed UTF-16 slices;</li>
+<li>materialized Rust strings;</li>
+<li>memory-mapped or file-backed content;</li>
+<li>bounded-window inputs with a documented decode retention window.</li>
+</ul>
+<p>The trait remains private or sealed during the first slice. <code>Utf16Text</code> is the
+only initial public input. A public custom-input trait is added only after its
+object-safety, retention, error, concurrency, and compatibility contracts are
+proven by a real implementation outside the core.</p>
+<p>It does not claim that an infinite stream can support arbitrary lookback or
+substring recovery. A maximum-lookback stream adapter is a separate product
+decision.</p>
+<h3>Error architecture</h3>
+<p>Use typed, non-panicking internal errors for expected failure:</p>
+<ul>
+<li><code>ParseError</code> with span and reason;</li>
+<li><code>BuildError</code> for limits and resource constraints;</li>
+<li><code>InputError</code> for unavailable or invalid ranges;</li>
+<li>a scan error preserving input and engine failures; and</li>
+<li><code>ConfigurationError</code> for invalid parallelism or budgets.</li>
+</ul>
+<p>The first public API wraps these details in one non-exhaustive <code>Error</code> enum
+whose variants retain pattern IDs, source spans, coordinates, and causes. Split
+public error types or a generic sink error are added only when callers need
+meaningfully different recovery paths. The initial infallible callback does
+not require a generic error parameter.</p>
+<p>Internal invariants may use debug assertions. Public input must not cause an
+uncontrolled panic.</p>
+<h3>Allocation and ownership</h3>
+<ul>
+<li>Compilation owns arenas and immutable tables.</li>
+<li>Each scan owns or borrows scratch buffers from a pool scoped to the matcher.</li>
+<li>Workers never mutate shared automaton tables.</li>
+<li>Scratch buffers are cleared and reused, not repeatedly allocated.</li>
+<li>Pattern IDs are caller values or compactly mapped IDs; strings do not appear
+in the hot loop.</li>
+<li>Match text is decoded only when the caller asks for it.</li>
+<li>Instrumentation is aggregated counters, not per-transition logging.</li>
+</ul>
+<h3>Dependency policy</h3>
+<p>Start with <code>std</code> for the semantic core. Candidate development dependencies
+include:</p>
+<ul>
+<li><a href="https://docs.rs/proptest/">proptest</a> for generated semantic cases;</li>
+<li><a href="https://rust-fuzz.github.io/book/">cargo-fuzz</a> for parser and engine fuzzing;</li>
+<li><a href="https://docs.rs/criterion/">Criterion.rs</a> for focused microbenchmarks.</li>
+</ul>
+<p>Rayon, specialized hash maps, bit-vector crates, Aho-Corasick crates, and
+allocator helpers should be introduced only after a local prototype shows a
+clear benefit. Every dependency must have compatible licensing, active
+maintenance, an acceptable MSRV, and a documented reason to exist.</p>
+<h3>Observability</h3>
+<p>An optional diagnostic snapshot may expose aggregate facts without exposing
+internal types:</p>
+<ul>
+<li>parsed and accepted pattern counts;</li>
+<li>NFA states and edges;</li>
+<li>deterministic states materialized;</li>
+<li>state-cache hits, misses, and evictions;</li>
+<li>prefilter enabled/bypassed and candidate positions produced;</li>
+<li>partitions and worker count;</li>
+<li>scratch high-water marks;</li>
+<li>build and scan durations when explicitly requested.</li>
+</ul>
+<p>Diagnostics are disabled or near-zero-cost by default. They are not part of
+match semantics.</p>
+<h3>Proposed repository layout</h3>
+<pre><code class="language-text">rustmatch/
+  Cargo.toml
+  Cargo.lock
+  rust-toolchain.toml
+  xtask/                        # Repository quality and evidence commands
+  crates/
+    rustmatch/                 # Small stable library API
+    rustmatch-core/            # Private semantic compiler and engine
+    rustmatch-compat/          # Shared-fixture and Java-oracle tooling
+    rustmatch-bench-adapter/   # JSON runner for benchmark containers
+    rustmatch-cli/             # Optional diagnostics and manual use
+  fixtures/
+    semantics/                 # Versioned positive/negative shared cases
+  fuzz/
+    fuzz_targets/
+  benches/
+  docs/
+    adr/
+    architecture/
+    compatibility/
+  README.md
+  LICENSE
+</code></pre>
+<p>Use a Cargo workspace so members share a lockfile, target directory, metadata,
+and lint policy. Keep <code>rustmatch-core</code> unpublished or private until there is a
+real reason to make it an extension surface.</p>
+<p>Bootstrap begins with the independently useful <code>xtask</code> member rather than
+empty production-crate shells. Run the complete local quality gate from the
+repository root:</p>
+<pre><code class="language-sh">cargo xtask ci
+</code></pre>
+<p>Production crates enter the workspace only when the walking spine uses them.
+The live roadmap SVG is regenerated at its stable local path with:</p>
+<pre><code class="language-sh">cargo xtask roadmap
+</code></pre>
+<h3>Required architecture decision records</h3>
+<table><thead><tr><th>ADR</th><th>Decision</th></tr></thead><tbody>
+<tr><td><a href="docs/adr/0001-canonical-utf16-model.html">ADR-0001</a></td><td>Canonical UTF-16 symbol and offset model</td></tr>
+<tr><td><a href="docs/adr/0002-match-event-semantics.html">ADR-0002</a></td><td>Normative match-event selection and ordering exclusions</td></tr>
+<tr><td><a href="docs/adr/0003-minimal-public-api.html">ADR-0003</a></td><td>Public builder, input, and callback API</td></tr>
+<tr><td>ADR-0004</td><td>AST/HIR and Thompson NFA representation</td></tr>
+<tr><td><a href="docs/adr/0005-lazy-determinization.html">ADR-0005</a></td><td>Lazy determinization and cache budget</td></tr>
+<tr><td>ADR-0006</td><td>Assertion context and pay-for-use strategy</td></tr>
+<tr><td>ADR-0007</td><td>Literal prefilter safety contract</td></tr>
+<tr><td>ADR-0008</td><td>Pattern partitioning and failure propagation</td></tr>
+<tr><td>ADR-0009</td><td><code>unsafe</code> admission and review policy</td></tr>
+<tr><td>ADR-0010</td><td>Benchmark adapter and receipt contract</td></tr>
+</tbody></table>
+<hr />
+<h2>Detailed implementation plan</h2>
+<p>This plan uses Alistair Cockburn's use-case style: actors and interests first,
+then goal-level use cases with preconditions, guarantees, a main success
+scenario, and named extensions. The delivery sequence afterward turns those
+use cases into tested increments.</p>
+<h3>System boundary</h3>
+<p>The system under design is the Rust workspace and its public library API. Java
+rmatch is outside the system and acts as a semantic oracle. The benchmark
+repository is outside the system and invokes a rustmatch adapter.</p>
+<h3>Actors</h3>
+<table><thead><tr><th>Actor</th><th>Kind</th><th>Interest</th></tr></thead><tbody>
+<tr><td>Application developer</td><td>Primary human</td><td>Correct, simple many-pattern matching</td></tr>
+<tr><td>Pattern author</td><td>Supporting human</td><td>Clear syntax and useful rejection errors</td></tr>
+<tr><td>Specialized input author</td><td>Supporting human</td><td>Stable minimal input trait</td></tr>
+<tr><td>Benchmark harness</td><td>Primary system</td><td>Repeatable machine-readable runs</td></tr>
+<tr><td>Java rmatch oracle</td><td>Supporting system</td><td>Normative compatibility comparison</td></tr>
+<tr><td>Worker runtime</td><td>Supporting system</td><td>Parallel execution and clean shutdown</td></tr>
+<tr><td>Maintainer</td><td>Primary human</td><td>Safe evolution and measurable performance</td></tr>
+</tbody></table>
+<h3>Use-case catalog by level</h3>
+<p>Cockburn's levels are used informally:</p>
+<ul>
+<li><strong>Cloud:</strong> why the product exists.</li>
+<li><strong>Sea:</strong> user-goal interactions.</li>
+<li><strong>Fish:</strong> subfunctions used by sea-level cases.</li>
+</ul>
+<table><thead><tr><th>ID</th><th>Level</th><th>Goal</th><th>Minimum evidence classes</th></tr></thead><tbody>
+<tr><td>UC-0</td><td>Cloud</td><td>Apply a large reusable rule set to large text efficiently</td><td>E1, E2, E4, E5, E6</td></tr>
+<tr><td>UC-1</td><td>Sea</td><td>Build a matcher from many patterns</td><td>E1, E3, E4, E5, E6</td></tr>
+<tr><td>UC-2</td><td>Sea</td><td>Scan an input and consume matches</td><td>E1, E2, E3, E4, E6</td></tr>
+<tr><td>UC-3</td><td>Sea</td><td>Prove compatibility with Java rmatch</td><td>E1, E2, E3, E6</td></tr>
+<tr><td>UC-4</td><td>Sea</td><td>Run a reproducible cross-engine benchmark</td><td>E1, E3, E4, E6</td></tr>
+<tr><td>UC-5</td><td>Sea</td><td>Configure and run parallel matching</td><td>E1, E2, E3, E4, E6</td></tr>
+<tr><td>UC-6</td><td>Sea</td><td>Supply a custom input implementation</td><td>E1, E3, E5, E6</td></tr>
+<tr><td>UC-7</td><td>Sea</td><td>Diagnose a rejected pattern</td><td>E1, E2, E3, E5, E6</td></tr>
+<tr><td>UC-8</td><td>Fish</td><td>Parse and normalize one pattern</td><td>E3 plus UC-1/UC-7 integration</td></tr>
+<tr><td>UC-9</td><td>Fish</td><td>Compile shared automata</td><td>E3 plus UC-1/UC-2 integration</td></tr>
+<tr><td>UC-10</td><td>Fish</td><td>Evaluate assertions at a position</td><td>E3 plus UC-2/UC-3 integration</td></tr>
+<tr><td>UC-11</td><td>Fish</td><td>Prefilter safe candidate starts</td><td>E3 plus UC-2/UC-4 integration</td></tr>
+<tr><td>UC-12</td><td>Fish</td><td>Track and commit longest matches</td><td>E3 plus UC-2/UC-3 integration</td></tr>
+</tbody></table>
+<h3>Use-case evidence contract</h3>
+<p>A use case is not implemented because the relevant types exist or because a
+reviewer can follow the intended control flow. It is implemented when another
+person can run a stable command against a named revision and inspect durable
+evidence that the main success scenario and important extensions work through
+the system boundary.</p>
+<p>Evidence is classified as follows:</p>
+<table><thead><tr><th>Class</th><th>Evidence</th><th>What it proves</th></tr></thead><tbody>
+<tr><td>E1</td><td>Public end-to-end test</td><td>The actor can achieve the goal through supported API or executable boundaries</td></tr>
+<tr><td>E2</td><td>Differential fixture and normalized result</td><td>Rustmatch agrees with the Java semantic reference</td></tr>
+<tr><td>E3</td><td>Invariant, property, fuzz, or model test</td><td>Internal representations preserve the assumptions on which public behavior depends</td></tr>
+<tr><td>E4</td><td>Benchmark or resource receipt</td><td>A non-functional claim is measured with versions, inputs, hashes, and machine settings</td></tr>
+<tr><td>E5</td><td>Compiled documentation example</td><td>The documented user path is complete and current</td></tr>
+<tr><td>E6</td><td>Negative-path test</td><td>A named extension fails safely and with the promised observable result</td></tr>
+</tbody></table>
+<p>Each evidence item must identify:</p>
+<ul>
+<li>the UC ID and scenario or extension it covers;</li>
+<li>the exact command that reproduces it;</li>
+<li>the fixture and expected result, preferably in a machine-readable form;</li>
+<li>the rustmatch revision and, for differential evidence, Java rmatch version;</li>
+<li>pass/fail criteria that do not require interpreting a debug log;</li>
+<li>the retained output when the claim is non-deterministic or non-functional.</li>
+</ul>
+<p>Evidence placement follows three rules:</p>
+<ol>
+<li>Deterministic fixtures, assertions, and reproduction commands live in this
+repository beside the code they constrain.</li>
+<li>Large performance artifacts and machine-specific receipts live in the
+benchmark repository and link back to the exact rustmatch revision.</li>
+<li>A CI run is a convenient execution record, not the only evidence. The test,
+fixture, expected result, and command must survive after the CI log expires.</li>
+</ol>
+<p>The planned naming convention is:</p>
+<pre><code class="language-text">crates/rustmatch/tests/uc_XX_&lt;goal&gt;.rs
+crates/rustmatch-compat/tests/uc_XX_&lt;goal&gt;.rs
+fixtures/use-cases/uc-XX/&lt;scenario&gt;.json
+</code></pre>
+<p>The workspace should eventually provide one summary command, such as
+<code>cargo xtask evidence</code>, that prints every UC, the evidence items executed, and
+their status. Until that command exists, <code>cargo test --workspace uc_XX</code> is the
+minimum reproducible entry point. Command names may be finalized during the
+executable-spine bootstrap, but every UC must have one before it can be marked
+implemented.</p>
+<h3>UC-0: Apply a large reusable rule set to large text efficiently</h3>
+<p><strong>Scope:</strong> rustmatch product<br />
+<strong>Level:</strong> cloud<br />
+<strong>Primary actor:</strong> application developer</p>
+<p><strong>Stakeholders and interests</strong></p>
+<ul>
+<li>The developer wants correct results and aggregate throughput without
+orchestrating thousands of independent regex scans.</li>
+<li>Operations wants bounded, observable resource use.</li>
+<li>Maintainers want semantics that can be tested independently of the current
+optimization strategy.</li>
+</ul>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>The workload fits the documented regular-language subset.</li>
+<li>Inputs can be represented through the canonical or custom input contract.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>Invalid patterns do not become silently different patterns.</li>
+<li>A failed scan does not corrupt the compiled matcher.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>Every eligible match event is delivered exactly once per registration.</li>
+<li>The matcher can be reused for later inputs.</li>
+<li>Performance and resource characteristics are inspectable through explicit
+diagnostics and external receipts.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>The application has a stable pattern set and one or more inputs to scan.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>The developer registers patterns and identifiers.</li>
+<li>Rustmatch validates and compiles an immutable matcher.</li>
+<li>The developer supplies an input and event sink.</li>
+<li>Rustmatch scans with the configured execution mode.</li>
+<li>The sink receives matches with typed half-open spans.</li>
+<li>Rustmatch returns success and remains reusable.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>2a. A pattern is unsupported: reject it with a source-spanned error; allow
+the builder to continue with corrected input.</li>
+<li>4a. The sink fails: stop according to the documented partition policy and
+return the sink error.</li>
+<li>4b. A resource budget is exhausted: use an exact fallback or return a
+documented build/scan error; never return partial success as complete.</li>
+</ul>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_00_reusable_rule_set</code> builds one matcher through the public API,
+scans at least two different inputs, and asserts the complete event multiset
+for both scans.</li>
+<li><strong>E2:</strong> the same patterns and inputs have Java and Rust normalized JSONL
+outputs with equal hashes after sorting.</li>
+<li><strong>E4:</strong> a retained benchmark receipt demonstrates at least 10,000 patterns
+over a 50 MiB corpus, or a later release plan's explicitly named replacement
+scale, with preparation and scanning measured separately and the expected
+match count validated.</li>
+<li><strong>E6:</strong> one rejected pattern and one sink failure are followed by the
+documented recovery behavior, proving that neither leaves hidden corrupt
+state.</li>
+<li><strong>E5:</strong> a compiled README or rustdoc example performs the complete
+build-scan-consume lifecycle.</li>
+</ul>
+<p><strong>Pass condition:</strong> UC-0 is fully demonstrated only when all five evidence
+items exist for the same released capability level. Before the large-scenario
+receipt exists, the executable spine may mark UC-0 as partially demonstrated,
+not complete.</p>
+<h3>UC-1: Build a matcher from many patterns</h3>
+<p><strong>Scope:</strong> rustmatch library<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> application developer</p>
+<p><strong>Stakeholders and interests</strong></p>
+<ul>
+<li>The developer wants one error to identify the exact bad registration.</li>
+<li>The engine wants immutable, compact, optimization-ready tables.</li>
+<li>The benchmark harness wants preparation time separated from scan time.</li>
+</ul>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>A builder exists and has not been consumed by <code>build</code>.</li>
+<li>Each pattern has a stable identity.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>Failed registration leaves the builder in a documented usable state.</li>
+<li>No partially compiled matcher escapes.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>The returned matcher contains exactly the accepted registrations.</li>
+<li>All automaton and prefilter data are internally consistent and immutable.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>The developer calls <code>build</code> after registration.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Validate builder configuration and worker count.</li>
+<li>Parse every pattern into a source-spanned AST.</li>
+<li>Normalize each AST into HIR and derive static properties.</li>
+<li>Compile HIR fragments into dense NFA tables.</li>
+<li>Join fragments under shared partition starts.</li>
+<li>Intern character classes and terminal pattern sets.</li>
+<li>Derive safe literal hints and start tables.</li>
+<li>Validate internal invariants.</li>
+<li>Return an immutable matcher and build diagnostics.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>2a. Syntax is malformed: return <code>ParseError</code> with pattern ID and span.</li>
+<li>3a. Counted repetition exceeds 1,000: return a bounded-expansion error.</li>
+<li>3b. Pattern is pure zero width: reject it explicitly.</li>
+<li>4a. State count exceeds an implementation limit: return <code>BuildError</code>, not
+wraparound or panic.</li>
+<li>7a. No universally safe literal exists: omit prefiltering for that pattern
+or partition.</li>
+</ul>
+<p><strong>Technology and data variations</strong></p>
+<ul>
+<li>Single partition versus deterministic multi-partition build.</li>
+<li>Owned pattern strings versus borrowed registration followed by owned HIR.</li>
+</ul>
+<p><strong>Frequency:</strong> once per rule-set revision, reused for many scans.</p>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_01_build_many_patterns</code> registers at least three patterns,
+including a shared prefix and equal pattern text under distinct IDs, calls
+<code>build</code>, scans one input, and proves from emitted pattern IDs that every and
+only accepted registration reached the immutable matcher.</li>
+<li><strong>E3:</strong> an invariant test validates dense state IDs, edge ranges, reachable
+terminals, partition ownership, and intern-table references for the built
+database.</li>
+<li><strong>E6:</strong> table-driven cases cover malformed syntax, excessive repetition,
+pure zero-width patterns, state/resource limits, and an unsafe or unavailable
+prefilter hint. Each case asserts the public error variant and builder state
+afterward.</li>
+<li><strong>E4:</strong> the benchmark adapter records preparation time separately from scan
+time and identifies pattern count and matcher revision.</li>
+<li><strong>E5:</strong> a compiled example shows registering more than one pattern and
+consuming the builder exactly once.</li>
+</ul>
+<p><strong>Pass condition:</strong> the UC passes when the public test and invariant test run
+from a clean checkout, every named extension has a machine-checked result, and
+no benchmark receipt folds preparation into scan timing.</p>
+<h3>UC-2: Scan an input and consume matches</h3>
+<p><strong>Scope:</strong> rustmatch library<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> application developer</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>Matcher build succeeded.</li>
+<li>Input satisfies <code>Input</code> and remains stable for the call.</li>
+<li>Sink satisfies the execution mode's thread-safety contract.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>No event outside the input bounds is delivered.</li>
+<li>Sink errors are not swallowed.</li>
+<li>Scratch state is reset before reuse.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>Delivered event multiset satisfies the normative match semantics.</li>
+<li>The matcher can scan another input afterward.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>The developer invokes <code>scan</code>.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Acquire or initialize per-scan scratch storage.</li>
+<li>Read input positions in increasing order.</li>
+<li>Derive assertion context for each position.</li>
+<li>Advance active candidate frontiers.</li>
+<li>Start candidates allowed by start tables and any safe prefilter.</li>
+<li>Update longest terminal ends by pattern and start.</li>
+<li>Commit events whose paths can no longer extend.</li>
+<li>Flush remaining final events at end of input.</li>
+<li>Return scratch storage and report success.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>1a. Scratch allocation fails: return resource failure before scanning.</li>
+<li>2a. Custom input reports an error: return <code>InputError</code> and do not claim a
+complete result.</li>
+<li>5a. Prefilter is unavailable or unsafe: use the unfiltered semantic path.</li>
+<li>7a. Sink fails: stop according to policy and preserve the original error.</li>
+<li>8a. End-of-input satisfies <code>$</code> or a boundary: evaluate terminal context
+before flush.</li>
+</ul>
+<p><strong>Technology and data variations</strong></p>
+<ul>
+<li>Direct ASCII transition table versus non-ASCII range dispatch.</li>
+<li>NFA baseline versus lazy deterministic cache.</li>
+<li>Immediate sink calls versus partition-local collection.</li>
+</ul>
+<p><strong>Frequency:</strong> potentially millions of scans per compiled matcher.</p>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_02_scan_and_consume</code> asserts exact typed spans, pattern IDs, and
+decoded text for literals, overlap, nesting, longest-per-start selection,
+end-of-input acceptance, and repeated scans.</li>
+<li><strong>E2:</strong> shared fixtures produce byte-for-byte equivalent normalized Java and
+Rust event files after sorting.</li>
+<li><strong>E3:</strong> property tests compare the semantic NFA baseline and every enabled
+optimized engine over bounded generated pattern/input sets.</li>
+<li><strong>E6:</strong> custom-input failure, sink failure, disabled/bypassed prefilter, and
+end-of-input assertion paths each have focused tests. A second scan proves
+scratch state was reset after success and after recoverable failure.</li>
+<li><strong>E4:</strong> an allocation receipt or profiler assertion demonstrates zero
+per-symbol heap allocation in steady state once that performance requirement
+becomes active.</li>
+</ul>
+<p><strong>Pass condition:</strong> all expected event multisets and negative-path results are
+machine asserted. Merely observing callbacks in a log is not evidence.</p>
+<h3>UC-3: Prove compatibility with Java rmatch</h3>
+<p><strong>Scope:</strong> compatibility tooling<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> maintainer</p>
+<p><strong>Stakeholders and interests</strong></p>
+<ul>
+<li>Users want "compatible" to have a reproducible meaning.</li>
+<li>Java maintainers want discrepancies to reveal specification ambiguities, not
+merely Rust bugs.</li>
+</ul>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>The Java reference is the Maven Central artifact
+<code>no.rmz:rmatch:2.0.0-RC1</code>, with JAR SHA-256
+<code>05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a</code>.</li>
+<li>The exact rustmatch revision is available.</li>
+<li>A shared fixture has patterns, input, expected acceptance, and coordinate
+mode.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>A harness or process failure is not reported as semantic agreement.</li>
+<li>Input and pattern hashes are retained.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>Both engines accept or reject the same patterns.</li>
+<li>Accepted runs produce identical sorted event multisets.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>CI, a semantic change, fuzz minimization, or release preparation.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Materialize canonical UTF-16 fixture inputs.</li>
+<li>Resolve <code>no.rmz:rmatch:2.0.0-RC1</code> from Maven Central and run the Java
+compatibility oracle in a pinned container/JDK.</li>
+<li>Run rustmatch in a pinned container/toolchain.</li>
+<li>Normalize outputs to <code>(pattern_id, start, end)</code>.</li>
+<li>Sort and compare event multisets.</li>
+<li>Store the fixture, versions, hashes, and result.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>2a/3a. One parser rejects: compare rejection class and fixture expectation.</li>
+<li>5a. Outputs differ: minimize the pattern/input pair and retain a regression
+fixture before changing code.</li>
+<li>5b. Java behavior contradicts the written contract: stop and resolve the
+specification; do not blindly clone an accidental bug.</li>
+</ul>
+<p><strong>Frequency:</strong> every pull request touching parser, compiler, or engine.</p>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E2:</strong> every compatibility run retains a manifest containing fixture ID,
+fixture SHA-256, Java rmatch version, rustmatch revision, coordinate mode,
+parser outcome, event count, sorted-event SHA-256, and comparison status.</li>
+<li><strong>E1:</strong> <code>uc_03_compare_with_java</code> launches both adapters from one command and
+exits zero only when acceptance/rejection and event multisets agree.</li>
+<li><strong>E6:</strong> a deliberately altered expected result proves the comparator fails
+closed; a process crash or malformed adapter output must also produce
+<code>inconclusive/fail</code>, never <code>pass</code>.</li>
+<li><strong>E3:</strong> generated compatible pattern/input cases are compared continuously,
+and every discovered discrepancy is minimized into a deterministic fixture
+before the fix is accepted.</li>
+</ul>
+<p>An acceptable retained manifest should be inspectable without either engine's
+debug output, for example:</p>
+<pre><code class="language-json">{
+  "use_case": "UC-3",
+  "fixture": "overlap-a-plus",
+  "fixture_sha256": "...",
+  "java_rmatch": "2.0.0",
+  "rustmatch_revision": "...",
+  "coordinate_mode": "utf16-code-units",
+  "java_event_sha256": "...",
+  "rust_event_sha256": "...",
+  "comparison": "pass"
+}
+</code></pre>
+<p><strong>Pass condition:</strong> all fixtures in the declared compatibility tier have
+passing manifests. Missing, crashed, skipped, or unparsable runs count as
+absent evidence, not agreement.</p>
+<h3>UC-4: Run a reproducible cross-engine benchmark</h3>
+<p><strong>Scope:</strong> rustmatch adapter plus benchmark repository<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> benchmark harness</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>Scenario fixtures have been generated.</li>
+<li>Container image and engine version are pinned.</li>
+<li>Correctness expectation is known.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>Compile and scan timing are not silently combined.</li>
+<li>A match-count mismatch invalidates timing.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>Runner emits valid JSON metrics.</li>
+<li>Harness archives a receipt with full provenance.</li>
+<li>The result is comparable under the benchmark contract.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>A campaign requests the rustmatch engine lane.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Read pattern TSV and corpus files without changing bytes.</li>
+<li>Build rustmatch outside scan timing.</li>
+<li>Perform configured untimed warm-ups.</li>
+<li>Execute configured timed repetitions.</li>
+<li>Apply equivalent minimal callback work.</li>
+<li>Verify the match count for every iteration.</li>
+<li>Emit preparation time, scans, median, throughput, count, and mode.</li>
+<li>Let the harness enrich and archive the receipt.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>1a. Scenario syntax exceeds the intersection: mark lane incomparable.</li>
+<li>4a. Runtime variance is excessive: retain raw data and rerun; do not cherry
+pick one fast iteration.</li>
+<li>6a. Count differs: fail the run and preserve diagnostics, not a chart point.</li>
+</ul>
+<p><strong>Frequency:</strong> every performance-sensitive change and release candidate.</p>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E4:</strong> a benchmark receipt conforming to the shared receipt schema records
+scenario/generator version, input hashes, engine revision, container image,
+host CPU, worker count, warm-ups, repetitions, preparation time, every scan
+duration, median throughput, expected count, observed count, and validation
+status.</li>
+<li><strong>E1:</strong> <code>uc_04_benchmark_adapter</code> runs a tiny deterministic scenario through
+the packaged adapter and validates its JSON against the schema.</li>
+<li><strong>E6:</strong> fixtures with a wrong expected count, unsupported syntax, and an
+adapter failure are rejected and cannot be archived as chartable results.</li>
+<li><strong>E3:</strong> a receipt-round-trip test proves that archive and plotting tools read
+the emitted values without engine-specific manual editing.</li>
+</ul>
+<p><strong>Pass condition:</strong> the benchmark repository can run and archive the exact
+packaged rustmatch revision using its ordinary engine interface. A console
+throughput number without a validated receipt is not evidence for UC-4.</p>
+<h3>UC-5: Configure and run parallel matching</h3>
+<p><strong>Scope:</strong> rustmatch library<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> systems developer</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>Worker count is positive and supported by available resources.</li>
+<li>Input supports concurrent reads.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>Worker failure cannot deadlock the caller.</li>
+<li>A partially failed scan is not reported as complete success.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>Event multiset equals single-thread execution.</li>
+<li>Worker resources are reclaimed at matcher drop or explicit shutdown.</li>
+</ul>
+<p><strong>Trigger</strong></p>
+<ul>
+<li>Build configuration requests more than one partition.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Deterministically assign registrations to partitions.</li>
+<li>Prepare partition engines.</li>
+<li>Start at most the configured workers for a scan.</li>
+<li>Let each worker scan the same immutable input.</li>
+<li>Deliver to a concurrent sink or gather partition-local results.</li>
+<li>Join all workers.</li>
+<li>Return success if all partitions succeeded.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>3a. Runtime cannot create workers: fail before producing scan events where
+possible.</li>
+<li>4a. One worker fails: signal cancellation, join all workers, and return the
+documented first/aggregate error.</li>
+<li>5a. Sink is not thread-safe: use local collection and merge, or reject that
+execution mode at the type/API boundary.</li>
+</ul>
+<p><strong>Frequency:</strong> common in throughput-oriented deployments.</p>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_05_parallel_equivalence</code> runs the same fixture with worker counts
+1, 2, 3, available parallelism, and at least one oversubscribed value, then
+asserts identical normalized event hashes.</li>
+<li><strong>E2:</strong> at least one parallel fixture also agrees with the Java reference;
+the single-thread Rust result alone is not used as the only oracle.</li>
+<li><strong>E6:</strong> injected worker-start, worker-scan, and sink failures prove that the
+call returns, all started workers are joined, no success is reported, and the
+documented error is preserved. The test has a hard timeout to expose
+deadlocks.</li>
+<li><strong>E3:</strong> repeated build/scan/drop cycles prove that workers and scratch state
+are reclaimed; sanitizer or model-concurrency evidence supplements this when
+available.</li>
+<li><strong>E4:</strong> a retained thread sweep records throughput and memory for every
+tested count rather than retaining only the winner.</li>
+</ul>
+<p><strong>Pass condition:</strong> correctness evidence is identical across configured worker
+counts, every injected failure terminates within the test timeout, and the
+calibrated performance claim links to the complete sweep.</p>
+<h3>UC-6: Supply a custom input implementation</h3>
+<p><strong>Scope:</strong> rustmatch public API<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> specialized input author</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>Input can provide stable UTF-16 symbols by position.</li>
+<li>Its retention and decoding behavior are documented.</li>
+</ul>
+<p><strong>Minimal guarantees</strong></p>
+<ul>
+<li>Rustmatch does not assume a hidden total length.</li>
+<li>Rustmatch does not retain borrowed symbols beyond the scan call.</li>
+</ul>
+<p><strong>Success guarantees</strong></p>
+<ul>
+<li>The custom input produces the same events as materialized text for retained
+content.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Author implements <code>Input</code> and <code>Sync</code> as required.</li>
+<li>Tests compare it with <code>Utf16Text</code> on the same content.</li>
+<li>Matcher scans using positional reads.</li>
+<li>Sink decodes spans within the input's retention contract.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>3a. Input fetch fails: propagate <code>InputError</code>.</li>
+<li>4a. Requested text fell outside a bounded lookback window: decoding fails
+explicitly while span reporting remains meaningful.</li>
+</ul>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_06_custom_input_conformance</code> runs a reusable conformance suite
+against both <code>Utf16Text</code> and a deliberately different test input
+implementation, asserting identical event multisets and decoded text where
+retention permits it.</li>
+<li><strong>E3:</strong> generated chunk boundaries and positional access orders exercise the
+custom implementation without changing results. A concurrent-read test is
+required before the input can be used by parallel matching.</li>
+<li><strong>E6:</strong> fetch failure and expired-lookback decoding produce the documented
+typed errors and never an out-of-bounds panic or silently altered text.</li>
+<li><strong>E5:</strong> rustdoc contains a complete minimal custom <code>Input</code> implementation and
+compiles it as a doctest.</li>
+</ul>
+<p><strong>Pass condition:</strong> an implementation written outside <code>rustmatch-core</code> passes
+the public conformance suite without privileged access to engine internals.
+Testing only the built-in <code>Utf16Text</code> does not demonstrate UC-6.</p>
+<h3>UC-7: Diagnose a rejected pattern</h3>
+<p><strong>Scope:</strong> parser and public error API<br />
+<strong>Level:</strong> sea<br />
+<strong>Primary actor:</strong> pattern author</p>
+<p><strong>Success guarantee</strong></p>
+<ul>
+<li>Error identifies pattern ID, source span, category, and a concise corrective
+message.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Parser encounters malformed or unsupported syntax.</li>
+<li>Parser records the smallest useful source span.</li>
+<li>Public error attaches pattern identity.</li>
+<li>Display output shows the pattern fragment and reason.</li>
+<li>Builder remains usable for correction or additional registrations.</li>
+</ol>
+<p><strong>Examples</strong></p>
+<ul>
+<li><code>a**</code>: second quantifier has no quantifiable atom.</li>
+<li><code>(?i:a)</code>: scoped flags are unsupported.</li>
+<li><code>a{1001}</code>: expansion exceeds the compatibility cap.</li>
+<li><code>^$</code>: pure zero-width match reporting is unsupported.</li>
+</ul>
+<p><strong>Required evidence</strong></p>
+<ul>
+<li><strong>E1:</strong> <code>uc_07_diagnose_rejected_pattern</code> submits a table of malformed and
+unsupported patterns through the public builder and asserts pattern ID,
+typed category, canonical UTF-16 span, mapped UTF-8 display span, and concise
+rendered message.</li>
+<li><strong>E2:</strong> compatibility fixtures compare rejection acceptance/class with Java
+rmatch where the shared contract defines one. Exact prose need not match.</li>
+<li><strong>E6:</strong> after every rejected registration, the same builder accepts a valid
+pattern, builds, and scans successfully.</li>
+<li><strong>E5:</strong> documentation shows one real diagnostic and the corrected pattern.</li>
+<li><strong>E3:</strong> parser fuzzing treats success or a typed diagnostic as valid outcomes
+and treats panic, hang, or unbounded allocation as failure.</li>
+</ul>
+<p><strong>Pass condition:</strong> every documented rejection family has at least one golden
+diagnostic fixture, all spans select the intended source fragment, and builder
+recovery is asserted rather than inferred.</p>
+<h3>Fish-level evidence matrix</h3>
+<p>Fish-level use cases are implementation mechanisms, so their evidence combines
+focused invariants with at least one sea-level path that consumes the result.</p>
+<table><thead><tr><th>UC</th><th>Required focused evidence</th><th>Required integration evidence</th></tr></thead><tbody>
+<tr><td>UC-8: Parse and normalize</td><td>Golden AST/HIR cases, rejection tables, parser fuzz corpus, source-span checks</td><td>At least one UC-1/UC-7 public-builder fixture for every supported construct</td></tr>
+<tr><td>UC-9: Compile shared automata</td><td>Dense-ID and edge-range invariant checker; bounded HIR-versus-NFA property test</td><td>UC-1 builds several patterns and UC-2 scans the resulting database</td></tr>
+<tr><td>UC-10: Evaluate assertions</td><td>Exhaustive context truth tables and assertion-adversary fixtures</td><td>UC-2/UC-3 event equality for anchors and boundaries at input and line edges</td></tr>
+<tr><td>UC-11: Prefilter candidates</td><td>Proof metadata tests and prefilter-on/off event-hash equality</td><td>UC-2 preserves events while UC-4 records candidate reduction and scan cost</td></tr>
+<tr><td>UC-12: Commit longest matches</td><td>Exact overlap/ambiguity fixtures and baseline-versus-optimized property tests</td><td>UC-2/UC-3 agree on the normalized longest-per-pattern/start event multiset</td></tr>
+</tbody></table>
+<p>A fish-level UC is not complete if only its data structure has unit tests. Its
+integration-evidence column must also be satisfied by the named sea-level UC.</p>
+<h3>Delivery strategy</h3>
+<p>Every increment must be vertically executable. Do not build every parser
+feature, then every compiler feature, then discover late that the event model
+is wrong. Each increment starts with an end-to-end failing example and ends
+with a working path from public pattern registration to normalized events.</p>
+<p>The governing sequence is:</p>
+<table><thead><tr><th>Slice</th><th>Added capability</th><th>System that remains running</th></tr></thead><tbody>
+<tr><td>1</td><td>ASCII literals</td><td>Builder, HIR, shared NFA, database, engine, sink, oracle, benchmark smoke</td></tr>
+<tr><td>2</td><td>ASCII predicates</td><td>The same path plus <code>.</code>, classes, ranges, and shorthands</td></tr>
+<tr><td>3</td><td>Composition</td><td>The same path plus alternation and grouping</td></tr>
+<tr><td>4</td><td>Repetition</td><td>The same path plus longest-match tracking for ambiguous lengths</td></tr>
+<tr><td>5</td><td>Full compatibility characters and assertions</td><td>The same path plus UTF-16, flags, anchors, and boundaries</td></tr>
+<tr><td>6+</td><td>Optimization and scale</td><td>The same answers through faster representations and parallel execution</td></tr>
+</tbody></table>
+<p>Internal modules may of course have focused unit tests. They do not count as an
+integrated increment until the executable spine uses them.</p>
+<p>Roadmap IDs are evidence-bearing milestones, not mandatory pull-request units.
+A milestone may need several coherent PRs, and one vertical PR may advance
+several tightly coupled IDs. Splitting work is useful only when every merged
+change leaves a runnable, tested capability or independently useful executable
+tooling. An unused parser, HIR, compiler, or engine skeleton is not an
+integration milestone.</p>
+<p>The recommended bootstrap PR sequence is a starting shape, not a cadence rule:</p>
+<ol>
+<li><strong>Workspace gate:</strong> <code>W0</code> and the first part of <code>C0</code> establish the Cargo
+workspace, pinned toolchain, formatting, Clippy, tests, rustdoc, and one
+root command. This is independently executable infrastructure.</li>
+<li><strong>Compatibility gate:</strong> <code>I0</code> and <code>F0</code> establish the semantic decisions,
+fixture schema, pinned Java oracle, and literal fixtures. The oracle and
+schema checks run end to end.</li>
+<li><strong>Walking-spine gate:</strong> the minimum of <code>A0</code> and <code>I1</code> lands together: one
+public builder, literal registration, real HIR, shared NFA, immutable
+database, scan loop, and observable match callback. One literal over one
+input works through every intended layer.</li>
+<li><strong>Literal-contract gate:</strong> complete <code>I1</code>, <code>B0</code>, <code>E0</code>, <code>C0</code>, and <code>C1</code> by
+adding multiple patterns, overlap and rejection fixtures, benchmark smoke,
+evidence summary, and the coarse performance tripwire.</li>
+</ol>
+<p>This sequence deliberately favors integration over one-PR-per-roadmap-box.
+Completeness grows from the running spine; components become merge candidates
+when that spine uses them, not merely when their local unit tests pass.</p>
+<p>PR cadence is chosen by coherence and integration, not line count or elapsed
+time. Split a change when parts have independent behavior, evidence, review,
+or rollback paths. Keep tightly coupled work together when splitting it would
+merge unused machinery, temporary public API, or a system that does not yet run
+end to end. Draft PRs may expose a larger walking-spine change early for review
+without pretending that every intermediate commit is mergeable.</p>
+<h3>Increment 0: Time-box the semantic charter</h3>
+<p><strong>Purpose:</strong> Remove enough ambiguity to build the spine without turning
+specification work into a long horizontal phase.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Import or mirror the versioned rmatch syntax and semantics document.</li>
+<li>ADR-0001 for UTF-16 symbols and typed offsets.</li>
+<li>ADR-0002 for match event selection.</li>
+<li>Machine-readable fixture schema.</li>
+<li>Java oracle CLI emitting sorted JSONL events and structured rejection data.</li>
+<li>The oracle resolves the exact Maven Central artifact
+<code>no.rmz:rmatch:2.0.0-RC1</code>; it never follows <code>latest</code> or a moving source
+branch.</li>
+<li>A tiny first fixture family for several ASCII literals, overlapping starts,
+duplicate text with distinct pattern IDs, rejection of unsupported syntax,
+and empty input.</li>
+<li>A backlog for later fixtures covering longest match, anchors, boundaries,
+flags, escapes, invalid syntax, and supplementary Unicode code points.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Java oracle fixtures are internally stable across repeated runs.</li>
+<li>Fixture hashes and schema validation run in CI.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>A human can answer exactly what literal patterns <code>a</code> and <code>aa</code> report over
+<code>aaa</code>.</li>
+<li>ASCII offset and event identity are unambiguous.</li>
+<li>Work can begin on the executable spine without an unresolved public API
+boundary.</li>
+</ul>
+<h3>Increment 1: Executable ASCII-literal spine</h3>
+<p><strong>Purpose:</strong> Establish the real end-to-end architecture with the smallest useful
+language.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Cargo workspace with resolver and workspace lints.</li>
+<li><code>rustmatch</code>, <code>rustmatch-core</code>, <code>rustmatch-compat</code>, and benchmark-adapter
+crates.</li>
+<li>Required pull-request CI for formatting, Clippy, workspace compilation,
+focused unit tests, public end-to-end tests, differential smoke fixtures,
+rustdoc, Rust <code>1.85.0</code> MSRV, and license checks. Primary checks use the pinned
+Rust <code>1.97.0</code> bootstrap toolchain.</li>
+<li>A coarse same-runner base/PR performance tripwire calibrated to catch severe
+anomalies without pretending to replace stable-machine measurements.</li>
+<li>Public builder that accepts non-empty 7-bit ASCII literal patterns and
+rejects every unsupported construct explicitly.</li>
+<li><code>Utf16Text</code>, typed spans, pattern IDs, and a collecting sink.</li>
+<li>Minimal AST/HIR with a literal node and source span.</li>
+<li>Real Thompson literal fragments joined under a shared synthetic start.</li>
+<li>Dense state IDs, contiguous edge/terminal storage, and an immutable pattern
+database.</li>
+<li>Production-shaped forward scan loop with reusable scratch state and a match
+event sink. No substring-search shortcut is permitted.</li>
+<li>Java-oracle adapter and benchmark-runner smoke lane using literal fixtures.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Prepare / Test / Assert structure in focused tests.</li>
+<li>Several patterns in one database, literal overlap, and duplicate-ID policy.</li>
+<li>Empty input, pattern-not-present, input shorter than pattern, and a match at
+the final input position.</li>
+<li>Unsupported metacharacters and non-ASCII pattern/input fail clearly while
+those restrictions remain.</li>
+<li>Internal NFA/database invariants: valid dense IDs, reachable terminals, and
+no dangling edge ranges.</li>
+<li>Rust output equals the Java oracle's normalized event multiset.</li>
+<li>Benchmark runner validates match counts before retaining a smoke timing.</li>
+<li>The required PR workflow is exercised on the branch and every functional job
+is green; an intentionally failing fixture proves the workflow blocks.</li>
+<li>The CI performance tripwire detects an intentionally catastrophic slow path
+but tolerates ordinary hosted-runner noise under its calibrated policy.</li>
+<li>Public rustdoc example compiled as a test.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>One command runs the complete workspace gate.</li>
+<li>The public API compiles several literal patterns into shared NFA machinery,
+scans an input, and emits Java-compatible events.</li>
+<li>The same packaged runner can enter the benchmark harness, even though its
+performance is not yet interesting.</li>
+<li>Deleting any one of parser, HIR, compiler, database, engine, or sink breaks an
+end-to-end test. None is a disconnected placeholder.</li>
+<li>No benchmark performance claim is made.</li>
+</ul>
+<h3>Increment 2: ASCII predicates through the spine</h3>
+<p><strong>Purpose:</strong> Prove that the spine can grow beyond literal strings without
+changing its boundaries.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Extend parser and HIR with <code>.</code>, positive and negated character classes,
+ranges, and ASCII <code>\d</code>, <code>\w</code>, <code>\s</code> plus complements.</li>
+<li>Interned ASCII character predicates compiled into consuming NFA edges.</li>
+<li>Direct ASCII predicate representation suitable for later indexed
+transitions.</li>
+<li>Keep alternation, grouping, repetition, flags, assertions, and non-ASCII
+explicitly rejected.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Table-driven positive and negative predicate syntax matrix.</li>
+<li>Exhaustive 128-value checks for every ASCII shorthand and complement.</li>
+<li>Character-class range, negation, escape, and malformed-class boundaries.</li>
+<li>Parser fuzz target that may return success or typed error but never panic.</li>
+<li>Every predicate fixture runs through public builder, NFA compiler, engine,
+sink, and Java differential comparator.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>Predicate acceptance and match events agree with Java for the new slice.</li>
+<li>Literal behavior and benchmark smoke remain unchanged.</li>
+</ul>
+<h3>Increment 3: Alternation and grouping through the spine</h3>
+<p><strong>Purpose:</strong> Add branching composition while retaining the same compiler and
+engine model.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Extend parser and HIR with alternation, capturing-syntax grouping without
+capture semantics, and <code>(?:...)</code>.</li>
+<li>Add epsilon edges and closure to the existing NFA representation.</li>
+<li>Flatten safe nested concatenations/alternations during normalization.</li>
+<li>Compute nullable and minimum consumed length, while continuing to reject
+pure zero-width patterns.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Alternation at pattern edges and inside nested groups.</li>
+<li>Empty alternatives according to the Java contract.</li>
+<li>Multiple patterns sharing literal prefixes but diverging through branches.</li>
+<li>Graph and epsilon-closure invariants.</li>
+<li>Property test comparing the NFA with a tiny HIR interpreter for bounded
+generated ASCII patterns and inputs.</li>
+<li>Public end-to-end differential fixtures for every new composition shape.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>All literal, predicate, alternation, and grouping fixtures pass through the
+same NFA baseline.</li>
+<li>Compiler has no public node types.</li>
+</ul>
+<h3>Increment 4: Repetition and general longest-match execution</h3>
+<p><strong>Purpose:</strong> Add variable-length paths and fully exercise rmatch's
+distinguishing reporting semantics.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Extend parser, HIR, and fragment compiler with <code>?</code>, <code>*</code>, <code>+</code>, <code>{m}</code>,
+<code>{m,n}</code>, and <code>{m,}</code>.</li>
+<li>Bind every quantifier to the preceding atom.</li>
+<li>Enforce the 1,000-repetition compatibility cap.</li>
+<li>Generalize the spine's candidate frontier and terminal tracking to retain the
+longest end for each pattern and start.</li>
+<li>Commit only when a candidate cannot extend, then reuse its storage.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li><code>a+</code> over <code>aaa</code> exact event set.</li>
+<li>Same-start independent patterns.</li>
+<li>Nested and overlapping matches.</li>
+<li>Ambiguous alternation with different accepting lengths.</li>
+<li>Quantifier-binding regressions such as <code>ab?</code>.</li>
+<li>Bounded generated-pattern differential tests.</li>
+<li>Repeated scans and recovery after rejected registrations or unsupported
+inputs. A fallible sink remains deferred with the corresponding public API.</li>
+</ul>
+<p><strong>Performance checks</strong></p>
+<ul>
+<li>Code inspection confirms that scan-local frontiers, closure storage, and
+terminal tracking are preallocated before symbol iteration; the repository
+performance tripwire guards against catastrophic regression.</li>
+<li>Record baseline throughput without setting a release promise.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>Event multisets agree with Java for the complete ASCII consuming-language
+slice.</li>
+</ul>
+<h3>Increment 5: Assertions and exact character behavior</h3>
+<p><strong>Purpose:</strong> Complete semantic parity.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Lift the temporary ASCII-only pattern and input restriction to canonical
+UTF-16 code units without changing public span types.</li>
+<li>Extend escapes and character predicates to the complete documented
+compatibility surface.</li>
+<li>Add prefix <code>(?i)</code> and <code>(?s)</code> handling plus the typed case-insensitive flag.</li>
+<li>Assertion edges for beginning/end of line and word/non-word boundary.</li>
+<li>Context classification using adjacent UTF-16 code units.</li>
+<li>Context-sensitive epsilon closure only where required.</li>
+<li>Exact ASCII shorthand classes.</li>
+<li>Verified Java-compatible single-code-unit case folding.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Assertions at input edges, line edges, alternations, and groups.</li>
+<li>Adversarial cases where one alternative fails an assertion and another
+remains valid.</li>
+<li>Exhaustive ASCII shorthand and boundary table.</li>
+<li>Exhaustive 65,536-code-unit folding comparison with a generated Java oracle.</li>
+<li>Assertion-free benchmark verifies pay-for-use isolation.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>Entire shared semantic suite passes.</li>
+<li>No assertion-related post-hoc match killing exists.</li>
+</ul>
+<h3>Increment 6: Lazy deterministic-state cache</h3>
+<p><strong>Purpose:</strong> Improve locality and avoid repeatedly interpreting NFA edges.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Canonical state-set representation prototypes.</li>
+<li>On-demand transition materialization.</li>
+<li>Direct ASCII transition path.</li>
+<li>Cache statistics and configurable budget.</li>
+<li>Exact NFA fallback on budget pressure.</li>
+</ul>
+<p><strong>Experiment sequence</strong></p>
+<ol>
+<li>Sorted <code>Vec&lt;StateId&gt;</code> key.</li>
+<li>Dense bitset for state counts where it wins.</li>
+<li>Hybrid small-vector/bitset if measurements justify complexity.</li>
+<li>Hashing and interning strategy comparison.</li>
+</ol>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Every optimized run compared with NFA baseline output.</li>
+<li>Forced tiny cache budgets and eviction/fallback.</li>
+<li>Context-sensitive and context-free key separation.</li>
+<li>Property tests across random pattern/input sets.</li>
+</ul>
+<p><strong>Performance gate</strong></p>
+<ul>
+<li>Treat Java's successful state-cache representations only as candidates.
+Predeclare Rust workloads, baseline, metric, noise threshold, and acceptable
+build-time/memory trade before selecting a representation.</li>
+<li>Merge only a representation whose Rust receipts show a positive scan
+improvement beyond noise without an unaccepted material regression in build
+time, memory, or another representative scenario.</li>
+<li>If every prototype is neutral or slower, keep the semantic NFA engine and
+record the failed experiment rather than merging optimization-shaped code.</li>
+</ul>
+<h3>Increment 7: Safe start acceleration and literal prefilter</h3>
+<p><strong>Purpose:</strong> Avoid starting work where a match is impossible.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>One- and two-symbol start tables.</li>
+<li>Necessary-literal extractor with proof metadata.</li>
+<li>Compact native three-/four-/five-unit prefix-membership filter; collisions
+admit extra candidates and never remove a possible match.</li>
+<li>Candidate-position and pattern mapping.</li>
+<li>Automatic bypass for assertions or patterns without safe hints.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Prefilter on/off differential suite.</li>
+<li>Patterns where a tempting literal is not actually necessary.</li>
+<li>Alternation, optional prefix, repetition, and case-folding adversaries.</li>
+<li>Corpus ending inside a literal.</li>
+<li>Mixed filterable/unfilterable pattern sets.</li>
+<li>Deterministic generated pattern families compared with the complete
+all-start reference path.</li>
+</ul>
+<p><strong>Performance gate</strong></p>
+<ul>
+<li>Java prefilter behavior provides hypotheses, not an activation threshold for
+Rust. Measure Rust activation thresholds across pattern counts, expression
+families, match densities, and corpus sizes.</li>
+<li>A prefilter that helps 10,000 literals but harms mixed 1,000-pattern cases is
+activated selectively, not universally.</li>
+<li>Prefiltering enters the production path only when on/off receipts show a
+positive improvement beyond noise in its declared activation region and no
+correctness difference. Otherwise the prototype is removed or remains a
+non-production experiment.</li>
+<li><code>scripts/i7-focused-campaign.sh</code> runs the frozen generated scenarios, while
+<code>scripts/i7-wuthering-campaign.sh</code> runs the 1,000/5,000/10,000-pattern
+Wuthering line, verifies native binaries, retains JSON, and renders HTML.</li>
+<li>The <code>C2</code> GitHub Actions job fails the workflow on a severe regression and
+remains a deliberately broad smoke alarm. It cannot replace the native
+3-warmup/7-measurement admission run or the required critical interpretation
+of its results.</li>
+<li>The accepted implementation, raw receipts, rejected prototypes, resource
+accounting, and critical profile interpretation are retained in the
+<a href="docs/evidence/i7/37f6981/README.html"><code>I7 evidence package</code></a>.</li>
+</ul>
+<h3>Increment 8: Parallel pattern partitions</h3>
+<p><strong>Purpose:</strong> Expose scalable throughput without changing results.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Explicit worker/partition configuration.</li>
+<li>Deterministic partition assignment.</li>
+<li>Worker runtime and clean teardown.</li>
+<li>Defined spawn, panic, callback, and teardown behavior.</li>
+<li>Partition-local collection with explicit event-buffer accounting.</li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul>
+<li>Event multiset equality for worker counts 1, 2, 3, CPU count, and oversubscribed
+values.</li>
+<li>Spawn and worker-panic failure paths, plus caller-thread callback panic.</li>
+<li>Repeated creation/drop to detect worker leaks.</li>
+<li>Thread sanitizer or Loom-style model tests where practical.</li>
+</ul>
+<p><strong>Performance gate</strong></p>
+<ul>
+<li>Run scenario-specific thread sweeps; never assume core count or 1.5 times
+core count is universally optimal.</li>
+<li>Record memory bandwidth saturation and compile-memory cost.</li>
+<li>Complete this increment only when at least one declared throughput workload
+improves beyond noise over the single-worker Rust baseline and no worker
+count changes the event multiset.</li>
+<li>Derive any default heuristic from Rust receipts. Java's heuristic may be a
+sweep candidate, but cannot satisfy this gate.</li>
+<li>The frozen execution contract and thresholds are in
+<a href="docs/experiments/i8-parallel-partitions.html"><code>docs/experiments/i8-parallel-partitions.md</code></a>.</li>
+<li>The accepted implementation, raw receipts, resource accounting, rejected
+prototype, and critical profile interpretation are retained in the
+<a href="docs/evidence/i8/ef61173/README.html"><code>I8 evidence package</code></a>.</li>
+</ul>
+<h3>Increment 9: Benchmark harness integration</h3>
+<p><strong>Purpose:</strong> Make rustmatch a first-class cross-engine lane.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Minimal benchmark runner binary.</li>
+<li>Container image pinned to Rust toolchain and crate/Git version.</li>
+<li>Make targets or harness commands parallel to existing engines.</li>
+<li>Receipt parser support for rustmatch.</li>
+<li>Single-thread and calibrated-throughput lanes.</li>
+</ul>
+<p><strong>Campaigns</strong></p>
+<ul>
+<li>Pattern counts: 1,000, 2,500, 5,000, 7,500, 10,000.</li>
+<li>Corpus sizes: 8 MiB and 50 MiB.</li>
+<li>Families: diverse literals and the validated mixed-regex intersection.</li>
+<li>Match densities: zero, sparse, and denser controlled cases.</li>
+<li>Modes: NFA baseline, optimized single-thread, and calibrated parallel.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>Every retained rustmatch receipt passes expected match count.</li>
+<li>Plots can include rustmatch without a one-off data conversion.</li>
+<li>Exact worker counts and engine version are available in the campaign record.</li>
+<li>The frozen integration and receipt contract is in
+<a href="docs/experiments/i9-benchmark-harness.html"><code>docs/experiments/i9-benchmark-harness.md</code></a>.</li>
+<li>The exact-commit container, strict outer validation, six correctness-clean
+smoke receipts, ordinary generated plot, and critical interpretation are
+retained in the <a href="docs/evidence/i9/fdd5efa/README.html"><code>I9 evidence package</code></a>.</li>
+</ul>
+<p>I9 proves that rustmatch is a first-class harness lane. The broader pattern,
+corpus, density, engine, and worker sweep above is the separate B1 evidence
+campaign; completing I9 does not claim those comparative results in advance.
+Its semantics, matrix, cache-pressure control, worker sweeps, profiling rules,
+and CI boundary are frozen in the
+<a href="docs/experiments/b1-cross-engine-campaign.html"><code>B1 cross-engine campaign protocol</code></a>.</p>
+<h3>Post-B1: full-dataset analysis and Rustmatch admission</h3>
+<p><strong>Purpose:</strong> Understand the complete evidence before turning any observation
+into a Rust-native optimization experiment.</p>
+<p>After B1, B2 first audits evidence integrity, then analyzes every valid workload
+quantitatively and automatically. A qualitative pass relates scaling regimes,
+cliffs, crossovers, anomalies, and competitor results to plausible mechanisms
+and alternatives. Only after that review may a ranked hypothesis registry
+authorize bounded experiments. G9 then compares each candidate with the exact
+Rustmatch production revision frozen before implementation.</p>
+<p>The candidate must preserve results, improve existing Rustmatch beyond a
+predeclared noise threshold on its target workloads, and avoid an unacceptable
+broader regression. Improvements outside the original target are welcome.
+RegexSet parity is neither required nor sufficient. The complete workflow and
+exit criteria are in the
+<a href="docs/experiments/b2-competitor-win-optimization.html"><code>B2/G9 protocol</code></a>.
+The versioned
+<a href="docs/optimization-decision-policy.html"><code>G9-v2</code> decision policy</a> automatically
+vetoes admission for any repeatable guard regression above 3%, classifies a
+demonstrated regression above 2% through 3% as <code>investigate</code>, normally asks
+optimization complexity to earn at least a 5% target gain, and retains a lab
+note for every merged, investigated, rejected, or inconclusive attempt. An
+investigation admits no code and does not advance the baseline.
+The retained campaign, automatic analysis, qualitative-review, and
+hypothesis-authorization artifacts are produced by the
+<a href="https://github.com/la3lma/rmatch-performance-measurements/blob/main/docs/b2-analysis.md"><code>rmatch-performance-measurements</code> B2 workflow</a>.
+An optimization branch must bind the exact benchmark commit,
+<code>review-manifest.json</code> SHA-256, and an ID explicitly listed in
+<code>authorized_hypotheses</code>; a general claim that B2 was reviewed is not enough.</p>
+<h3>Increment 10: Hardening</h3>
+<p><strong>Purpose:</strong> Turn a promising engine into a dependable library.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Property tests expanded beyond parser grammar.</li>
+<li>Fuzz targets for parser, compiler, scan, and oracle differential behavior.</li>
+<li>Miri lane for core tests.</li>
+<li>Dependency audit and license report.</li>
+<li>Memory and cache-budget soak tests.</li>
+<li>Panic policy audit.</li>
+<li>Complete public rustdoc and examples.</li>
+</ul>
+<p><strong>Adversarial families</strong></p>
+<ul>
+<li>Deeply nested groups up to a configured parser limit.</li>
+<li>Alternation and repetition combinations aimed at state growth.</li>
+<li>Long common prefixes and suffixes.</li>
+<li>Assertion-dense patterns.</li>
+<li>All-invalid and mixed-validity registrations.</li>
+<li>Supplementary Unicode and unmatched surrogate code units in raw UTF-16
+inputs.</li>
+<li>Sink failure after zero, one, and many delivered events.</li>
+</ul>
+<p><strong>Exit criteria</strong></p>
+<ul>
+<li>No known correctness discrepancy is waived as "just an edge case."</li>
+<li>Every resource limit fails explicitly.</li>
+</ul>
+<h3>Increment 11: Release preparation</h3>
+<p><strong>Purpose:</strong> Publish only what the project can support.</p>
+<p><strong>Deliverables</strong></p>
+<ul>
+<li>Compatibility matrix naming Java rmatch reference version.</li>
+<li>Stable API review and public-surface audit.</li>
+<li>MSRV declaration and CI lane.</li>
+<li>SemVer and deprecation policy.</li>
+<li>Changelog and migration notes.</li>
+<li>crates.io name and ownership verification.</li>
+<li>Reproducible package contents via <code>cargo package --list</code>.</li>
+<li>Signed tag and GitHub release.</li>
+<li>Benchmark campaign for the exact release artifact.</li>
+</ul>
+<p><strong>Release gate</strong></p>
+<ul>
+<li>The packaged crate, not merely the worktree, passes unit, semantic,
+integration, rustdoc, and benchmark smoke tests.</li>
+<li>Documentation describes limitations as prominently as strengths.</li>
+</ul>
+<h3>Pull-request protocol</h3>
+<p>Every behavior or performance change should follow this sequence:</p>
+<ol>
+<li><strong>Classify:</strong> identify the change as semantic functionality, performance
+optimization, or a mixture of both.</li>
+<li><strong>Prepare:</strong> add or identify a failing fixture, property, or benchmark.</li>
+<li><strong>Predeclare:</strong> state the expected event multiset; for an optimization also
+state the exact existing Rustmatch baseline, target workloads, metric, noise
+threshold, and unacceptable regressions before implementation.</li>
+<li><strong>Test:</strong> run the smallest focused test, then the full semantic suite.</li>
+<li>Implement the smallest coherent change.</li>
+<li>Run format, Clippy, tests, rustdoc, and fuzz smoke lanes.</li>
+<li>For hot-path changes, run the benchmark regression campaign on the
+designated machine.</li>
+<li>Compare complete receipts, not console impressions or selected fast runs.</li>
+<li>Update ADRs and this plan when architecture changes.</li>
+</ol>
+<p>Performance work must include correctness evidence and a positive Rust result
+beyond the predeclared noise threshold. Neutral or inconclusive performance is
+a failed optimization result. Semantic work that touches the hot path must
+include non-regression evidence, but semantic value does not have to masquerade
+as a speed improvement.</p>
+<p>No pull request may merge with a failed or missing required functional CI job.
+The coarse CI performance tripwire may also block pending investigation, but a
+green tripwire is never substituted for the external receipts required from a
+performance-sensitive change.</p>
+<h3>Definition of done for an implementation task</h3>
+<ul>
+<li>Public behavior is documented.</li>
+<li>At least one test exercises the capability through the public builder,
+compiled database, scan engine, and observable match/error result. A unit
+test of one horizontal layer is not sufficient by itself.</li>
+<li>Every affected UC's evidence bundle is updated with the fixture, reproduction
+command, and machine-checked pass condition; new evidence is not left only in
+a pull-request description or CI log.</li>
+<li>Focused tests use explicit Prepare / Test / Assert comments where that makes
+multi-stage intent easier to review.</li>
+<li>Differential fixtures exist when Java compatibility is relevant.</li>
+<li>Error behavior is tested, not inferred.</li>
+<li>No new public item exists without rustdoc.</li>
+<li>No new dependency exists without rationale and license/MSRV review.</li>
+<li>No <code>unsafe</code> exists without a local safety argument and benchmark receipt.</li>
+<li>Full workspace gate passes.</li>
+<li>Every required pull-request CI job is green for the final revision.</li>
+<li>Performance-sensitive changes pass the agreed regression threshold.</li>
+<li>Performance-sensitive changes carry the required external base/candidate
+receipts from the designated stable machine; the CI tripwire is only
+supplementary evidence.</li>
+<li>A change proposed as an optimization has a retained existing-Rustmatch
+baseline/candidate comparison showing a positive improvement beyond noise.
+Competitor evidence alone, or merely avoiding a regression, does not satisfy
+this item.</li>
+</ul>
+<h3>Bootstrap execution sequence</h3>
+<p>This sequence records dependencies and intended progression, not a permanent
+priority queue. The roadmap marks every dependency-unblocked task yellow. When
+more than one task is yellow, the task to start is chosen separately from that
+available set based on current value, risk, evidence needs, and capacity.</p>
+<ol>
+<li>Review and approve the UTF-16 compatibility model.</li>
+<li>Define the versioned fixture schema and Java-oracle JSONL protocol for the
+tiny ASCII-literal slice.</li>
+<li>Create the Cargo workspace and public spine API.</li>
+<li>Implement ASCII literals through the real HIR, shared dense NFA, immutable
+database, scan loop, and match sink.</li>
+<li>Put the packaged executable spine through the benchmark harness's
+correctness gate and retain a smoke receipt without making a performance
+claim.</li>
+<li>Grow one vertical syntax slice at a time while keeping all earlier
+end-to-end fixtures green.</li>
+</ol>
+<hr />
+<h2>Relationship to Java rmatch</h2>
+<p>Java rmatch remains an independent implementation and the initial behavioral
+reference. Rustmatch should credit its concepts and lessons while avoiding two
+bad outcomes:</p>
+<ul>
+<li>copying internal Java artifacts that Rust does not need;</li>
+<li>changing observable semantics merely because a different behavior is easier
+in Rust.</li>
+</ul>
+<p>When the written contract, Java behavior, and a sensible Rust design disagree,
+the disagreement must become an explicit specification decision and regression
+fixture. Compatibility is a maintained relationship, not a one-time porting
+milestone.</p>
+<h3>Pinned initial Java reference</h3>
+<p>The initial compatibility oracle is locked to the published Maven Central
+artifact
+<a href="https://central.sonatype.com/artifact/no.rmz/rmatch/2.0.0-RC1"><code>no.rmz:rmatch:2.0.0-RC1</code></a>,
+whose JAR SHA-256 is
+<code>05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a</code>.
+Project discussion may shorten this to "2.0-RC1", but manifests and commands
+must use the exact Maven version <code>2.0.0-RC1</code>.</p>
+<p>This is a reproducibility lock, not a claim that the artifact is eternally
+normative. Changing the reference requires an explicit reviewed change,
+retained old-version evidence where it remains relevant, and regeneration of
+affected differential fixtures. The oracle must not silently track Maven
+Central's <code>latest</code> version or a source branch.</p>
+<h2>License</h2>
+<p>Copyright 2026 Bjorn Remseth.</p>
+<p>Licensed under the <a href="../../../LICENSE">Apache License, Version 2.0</a>.</p>
+</main><footer>Generated from <code>README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

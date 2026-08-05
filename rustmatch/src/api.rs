@@ -12,6 +12,7 @@ use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
 use crate::parser;
 use crate::prefilter::Prefilter;
+use crate::shared_candidate::{self, SharedCandidate};
 use crate::{Error, Match, PatternFlags, PatternId, Utf16Text};
 
 /// Collects and validates patterns before compiling an immutable matcher.
@@ -111,8 +112,10 @@ impl MatcherBuilder {
     /// # Errors
     ///
     /// Returns [`Error::DuplicatePatternId`] if `pattern_id` is already used,
-    /// [`Error::InvalidPattern`] for malformed syntax, or another pattern error
-    /// if `pattern` is empty or outside the current syntax.
+    /// [`Error::InvalidPattern`] for malformed syntax,
+    /// [`Error::PatternNestingTooDeep`] beyond the documented group limit, or
+    /// another pattern error if `pattern` is empty or outside the current
+    /// syntax.
     pub fn add(&mut self, pattern_id: PatternId, pattern: &str) -> Result<(), Error> {
         self.add_with_flags(pattern_id, pattern, PatternFlags::NONE)
     }
@@ -485,6 +488,7 @@ impl Matcher {
         BeforeScan: Fn(usize) + Sync,
     {
         debug_assert!(self.partitions.len() > 1);
+        let shared_plan = self.shared_candidate_plan(input)?;
         thread::scope(|scope| {
             let mut handles = Vec::with_capacity(self.partitions.len() - 1);
             let mut spawn_error = None;
@@ -493,16 +497,22 @@ impl Matcher {
                     spawn_error = Some(error);
                     break;
                 }
+                let shared = shared_plan
+                    .as_ref()
+                    .map(|plan| plan.partition(partition_index));
                 let worker = thread::Builder::new()
                     .name(format!("rustmatch-worker-{partition_index}"))
                     .spawn_scoped(scope, move || {
                         before_scan(partition_index);
-                        scan_partition(
-                            partition,
-                            input,
-                            self.prefilter_enabled,
-                            self.literal_prefilter_enabled,
-                        )
+                        match shared {
+                            Some(shared) => scan_partition_shared(partition, input, shared),
+                            None => scan_partition(
+                                partition,
+                                input,
+                                self.prefilter_enabled,
+                                self.literal_prefilter_enabled,
+                            ),
+                        }
                     });
                 if let Ok(handle) = worker {
                     handles.push((partition_index, handle));
@@ -514,12 +524,15 @@ impl Matcher {
 
             let caller_result = if spawn_error.is_none() {
                 before_scan(0);
-                Some(scan_partition(
-                    &self.partitions[0],
-                    input,
-                    self.prefilter_enabled,
-                    self.literal_prefilter_enabled,
-                ))
+                Some(match shared_plan.as_ref().map(|plan| plan.partition(0)) {
+                    Some(shared) => scan_partition_shared(&self.partitions[0], input, shared),
+                    None => scan_partition(
+                        &self.partitions[0],
+                        input,
+                        self.prefilter_enabled,
+                        self.literal_prefilter_enabled,
+                    ),
+                })
             } else {
                 None
             };
@@ -561,6 +574,31 @@ impl Matcher {
                 .collect::<Vec<_>>();
             Ok(ParallelScanOutput::new(partitions))
         })
+    }
+
+    fn shared_candidate_plan(
+        &self,
+        input: &Utf16Text,
+    ) -> Result<Option<shared_candidate::SharedCandidatePlan>, Error> {
+        if !shared_candidate::is_eligible(
+            self.partitions.len(),
+            input.units().len(),
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+        ) {
+            return Ok(None);
+        }
+        let prefilters = self
+            .partitions
+            .iter()
+            .map(|partition| &partition.prefilter)
+            .collect::<Vec<_>>();
+        shared_candidate::plan(
+            &prefilters,
+            input.units(),
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+        )
     }
 
     #[cfg(feature = "benchmark-internals")]
@@ -681,6 +719,38 @@ fn scan_partition(
     })
 }
 
+fn scan_partition_shared(
+    partition: &MatcherPartition,
+    input: &Utf16Text,
+    shared: SharedCandidate<'_>,
+) -> Result<PartitionScanOutput, Error> {
+    let mut events = Vec::new();
+    #[cfg(feature = "benchmark-internals")]
+    let stats = engine::scan_with_shared_candidates_and_stats(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        shared,
+        |matched| events.push(matched),
+    )?;
+    #[cfg(not(feature = "benchmark-internals"))]
+    engine::scan_with_shared_candidates_and_stats(
+        &partition.database,
+        &partition.prefilter,
+        input,
+        partition.state_cache_budget,
+        shared,
+        |matched| events.push(matched),
+    )
+    .map(|_| ())?;
+    Ok(PartitionScanOutput {
+        events,
+        #[cfg(feature = "benchmark-internals")]
+        stats,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -781,6 +851,27 @@ mod tests {
     }
 
     #[test]
+    fn shared_parallel_candidates_match_the_private_path() -> Result<(), Error> {
+        // Prepare
+        let single = literal_test_matcher(1)?;
+        let parallel = literal_test_matcher(2)?;
+        let mut units = vec![u16::from(b'x'); 1024 * 1024];
+        place(&mut units, 128, "left0255needle");
+        place(&mut units, 65_664, "right0511needle");
+        place(&mut units, 131_200, "left9999near-miss");
+        let input = Utf16Text::from_units(units);
+
+        // Test
+        let single_events = collect_events(&single, &input)?;
+        let parallel_events = collect_events(&parallel, &input)?;
+
+        // Assert
+        assert_eq!(parallel_events, single_events);
+        assert_eq!(parallel_events, [(255, 128, 142), (511, 65_664, 65_679)]);
+        Ok(())
+    }
+
+    #[test]
     fn matcher_is_send_and_sync() {
         // Prepare / Test
         fn assert_send_sync<T: Send + Sync>() {}
@@ -796,5 +887,36 @@ mod tests {
         builder.add(PatternId::new(2), "two")?;
         builder.add(PatternId::new(3), "three")?;
         builder.build()
+    }
+
+    fn literal_test_matcher(worker_count: usize) -> Result<Matcher, Error> {
+        let mut builder = MatcherBuilder::new();
+        builder.worker_count(worker_count);
+        for ordinal in 0..512_u32 {
+            let prefix = if ordinal < 256 { "left" } else { "right" };
+            builder.add(
+                PatternId::new(ordinal),
+                &format!("{prefix}{ordinal:04}needle"),
+            )?;
+        }
+        builder.build()
+    }
+
+    fn collect_events(matcher: &Matcher, input: &Utf16Text) -> Result<Vec<(u32, u64, u64)>, Error> {
+        let mut events = Vec::new();
+        matcher.scan(input, |matched| {
+            events.push((
+                matched.pattern_id().get(),
+                matched.span().start(),
+                matched.span().end(),
+            ));
+        })?;
+        events.sort_unstable();
+        Ok(events)
+    }
+
+    fn place(input: &mut [u16], start: usize, text: &str) {
+        let encoded = text.encode_utf16().collect::<Vec<_>>();
+        input[start..start + encoded.len()].copy_from_slice(&encoded);
     }
 }

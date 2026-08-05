@@ -1,0 +1,265 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contributing to rustmatch · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../index.html">rustmatch evidence</a><div><a href="../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../index.html">HTML universe</a><a href="../../../CONTRIBUTING.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">CONTRIBUTING.md</div></header><main><h1>Contributing to rustmatch</h1>
+<p>This document is the durable policy for roadmap task <strong>Q0: Documentation and
+Rust hygiene</strong>. The repository is still in design, so some commands below will
+become executable with the Cargo workspace in increment I1. The standards apply
+as soon as their corresponding files exist.</p>
+<p>Before contributing, read the <a href="CODE_OF_CONDUCT.html">Code of Conduct</a> and the
+<a href="GOVERNANCE.html">governance model</a>. Search the
+<a href="https://github.com/la3lma/rustmatch/issues">issue tracker</a> and the
+<a href="docs/roadmap.html">roadmap</a>, then use the issue form that matches the work.
+Security vulnerabilities and conduct concerns must use the private channels in
+<a href="SECURITY.html">SECURITY.md</a> and <a href="CODE_OF_CONDUCT.html">CODE_OF_CONDUCT.md</a>, not a
+public issue.</p>
+<p>Contributions are accepted under the repository's Apache License 2.0. The
+project does not currently require a separate contributor license agreement or
+Developer Certificate of Origin sign-off.</p>
+<h2>The goal: neat for comprehension</h2>
+<p>Rustmatch should be neat for practical reasons:</p>
+<ul>
+<li>a reader can find the public contract and the code that implements it;</li>
+<li>invariants, units, ownership, concurrency, and failure behavior are explicit;</li>
+<li>tests explain behavior without requiring a debugger;</li>
+<li>tools can run one documented command and receive structured results;</li>
+<li>a change can be reviewed without reverse-engineering unrelated machinery.</li>
+</ul>
+<p>Neatness is not an excuse for abstraction, churn, or tool-driven busywork. A
+smaller direct implementation is preferable when it is easier to prove,
+measure, and maintain. Refactoring must improve comprehension, correctness,
+evidence, or measured performance.</p>
+<h2>Pull-request rules</h2>
+<p>Every pull request must:</p>
+<ol>
+<li>Name the roadmap task or UC it advances, using the stable symbolic ID.</li>
+<li>Keep one coherent purpose; unrelated cleanup belongs in another change.</li>
+<li>Add or update the smallest useful test before or with behavior changes.</li>
+<li>Update public documentation and evidence contracts in the same change.</li>
+<li>Pass every required functional CI job.</li>
+<li>Run the external regression protocol before merge when the hot path changes.</li>
+<li>For an optimization, name the reviewed B2-H hypothesis and authorization
+artifact before implementation starts. Record the exact benchmark-repository
+commit, reviewed-manifest SHA-256, and hypothesis ID listed in that manifest's
+<code>authorized_hypotheses</code>, then supply positive Rust performance evidence
+against the frozen existing-Rustmatch baseline.</li>
+<li>Leave no unexplained generated files, lint suppressions, or TODO markers.</li>
+</ol>
+<h3>Pull-request cadence</h3>
+<p>There is no required line count, duration, commit count, or one-task-per-PR
+rule. A PR should have one explainable purpose, remain reviewable, and leave a
+runnable integrated capability or independently useful executable tooling.</p>
+<p>Split work when parts have independent behavior, evidence, reviewers, or
+rollback paths. Keep work together when splitting it would merge unused
+components, temporary public API, or a disconnected horizontal layer. Use a
+draft PR to expose a larger walking-spine change early without claiming that
+every intermediate commit is ready to merge.</p>
+<p>A green CI performance tripwire is supplementary. It does not replace the
+external performance receipts required by the
+<a href="README.html#testing-and-regression-policy">testing and regression policy</a>.</p>
+<h2>Rust code hygiene</h2>
+<h3>Formatting and linting</h3>
+<ul>
+<li>Use Rust 2024 edition. Bootstrap development and primary CI use pinned Rust
+<code>1.97.0</code>; the library also has to build in the Rust <code>1.85.0</code> MSRV lane.</li>
+<li>A newer primary toolchain may be adopted routinely when all checks pass. An
+MSRV increase requires a concrete benefit, compatibility review, and release
+note.</li>
+<li>Use the repository's pinned toolchain and canonical <code>rustfmt</code>.</li>
+<li>Run Clippy for the whole workspace, all targets, and relevant features with
+warnings denied.</li>
+<li>Do not add broad crate-level <code>allow</code> attributes to silence actionable
+warnings.</li>
+<li>A necessary lint exception is local, names the lint, and explains why the
+code is clearer or more correct with the exception.</li>
+<li>Do not commit compiler warnings, dead code, unused dependencies, or stale
+feature flags.</li>
+</ul>
+<h3>Visibility and API surface</h3>
+<ul>
+<li>Keep items private by default.</li>
+<li>Use <code>pub(crate)</code> only for a demonstrated cross-module need.</li>
+<li>Treat every <code>pub</code> item in a published crate as a compatibility commitment.</li>
+<li>Do not expose AST, HIR, automaton, cache, arena, worker, or diagnostic
+implementation types merely to simplify internal wiring.</li>
+<li>Prefer sealed traits or concrete types until users have a real extension
+requirement.</li>
+</ul>
+<h3>Types and naming</h3>
+<ul>
+<li>Use domain types such as <code>PatternId</code>, <code>StateId</code>, <code>Utf16Position</code>, and
+<code>Utf16Span</code> instead of interchangeable integer arguments.</li>
+<li>Use enums instead of boolean mode parameters when the call site would be
+ambiguous.</li>
+<li>Names describe roles and units. Avoid abbreviations outside established
+domain terms recorded in the architecture.</li>
+<li>Keep roadmap, UC, fixture, and evidence IDs stable after publication.</li>
+<li>Conversions that can lose range, unit, or encoding information are explicit
+and checked.</li>
+</ul>
+<h3>Ownership and data flow</h3>
+<ul>
+<li>Prefer immutable compiled data and scan-local mutable scratch state.</li>
+<li>Make sharing, synchronization, and thread-safety requirements visible in
+types and rustdoc.</li>
+<li>Avoid cloning to satisfy the borrow checker without first understanding the
+ownership boundary.</li>
+<li>Avoid advanced lifetime, trait, macro, or generic machinery unless it
+removes real duplication or enforces a useful invariant.</li>
+<li>Keep hot-path allocation visible and measurable.</li>
+</ul>
+<h3>Errors and panics</h3>
+<ul>
+<li>Expected user, pattern, input, configuration, and resource failures return
+typed errors.</li>
+<li>Errors retain the relevant pattern ID, span, coordinate unit, or operation.</li>
+<li>Do not use <code>unwrap</code>, <code>expect</code>, indexing, or assertions on public input unless
+an earlier checked invariant makes the operation infallible and the reason is
+locally obvious.</li>
+<li>Panic only for an internal invariant violation. Document public panic
+conditions when they cannot be eliminated.</li>
+<li>Preserve source errors where they help diagnosis.</li>
+</ul>
+<h3>Unsafe Rust</h3>
+<ul>
+<li>The initial core denies unsafe code.</li>
+<li>A later <code>unsafe</code> block requires a written safety invariant, focused tests,
+Miri or equivalent evidence where applicable, independent review, and a
+positive Rust performance result beyond noise.</li>
+<li>Keep unsafe code small and wrapped by a safe interface that checks its
+preconditions.</li>
+<li>Java precedent cannot justify unsafe Rust.</li>
+</ul>
+<h3>Dependencies</h3>
+<ul>
+<li>Prefer <code>std</code> until a dependency provides a measured or substantial
+maintenance benefit.</li>
+<li>Record why each dependency exists and which public or internal boundary owns
+it.</li>
+<li>Review license, maintenance, MSRV, default features, transitive footprint,
+and security advisories.</li>
+<li>Disable unnecessary default features.</li>
+<li>Remove unused dependencies promptly.</li>
+<li>Dependency upgrades pass functional and applicable performance regression
+gates.</li>
+</ul>
+<h2>Documentation standard</h2>
+<h3>Public rustdoc</h3>
+<p>Every public crate, module, type, trait, function, method, field, and error
+variant has useful rustdoc. Documentation states, where relevant:</p>
+<ul>
+<li>what the item does and when to use it;</li>
+<li>coordinate and size units;</li>
+<li>ownership and borrowing behavior;</li>
+<li>matcher lifecycle and mutability;</li>
+<li>concurrency, <code>Send</code>, and <code>Sync</code> expectations;</li>
+<li>errors and recovery behavior;</li>
+<li>panic and safety conditions;</li>
+<li>complexity or allocation behavior when callers need it; and</li>
+<li>a minimal compiled example.</li>
+</ul>
+<p>Examples should use only supported public API. They compile as doctests unless
+there is a documented reason they cannot.</p>
+<h3>Internal documentation</h3>
+<ul>
+<li>Start each non-trivial module with its responsibility and boundary.</li>
+<li>Comment invariants, representation choices, proof obligations, and surprising
+performance constraints.</li>
+<li>Do not narrate assignments, loops, or syntax already clear from the code.</li>
+<li>Link design decisions to an ADR, roadmap ID, issue, or retained benchmark
+receipt.</li>
+<li>Update or remove comments when behavior changes; stale comments are defects.</li>
+</ul>
+<h3>Project documentation</h3>
+<ul>
+<li>Commands are copy-pasteable from the repository root.</li>
+<li>Paths and links are relative when they refer to repository content.</li>
+<li>Structured file formats have a versioned schema and an example.</li>
+<li>Generated files identify their source and reproduction command.</li>
+<li>Release notes describe behavior, compatibility, limitations, and evidence,
+not internal activity logs.</li>
+</ul>
+<h2>Test standard</h2>
+<ul>
+<li>Prefer small deterministic fixtures with exact expected events or errors.</li>
+<li>Name tests after observable behavior, not implementation methods.</li>
+<li>Use explicit <code>Prepare</code>, <code>Test</code>, and <code>Assert</code> comments when the stages would
+otherwise require interpretation.</li>
+<li>Keep unit tests close to implementation and public behavior tests at crate
+boundaries.</li>
+<li>Every bug fix starts with a failing regression test.</li>
+<li>Every parser feature includes positive, malformed, unsupported, and boundary
+cases.</li>
+<li>Every optimization compares output with the bypassable semantic baseline.</li>
+<li>Avoid sleeps, wall-clock races, random seeds that are not retained, and tests
+that depend on execution order.</li>
+<li>Property and fuzz failures are minimized into deterministic fixtures.</li>
+</ul>
+<h2>Machine-readable project hygiene</h2>
+<ul>
+<li>Every roadmap task and gate has a unique stable symbolic short name.</li>
+<li>Every UC evidence item names the UC, command, fixture, expected result, and
+revision.</li>
+<li>JSON and JSONL outputs use versioned schemas.</li>
+<li>Benchmark receipts retain complete inputs, versions, hashes, environment,
+correctness status, and raw measurements.</li>
+<li>CI summaries should be useful to a person but derive from machine-readable
+results rather than replacing them.</li>
+<li>Hidden local setup is a defect; setup and generated prerequisites belong in
+documented scripts or Cargo tasks.</li>
+</ul>
+<h2>Required commands</h2>
+<p>Increment I1 will provide one stable aggregate command, planned as
+<code>cargo xtask ci</code>, that runs the required local equivalent of PR CI. Its
+constituent checks are expected to include:</p>
+<pre><code class="language-sh">cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
+</code></pre>
+<p>The workspace may add focused schema, fixture, license, dependency, and UC
+evidence commands. Scheduled and release workflows add the heavier audit,
+fuzz, Miri, package, consumer, and external benchmark gates described in the
+<a href="docs/roadmap.html">roadmap</a>.</p>
+<h2>Review checklist</h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+The PR names a stable roadmap or UC ID.</li>
+<li><input disabled="" type="checkbox"/>
+Public behavior and limitations are documented.</li>
+<li><input disabled="" type="checkbox"/>
+Tests are small, deterministic, and exact.</li>
+<li><input disabled="" type="checkbox"/>
+Formatting, Clippy, tests, and rustdoc pass.</li>
+<li><input disabled="" type="checkbox"/>
+Visibility is no broader than required.</li>
+<li><input disabled="" type="checkbox"/>
+Errors preserve useful context and expected failures do not panic.</li>
+<li><input disabled="" type="checkbox"/>
+New dependencies or unsafe code have explicit justification and evidence.</li>
+<li><input disabled="" type="checkbox"/>
+Hot-path changes have external regression receipts.</li>
+<li><input disabled="" type="checkbox"/>
+Claimed optimizations name an authorized, reviewed B2-H hypothesis and
+bind the benchmark commit, review-manifest SHA-256, and authorized ID;
+they have a positive Rust result beyond noise against frozen current
+Rustmatch.</li>
+<li><input disabled="" type="checkbox"/>
+Generated and machine-readable artifacts are reproducible and validated.</li>
+</ul>
+<p>See <a href="SUPPORT.html">SUPPORT.md</a> for help and reporting boundaries.</p>
+</main><footer>Generated from <code>CONTRIBUTING.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

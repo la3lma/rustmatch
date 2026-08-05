@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B2-H-0040 exact SIMD candidate discovery · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0040-simd-candidate-discovery.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0040-simd-candidate-discovery.md</div></header><main><h1>B2-H-0040 exact SIMD candidate discovery</h1>
+<p><strong>Decision:</strong> rejected before full G9; not merged</p>
+<p><strong>Production baseline:</strong> H11
+<code>bacd5c46d934cd5526dcab78af88e375b2f13370</code></p>
+<p><strong>Initial candidate:</strong> <code>58c1eb14bd16ed95d37cac9440111fe3a1136205</code></p>
+<p><strong>Recovery candidate:</strong> <code>843ebafe947fd8749c0f8e843af4ce480b40c3b4</code></p>
+<p><strong>Review date:</strong> 2026-08-04</p>
+<h2>Question</h2>
+<p>H11 still applies a scalar five-unit prefix predicate at every input start
+while constructing one shared candidate bitmap. H40 asked whether an exact
+AVX2 kernel could replace that scalar pass without changing H11's conservative
+candidate semantics or regressing paths that cannot activate SIMD.</p>
+<p>The bounded kernel computes eight adjacent low-20-bit FNV-1a hashes in AVX2
+lanes and gathers the unchanged H11 union bitmap. Non-ASCII lanes are admitted
+conservatively. The unchanged per-partition NFA remains the semantic authority,
+and audited intrinsics are confined to a private crate behind a safe API.</p>
+<h2>Headroom gate</h2>
+<p>The frozen isolated discriminator compared scalar and SIMD candidate plans on
+the four established sparse/dense 50 MiB cells. All 24 pairs passed:</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Candidate-plan speedup</th><th style="text-align: right">Predicted complete-scan gain</th></tr></thead><tbody>
+<tr><td>Sparse, 16 workers</td><td style="text-align: right">4.491x</td><td style="text-align: right">63.553%</td></tr>
+<tr><td>Sparse, 24 workers</td><td style="text-align: right">4.559x</td><td style="text-align: right">62.874%</td></tr>
+<tr><td>Dense, 16 workers</td><td style="text-align: right">4.641x</td><td style="text-align: right">22.707%</td></tr>
+<tr><td>Dense, 32 workers</td><td style="text-align: right">4.413x</td><td style="text-align: right">25.203%</td></tr>
+</tbody></table>
+<p>Candidate bitmaps, counts, events, and digests were exact. This authorized one
+bounded production candidate, not admission.</p>
+<h2>Initial production screen</h2>
+<p>The first production candidate vectorized density sampling and full candidate
+fill. It passed the complete test and static-correctness suite, and every
+target scan pair was positive:</p>
+<table><thead><tr><th>Target</th><th style="text-align: right">Scan effect</th><th style="text-align: right">Wall effect</th></tr></thead><tbody>
+<tr><td>Sparse 50 MiB, 16 workers</td><td style="text-align: right">+63.897%</td><td style="text-align: right">+40.464%</td></tr>
+<tr><td>Sparse 50 MiB, 24 workers</td><td style="text-align: right">+61.889%</td><td style="text-align: right">+39.641%</td></tr>
+<tr><td>Dense 50 MiB, 16 workers</td><td style="text-align: right">+22.110%</td><td style="text-align: right">+19.099%</td></tr>
+<tr><td>Dense 50 MiB, 32 workers</td><td style="text-align: right">+25.227%</td><td style="text-align: right">+20.228%</td></tr>
+</tbody></table>
+<p>Both inactive guards executed no SIMD. The ordinary one-worker
+candidate-before stratum nevertheless regressed 3.750% in scan, 6.747% in
+preparation, and 3.325% in wall. Wuthering candidate-after wall regressed
+4.202%. The exact candidate was blocked and preserved.</p>
+<h2>Bounded recovery</h2>
+<p>Static analysis showed complete mnemonic identity in the private scanner but
+different placement. A control rebuild established that accepted H11 is
+byte-reproducible only under its original B2-H-0004 Cargo and Rustup roots.</p>
+<p>The one allowed recovery therefore:</p>
+<ol>
+<li>restored H11's scalar density sampler byte-for-byte;</li>
+<li>retained SIMD only for the full 50 MiB candidate fill; and</li>
+<li>used the build roots that reproduce accepted H11 exactly.</li>
+</ol>
+<p>No padding, function-order tuning, benchmark-specific placement, threshold,
+cell, or repetition changed. The timed harness, private scanner, and shared
+scanner retained H11's exact sizes and complete mnemonic sequences. The total
+load image grew by only 24 bytes, versus 4 KiB for the initial candidate under
+matched provenance.</p>
+<h2>Frozen recovery result</h2>
+<p>The guarded recovery completed 72 fresh processes with exact event identity,
+no contamination, an idle GPU, and complete service restoration.</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Scan</th><th style="text-align: right">Before</th><th style="text-align: right">After</th><th style="text-align: right">Wall</th><th>Ruling</th></tr></thead><tbody>
+<tr><td>Sparse 50 MiB, 16 workers</td><td style="text-align: right">+63.445%</td><td style="text-align: right">+64.441%</td><td style="text-align: right">+63.339%</td><td style="text-align: right">+41.658%</td><td>Passed, 6/6 scan pairs</td></tr>
+<tr><td>Sparse 50 MiB, 24 workers</td><td style="text-align: right">+62.189%</td><td style="text-align: right">+62.215%</td><td style="text-align: right">+62.164%</td><td style="text-align: right">+40.596%</td><td>Passed, 6/6 scan pairs</td></tr>
+<tr><td>Dense 50 MiB, 16 workers</td><td style="text-align: right">+22.937%</td><td style="text-align: right">+23.050%</td><td style="text-align: right">+22.825%</td><td style="text-align: right">+19.519%</td><td>Passed, 6/6 scan pairs</td></tr>
+<tr><td>Dense 50 MiB, 32 workers</td><td style="text-align: right">+25.241%</td><td style="text-align: right">+25.792%</td><td style="text-align: right">+25.203%</td><td style="text-align: right">+20.311%</td><td>Passed, 6/6 scan pairs</td></tr>
+<tr><td>Ordinary 1 MiB, one worker</td><td style="text-align: right">-0.186%</td><td style="text-align: right">-0.396%</td><td style="text-align: right">+0.803%</td><td style="text-align: right">-1.061%</td><td>Before-order wall -2.266%; investigation boundary</td></tr>
+<tr><td>Wuthering 8 MiB, 64 workers</td><td style="text-align: right">-1.895%</td><td style="text-align: right">-0.401%</td><td style="text-align: right"><strong>-5.272%</strong></td><td style="text-align: right">-1.423%</td><td>After-order scan and RSS automatic veto</td></tr>
+</tbody></table>
+<p>The recovery retained nearly all target gain despite scalar sampling. It still
+failed: Wuthering candidate-after scan regressed 5.272% and peak RSS regressed
+3.321%, both beyond the unchanged automatic veto. The ordinary candidate-before
+wall stratum independently regressed 2.266%.</p>
+<p>Neither failing guard can execute SIMD. That establishes an inactive-path
+code-generation or process-layout cost, not an algorithmic cost. It does not
+authorize a waiver: frozen guardrails apply to the production artifact, not
+only to the lines executed by the intended target.</p>
+<h2>Decision</h2>
+<p>H40 is rejected before full G9. Neither candidate is merged, H11 remains the
+production baseline, and the cross-engine comparison stays unchanged. A
+second layout-recovery cycle would risk the source padding, function ordering,
+or benchmark-specific placement tuning explicitly excluded by the contract.</p>
+<p>The positive signal remains valuable: exact SIMD candidate fill delivered
+22.9%-63.4% complete-scan gains on the intended cells. Revisit it only after a
+generally applicable stable production-layout boundary or as part of a
+materially different exact literal engine. The next independent experiment is
+an exact literal-only backend diagnostic.</p>
+<h2>Retained evidence</h2>
+<ul>
+<li>Discriminator summary SHA-256:
+<code>d4f253a5a2892206890d3f77658ae66304a42db2e2eb4e37ffdfccbb1febe6c6</code></li>
+<li>Initial focused summary SHA-256:
+<code>cf18c96c07227787e4311661041cd4db71ad38e783290093bb125bee978037c8</code></li>
+<li>Initial focused archive SHA-256:
+<code>922299e312b12113f070c06b3d32cd0b0bae9ecf0b2b6208f43e302d2a46c686</code></li>
+<li>Recovery plan SHA-256:
+<code>2a5f1c53557ba7709779b4585d11b25d9823b0f15b5a138768ba77d0c7e91679</code></li>
+<li>Recovery summary SHA-256:
+<code>d074bb222c10a61df92c28cc03de413745b698161ddd5d9509f46dc001c20b28</code></li>
+<li>Recovery window-state SHA-256:
+<code>0dcc5407b4436f2c47ac19448b47bc1717e15349aa5dd7d3bd0f0a74ee004f4c</code></li>
+<li>Recovery archive SHA-256:
+<code>101ef0b52f5c7c67ebd3e19b5f7fcdaffb7b2a057e2fc653fcaedd8059574b88</code></li>
+<li>Recovery source bundle SHA-256:
+<code>78d03a3b6abdfda241d181527953dcddf8e98a7ebf15fa4b9a0e394ea410fdaf</code></li>
+<li>Measurement decision commit: <code>8bb1e8a</code></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/b2-h-0040-simd-candidate-discovery.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

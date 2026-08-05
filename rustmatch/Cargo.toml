@@ -6,10 +6,18 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "A Rust-native many-pattern regular-expression matcher"
-publish = false
+homepage = "https://github.com/la3lma/rustmatch"
+documentation = "https://docs.rs/rustmatch"
+readme = "README.md"
+keywords = ["regex", "matching", "automata", "utf16", "search"]
+categories = ["algorithms", "text-processing"]
+publish = ["crates-io"]
 
 [features]
 benchmark-internals = []
+
+[dependencies]
+rustmatch-simd = { path = "../rustmatch-simd", version = "0.1.0" }
 
 [lints]
 workspace = true

@@ -1,0 +1,270 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B1 experiment: correctness-gated cross-engine campaign · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b1-cross-engine-campaign.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b1-cross-engine-campaign.md</div></header><main><h1>B1 experiment: correctness-gated cross-engine campaign</h1>
+<h2>Status</h2>
+<p>Active. This protocol is frozen before the stable-host B1 results are run. A
+change to the matrix, engine semantics, timing boundary, worker sweep, or
+acceptance rule requires an explicit protocol revision before affected results
+are interpreted.</p>
+<p>The designated host is <code>agogo.local</code>, previously recorded as a 16-core,
+32-thread AMD Ryzen 9 9950X3D Linux machine. Execution cannot begin until the
+host is reachable and its current CPU, memory, kernel, Docker, governor, load,
+and isolation metadata have been captured again. Old host descriptions are not
+silently reused as current evidence.</p>
+<h2>Questions</h2>
+<p>B1 must answer, without collapsing unlike execution models:</p>
+<ol>
+<li>How does Rust rustmatch throughput scale with pattern count, corpus size,
+match density, and explicit pattern partitions?</li>
+<li>Where does Rust rustmatch sit relative to Java rmatch, RE2/J, Java regex,
+and the one-thread native Hyperscan reference on a shared event-enumeration
+task?</li>
+<li>How does Rust <code>RegexSet</code> compare on its native set-membership task, and what
+changes when event enumeration is required?</li>
+<li>Which worker counts maximize retained whole-task throughput for each engine
+and workload, and how stable are those winners?</li>
+<li>Where do scaling discontinuities appear, and what do profiles and engine
+diagnostics say about them?</li>
+</ol>
+<h2>Exact engine identities</h2>
+<ul>
+<li>Rust rustmatch uses commit
+<code>da755b0069c94d4da9db74a8778dd9932fc64671</code>, built with the committed lockfile
+and Rust <code>1.97.0</code>. This is the frozen B1 candidate whose runner accounts for
+every requested warm-up and measurement scan. Any later candidate receives a
+separate exact identity and base/candidate receipts.</li>
+<li>Java rmatch uses the published Maven Central artifact
+<code>no.rmz:rmatch:2.0.0-RC1</code>, including its recorded artifact checksum.</li>
+<li>RE2/J uses <code>1.8</code>.</li>
+<li>Java regex uses OpenJDK <code>21</code> and records the full runtime build.</li>
+<li>Rust <code>RegexSet</code> uses the workspace-pinned <code>regex 1.13.1</code> until an explicit
+dependency revision is admitted.</li>
+<li>Hyperscan uses release <code>5.4.2</code> through its general regex API. Its pure-literal
+API, if measured, is a separately labeled best-case lane.</li>
+</ul>
+<p>Every retained receipt records the container image ID in addition to the human
+version. Moving tags, branch names, dirty worktrees, and unrecorded local
+patches are rejected.</p>
+<h2>Semantic lanes</h2>
+<h3>Event-enumeration task</h3>
+<p>Rust rustmatch, Java rmatch, Hyperscan, RE2/J, and Java regex must enumerate the
+same generated non-overlapping events. Fixtures avoid self-overlap and
+cross-pattern ambiguity that would expose known differences between
+leftmost/non-overlapping and overlap-preserving APIs. A timing is rejected
+unless its manifest count agrees exactly.</p>
+<p>RE2/J and Java regex compile and retain every pattern, reuse matcher objects,
+and scan each pattern to exhaustion. Their physical traffic is pattern count
+times corpus size, but their reported task throughput remains one logical
+corpus divided by the time to apply the complete pattern set. Inflating their
+throughput by physical rescans would be unfair.</p>
+<p>Hyperscan's <code>hsbench -T</code> mode gives each thread an independent copy of the full
+corpus. It measures aggregate independent-stream throughput, not parallel
+completion of one shared task. B1 therefore retains Hyperscan at one thread as
+a native reference. Multi-thread Hyperscan may be explored separately, but it
+may not appear as a peer in the maximum-throughput task chart.</p>
+<h3>RegexSet-native task</h3>
+<p><code>RegexSet</code> answers which patterns match, not where or how often they match. Its
+native set-membership lane is useful and must be measured, but is labeled as a
+different task. An event-preserving adapter may also be measured; it is not
+presented as the native <code>RegexSet</code> result. Neither lane can satisfy the event
+count gate by substituting matched-pattern count for event count.</p>
+<h2>Scenario matrix</h2>
+<p>The reproducible generated intersection uses both <code>diverse_literals</code> and
+<code>mixed_regex</code> families.</p>
+<p>The core sparse matrix is the Cartesian product of:</p>
+<ul>
+<li>1,000, 2,500, 5,000, 7,500, and 10,000 patterns;</li>
+<li>8 MiB and 50 MiB corpora; and</li>
+<li>both families.</li>
+</ul>
+<p>Sparse fixtures retain four matches per literal pattern and two matches per
+mixed-regex pattern. At 1,000, 5,000, and 10,000 patterns, both sizes and both
+families also receive:</p>
+<ul>
+<li>a zero-match fixture; and</li>
+<li>a controlled dense fixture with 100,000 total events at 8 MiB or 500,000 at
+50 MiB.</li>
+</ul>
+<p>This yields 44 ordinary scenarios: 20 sparse core points and 24 additional
+density controls. A 256 MiB cache-pressure checkpoint at 1,000 patterns in both
+families is run after ordinary calibration. It is intentionally large enough
+to exceed the host's shared last-level cache. Multi-pass engines are included
+at one worker and their selected 50 MiB worker count, even if the result is
+slow; no engine is omitted merely because the checkpoint is unfavorable.</p>
+<p>The established Wuthering Heights 1,000/5,000/10,000 line remains the realistic
+language-corpus scaling control. Its exact ASCII source files and hashes come
+from Rust commit <code>65453779f2560014fba020161b262ca660aeb58b</code>. Because the
+repository is private, the harness extracts the blobs from that exact commit
+through a local or SSH-accessible Git clone and then verifies SHA-256; it does
+not retain a temporary authenticated download URL. Wuthering results complement
+generated fixtures; they do not replace the controlled family/density matrix.
+Together with the 44 ordinary generated scenarios and two 256 MiB checkpoints,
+these controls produce 49 frozen scenarios. The preregistered initial worker
+sweeps contain 1,891 runs before adaptive winner confirmation and profiling.
+The executable campaign is frozen in the private benchmark repository at commit
+<code>91466be8fbc0f117433bf7ba6d9168aef477538e</code>. That revision includes the exact
+initial matrix, fresh-host resumable execution, deterministic winner
+confirmation, confirmed cache-pressure and profile plans, a self-contained
+hash-verified report archive, and the reversible clean-host window used for
+authoritative execution. It also preserves each run's UTC start and finish
+time, reports the campaign measurement window, requests untruncated Docker
+identities, and rejects the earlier RegexSet and Rustmatch runners whose
+consistency scans occurred outside their declared warm-ups. Both corrected
+runners prove that two requested warm-ups plus three measurements execute
+exactly five full scans. The frozen scenario dimensions and other engine inputs
+are unchanged.</p>
+<p>The initial timing window remains attributed to harness revision
+<code>91466be8fbc0f117433bf7ba6d9168aef477538e</code>. Before the separate profile window,
+benchmark revision <code>221b51d3c781939625100de2cf7eeca6f075f3f4</code> strengthened the
+profile and report path without changing any of the 1,891 initial timing runs.
+It validates and independently re-parses raw hardware counters; reports IPC,
+miss rates, scheduler activity, counter running time, and process RSS; expands
+the core profile line described below; and exposes adjacent pattern scaling,
+host-relative worker retention, and exact anomalies for critical review. The
+report also preserves whole-process wall effort separately from preparation
+and scan throughput. The final report retains both window revisions rather
+than attributing earlier timings to the later profiler.</p>
+<p>The Wuthering event expectations are 109,693, 926,975, and 1,912,854. The
+separate RegexSet membership expectations are 901, 4,693, and 9,466. The new
+engine-neutral fixture was locally checked against Rust rustmatch at all three
+event points; authoritative timings still await the stable host.</p>
+<h2>Declared worker sweeps</h2>
+<p>The full sparse-core sweeps are:</p>
+<ul>
+<li>Rust rustmatch and Java rmatch: <code>1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64</code>;</li>
+<li>RE2/J and Java regex: <code>1, 2, 4, 8, 16, 32, 64, 128, 256</code>;</li>
+<li>RegexSet application-level task lanes: <code>1, 2, 4, 8, 16, 24, 32, 48, 64</code>;
+and</li>
+<li>Hyperscan native reference: <code>1</code> only for the shared-task chart.</li>
+</ul>
+<p>Oversubscribed values are intentional. Requested and actual workers are both
+recorded. Density controls use the abbreviated preregistered sets
+<code>1, 4, 8, 16, 32, 64</code> for Rust/Java rmatch and
+<code>1, 8, 32, 64, 128, 256</code> for RE2/J/Java regex. A measured winner is not inferred
+from adjacent points that were never run.</p>
+<p>The Wuthering language controls use the same abbreviated worker grids as the
+density controls. This retains one realistic pattern-count line without
+duplicating the entire synthetic calibration matrix.</p>
+<p>The unoptimized Rust NFA control is limited to the two 1,000-pattern / 8 MiB
+sparse scenarios with one warm-up and one retained measurement. I9 measured
+more than 52 seconds per NFA scan. Repeating that settled architectural contrast
+at every B1 point would consume machine time without improving the comparative
+answer. This exception was declared before B1 results.</p>
+<h2>Timing and run order</h2>
+<ul>
+<li>Fixture generation, file reads, encoding conversion, compilation, matcher
+preparation, warm-up, scan, callback, and process wall time remain distinct.</li>
+<li>Task throughput is logical corpus bytes divided by median complete-pattern-set
+scan time. It is never multiplied by patterns or workers.</li>
+<li>Sweep points use two warm-ups and three measurements.</li>
+<li>Hyperscan is invoked with <code>--per-scan</code>; its declared warm-up scans are
+excluded and the median of the remaining scan throughputs is reported.</li>
+<li>The apparent winner and its nearest declared neighbors are rerun with three
+warm-ups and seven measurements.</li>
+<li>Winner confirmation is repeated in reverse order. A winner with more than 3%
+median drift or contradictory ordering remains inconclusive.</li>
+<li>Scenario/engine/worker execution order is deterministically shuffled from a
+recorded campaign seed. Failed or interrupted points resume without changing
+the original order.</li>
+<li>Every executor invocation requires a passing host receipt no more than 15
+minutes old and an independent live host check. Resumed invocations create a
+new host session in campaign state, and every run records its session ID;
+stale idle-host observations cannot authorize later work.</li>
+<li>The host must be otherwise idle. CPU affinity, frequency policy, thermal
+state, and co-located load are recorded; unexplained interference invalidates
+the affected block.</li>
+</ul>
+<p>The 8 MiB and 50 MiB scans are steady-state throughput lanes. The separate
+256 MiB checkpoint supplies the explicit beyond-last-level-cache pressure; B1
+does not falsely describe every ordinary point as a cold-cache measurement.</p>
+<h2>Correctness and admission</h2>
+<p>A retained run requires:</p>
+<ul>
+<li>exact scenario, input hashes, engine artifact, container image, host, mode,
+requested workers, actual workers, warm-ups, repetitions, and timing arrays;</li>
+<li>successful compile and scan;</li>
+<li>the manifest's exact event count for event-enumeration lanes;</li>
+<li>stable count across every warm-up and measured scan;</li>
+<li>complete and internally coherent engine-specific diagnostics where exposed;
+and</li>
+<li>no unsupported syntax silently dropped from the pattern set.</li>
+</ul>
+<p>Cross-engine event digests are compared only where event identities are known
+to have the same semantics. Count equality is mandatory everywhere in the
+event lane. RegexSet-native membership uses its own manifest expectation and
+cannot be relabeled as event parity.</p>
+<h2>Critical analysis and profiling</h2>
+<p>Green validation is the beginning of analysis, not its conclusion. Reports
+must discuss pattern-count slopes, corpus-size effects, density sensitivity,
+worker optima, oversubscription, compile/prepare cost, memory and callback work,
+outliers, crossovers, and discontinuities such as the historical 1,000-to-10,000
+throughput drop.</p>
+<p>Linux <code>perf stat</code> and sampled profiles are retained for Rust rustmatch at 1,000,
+2,500, 5,000, 7,500, and 10,000 patterns in single-worker and
+confirmed-winner modes for both 50 MiB core families. These 20 evidence roles
+exceed the original endpoint minimum and locate a scaling discontinuity rather
+than asking endpoint profiles to explain an unknown transition. Identical
+single-worker and winner commands collapse into one physical point with both
+roles. Any unexplained cliff or engine-order reversal outside this complete
+core line adds a profile point before a claim is accepted. Profiles record
+symbols, exact image, kernel restrictions, command, validated counters, raw
+output, and whole-process resource use.</p>
+<h2>Post-B1 optimization handoff</h2>
+<p>B1 measures and explains the engines; it does not admit optimizations. After
+all required points, confirmations, and profiles are complete, the
+<a href="b2-competitor-win-optimization.html">B2/G9 protocol</a> first examines the complete
+dataset quantitatively and qualitatively. It then turns reviewed observations,
+including confirmed cells where RegexSet beats Rustmatch, into ranked,
+falsifiable hypotheses. Native set-membership and complete-event results remain
+separate.</p>
+<p>Those competitor wins nominate Rust-native hypotheses. They do not become the
+baseline for accepting a change. Each candidate is measured against the exact
+existing Rustmatch production revision frozen before implementation. A
+candidate is retained only when it preserves results, improves that Rustmatch
+baseline beyond the declared noise threshold on its target set, and avoids an
+unaccepted broader regression. It may also improve other workloads; such gains
+are welcome and reported. RegexSet parity is neither required nor sufficient.</p>
+<p>No optimization candidate may begin before the B2 evidence-integrity,
+full-dataset analysis, qualitative review, and hypothesis-registry gate is
+complete. G9 then requires every candidate to follow a bounded
+hypothesize-test-evaluate-accept-or-reject cycle against the exact current
+Rustmatch baseline.</p>
+<p>This handoff adds no point to the frozen 1,891-run initial B1 plan and does not
+change B1's engine identities, measurement boundaries, or exit criteria.</p>
+<h2>CI boundary</h2>
+<p>GitHub Actions keeps the optimized Wuthering Heights C2 tripwire: 5,000
+patterns, an 8 MiB deterministic corpus, exact event evidence, same-runner
+base/candidate comparison, reverse-order retry, and a failure only beyond both
+100% slowdown and 50 ms. It is a useful build-breaking detector for severe
+regressions.</p>
+<p>Hosted CI is not B1 evidence. It does not replace stable-host worker sweeps,
+cross-engine receipts, cache-pressure checkpoints, or profiles. The NFA control
+is far too expensive for routine CI and is not added to that lane.</p>
+<h2>Exit criteria</h2>
+<p>B1 completes only when:</p>
+<ol>
+<li>every required point is either a validated receipt or an explicitly reviewed
+protocol exception;</li>
+<li>complete declared thread sweeps and confirmation runs are retained;</li>
+<li>ordinary and cache-pressure plots can be regenerated from receipts;</li>
+<li>critical analysis and required profiles are published;</li>
+<li>no chart equates unlike semantics or unlike parallel tasks; and</li>
+<li>the campaign is rerunnable from exact versions without access to an
+uncommitted worktree.</li>
+</ol>
+</main><footer>Generated from <code>docs/experiments/b1-cross-engine-campaign.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
