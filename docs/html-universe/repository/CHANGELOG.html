@@ -42,6 +42,19 @@ flag/character fixtures.</li>
 specialization, exhaustive ASCII boundary classification, and 28 pinned
 Java differential fixtures spanning line edges, composition, flags,
 non-ASCII input, and raw surrogates.</li>
+<li>Lazy deterministic state caching, conservative start tables and literal
+prefilters, exact pattern-partition parallelism, and runtime-detected AVX2
+candidate discovery, each retained through correctness-gated performance
+admission evidence.</li>
+<li>A correctness-gated cross-engine benchmark campaign and reviewed comparison
+against Java rmatch, RegexSet, and Hyperscan.</li>
+<li>Explicit 256-level group-nesting rejection, generated semantic properties,
+compiler/scan/oracle fuzz targets, a bounded cache/matcher soak, and a Miri
+release lane.</li>
+<li>Reproducible package rehearsal for <code>rustmatch</code> and <code>rustmatch-simd</code>, including
+normalized-archive tests, documentation, and an external-consumer smoke.</li>
+<li>A first-release compatibility matrix, public-API and versioning policy,
+dependency/license/unsafe/panic audit, and release runbook.</li>
 </ul>
 <h3>Changed</h3>
 <ul>

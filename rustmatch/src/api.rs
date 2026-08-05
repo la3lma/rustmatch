@@ -112,8 +112,10 @@ impl MatcherBuilder {
     /// # Errors
     ///
     /// Returns [`Error::DuplicatePatternId`] if `pattern_id` is already used,
-    /// [`Error::InvalidPattern`] for malformed syntax, or another pattern error
-    /// if `pattern` is empty or outside the current syntax.
+    /// [`Error::InvalidPattern`] for malformed syntax,
+    /// [`Error::PatternNestingTooDeep`] beyond the documented group limit, or
+    /// another pattern error if `pattern` is empty or outside the current
+    /// syntax.
     pub fn add(&mut self, pattern_id: PatternId, pattern: &str) -> Result<(), Error> {
         self.add_with_flags(pattern_id, pattern, PatternFlags::NONE)
     }

@@ -50,6 +50,13 @@ pub enum Error {
         /// ID supplied with the oversized pattern.
         pattern_id: PatternId,
     },
+    /// A pattern exceeded the supported group-nesting depth.
+    PatternNestingTooDeep {
+        /// ID supplied with the deeply nested pattern.
+        pattern_id: PatternId,
+        /// Maximum supported group-nesting depth.
+        limit: usize,
+    },
     /// An input position could not be represented as a public UTF-16 offset.
     InputTooLarge,
     /// The operating system could not start a requested scan worker.
@@ -91,6 +98,10 @@ impl fmt::Display for Error {
             Self::PatternTooLarge { pattern_id } => {
                 write!(formatter, "pattern {pattern_id} is too large")
             }
+            Self::PatternNestingTooDeep { pattern_id, limit } => write!(
+                formatter,
+                "pattern {pattern_id} exceeds the supported group-nesting depth of {limit}"
+            ),
             Self::InputTooLarge => formatter.write_str("input is too large"),
             Self::WorkerUnavailable => formatter.write_str("could not start a scan worker"),
         }

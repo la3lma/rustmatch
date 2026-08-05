@@ -7,17 +7,15 @@ main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius
 p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../roadmap.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/roadmap.md</div></header><main><h1>rustmatch implementation roadmap</h1>
-<p><strong>Last reviewed:</strong> 2026-07-26</p>
-<p><strong>Implementation increments started:</strong> <strong>10/12</strong></p>
-<p><strong>Implementation increments complete:</strong> <strong>10/12</strong></p>
-<p><strong>Active:</strong> <code>B2-H-0012</code> is retained for investigation but not admitted; H11
-remains the exact production baseline</p>
-<p><strong>Next evidence goal:</strong> freeze an assertion-dispatch isolation successor that
-preserves H12's 185x-to-385x sparse-target gains while restoring Wuthering and
-reducing assertion preparation cost. The
-<a href="experiments/b2-h-0012-assertion-prefilter-result.html">H12 result</a> identifies a
-plausibly separable compiler/layout regression on a guard that cannot execute
-the new assertion path</p>
+<p><strong>Last reviewed:</strong> 2026-08-05</p>
+<p><strong>Implementation increments started:</strong> <strong>12/12</strong></p>
+<p><strong>Implementation increments complete:</strong> <strong>11/12</strong></p>
+<p><strong>Active:</strong> <code>I11</code> release preparation for the first public <code>0.1.0</code> package;
+H42 remains the exact owner-authorized production source</p>
+<p><strong>Next evidence goal:</strong> pass non-publishing release-readiness CI and retain an
+exact-candidate performance receipt from the designated benchmark host. The
+<a href="pre-release-todo.html">prerelease checklist</a> is the authoritative remaining-work
+ledger</p>
 <p>This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
@@ -49,7 +47,7 @@ Color carries status or role, so task boxes do not repeat state labels.
 Every task and gate begins with a unique symbolic short name. These IDs are
 stable references for commits, pull requests, evidence manifests, and roadmap
 discussion even when a task's wording or color changes.</p>
-<figure class="mermaid-diagram"><a href="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg" title="Open full-size SVG"><img src="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/44e3065457652a76c677885bb879c7541bb784513538e8a84f784aa24e81617e.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg" title="Open full-size SVG"><img src="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg">Open full-size SVG</a></figcaption></figure>
 <p>Solid arrows show required dependencies. Dotted arrows show evidence that
 accumulates across several increments; they are intentionally retained as a
 separate visual language from the execution path.</p>
@@ -188,8 +186,8 @@ and use-case evidence bundle pass from a clean checkout.</p>
 <tr><td>B1</td><td>Cross-engine receipts and thread sweeps</td><td>Complete</td><td>The <a href="experiments/b1-cross-engine-campaign.html">frozen B1 protocol</a> produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded</td></tr>
 <tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source</td></tr>
 <tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Complete for B2-H-0011</td><td>H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate <code>bacd5c46</code>. Any next optimization requires a fresh B2 authorization</td></tr>
-<tr><td>I10</td><td>Hardening</td><td>Planned</td><td>Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit</td></tr>
-<tr><td>I11</td><td>Release preparation</td><td>Planned</td><td>Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete</td></tr>
+<tr><td>I10</td><td>Hardening</td><td>Complete</td><td>Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass</td></tr>
+<tr><td>I11</td><td>Release preparation</td><td>Active</td><td>Exact package, consumer, documentation, compatibility, changelog, runbook, portability, and local benchmark-smoke gates pass; designated-host candidate performance and remote release-readiness CI remain</td></tr>
 <tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>
 </tbody></table>
 <h2>Status update protocol</h2>

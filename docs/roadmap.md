@@ -1,20 +1,18 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-07-26
+**Last reviewed:** 2026-08-05
 
-**Implementation increments started:** **10/12**
+**Implementation increments started:** **12/12**
 
-**Implementation increments complete:** **10/12**
+**Implementation increments complete:** **11/12**
 
-**Active:** `B2-H-0012` is retained for investigation but not admitted; H11
-remains the exact production baseline
+**Active:** `I11` release preparation for the first public `0.1.0` package;
+H42 remains the exact owner-authorized production source
 
-**Next evidence goal:** freeze an assertion-dispatch isolation successor that
-preserves H12's 185x-to-385x sparse-target gains while restoring Wuthering and
-reducing assertion preparation cost. The
-[H12 result](experiments/b2-h-0012-assertion-prefilter-result.md) identifies a
-plausibly separable compiler/layout regression on a guard that cannot execute
-the new assertion path
+**Next evidence goal:** pass non-publishing release-readiness CI and retain an
+exact-candidate performance receipt from the designated benchmark host. The
+[prerelease checklist](pre-release-todo.md) is the authoritative remaining-work
+ledger
 
 This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
@@ -185,10 +183,12 @@ flowchart TB
 
     class P0,P1,P2,Q0,Q1,W0,I0,F0,A0,I1,I2,I3,I4,I5,I6,I7,I8,I9,S0,C0,C1,C2,B0,E0,G6,G7,G8 complete;
     class B1,B2 complete;
-    class X0,H1,R1,R2 evidence;
+    class X0 evidence;
+    class H1,H2,H3,R1,R3,I10 complete;
+    class R2 active;
     class G9 gate;
-    class I10,I11 gate;
-    class H2,H3,R3,REL planned;
+    class I11 gate;
+    class REL planned;
 
     click P0 "https://github.com/la3lma/rustmatch/blob/main/README.md#product-requirements-document" "Open product requirements"
     click P1 "https://github.com/la3lma/rustmatch/blob/main/README.md#architecture" "Open architecture"
@@ -381,8 +381,8 @@ and use-case evidence bundle pass from a clean checkout.
 | B1 | Cross-engine receipts and thread sweeps | Complete | The [frozen B1 protocol](experiments/b1-cross-engine-campaign.md) produced 3,636 accepted runs, 21,020 retained samples, 248 confirmed winners, 34 explicit unresolved groups, 20 Rustmatch profile points, zero accepted failures, and a hash-audited final report; all rejected windows remain preserved and excluded |
 | B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source |
 | G9 | Existing-Rustmatch candidate gate | Complete for B2-H-0011 | H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate `bacd5c46`. Any next optimization requires a fresh B2 authorization |
-| I10 | Hardening | Planned | Property/fuzz/Miri/soak evidence, public API/rustdoc audit, and dependency/license/security/MSRV audit |
-| I11 | Release preparation | Planned | Exact package passes semantic, consumer, documentation, and performance gates; compatibility matrix and changelog complete |
+| I10 | Hardening | Complete | Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass |
+| I11 | Release preparation | Active | Exact package, consumer, documentation, compatibility, changelog, runbook, portability, and local benchmark-smoke gates pass; designated-host candidate performance and remote release-readiness CI remain |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
 
 ## Status update protocol

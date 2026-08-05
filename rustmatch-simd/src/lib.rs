@@ -83,6 +83,7 @@ unsafe fn scan_five_hash_words_avx2(
     admissions
 }
 
+#[cfg(target_arch = "x86_64")]
 fn scalar_five_allows(hash_words: &[u64], input: &[u16], start: usize) -> bool {
     let Some(prefix) = input.get(start..start.saturating_add(5)) else {
         return false;
@@ -94,6 +95,7 @@ fn scalar_five_allows(hash_words: &[u64], input: &[u16], start: usize) -> bool {
     hash_words[bit / 64] & (1_u64 << (bit % 64)) != 0
 }
 
+#[cfg(target_arch = "x86_64")]
 fn five_hash_index(prefix: &[u16]) -> usize {
     let mut hash = 0xcbf2_9ce4_8422_2325_u64;
     for &unit in prefix {
@@ -118,44 +120,48 @@ unsafe fn five_lane_mask_avx2(hash_words: &[u64], input: &[u16], start: usize) -
     const FNV_PRIME_LOW: i32 = 0x0000_01b3;
     const HASH_MASK: i32 = 0x000f_ffff;
 
-    // SAFETY: the caller proves start..start+12 is in bounds. Each load reads
-    // eight u16 values, with the final load beginning at start+4.
-    let load = |offset: usize| unsafe {
-        _mm256_cvtepu16_epi32(_mm_loadu_si128(
-            input.as_ptr().add(start + offset).cast::<__m128i>(),
-        ))
-    };
-    let units = [load(0), load(1), load(2), load(3), load(4)];
-    let mut hash = _mm256_set1_epi32(FNV_OFFSET_LOW);
-    let prime = _mm256_set1_epi32(FNV_PRIME_LOW);
-    let mut combined = _mm256_set1_epi32(0);
-    for unit in units {
-        combined = _mm256_or_si256(combined, unit);
-        hash = _mm256_mullo_epi32(_mm256_xor_si256(hash, unit), prime);
-    }
+    // SAFETY: the caller establishes AVX2 support and start..start+12 bounds.
+    // Every load reads eight u16 values, the final load begins at start+4,
+    // HASH_MASK confines gathers to the validated 2^20-bit table, and reading
+    // u64 storage as native-endian u32 words preserves x86 bit order.
+    unsafe {
+        let load = |offset: usize| {
+            _mm256_cvtepu16_epi32(_mm_loadu_si128(
+                input.as_ptr().add(start + offset).cast::<__m128i>(),
+            ))
+        };
+        let units = [load(0), load(1), load(2), load(3), load(4)];
+        let mut hash = _mm256_set1_epi32(FNV_OFFSET_LOW);
+        let prime = _mm256_set1_epi32(FNV_PRIME_LOW);
+        let mut combined = _mm256_set1_epi32(0);
+        for unit in units {
+            combined = _mm256_or_si256(combined, unit);
+            hash = _mm256_mullo_epi32(_mm256_xor_si256(hash, unit), prime);
+        }
 
-    let bit_indices = _mm256_and_si256(hash, _mm256_set1_epi32(HASH_MASK));
-    let word_indices = _mm256_srli_epi32::<5>(bit_indices);
-    let shifts = _mm256_and_si256(bit_indices, _mm256_set1_epi32(31));
-    // SAFETY: HASH_MASK confines every gather to the validated 2^20-bit table.
-    // Reading u64 storage as native-endian u32 words preserves x86 bit order.
-    let selected_words =
-        unsafe { _mm256_i32gather_epi32::<4>(hash_words.as_ptr().cast::<i32>(), word_indices) };
-    let selected_bits = _mm256_and_si256(
-        _mm256_srlv_epi32(selected_words, shifts),
-        _mm256_set1_epi32(1),
-    );
-    let matches = _mm256_cmpeq_epi32(selected_bits, _mm256_set1_epi32(1));
-    let non_ascii = _mm256_cmpgt_epi32(combined, _mm256_set1_epi32(127));
-    u8::try_from(_mm256_movemask_ps(_mm256_castsi256_ps(_mm256_or_si256(
-        matches, non_ascii,
-    ))))
-    .expect("eight AVX2 lanes fit one byte")
+        let bit_indices = _mm256_and_si256(hash, _mm256_set1_epi32(HASH_MASK));
+        let word_indices = _mm256_srli_epi32::<5>(bit_indices);
+        let shifts = _mm256_and_si256(bit_indices, _mm256_set1_epi32(31));
+        let selected_words =
+            _mm256_i32gather_epi32::<4>(hash_words.as_ptr().cast::<i32>(), word_indices);
+        let selected_bits = _mm256_and_si256(
+            _mm256_srlv_epi32(selected_words, shifts),
+            _mm256_set1_epi32(1),
+        );
+        let matches = _mm256_cmpeq_epi32(selected_bits, _mm256_set1_epi32(1));
+        let non_ascii = _mm256_cmpgt_epi32(combined, _mm256_set1_epi32(127));
+        u8::try_from(_mm256_movemask_ps(_mm256_castsi256_ps(_mm256_or_si256(
+            matches, non_ascii,
+        ))))
+        .expect("eight AVX2 lanes fit one byte")
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{FIVE_HASH_WORDS, five_hash_index, scalar_five_allows, scan_five_hash_words};
+    use super::{FIVE_HASH_WORDS, scan_five_hash_words};
+    #[cfg(target_arch = "x86_64")]
+    use super::{five_hash_index, scalar_five_allows};
 
     #[test]
     fn unavailable_kernel_returns_none_without_writing() {

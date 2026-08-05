@@ -6,14 +6,16 @@
 > now covers the documented rmatch 2.x consuming language, including UTF-16,
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
 > scale work has completed the B1/B2 cross-engine campaign, and current
-> production includes the owner-authorized H42 exact SIMD scan path. This is a
-> development prototype, not a published crate.
+> production includes the owner-authorized H42 exact SIMD scan path. The
+> `0.1.0` release candidate is now in prerelease verification; no crate has
+> been published.
 
 > **Roadmap:** [See the implementation dependency graph and current
-> status](docs/roadmap.md). Planning is complete; implementation is at `10/12`
-> increments started and `10/12` complete. Cross-engine measurement and B2
-> analysis are complete; optimization work continues under the measured
-> admission policy.
+> status](docs/roadmap.md). Planning is complete; implementation is at `12/12`
+> increments started and `11/12` complete. Cross-engine measurement, B2
+> analysis, and hardening are complete; the
+> [prerelease checklist](docs/pre-release-todo.md) tracks the final package and
+> release gates.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.
@@ -235,7 +237,7 @@ executed together.
 
 ### Definition of success
 
-`rustmatch` is ready for a first stable release only when all of the following
+`rustmatch` is ready for a first public release only when all of the following
 are true:
 
 - The shared semantic suite passes against Java rmatch for supported syntax,

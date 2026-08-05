@@ -267,6 +267,7 @@ fn union_words(union: &mut [u64], partition: &[u64]) {
 }
 
 #[allow(clippy::inline_always)]
+#[allow(clippy::collapsible_if)] // `let` chains are newer than the 1.85.0 MSRV.
 #[inline(always)]
 fn scan_word_slice(
     filter: &UnionLiteralFilter,
@@ -275,11 +276,12 @@ fn scan_word_slice(
     words: &mut [u64],
 ) -> usize {
     let first_start = first_word.saturating_mul(64);
-    if filter.supports_avx2_five()
-        && let Some(admissions) =
+    if filter.supports_avx2_five() {
+        if let Some(admissions) =
             rustmatch_simd::scan_five_hash_words(input, &filter.ascii_five_hash, first_start, words)
-    {
-        return admissions;
+        {
+            return admissions;
+        }
     }
     scan_word_slice_scalar(filter, input, first_start, words)
 }

@@ -92,13 +92,13 @@ const QUALITY_STEPS: &[QualityStep] = &[
         toolchain: None,
     },
     QualityStep {
-        label: "parser fuzz format",
+        label: "fuzz target format",
         args: &["fmt", "--manifest-path", "fuzz/Cargo.toml", "--", "--check"],
         rustdoc_flags: None,
         toolchain: None,
     },
     QualityStep {
-        label: "parser fuzz target",
+        label: "fuzz targets",
         args: &[
             "clippy",
             "--manifest-path",

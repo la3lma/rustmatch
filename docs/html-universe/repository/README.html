@@ -13,15 +13,17 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 now covers the documented rmatch 2.x consuming language, including UTF-16,
 flags, anchors, and boundaries, with pinned Java evidence. Optimization and
 scale work has completed the B1/B2 cross-engine campaign, and current
-production includes the owner-authorized H42 exact SIMD scan path. This is a
-development prototype, not a published crate.</p>
+production includes the owner-authorized H42 exact SIMD scan path. The
+<code>0.1.0</code> release candidate is now in prerelease verification; no crate has
+been published.</p>
 </blockquote>
 <blockquote>
 <p><strong>Roadmap:</strong> <a href="docs/roadmap.html">See the implementation dependency graph and current
-status</a>. Planning is complete; implementation is at <code>10/12</code>
-increments started and <code>10/12</code> complete. Cross-engine measurement and B2
-analysis are complete; optimization work continues under the measured
-admission policy.</p>
+status</a>. Planning is complete; implementation is at <code>12/12</code>
+increments started and <code>11/12</code> complete. Cross-engine measurement, B2
+analysis, and hardening are complete; the
+<a href="docs/pre-release-todo.html">prerelease checklist</a> tracks the final package and
+release gates.</p>
 </blockquote>
 <blockquote>
 <p><strong>Engineering standards:</strong> <a href="CONTRIBUTING.html">Documentation, Rust hygiene, testing, and pull-
@@ -215,7 +217,7 @@ system while preserving end-to-end tests. At no planned point should the
 project contain several sophisticated horizontal layers that have never been
 executed together.</p>
 <h3>Definition of success</h3>
-<p><code>rustmatch</code> is ready for a first stable release only when all of the following
+<p><code>rustmatch</code> is ready for a first public release only when all of the following
 are true:</p>
 <ul>
 <li>The shared semantic suite passes against Java rmatch for supported syntax,

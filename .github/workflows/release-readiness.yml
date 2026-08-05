@@ -1,0 +1,119 @@
+name: Release readiness
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/release-readiness.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "rust-toolchain.toml"
+      - "rustmatch/**"
+      - "rustmatch-simd/**"
+      - "scripts/release-readiness.sh"
+      - "docs/pre-release-todo.md"
+      - "docs/release/**"
+      - "docs/releasing.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-readiness.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "rust-toolchain.toml"
+      - "rustmatch/**"
+      - "rustmatch-simd/**"
+      - "scripts/release-readiness.sh"
+      - "docs/pre-release-todo.md"
+      - "docs/release/**"
+      - "docs/releasing.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-rehearsal:
+    name: Exact package rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install release toolchain
+        run: rustup toolchain install 1.97.0 --profile minimal --component clippy,rustfmt
+      - name: Test packages without publishing
+        run: scripts/release-readiness.sh
+      - name: Run release-profile benchmark smoke
+        run: cargo xtask bench-smoke
+
+  portable:
+    name: ${{ matrix.os }} public crate
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install release toolchain
+        run: rustup toolchain install 1.97.0 --profile minimal
+      - name: Test public and SIMD crates
+        run: cargo +1.97.0 test --package rustmatch --package rustmatch-simd --all-features
+      - name: Build public documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo +1.97.0 doc --package rustmatch --all-features --no-deps
+
+  msrv:
+    name: Rust 1.85.0 MSRV
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install MSRV
+        run: rustup toolchain install 1.85.0 --profile minimal
+      - name: Test supported packages on MSRV
+        run: cargo +1.85.0 test --package rustmatch --package rustmatch-simd --all-features
+
+  aarch64:
+    name: AArch64 portable compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install release toolchain and target
+        run: |
+          rustup toolchain install 1.97.0 --profile minimal
+          rustup target add --toolchain 1.97.0 aarch64-unknown-linux-gnu
+      - name: Compile portable path
+        env:
+          RUSTFLAGS: -D warnings
+        run: cargo +1.97.0 check --package rustmatch --all-features --target aarch64-unknown-linux-gnu
+
+  miri:
+    name: Miri safe semantic core
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install nightly Miri
+        run: rustup toolchain install nightly --profile minimal --component miri
+      - name: Run Miri on the safe semantic core
+        run: cargo +nightly miri test --package rustmatch --test miri_release

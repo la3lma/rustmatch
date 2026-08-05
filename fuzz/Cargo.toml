@@ -19,4 +19,25 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "compiler"
+path = "fuzz_targets/compiler.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "scan"
+path = "fuzz_targets/scan.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "literal-oracle"
+path = "fuzz_targets/literal_oracle.rs"
+test = false
+doc = false
+bench = false
+
 [workspace]

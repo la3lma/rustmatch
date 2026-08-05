@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rustmatch 0.1.0 compatibility matrix · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../release/compatibility.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/release/compatibility.md</div></header><main><h1>Rustmatch 0.1.0 compatibility matrix</h1>
+<p>This is the support contract proposed for the first public release. A target is
+not release-supported until the release-readiness workflow passes for the exact
+candidate commit.</p>
+<h2>Toolchains and platforms</h2>
+<table><thead><tr><th>Surface</th><th>0.1.0 contract</th></tr></thead><tbody>
+<tr><td>Rust edition</td><td>2024</td></tr>
+<tr><td>Minimum Rust version</td><td>1.85.0</td></tr>
+<tr><td>Continuously tested hosts</td><td>Linux x86-64, macOS, Windows x86-64</td></tr>
+<tr><td>Additional compile target</td><td>AArch64 Linux</td></tr>
+<tr><td>SIMD acceleration</td><td>Runtime-detected AVX2 on x86-64</td></tr>
+<tr><td>Portable behavior</td><td>Exact non-SIMD path when AVX2 is absent</td></tr>
+<tr><td>Runtime environment</td><td>Rust standard library; no <code>no_std</code> support</td></tr>
+</tbody></table>
+<p>The non-x86 path is semantically supported, not promised to match AVX2
+throughput. Architectures outside the tested matrix are best effort for 0.1.x.</p>
+<h2>Semantic reference</h2>
+<table><thead><tr><th>Surface</th><th>0.1.0 contract</th></tr></thead><tbody>
+<tr><td>Behavioral reference</td><td>Maven Central <code>no.rmz:rmatch:2.0.0-RC1</code></td></tr>
+<tr><td>Reference JAR SHA-256</td><td><code>05542b4778d004bd40037539567a0fff31b65b3bf234c61ef1493046c3e71a8a</code></td></tr>
+<tr><td>Input coordinates</td><td>Owned UTF-16 code units</td></tr>
+<tr><td>Match coordinates</td><td>Zero-based, half-open UTF-16 spans</td></tr>
+<tr><td>Event selection</td><td>Longest event for each pattern and eligible start</td></tr>
+<tr><td>Overlap</td><td>Preserved across distinct starts and patterns</td></tr>
+<tr><td>Callback order</td><td>Unspecified</td></tr>
+</tbody></table>
+<p>The retained Java fixtures cover literals, predicates, composition,
+repetition, UTF-16 and flags, anchors, and boundaries. Compatibility means the
+same event multiset for supported syntax, not source or implementation parity.</p>
+<h2>Supported syntax</h2>
+<ul>
+<li>UTF-16 literals, including isolated surrogate code units through raw input.</li>
+<li>Dot and positive or negated character classes with ranges.</li>
+<li>ASCII <code>\d</code>, <code>\w</code>, and <code>\s</code>, plus their complements.</li>
+<li>Alternation, plain groups, and non-capturing groups.</li>
+<li>Greedy <code>?</code>, <code>*</code>, <code>+</code>, <code>{m}</code>, <code>{m,n}</code>, and <code>{m,}</code> repetition, with bounds up
+to 1,000.</li>
+<li>Prefix <code>(?i)</code> and <code>(?s)</code> flags and typed case-insensitive registration.</li>
+<li><code>^</code>, <code>$</code>, <code>\b</code>, and <code>\B</code> assertions.</li>
+<li>Group nesting up to 256 levels; deeper patterns return a typed error.</li>
+</ul>
+<h2>Known limitations</h2>
+<ul>
+<li>Captures, look-around, backreferences, lazy quantifiers, possessive
+quantifiers, and scoped flags are unsupported.</li>
+<li>Pure zero-width patterns are rejected.</li>
+<li>Case folding follows Java single-UTF-16-unit behavior rather than full
+Unicode multi-code-point or locale-sensitive folding.</li>
+<li>UTF-8 convenience input is not yet a Java-compatible coordinate API.</li>
+<li>Parallel matching serializes callback delivery after workers complete and
+may retain match events temporarily.</li>
+<li>Candidate filters and SIMD kernels are conservative accelerators; the exact
+semantic engine remains authoritative.</li>
+<li>The <code>benchmark-internals</code> feature is for repository tooling and is outside
+the supported application API.</li>
+</ul>
+<p>Performance comparisons and their semantic qualifications are maintained in
+the <a href="../experiments/h42-cross-engine-snapshot.html">current cross-engine snapshot</a>.</p>
+</main><footer>Generated from <code>docs/release/compatibility.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
