@@ -39,20 +39,26 @@ project.
 ## Current performance snapshot
 
 The latest exact overlap snapshot measures the current H42 production source
-(`c6f221b`) against retained, unchanged Java rmatch and Hyperscan results from
-the same benchmark scenarios. Ratios are Rustmatch throughput divided by the
-reference throughput.
+(`c6f221b`) against retained, unchanged Java rmatch, Rust `regex::RegexSet`,
+and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
+throughput divided by the reference throughput, so values above `1.0x` favor
+Rustmatch.
 
 | Reference | Contract | Exact overlap | Rust wins | Geometric mean | Median | Range |
 |---|---|---:|---:|---:|---:|---:|
 | Java rmatch | Same complete event contract | 9 groups | 9/9 | **44.543x** | 80.983x | 2.738x-126.566x |
+| Rust `regex::RegexSet` | Different output contract | 8 groups | 4/8 | **2.288x** | 1.086x | 0.194x-27.154x |
 | Hyperscan | Native-reference diagnostic | 8 groups | 2/8 | **0.308x (30.8%)** | 0.402x | 0.011x-3.637x |
 
-On the same overlap, H11 measured 27.893x Java rmatch and 0.210x Hyperscan, so
-the current source improves those geometric-mean ratios by 1.60x and 1.47x,
-respectively. Java rmatch is the directly comparable complete-event reference;
-Hyperscan uses different native semantics and is a useful performance ceiling,
-not a fairness claim.
+The result is competitive rather than universal: Rustmatch wins every
+same-contract Java comparison, leads RegexSet on geometric mean while splitting
+the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
+two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
+RegexSet, and 0.210x Hyperscan, so the current source improves those
+geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
+the directly comparable complete-event reference. RegexSet and Hyperscan use
+different native semantics, so those measurements are useful performance
+references rather than fairness claims.
 
 This is an exact nine-group admission-overlap update, not a new full-dataset
 rerun. H42's formal outcome remains `investigate` because its Wuthering guard

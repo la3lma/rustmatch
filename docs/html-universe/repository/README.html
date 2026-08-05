@@ -46,18 +46,24 @@ parallelism, and a small public API. This is not a Java-to-Rust transliteration
 project.</p>
 <h2>Current performance snapshot</h2>
 <p>The latest exact overlap snapshot measures the current H42 production source
-(<code>c6f221b</code>) against retained, unchanged Java rmatch and Hyperscan results from
-the same benchmark scenarios. Ratios are Rustmatch throughput divided by the
-reference throughput.</p>
+(<code>c6f221b</code>) against retained, unchanged Java rmatch, Rust <code>regex::RegexSet</code>,
+and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
+throughput divided by the reference throughput, so values above <code>1.0x</code> favor
+Rustmatch.</p>
 <table><thead><tr><th>Reference</th><th>Contract</th><th style="text-align: right">Exact overlap</th><th style="text-align: right">Rust wins</th><th style="text-align: right">Geometric mean</th><th style="text-align: right">Median</th><th style="text-align: right">Range</th></tr></thead><tbody>
 <tr><td>Java rmatch</td><td>Same complete event contract</td><td style="text-align: right">9 groups</td><td style="text-align: right">9/9</td><td style="text-align: right"><strong>44.543x</strong></td><td style="text-align: right">80.983x</td><td style="text-align: right">2.738x-126.566x</td></tr>
+<tr><td>Rust <code>regex::RegexSet</code></td><td>Different output contract</td><td style="text-align: right">8 groups</td><td style="text-align: right">4/8</td><td style="text-align: right"><strong>2.288x</strong></td><td style="text-align: right">1.086x</td><td style="text-align: right">0.194x-27.154x</td></tr>
 <tr><td>Hyperscan</td><td>Native-reference diagnostic</td><td style="text-align: right">8 groups</td><td style="text-align: right">2/8</td><td style="text-align: right"><strong>0.308x (30.8%)</strong></td><td style="text-align: right">0.402x</td><td style="text-align: right">0.011x-3.637x</td></tr>
 </tbody></table>
-<p>On the same overlap, H11 measured 27.893x Java rmatch and 0.210x Hyperscan, so
-the current source improves those geometric-mean ratios by 1.60x and 1.47x,
-respectively. Java rmatch is the directly comparable complete-event reference;
-Hyperscan uses different native semantics and is a useful performance ceiling,
-not a fairness claim.</p>
+<p>The result is competitive rather than universal: Rustmatch wins every
+same-contract Java comparison, leads RegexSet on geometric mean while splitting
+the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
+two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
+RegexSet, and 0.210x Hyperscan, so the current source improves those
+geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
+the directly comparable complete-event reference. RegexSet and Hyperscan use
+different native semantics, so those measurements are useful performance
+references rather than fairness claims.</p>
 <p>This is an exact nine-group admission-overlap update, not a new full-dataset
 rerun. H42's formal outcome remains <code>investigate</code> because its Wuthering guard
 was 2.111% below H11; it entered production through an explicit owner-authorized
