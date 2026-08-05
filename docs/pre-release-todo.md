@@ -59,13 +59,20 @@ until the owner explicitly starts the release ceremony.
 
 ## Automation and evidence
 
-- [x] Add non-publishing release-readiness CI for Linux, macOS, Windows, MSRV,
-  AArch64 compilation, Miri, package rehearsal, and consumer smoke testing.
+- [x] Add and pass non-publishing release-readiness CI for Linux, macOS,
+  Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
+  smoke testing.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
-- [ ] Retain an exact release-candidate performance receipt from the designated
-  benchmark host.
-- [ ] Record the candidate commit and package checksums in this checklist.
+- [x] Retain an exact release-candidate performance receipt from the designated
+  benchmark host in the
+  [candidate evidence archive](evidence/release/0.1.0/7305a24/README.md).
+- [x] Record the candidate commit and package checksums in this checklist:
+  `7305a24ba0f67219ea0d3026e45db5ad22d71734`,
+  `rustmatch-simd` SHA-256
+  `07825e3a04dbe888c6729c42be126865d9cda6aaf60d3df38e38325b588393ad`,
+  and `rustmatch` SHA-256
+  `cdff31c0a0ae63ff54734c03029a553b61ea373dadfdfee9feb06596fa707ceb`.
 
 ## Release ceremony: intentionally not executed
 

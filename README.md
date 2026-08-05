@@ -7,15 +7,15 @@
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
 > scale work has completed the B1/B2 cross-engine campaign, and current
 > production includes the owner-authorized H42 exact SIMD scan path. The
-> `0.1.0` release candidate is now in prerelease verification; no crate has
+> `0.1.0` release candidate has passed prerelease verification; no crate has
 > been published.
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `12/12`
-> increments started and `11/12` complete. Cross-engine measurement, B2
-> analysis, and hardening are complete; the
+> increments started and `12/12` complete. Cross-engine measurement, B2
+> analysis, hardening, and release preparation are complete; the
 > [prerelease checklist](docs/pre-release-todo.md) tracks the final package and
-> release gates.
+> intentionally unexecuted release ceremony.
 
 > **Engineering standards:** [Documentation, Rust hygiene, testing, and pull-
 > request expectations](CONTRIBUTING.md) are part of the product contract.

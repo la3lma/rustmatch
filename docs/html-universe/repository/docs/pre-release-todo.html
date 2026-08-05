@@ -93,17 +93,24 @@ Write the release runbook with immutable-artifact recovery instructions.</li>
 <h2>Automation and evidence</h2>
 <ul>
 <li><input disabled="" type="checkbox" checked=""/>
-Add non-publishing release-readiness CI for Linux, macOS, Windows, MSRV,
-AArch64 compilation, Miri, package rehearsal, and consumer smoke testing.</li>
+Add and pass non-publishing release-readiness CI for Linux, macOS,
+Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
+smoke testing.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass release-profile semantic and benchmark smoke tests.</li>
-<li><input disabled="" type="checkbox"/>
+<li><input disabled="" type="checkbox" checked=""/>
 Retain an exact release-candidate performance receipt from the designated
-benchmark host.</li>
-<li><input disabled="" type="checkbox"/>
-Record the candidate commit and package checksums in this checklist.</li>
+benchmark host in the
+<a href="evidence/release/0.1.0/7305a24/README.html">candidate evidence archive</a>.</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Record the candidate commit and package checksums in this checklist:
+<code>7305a24ba0f67219ea0d3026e45db5ad22d71734</code>,
+<code>rustmatch-simd</code> SHA-256
+<code>07825e3a04dbe888c6729c42be126865d9cda6aaf60d3df38e38325b588393ad</code>,
+and <code>rustmatch</code> SHA-256
+<code>cdff31c0a0ae63ff54734c03029a553b61ea373dadfdfee9feb06596fa707ceb</code>.</li>
 </ul>
 <h2>Release ceremony: intentionally not executed</h2>
 <ul>

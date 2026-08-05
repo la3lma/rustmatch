@@ -9,13 +9,14 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 </style></head><body><nav><a class="brand" href="../../index.html">rustmatch evidence</a><div><a href="../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../index.html">HTML universe</a><a href="../../../roadmap.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/roadmap.md</div></header><main><h1>rustmatch implementation roadmap</h1>
 <p><strong>Last reviewed:</strong> 2026-08-05</p>
 <p><strong>Implementation increments started:</strong> <strong>12/12</strong></p>
-<p><strong>Implementation increments complete:</strong> <strong>11/12</strong></p>
-<p><strong>Active:</strong> <code>I11</code> release preparation for the first public <code>0.1.0</code> package;
-H42 remains the exact owner-authorized production source</p>
-<p><strong>Next evidence goal:</strong> pass non-publishing release-readiness CI and retain an
-exact-candidate performance receipt from the designated benchmark host. The
-<a href="pre-release-todo.html">prerelease checklist</a> is the authoritative remaining-work
-ledger</p>
+<p><strong>Implementation increments complete:</strong> <strong>12/12</strong></p>
+<p><strong>Active:</strong> no implementation increment; H42 remains the exact
+owner-authorized production source and <code>0.1.0</code> candidate <code>7305a24</code> has passed
+the complete prerelease gate</p>
+<p><strong>Next owner decision:</strong> review and merge draft PR #38, then separately
+authorize the irreversible release ceremony when desired. The
+<a href="pre-release-todo.html">prerelease checklist</a> is the authoritative ledger; every
+publication, tag, and GitHub-release action remains intentionally unchecked</p>
 <p>This page is the at-a-glance map from the completed product planning to a
 tested rustmatch release. The detailed requirements, architecture, use cases,
 evidence contracts, and exit criteria remain in the <a href="../README.html">main README</a>.
@@ -47,7 +48,7 @@ Color carries status or role, so task boxes do not repeat state labels.
 Every task and gate begins with a unique symbolic short name. These IDs are
 stable references for commits, pull requests, evidence manifests, and roadmap
 discussion even when a task's wording or color changes.</p>
-<figure class="mermaid-diagram"><a href="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg" title="Open full-size SVG"><img src="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/a6918d6c5b76006ee984dea8909c43c6568423bfc6efeae18cc5efaf652b691a.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg" title="Open full-size SVG"><img src="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg" alt="Dependency graph diagram"></a><figcaption>Dependency graph · <a href="../../assets/mermaid/681de8ce462c0f0412d27e193dc8edd00911c10fd0d05f388ee20229ab1bbf2a.svg">Open full-size SVG</a></figcaption></figure>
 <p>Solid arrows show required dependencies. Dotted arrows show evidence that
 accumulates across several increments; they are intentionally retained as a
 separate visual language from the execution path.</p>
@@ -187,7 +188,7 @@ and use-case evidence bundle pass from a clean checkout.</p>
 <tr><td>B2</td><td>Full-dataset analysis and reviewed hypotheses</td><td>Complete</td><td>The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source</td></tr>
 <tr><td>G9</td><td>Existing-Rustmatch candidate gate</td><td>Complete for B2-H-0011</td><td>H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate <code>bacd5c46</code>. Any next optimization requires a fresh B2 authorization</td></tr>
 <tr><td>I10</td><td>Hardening</td><td>Complete</td><td>Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass</td></tr>
-<tr><td>I11</td><td>Release preparation</td><td>Active</td><td>Exact package, consumer, documentation, compatibility, changelog, runbook, portability, and local benchmark-smoke gates pass; designated-host candidate performance and remote release-readiness CI remain</td></tr>
+<tr><td>I11</td><td>Release preparation</td><td>Complete</td><td>Frozen candidate <code>7305a24</code> passes exact package, consumer, documentation, compatibility, changelog, runbook, Linux/macOS/Windows, MSRV, AArch64, Miri, Java differential, hosted tripwire, and designated-host performance gates; raw receipts and archive hashes are retained</td></tr>
 <tr><td>REL</td><td>First stable release</td><td>Planned</td><td>Published crate, signed tag, GitHub release, and archived release receipts</td></tr>
 </tbody></table>
 <h2>Status update protocol</h2>
