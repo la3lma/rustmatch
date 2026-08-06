@@ -310,11 +310,49 @@ impl StartTable {
         }
 
         let mut closure = ClosureScratch::new(database.state_count());
-        let root = closure.epsilon_closure(database, &[database.root()]);
+        let mut root = Vec::new();
+        closure.epsilon_closure_into(database, &[database.root()], &mut root);
+        let mut first_states = Vec::new();
+        let mut second_states = Vec::new();
         let mut first_ascii = [0_u64; 2];
         let mut pair_ascii = Box::new([0_u64; 256]);
         for first in 0_u16..128 {
-            let first_states = closure.transition(database, &root, first);
+            closure.transition_into(database, &root, first, &mut first_states);
+            if first_states.is_empty() {
+                continue;
+            }
+            set_bit(&mut first_ascii, usize::from(first));
+            let accepts_after_first = first_states
+                .iter()
+                .any(|&state| !database.terminals_at(state).is_empty());
+            for second in 0_u16..128 {
+                if accepts_after_first || {
+                    closure.transition_into(database, &first_states, second, &mut second_states);
+                    !second_states.is_empty()
+                } {
+                    let pair = usize::from(first) * 128 + usize::from(second);
+                    set_bit(pair_ascii.as_mut(), pair);
+                }
+            }
+        }
+        Some(Self {
+            first_ascii,
+            pair_ascii,
+        })
+    }
+
+    #[cfg(test)]
+    fn compile_allocating_reference(database: &PatternDatabase) -> Option<Self> {
+        if database.uses_assertions() {
+            return None;
+        }
+
+        let mut closure = ClosureScratch::new(database.state_count());
+        let root = closure.epsilon_closure_allocating(database, &[database.root()]);
+        let mut first_ascii = [0_u64; 2];
+        let mut pair_ascii = Box::new([0_u64; 256]);
+        for first in 0_u16..128 {
+            let first_states = closure.transition_allocating(database, &root, first);
             if first_states.is_empty() {
                 continue;
             }
@@ -325,7 +363,7 @@ impl StartTable {
             for second in 0_u16..128 {
                 if accepts_after_first
                     || !closure
-                        .transition(database, &first_states, second)
+                        .transition_allocating(database, &first_states, second)
                         .is_empty()
                 {
                     let pair = usize::from(first) * 128 + usize::from(second);
@@ -377,9 +415,15 @@ impl ClosureScratch {
         }
     }
 
-    fn epsilon_closure(&mut self, database: &PatternDatabase, seeds: &[StateId]) -> Vec<StateId> {
+    fn epsilon_closure_into(
+        &mut self,
+        database: &PatternDatabase,
+        seeds: &[StateId],
+        output: &mut Vec<StateId>,
+    ) {
         let generation = self.next_generation();
-        let mut output = Vec::new();
+        output.clear();
+        debug_assert!(self.stack.is_empty());
         self.stack.extend(seeds.iter().copied());
         while let Some(state) = self.stack.pop() {
             if self.seen[state.index()] == generation {
@@ -394,24 +438,61 @@ impl ClosureScratch {
             }
         }
         output.sort_unstable();
+    }
+
+    fn transition_into(
+        &mut self,
+        database: &PatternDatabase,
+        source: &[StateId],
+        symbol: u16,
+        output: &mut Vec<StateId>,
+    ) {
+        let generation = self.next_generation();
+        output.clear();
+        debug_assert!(self.stack.is_empty());
+        for &state in source {
+            for edge in database.edges_from(state) {
+                if database.edge_matches(edge.kind, symbol) {
+                    self.stack.push(edge.target);
+                }
+            }
+        }
+        while let Some(state) = self.stack.pop() {
+            if self.seen[state.index()] == generation {
+                continue;
+            }
+            self.seen[state.index()] = generation;
+            output.push(state);
+            for edge in database.edges_from(state) {
+                if edge.kind == EdgeKind::Epsilon {
+                    self.stack.push(edge.target);
+                }
+            }
+        }
+        output.sort_unstable();
+    }
+
+    #[cfg(test)]
+    fn epsilon_closure_allocating(
+        &mut self,
+        database: &PatternDatabase,
+        seeds: &[StateId],
+    ) -> Vec<StateId> {
+        let mut output = Vec::new();
+        self.epsilon_closure_into(database, seeds, &mut output);
         output
     }
 
-    fn transition(
+    #[cfg(test)]
+    fn transition_allocating(
         &mut self,
         database: &PatternDatabase,
         source: &[StateId],
         symbol: u16,
     ) -> Vec<StateId> {
-        let mut seeds = Vec::new();
-        for &state in source {
-            for edge in database.edges_from(state) {
-                if database.edge_matches(edge.kind, symbol) {
-                    seeds.push(edge.target);
-                }
-            }
-        }
-        self.epsilon_closure(database, &seeds)
+        let mut output = Vec::new();
+        self.transition_into(database, source, symbol, &mut output);
+        output
     }
 
     fn next_generation(&mut self) -> u32 {
@@ -793,7 +874,7 @@ pub(crate) fn contains_bit(words: &[u64], bit: usize) -> bool {
 mod tests {
     use super::{
         CandidateBitmap, LiteralPrefilter, MIN_LITERAL_INPUT_UNITS, NecessaryLiteral, Prefilter,
-        PrefilterBypass, PrefilterPath, necessary_prefix,
+        PrefilterBypass, PrefilterPath, StartTable, necessary_prefix,
     };
     use crate::hir::Hir;
     use crate::{MatcherBuilder, PatternId, Utf16Text, nfa, parser};
@@ -861,6 +942,52 @@ mod tests {
         assert!(!table.allows(&utf16("ax"), 0));
         assert!(!table.allows(&utf16("z"), 0));
         assert!(table.allows(&utf16("a"), 0));
+        Ok(())
+    }
+
+    #[test]
+    fn reused_start_table_scratch_matches_allocating_reference() -> Result<(), crate::Error> {
+        let mut pattern_sets = vec![
+            vec!["ab".to_owned(), "cd".to_owned()],
+            vec!["a".to_owned(), "b?c".to_owned(), "d+".to_owned()],
+            vec![
+                "(ab|ac)d".to_owned(),
+                "[a-c]x".to_owned(),
+                r"\dfoo".to_owned(),
+            ],
+            vec!["a*".to_owned(), "(xy){1,3}".to_owned(), ".z".to_owned()],
+            vec!["(?i)ab".to_owned(), "[A-Z]x".to_owned()],
+        ];
+        for first in ['a', 'b', 'c', 'x'] {
+            for second in ['a', 'b', 'c', 'x'] {
+                pattern_sets.push(vec![format!("{first}{second}")]);
+                pattern_sets.push(vec![
+                    format!("{first}{second}"),
+                    format!("{second}{first}"),
+                    format!("({first}|{second})x"),
+                ]);
+            }
+        }
+
+        for sources in pattern_sets {
+            let patterns = sources
+                .iter()
+                .enumerate()
+                .map(|(index, source)| {
+                    parser::parse(
+                        PatternId::new(u32::try_from(index + 1).expect("small fixture")),
+                        source,
+                    )
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let database = nfa::compile(&patterns)?;
+            let reused = StartTable::compile(&database).expect("assertion-free table");
+            let allocating = StartTable::compile_allocating_reference(&database)
+                .expect("assertion-free reference table");
+
+            assert_eq!(reused.first_ascii, allocating.first_ascii, "{sources:?}");
+            assert_eq!(reused.pair_ascii, allocating.pair_ascii, "{sources:?}");
+        }
         Ok(())
     }
 
