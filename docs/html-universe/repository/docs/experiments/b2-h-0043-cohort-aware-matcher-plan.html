@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/81affd19232dbe415c13c18b3fbd3a75d1a8ade8f176d5d866a2195a955ba872.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/81affd19232dbe415c13c18b3fbd3a75d1a8ade8f176d5d866a2195a955ba872.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/81affd19232dbe415c13c18b3fbd3a75d1a8ade8f176d5d866a2195a955ba872.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -678,7 +678,7 @@ result is <code>docs/experiments/h43-d1-result.md</code>; the raw archive SHA-25
 <h2>H43-D1-R1: Recover classification cost and parallel occupancy</h2>
 <p><strong>Scope:</strong> semantically inert cohort-spine recovery<br>
 <strong>Level:</strong> system<br>
-<strong>Status:</strong> available for execution<br>
+<strong>Status:</strong> active<br>
 <strong>Primary actor:</strong> optimization engineer<br>
 <strong>Supporting actors:</strong> correctness reviewer, exclusive-host benchmark runner,
 profiler</p>
@@ -737,6 +737,35 @@ the unchanged D1 plan.</li>
 <li>Written authorize/reject decision for H43-A1.</li>
 </ul>
 <p><strong>Dependencies:</strong> H43-D1; H43-E1; unchanged G9-v3 evidence policy.</p>
+<p><strong>Implementation result</strong></p>
+<ul>
+<li><strong>Result:</strong> active on 2026-08-06.</li>
+<li><strong>Frozen candidate:</strong>
+<code>2b650e980cafaed608ce8c7e8c7e9bde02e27a5e</code> replaces the full diagnostic
+classifier in cohort execution with the existing exact HIR assertion query.
+One-cohort builds retain their original pattern vector and add no
+classification allocation.</li>
+<li><strong>Recovered occupancy:</strong> one requested worker still scans both cohort groups
+sequentially with no spawned worker. At two or more workers, each cohort
+retains its independent candidate plan while all allocated partitions enter
+one scoped execution with one caller partition and at most
+<code>requested_workers - 1</code> spawned workers.</li>
+<li><strong>Expanded proof:</strong> focused tests prove a four-partition mixed matcher reaches
+one common start gate, one-worker scans remain sequential, and all thirteen
+now-spawnable mixed-cohort worker failures return before callback delivery.
+All partition panic, sink panic, reuse, simultaneous-scan, ID, multiplicity,
+cache-budget, and event parity tests pass.</li>
+<li><strong>Local gates:</strong> the unchanged 3,628-comparison H43-E1 campaign and complete
+repository CI pass. A non-admissible local screen retained the approximately
+9.8x mixed-output one-worker gain and changed the former four- and
+sixteen-worker losses into small gains. Preparation remains reserved for
+the formal exclusive-host ruling because its absolute duration is only tens
+of microseconds locally.</li>
+<li><strong>Frozen formal plan:</strong> <code>h43-d1-r1-plan.json</code> preserves all D1 fixtures,
+workers, cycles, resource lanes, and G9-v3 thresholds. Its SHA-256 is
+<code>36da2a69703d48a76c7571b74ca59fa22f9a5e57f20a8e1d59cb1eeb788bfc61</code>.</li>
+<li><strong>Decision:</strong> guarded Agogo measurement pending. H43-A1 remains blocked.</li>
+</ul>
 <h2>H43-A1: Reconstruct H24 assertion backend in an isolated artifact</h2>
 <p><strong>Scope:</strong> candidate specialized backend<br />
 <strong>Level:</strong> sea<br />
@@ -1154,9 +1183,9 @@ cohorting is worth its fixed complexity.</p>
 <p>H43-C1, H43-C2, H43-K1, H43-E1, and H43-D1 are complete. D1 found clean
 ordinary and one-cohort scan guards plus 57.58%-90.46% one-worker mixed gains,
 but it also found stable classifier preparation cost and sequential-cohort
-parallel occupancy losses. <strong>H43-D1-R1 is the next available task.</strong> It may
-recover only those two causal defects. H43-A1 remains blocked until the
-unchanged D1 matrix passes after recovery.</p>
+parallel occupancy losses. <strong>H43-D1-R1 is active</strong> and may recover only those
+two causal defects. H43-A1 remains blocked until the unchanged D1 matrix passes
+after recovery.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good

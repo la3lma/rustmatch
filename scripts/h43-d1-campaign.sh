@@ -17,6 +17,7 @@ done
 
 baseline_revision=$(jq -r .baseline_revision "$plan")
 candidate_revision=$(jq -r .candidate_revision "$plan")
+evidence_id=$(jq -r .evidence_id "$plan")
 cpu_set=$(jq -r .cpu_set "$plan")
 timing_cycles=$(jq -r .timing_cycles "$plan")
 warmups=$(jq -r .warmup_scans "$plan")
@@ -26,7 +27,7 @@ compile_cycles=$(jq -r .compile_cycles "$plan")
 runner_label="$(hostname) | $(uname -m) | cpu-set $cpu_set"
 
 if [[ -e $run_root ]]; then
-  echo "H43-D1 run root already exists: $run_root" >&2
+  echo "$evidence_id run root already exists: $run_root" >&2
   exit 2
 fi
 mkdir -p "$run_root"/{activation,artifacts,build,fixtures,host,receipts/{timing,resources}}
@@ -51,12 +52,12 @@ verify_source baseline "$baseline_root" "$baseline_revision"
 verify_source candidate "$candidate_root" "$candidate_revision"
 
 if [[ -n $(docker ps -q) ]]; then
-  echo "H43-D1 requires an empty Docker runtime" >&2
+  echo "$evidence_id requires an empty Docker runtime" >&2
   docker ps --no-trunc >&2
   exit 3
 fi
 if [[ -n $(nvidia-smi --query-compute-apps=pid --format=csv,noheader 2>/dev/null) ]]; then
-  echo "H43-D1 requires an idle GPU" >&2
+  echo "$evidence_id requires an idle GPU" >&2
   nvidia-smi >&2
   exit 3
 fi
@@ -119,7 +120,7 @@ trap cleanup_guard EXIT INT TERM
 host_checkpoint() {
   local label=$1
   if [[ -s $guard_failure ]]; then
-    echo "H43-D1 contamination guard fired before $label" >&2
+    echo "$evidence_id contamination guard fired before $label" >&2
     exit 3
   fi
   {
@@ -274,12 +275,12 @@ ended_epoch=$(date +%s)
 docker events --since "$started_epoch" --until "$ended_epoch" --format '{{json .}}' \
   > "$run_root/host/docker-events.jsonl"
 if [[ -s $guard_failure || -s $run_root/host/docker-events.jsonl ]]; then
-  echo "H43-D1 window rejected by contamination evidence" >&2
+  echo "$evidence_id window rejected by contamination evidence" >&2
   exit 3
 fi
 
 {
-  printf '{"schema_version":1,"evidence_id":"H43-D1-window","status":"pass",'
+  printf '{"schema_version":1,"evidence_id":"%s-window","status":"pass",' "$evidence_id"
   printf '"started_utc":"%s","ended_utc":"%s",' "$started_utc" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   printf '"plan_sha256":"%s","baseline_revision":"%s","candidate_revision":"%s",' \
     "$plan_sha256" "$baseline_revision" "$candidate_revision"
@@ -290,4 +291,4 @@ fi
 
 sha256sum "$run_root/window-state.json" "$run_root/fixtures/manifest.json" \
   > "$run_root/manifest-sha256.txt"
-echo "H43-D1 guarded campaign complete: $run_root"
+echo "$evidence_id guarded campaign complete: $run_root"

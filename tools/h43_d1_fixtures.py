@@ -45,7 +45,7 @@ def generate(output: Path, plan_path: Path) -> dict[str, object]:
     output.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, object] = {
         "schema_version": 1,
-        "evidence_id": "H43-D1-fixtures",
+        "evidence_id": f"{plan['evidence_id']}-fixtures",
         "plan_sha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
         "fixtures": [],
     }

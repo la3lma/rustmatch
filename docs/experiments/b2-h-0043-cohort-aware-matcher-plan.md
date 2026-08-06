@@ -189,7 +189,7 @@ flowchart TB
     class K1 complete;
     class E1 complete;
     class D1 complete;
-    class D1R available;
+    class D1R active;
     class A1 blocked;
     class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -870,7 +870,7 @@ path activation is unproved.
 
 **Scope:** semantically inert cohort-spine recovery<br>
 **Level:** system<br>
-**Status:** available for execution<br>
+**Status:** active<br>
 **Primary actor:** optimization engineer<br>
 **Supporting actors:** correctness reviewer, exclusive-host benchmark runner,
 profiler
@@ -934,6 +934,35 @@ all D1 evidence, and does not authorize H43-A1.
 - Written authorize/reject decision for H43-A1.
 
 **Dependencies:** H43-D1; H43-E1; unchanged G9-v3 evidence policy.
+
+**Implementation result**
+
+- **Result:** active on 2026-08-06.
+- **Frozen candidate:**
+  `2b650e980cafaed608ce8c7e8c7e9bde02e27a5e` replaces the full diagnostic
+  classifier in cohort execution with the existing exact HIR assertion query.
+  One-cohort builds retain their original pattern vector and add no
+  classification allocation.
+- **Recovered occupancy:** one requested worker still scans both cohort groups
+  sequentially with no spawned worker. At two or more workers, each cohort
+  retains its independent candidate plan while all allocated partitions enter
+  one scoped execution with one caller partition and at most
+  `requested_workers - 1` spawned workers.
+- **Expanded proof:** focused tests prove a four-partition mixed matcher reaches
+  one common start gate, one-worker scans remain sequential, and all thirteen
+  now-spawnable mixed-cohort worker failures return before callback delivery.
+  All partition panic, sink panic, reuse, simultaneous-scan, ID, multiplicity,
+  cache-budget, and event parity tests pass.
+- **Local gates:** the unchanged 3,628-comparison H43-E1 campaign and complete
+  repository CI pass. A non-admissible local screen retained the approximately
+  9.8x mixed-output one-worker gain and changed the former four- and
+  sixteen-worker losses into small gains. Preparation remains reserved for
+  the formal exclusive-host ruling because its absolute duration is only tens
+  of microseconds locally.
+- **Frozen formal plan:** `h43-d1-r1-plan.json` preserves all D1 fixtures,
+  workers, cycles, resource lanes, and G9-v3 thresholds. Its SHA-256 is
+  `36da2a69703d48a76c7571b74ca59fa22f9a5e57f20a8e1d59cb1eeb788bfc61`.
+- **Decision:** guarded Agogo measurement pending. H43-A1 remains blocked.
 
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
@@ -1414,9 +1443,9 @@ cohorting is worth its fixed complexity.
 H43-C1, H43-C2, H43-K1, H43-E1, and H43-D1 are complete. D1 found clean
 ordinary and one-cohort scan guards plus 57.58%-90.46% one-worker mixed gains,
 but it also found stable classifier preparation cost and sequential-cohort
-parallel occupancy losses. **H43-D1-R1 is the next available task.** It may
-recover only those two causal defects. H43-A1 remains blocked until the
-unchanged D1 matrix passes after recovery.
+parallel occupancy losses. **H43-D1-R1 is active** and may recover only those
+two causal defects. H43-A1 remains blocked until the unchanged D1 matrix passes
+after recovery.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

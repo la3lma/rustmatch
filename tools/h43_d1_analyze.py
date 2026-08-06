@@ -264,6 +264,12 @@ def analyze(root: Path, plan_path: Path) -> dict[str, Any]:
     state = read_json(root / "window-state.json")
     if state.get("status") != "pass":
         raise ValueError("guarded window did not pass")
+    expected_evidence_id = f"{plan['evidence_id']}-window"
+    if state.get("evidence_id") != expected_evidence_id:
+        raise ValueError(
+            f"window evidence ID mismatch: expected {expected_evidence_id}, "
+            f"found {state.get('evidence_id')}"
+        )
     plan_sha256 = hashlib.sha256(plan_path.read_bytes()).hexdigest()
     if state.get("plan_sha256") != plan_sha256:
         raise ValueError("window state is not bound to this plan")
@@ -280,7 +286,7 @@ def analyze(root: Path, plan_path: Path) -> dict[str, Any]:
     decision, signals = classify(timing, resources, correctness_errors, plan)
     summary = {
         "schema_version": 1,
-        "evidence_id": "H43-D1-summary",
+        "evidence_id": f"{plan['evidence_id']}-summary",
         "plan_sha256": plan_sha256,
         "window_state_sha256": hashlib.sha256((root / "window-state.json").read_bytes()).hexdigest(),
         "baseline_revision": plan["baseline_revision"],

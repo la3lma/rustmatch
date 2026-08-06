@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-D1-R1",
+  "policy": "G9-v3",
+  "claim": "causal-recovery-cohort-plumbing-cost-only",
+  "baseline_revision": "05992bf1f20e0f9384fc52fcb4a9863500e7a4da",
+  "candidate_revision": "2b650e980cafaed608ce8c7e8c7e9bde02e27a5e",
+  "runner": "agogo.local",
+  "cpu_set": "0-15",
+  "worker_counts": [1, 4, 16],
+  "timing_cycles": 15,
+  "warmup_scans": 2,
+  "retained_scans": 5,
+  "resource_cycles": 3,
+  "compile_cycles": 5,
+  "thresholds": {
+    "investigate_regression_basis_points": 200,
+    "block_regression_basis_points": 300,
+    "directional_burden_required": 13,
+    "directional_burden_cycles": 15,
+    "target_improvement_basis_points": 500,
+    "rss_absolute_materiality_bytes": 1048576
+  },
+  "fixtures": [
+    {
+      "id": "assertion-free",
+      "pattern_family": "64 exact ASCII literals",
+      "pattern_count": 64,
+      "corpus_bytes": 1048576,
+      "expected_cohorts": 1,
+      "role": "one-cohort inactive guard"
+    },
+    {
+      "id": "assertion-only",
+      "pattern_family": "64 exact line assertions",
+      "pattern_count": 64,
+      "corpus_bytes": 262144,
+      "expected_cohorts": 1,
+      "role": "one-cohort assertion control"
+    },
+    {
+      "id": "mixed-balanced",
+      "pattern_family": "32 exact literals plus 32 exact line assertions",
+      "pattern_count": 64,
+      "corpus_bytes": 524288,
+      "expected_cohorts": 2,
+      "role": "true mixed-cohort target"
+    },
+    {
+      "id": "mixed-output",
+      "pattern_family": "8 duplicate consuming expressions plus 8 duplicate asserted expressions",
+      "pattern_count": 16,
+      "corpus_bytes": 16384,
+      "expected_cohorts": 2,
+      "role": "buffered-output and memory pressure guard"
+    }
+  ],
+  "required_lanes": [
+    "pre-k1-baseline-versus-candidate-ordinary",
+    "candidate-ordinary-versus-candidate-cohort",
+    "activation-and-exact-event-parity",
+    "peak-rss-and-explicit-retained-byte-accounting",
+    "linux-process-allocation-counting-outside-timed-cells",
+    "feature-enabled-and-default-artifact-size",
+    "feature-enabled-clean-package-compile-time",
+    "docker-gpu-and-host-window-guard"
+  ]
+}
