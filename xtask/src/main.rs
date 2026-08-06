@@ -217,10 +217,34 @@ fn run_evidence_summary() -> Result<(), String> {
     run_repetition_evidence()?;
     run_utf16_flags_evidence()?;
     run_assertion_evidence()?;
+    run_cohort_parity_evidence()?;
     run_benchmark_smoke()?;
     eprintln!("==> E0 use-case evidence summary");
     println!("{EVIDENCE_SUMMARY_JSON}");
     Ok(())
+}
+
+fn run_cohort_parity_evidence() -> Result<(), String> {
+    eprintln!("==> H43-E1 cohort semantic parity evidence");
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
+    let status = Command::new(cargo)
+        .args([
+            "run",
+            "--quiet",
+            "--package",
+            "rustmatch-compat",
+            "--",
+            "verify-cohort-parity",
+        ])
+        .status()
+        .map_err(|error| format!("could not start cohort parity evidence adapter: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "cohort parity evidence adapter failed with {status}"
+        ))
+    }
 }
 
 fn run_assertion_evidence() -> Result<(), String> {

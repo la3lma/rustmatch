@@ -1,5 +1,7 @@
 //! Differential fixture adapter for the private rustmatch development workspace.
 
+mod cohort_parity;
+
 use std::collections::BTreeMap;
 use std::env;
 use std::process::ExitCode;
@@ -58,17 +60,11 @@ const ASSERTION_JAVA_RESULTS: &str = include_str!(concat!(
 ));
 
 fn main() -> ExitCode {
-    match run(env::args().skip(1)) {
-        Ok(summary) => match serde_json::to_string(&summary) {
-            Ok(json) => {
-                println!("{json}");
-                ExitCode::SUCCESS
-            }
-            Err(error) => {
-                eprintln!("error: could not serialize evidence summary: {error}");
-                ExitCode::FAILURE
-            }
-        },
+    match execute(env::args().skip(1).collect()) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
         Err(message) => {
             eprintln!("error: {message}");
             ExitCode::FAILURE
@@ -76,13 +72,24 @@ fn main() -> ExitCode {
     }
 }
 
+fn execute(arguments: Vec<String>) -> Result<String, String> {
+    if arguments == ["verify-cohort-parity"] {
+        return serde_json::to_string(&cohort_parity::verify()?)
+            .map_err(|error| format!("could not serialize H43-E1 evidence: {error}"));
+    }
+    serde_json::to_string(&run(arguments.into_iter()))
+        .map_err(|error| format!("could not serialize evidence summary: {error}"))
+}
+
+fn usage() -> String {
+    "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition|verify-utf16-flags|verify-assertions|verify-cohort-parity>"
+        .to_owned()
+}
+
 fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, String> {
     let command = arguments.next();
     if arguments.next().is_some() {
-        return Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition|verify-utf16-flags|verify-assertions>"
-                .to_owned(),
-        );
+        return Err(usage());
     }
     match command.as_deref() {
         Some("verify-literals") => verify_fixture_set(
@@ -127,10 +134,7 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<EvidenceSummary, S
             "assertions-v1",
             "I5-E2",
         ),
-        _ => Err(
-            "usage: rustmatch-compat <verify-literals|verify-predicates|verify-composition|verify-repetition|verify-utf16-flags|verify-assertions>"
-                .to_owned(),
-        ),
+        _ => Err(usage()),
     }
 }
 

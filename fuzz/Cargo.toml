@@ -10,7 +10,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4.13"
-rustmatch = { path = "../rustmatch" }
+rustmatch = { path = "../rustmatch", features = ["benchmark-internals"] }
 
 [[bin]]
 name = "parser"
@@ -36,6 +36,13 @@ bench = false
 [[bin]]
 name = "literal-oracle"
 path = "fuzz_targets/literal_oracle.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "cohort-parity"
+path = "fuzz_targets/cohort_parity.rs"
 test = false
 doc = false
 bench = false

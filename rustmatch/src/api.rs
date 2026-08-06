@@ -1518,83 +1518,131 @@ mod tests {
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
-    fn second_cohort_failure_discards_first_cohort_events_before_delivery() -> Result<(), Error> {
-        // Prepare
-        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+    fn every_cohort_spawn_failure_precedes_delivery_and_preserves_reuse() -> Result<(), Error> {
+        // Prepare / Test / Assert
         let input = mixed_cohort_input();
-        let delivered = Cell::new(0_usize);
-        let second_cohort_worker = 3;
-        let before_spawn = |partition_index| {
-            if partition_index == second_cohort_worker {
-                Err(Error::WorkerUnavailable)
-            } else {
-                Ok(())
+        let mut injected_failures = 0;
+        for worker_count in [2, 3, 4, 8] {
+            let matcher = mixed_cohort_test_matcher(worker_count, 9, true)?;
+            let split = matcher
+                .cohort_split_partition()
+                .expect("mixed matcher has a cohort split");
+            let spawnable_partitions = (1..split)
+                .chain(split + 1..matcher.partitions.len())
+                .collect::<Vec<_>>();
+            for failed_partition in spawnable_partitions {
+                let delivered = Cell::new(0_usize);
+                let before_spawn = |partition_index| {
+                    if partition_index == failed_partition {
+                        Err(Error::WorkerUnavailable)
+                    } else {
+                        Ok(())
+                    }
+                };
+                let result = matcher.scan_parallel_with_hooks_and_deliver(
+                    &input,
+                    &before_spawn,
+                    &|_| {},
+                    |_| delivered.set(delivered.get() + 1),
+                );
+
+                assert!(matches!(result, Err(Error::WorkerUnavailable)));
+                assert_eq!(delivered.get(), 0);
+                assert!(!collect_events(&matcher, &input)?.is_empty());
+                injected_failures += 1;
             }
-        };
+        }
 
-        // Test
-        let result =
-            matcher.scan_parallel_with_hooks_and_deliver(&input, &before_spawn, &|_| {}, |_| {
-                delivered.set(delivered.get() + 1);
-            });
-
-        // Assert
-        assert!(matches!(result, Err(Error::WorkerUnavailable)));
-        assert_eq!(delivered.get(), 0);
-        assert!(!collect_events(&matcher, &input)?.is_empty());
+        assert_eq!(injected_failures, 9);
         Ok(())
     }
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
-    fn second_cohort_panic_precedes_delivery_and_matcher_remains_reusable() -> Result<(), Error> {
-        // Prepare
-        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+    fn every_cohort_partition_panic_precedes_delivery_and_preserves_reuse() -> Result<(), Error> {
+        // Prepare / Test / Assert
         let input = mixed_cohort_input();
-        let delivered = Cell::new(0_usize);
-        let second_cohort_worker_partition = 3;
-
-        // Test
-        let panic_result = catch_unwind(AssertUnwindSafe(|| {
-            let _ = matcher.scan_parallel_with_hooks_and_deliver(
-                &input,
-                &|_| Ok(()),
-                &|partition_index| {
-                    assert_ne!(
-                        partition_index, second_cohort_worker_partition,
-                        "controlled second-cohort panic"
+        let mut injected_panics = 0;
+        for worker_count in [1, 2, 3, 4, 8] {
+            let matcher = mixed_cohort_test_matcher(worker_count, 9, true)?;
+            for failed_partition in 0..matcher.partitions.len() {
+                let delivered = Cell::new(0_usize);
+                let panic_result = catch_unwind(AssertUnwindSafe(|| {
+                    let _ = matcher.scan_parallel_with_hooks_and_deliver(
+                        &input,
+                        &|_| Ok(()),
+                        &|partition_index| {
+                            assert_ne!(
+                                partition_index, failed_partition,
+                                "controlled cohort partition panic"
+                            );
+                        },
+                        |_| delivered.set(delivered.get() + 1),
                     );
-                },
-                |_| {
-                    delivered.set(delivered.get() + 1);
-                },
-            );
-        }));
-        let recovered = collect_events(&matcher, &input)?;
+                }));
 
-        // Assert
-        assert!(panic_result.is_err());
-        assert_eq!(delivered.get(), 0);
-        assert!(!recovered.is_empty());
+                assert!(panic_result.is_err());
+                assert_eq!(delivered.get(), 0);
+                assert!(!collect_events(&matcher, &input)?.is_empty());
+                injected_panics += 1;
+            }
+        }
+
+        assert_eq!(injected_panics, 19);
         Ok(())
     }
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
-    fn sink_panic_after_cohort_success_leaves_matcher_reusable() -> Result<(), Error> {
-        // Prepare
-        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+    fn sink_panic_parity_leaves_ordinary_and_cohort_matchers_reusable() -> Result<(), Error> {
+        // Prepare / Test / Assert
         let input = mixed_cohort_input();
+        for worker_count in [1, 2, 4, 8] {
+            for cohort_enabled in [false, true] {
+                let matcher = mixed_cohort_test_matcher(worker_count, 9, cohort_enabled)?;
+                let expected = collect_events(&matcher, &input)?;
+                let panic_result = catch_unwind(AssertUnwindSafe(|| {
+                    let _ = matcher.scan(&input, |_| panic!("controlled cohort sink panic"));
+                }));
+                let recovered = collect_events(&matcher, &input)?;
 
-        // Test
-        let panic_result = catch_unwind(AssertUnwindSafe(|| {
-            let _ = matcher.scan(&input, |_| panic!("controlled cohort sink panic"));
-        }));
-        let recovered = collect_events(&matcher, &input)?;
+                assert!(panic_result.is_err());
+                assert_eq!(recovered, expected);
+            }
+        }
+        Ok(())
+    }
 
-        // Assert
-        assert!(panic_result.is_err());
-        assert!(!recovered.is_empty());
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn simultaneous_scans_preserve_ordinary_and_cohort_parity() -> Result<(), Error> {
+        // Prepare
+        let inputs = [
+            mixed_cohort_input(),
+            Utf16Text::from("foo\nabc"),
+            Utf16Text::from_units(vec![0xd800, u16::from(b'a'), u16::from(b'r')]),
+            Utf16Text::from("no matches here"),
+        ];
+
+        // Test / Assert
+        for cohort_enabled in [false, true] {
+            let matcher = mixed_cohort_test_matcher(4, 17, cohort_enabled)?;
+            let simultaneous = std::thread::scope(|scope| {
+                inputs
+                    .iter()
+                    .map(|input| scope.spawn(|| collect_events(&matcher, input)))
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .map(|handle| handle.join().expect("bounded scan must not panic"))
+                    .collect::<Result<Vec<_>, Error>>()
+            })?;
+            let sequential = inputs
+                .iter()
+                .map(|input| collect_events(&matcher, input))
+                .collect::<Result<Vec<_>, Error>>()?;
+
+            assert_eq!(simultaneous, sequential);
+        }
         Ok(())
     }
 

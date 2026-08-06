@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-E1",
+  "campaign": "h43-e1-cohort-semantic-parity-v1",
+  "generator_seed": "0x43e12026",
+  "generated_case_count": 96,
+  "worker_counts": [1, 2, 3, 4, 8, 128],
+  "cache_budgets": [0, 1, 8192],
+  "source_digests": [
+    {
+      "fixture_set": "ascii-literals-v1",
+      "fixture_digest": "fnv1a64:53a460bd2f48f6a5",
+      "java_result_digest": "fnv1a64:66fe0af349dec198"
+    },
+    {
+      "fixture_set": "ascii-predicates-v1",
+      "fixture_digest": "fnv1a64:94300fa316042f16",
+      "java_result_digest": "fnv1a64:ab84ddb8cd297404"
+    },
+    {
+      "fixture_set": "ascii-composition-v1",
+      "fixture_digest": "fnv1a64:b7360be62ab0a87d",
+      "java_result_digest": "fnv1a64:6fd72fc5cd6a9cf0"
+    },
+    {
+      "fixture_set": "ascii-repetition-v1",
+      "fixture_digest": "fnv1a64:7b36501d31e07d45",
+      "java_result_digest": "fnv1a64:930e7ffbcca4017b"
+    },
+    {
+      "fixture_set": "utf16-flags-v1",
+      "fixture_digest": "fnv1a64:b0dfc65ad3e13962",
+      "java_result_digest": "fnv1a64:8bfd2ecc9fa970af"
+    },
+    {
+      "fixture_set": "assertions-v1",
+      "fixture_digest": "fnv1a64:fb94363612b84b80",
+      "java_result_digest": "fnv1a64:c8c7893978b4686b"
+    }
+  ],
+  "java_fixture_families": [
+    {
+      "family": "ascii-literals-v1",
+      "cases": 7,
+      "matched_cases": 6,
+      "rejected_cases": 1,
+      "mixed_cohort_cases": 0,
+      "comparisons": 109,
+      "reference_events": 10,
+      "event_digest": "fnv1a64:1ae14b6b54d521ce"
+    },
+    {
+      "family": "ascii-predicates-v1",
+      "cases": 12,
+      "matched_cases": 9,
+      "rejected_cases": 3,
+      "mixed_cohort_cases": 0,
+      "comparisons": 165,
+      "reference_events": 56,
+      "event_digest": "fnv1a64:6891ea29aa2d4635"
+    },
+    {
+      "family": "ascii-composition-v1",
+      "cases": 17,
+      "matched_cases": 12,
+      "rejected_cases": 5,
+      "mixed_cohort_cases": 0,
+      "comparisons": 221,
+      "reference_events": 17,
+      "event_digest": "fnv1a64:1bdd7c4fdd0491d9"
+    },
+    {
+      "family": "ascii-repetition-v1",
+      "cases": 29,
+      "matched_cases": 20,
+      "rejected_cases": 9,
+      "mixed_cohort_cases": 0,
+      "comparisons": 369,
+      "reference_events": 52,
+      "event_digest": "fnv1a64:cdb251f0b312809a"
+    },
+    {
+      "family": "utf16-flags-v1",
+      "cases": 23,
+      "matched_cases": 21,
+      "rejected_cases": 2,
+      "mixed_cohort_cases": 0,
+      "comparisons": 380,
+      "reference_events": 39,
+      "event_digest": "fnv1a64:dca4444d8597c291"
+    },
+    {
+      "family": "assertions-v1",
+      "cases": 28,
+      "matched_cases": 26,
+      "rejected_cases": 2,
+      "mixed_cohort_cases": 0,
+      "comparisons": 470,
+      "reference_events": 37,
+      "event_digest": "fnv1a64:c63dd5ec4778f989"
+    }
+  ],
+  "adversarial_family": {
+    "family": "adversarial-v1",
+    "cases": 10,
+    "matched_cases": 10,
+    "rejected_cases": 0,
+    "mixed_cohort_cases": 10,
+    "comparisons": 180,
+    "reference_events": 468,
+    "event_digest": "fnv1a64:477b69bfaa796d80"
+  },
+  "generated_family": {
+    "family": "generated-v1",
+    "cases": 96,
+    "matched_cases": 96,
+    "rejected_cases": 0,
+    "mixed_cohort_cases": 96,
+    "comparisons": 1728,
+    "reference_events": 4715,
+    "event_digest": "fnv1a64:05e266c33133461f"
+  },
+  "explicit_build_error_checks": 6,
+  "total_cases": 222,
+  "total_comparisons": 3628,
+  "total_reference_events": 5394,
+  "aggregate_event_digest": "fnv1a64:359bc776d9cd1aba",
+  "status": "pass"
+}
