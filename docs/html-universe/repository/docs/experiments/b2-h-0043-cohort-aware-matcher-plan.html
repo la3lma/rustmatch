@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/a8386ddfa4b9b8a5321c9292c4e172fadad30ec37179374c7739ec74e2588b50.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -593,7 +593,7 @@ merge claim from E1 alone.</li>
 <h2>H43-D1: Measure cohort-only cost and code-layout effects</h2>
 <p><strong>Scope:</strong> diagnostic performance and resources<br />
 <strong>Level:</strong> system<br />
-<strong>Status:</strong> active<br>
+<strong>Status:</strong> complete; rework required<br>
 <strong>Primary actor:</strong> performance reviewer<br />
 <strong>Supporting actors:</strong> exclusive-host benchmark runner, profiler</p>
 <p><strong>Goal</strong></p>
@@ -636,7 +636,7 @@ are measured separately.</li>
 <p><strong>Dependencies:</strong> H43-E1; G9 evidence discipline; lessons from H9-H42.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> active on 2026-08-06.</li>
+<li><strong>Result:</strong> complete on 2026-08-06 with a <code>rework</code> decision.</li>
 <li><strong>Frozen comparison:</strong> pre-K1 baseline
 <code>05992bf1f20e0f9384fc52fcb4a9863500e7a4da</code> versus semantically certified
 E1 implementation <code>1356197d1581ad28f6cba822d91e2d6bd5aff04d</code>.</li>
@@ -649,9 +649,94 @@ Linux allocation shim are the hash-bound controller inputs.</li>
 byte and pattern counts, activate the expected one or two cohorts, and emit
 identical ordinary/cohort event counts and digests. These local observations
 are correctness/setup checks only and are not admissible timing evidence.</li>
-<li><strong>Evidence:</strong> guarded Agogo measurement pending.</li>
-<li><strong>Decision:</strong> pending.</li>
+<li><strong>Formal evidence:</strong> the uncontaminated Agogo window completed 720 timing
+receipts and 108 resource receipts with exact event counts and digests,
+expected <code>1/1/2/2</code> cohort activation, no Docker or GPU activity, and complete
+service restoration. The summary SHA-256 is
+<code>bf7733c62a504e64f867873c3a0f75169632c7cc5aa09565ef3b512810c731f1</code>.</li>
+<li><strong>Clean controls:</strong> ordinary candidate scans produced no stable G9-v3
+blocker. One-cohort assertion-free and assertion-only scan effects remained
+within one percent at workers <code>1/4/16</code>. Compile time grew 1.32%, the default
+rlib 0.13%, and the benchmark binary 0.36%; no RSS delta crossed 1 MiB.</li>
+<li><strong>Preparation blocker:</strong> the execution build path invokes the complete
+multi-fact diagnostic classifier. Stable controls regressed 10.61%-46.00%
+in preparation, adding 646-838 allocations and about 8-10 KiB requested
+bytes. A minimal assertion split is required before another gate.</li>
+<li><strong>Mixed signal:</strong> cohorting improved mixed-balanced one-worker scan by
+57.58% and mixed duplicate-output one-worker scan by 90.46% (10.48x), but
+duplicate-output regressed 53.85% at four workers and 37.46% at sixteen.
+Seven-process <code>perf stat</code> profiles show nearly unchanged task time and
+instructions but average occupancy falling from 2.97 to 1.92 CPUs and 9.30
+to 6.83 CPUs. The implementation scans two partition groups in sequential
+thread scopes, leaving half of the requested partitions inactive at once.</li>
+<li><strong>Decision:</strong> do not authorize H43-A1. Authorize only H43-D1-R1 to remove
+the full-classifier build cost and recover total parallel occupancy while
+preserving one-worker sequential execution and all E1 semantics. The full
+result is <code>docs/experiments/h43-d1-result.md</code>; the raw archive SHA-256 is
+<code>643aa43c0556582d13e39602b6ede4c07c87211da5c45e8881aed6fdb12d8082</code>.</li>
 </ul>
+<h2>H43-D1-R1: Recover classification cost and parallel occupancy</h2>
+<p><strong>Scope:</strong> semantically inert cohort-spine recovery<br>
+<strong>Level:</strong> system<br>
+<strong>Status:</strong> available for execution<br>
+<strong>Primary actor:</strong> optimization engineer<br>
+<strong>Supporting actors:</strong> correctness reviewer, exclusive-host benchmark runner,
+profiler</p>
+<p><strong>Goal</strong></p>
+<p>Remove the two causal D1 blockers without adding a specialized matcher or
+changing any semantic, fixture, or decision-policy boundary.</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>H43-D1 is complete with a <code>rework</code> decision.</li>
+<li>E1 remains the semantic oracle and its candidate is reproducible.</li>
+<li>The D1 plan, fixtures, thresholds, and raw evidence are frozen.</li>
+</ul>
+<p><strong>Minimal guarantee</strong></p>
+<p>An unsuccessful recovery leaves the ordinary public path unchanged, preserves
+all D1 evidence, and does not authorize H43-A1.</p>
+<p><strong>Success guarantee / postconditions</strong></p>
+<ul>
+<li>Cohort execution derives only its required assertion split without running
+the complete diagnostic classifier.</li>
+<li>One requested worker remains single-threaded and sequential across cohorts.</li>
+<li>Two or more requested workers can execute all allocated cohort partitions in
+one scope while never exceeding the requested total worker count.</li>
+<li>E1 event, ID, multiplicity, error, panic, callback-atomicity, reuse, and
+concurrency proofs still pass.</li>
+<li>The unchanged D1 matrix has no stable veto and explicitly authorizes or
+rejects H43-A1.</li>
+</ul>
+<p><strong>Main success scenario</strong></p>
+<ol>
+<li>Add a minimal one-pass assertion-bearing classification for execution and
+keep full <code>PatternDiagnostics</code> computation on the diagnostic-only path.</li>
+<li>Precompute each cohort's independent shared-candidate plan.</li>
+<li>For one requested worker, retain sequential direct cohort scans.</li>
+<li>For <code>workers &gt;= 2</code>, schedule all cohort partitions in one scoped execution,
+retaining deterministic result collection and full pre-delivery buffering.</li>
+<li>Extend failure injection across both cohort groups in the shared scope.</li>
+<li>Rerun E1, allocation checks, and the complete unchanged D1 campaign.</li>
+<li>Critically review the recovery before any specialization is considered.</li>
+</ol>
+<p><strong>Extensions</strong></p>
+<ul>
+<li>If minimal classification still crosses a preparation veto, retain cohort
+analysis as diagnostics only and reject the execution spine.</li>
+<li>If concurrent groups violate atomicity, worker limits, or deterministic
+reuse, reject the recovery rather than weakening semantics.</li>
+<li>If the one-worker gain disappears, investigate the prefilter activation
+boundary; do not compensate by moving thresholds or fixtures.</li>
+</ul>
+<p><strong>Expected evidence</strong></p>
+<ul>
+<li>Source-frozen recovery commit and activation reports.</li>
+<li>Complete E1 differential and failure receipts.</li>
+<li>Allocation, preparation, scan, RSS, compile, and artifact comparisons under
+the unchanged D1 plan.</li>
+<li>Occupancy profiles for mixed-output workers <code>1/4/16</code>.</li>
+<li>Written authorize/reject decision for H43-A1.</li>
+</ul>
+<p><strong>Dependencies:</strong> H43-D1; H43-E1; unchanged G9-v3 evidence policy.</p>
 <h2>H43-A1: Reconstruct H24 assertion backend in an isolated artifact</h2>
 <p><strong>Scope:</strong> candidate specialized backend<br />
 <strong>Level:</strong> sea<br />
@@ -1056,6 +1141,7 @@ cohorting is worth its fixed complexity.</p>
 <h2>Program risks and kill criteria</h2>
 <table><thead><tr><th>Risk</th><th>Early signal</th><th>Mitigation</th><th>Kill or redirect condition</th></tr></thead><tbody>
 <tr><td>Cohort abstraction slows generic H42 path</td><td>Stable one-cohort inactive guard regression</td><td>Preserve one-cohort direct path; isolate modules/artifacts; inspect codegen</td><td>Stop before specialization if causal recovery cannot meet policy.</td></tr>
+<tr><td>Sequential cohort groups strand requested workers</td><td>Task time remains flat while wall time and context switches rise</td><td>Use one scope for all partitions when at least two workers are requested; retain sequential one-worker execution</td><td>Block specialization until occupancy and all atomicity proofs pass together.</td></tr>
 <tr><td>Classifier becomes heuristic folklore</td><td>Rules lack proof provenance or require workload names</td><td>Explicit unknown states; one proof source per fact; boundary mutation tests</td><td>Reject any unprovable eligibility input.</td></tr>
 <tr><td>Specialized backend changes semantics</td><td>Differential mismatch or callback-before-error</td><td>Exact generic oracle; buffering; global ID invariants</td><td>Immediate block; preserve minimized counterexample.</td></tr>
 <tr><td>Large gain hides severe minority regressions</td><td>Opposing target/guard effects</td><td>Apply investigate outcome; profile sign-changing boundaries</td><td>Do not merge until regression cause is separated or accepted by unchanged rule.</td></tr>
@@ -1065,12 +1151,12 @@ cohorting is worth its fixed complexity.</p>
 <tr><td>Test cycle is too slow</td><td>Formal failures discover basic mechanism issues</td><td>Static models, microbenchmarks, phase diagnostics, focused funnel</td><td>Improve early model, but never replace final exact/formal gates.</td></tr>
 </tbody></table>
 <h2>Execution order</h2>
-<p>H43-C1, H43-C2, H43-K1, and H43-E1 are complete. <strong>H43-D1 is active</strong> and is
-measuring the preparation, scan, allocation, RSS, binary-size, compile-time,
-and inactive-path cost of the semantically inert cohort spine.
-E1 authorizes measurement, not specialization. H43-A1 remains forbidden until
-H43-D1 demonstrates that the cohort abstraction is cheap and stable enough to
-carry a separately certified backend.</p>
+<p>H43-C1, H43-C2, H43-K1, H43-E1, and H43-D1 are complete. D1 found clean
+ordinary and one-cohort scan guards plus 57.58%-90.46% one-worker mixed gains,
+but it also found stable classifier preparation cost and sequential-cohort
+parallel occupancy losses. <strong>H43-D1-R1 is the next available task.</strong> It may
+recover only those two causal defects. H43-A1 remains blocked until the
+unchanged D1 matrix passes after recovery.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good

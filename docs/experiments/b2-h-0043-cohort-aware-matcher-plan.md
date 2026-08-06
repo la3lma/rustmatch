@@ -109,6 +109,7 @@ flowchart TB
         K1["H43-K1 Compile assertion-free and assertion-bearing cohorts"]
         E1["H43-E1 Prove exact mixed-cohort event and failure parity"]
         D1["H43-D1 Measure cohort-only cost and code-layout effects"]
+        D1R["H43-D1-R1 Recover classification cost and parallel occupancy"]
     end
 
     subgraph ASSERTION[First specialized backend]
@@ -145,7 +146,8 @@ flowchart TB
     C2 --> E1
     K1 --> E1
     E1 --> D1
-    D1 --> A1
+    D1 --> D1R
+    D1R --> A1
     A1 --> A2
     A2 --> S1
     S1 --> E2
@@ -186,8 +188,10 @@ flowchart TB
     class C2 complete;
     class K1 complete;
     class E1 complete;
-    class D1 active;
-    class A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
+    class D1 complete;
+    class D1R available;
+    class A1 blocked;
+    class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
@@ -774,7 +778,7 @@ input, seed, source identity, and diagnostic report.
 
 **Scope:** diagnostic performance and resources  
 **Level:** system  
-**Status:** active<br>
+**Status:** complete; rework required<br>
 **Primary actor:** performance reviewer  
 **Supporting actors:** exclusive-host benchmark runner, profiler
 
@@ -823,7 +827,7 @@ path activation is unproved.
 
 **Implementation result**
 
-- **Result:** active on 2026-08-06.
+- **Result:** complete on 2026-08-06 with a `rework` decision.
 - **Frozen comparison:** pre-K1 baseline
   `05992bf1f20e0f9384fc52fcb4a9863500e7a4da` versus semantically certified
   E1 implementation `1356197d1581ad28f6cba822d91e2d6bd5aff04d`.
@@ -836,8 +840,100 @@ path activation is unproved.
   byte and pattern counts, activate the expected one or two cohorts, and emit
   identical ordinary/cohort event counts and digests. These local observations
   are correctness/setup checks only and are not admissible timing evidence.
-- **Evidence:** guarded Agogo measurement pending.
-- **Decision:** pending.
+- **Formal evidence:** the uncontaminated Agogo window completed 720 timing
+  receipts and 108 resource receipts with exact event counts and digests,
+  expected `1/1/2/2` cohort activation, no Docker or GPU activity, and complete
+  service restoration. The summary SHA-256 is
+  `bf7733c62a504e64f867873c3a0f75169632c7cc5aa09565ef3b512810c731f1`.
+- **Clean controls:** ordinary candidate scans produced no stable G9-v3
+  blocker. One-cohort assertion-free and assertion-only scan effects remained
+  within one percent at workers `1/4/16`. Compile time grew 1.32%, the default
+  rlib 0.13%, and the benchmark binary 0.36%; no RSS delta crossed 1 MiB.
+- **Preparation blocker:** the execution build path invokes the complete
+  multi-fact diagnostic classifier. Stable controls regressed 10.61%-46.00%
+  in preparation, adding 646-838 allocations and about 8-10 KiB requested
+  bytes. A minimal assertion split is required before another gate.
+- **Mixed signal:** cohorting improved mixed-balanced one-worker scan by
+  57.58% and mixed duplicate-output one-worker scan by 90.46% (10.48x), but
+  duplicate-output regressed 53.85% at four workers and 37.46% at sixteen.
+  Seven-process `perf stat` profiles show nearly unchanged task time and
+  instructions but average occupancy falling from 2.97 to 1.92 CPUs and 9.30
+  to 6.83 CPUs. The implementation scans two partition groups in sequential
+  thread scopes, leaving half of the requested partitions inactive at once.
+- **Decision:** do not authorize H43-A1. Authorize only H43-D1-R1 to remove
+  the full-classifier build cost and recover total parallel occupancy while
+  preserving one-worker sequential execution and all E1 semantics. The full
+  result is `docs/experiments/h43-d1-result.md`; the raw archive SHA-256 is
+  `643aa43c0556582d13e39602b6ede4c07c87211da5c45e8881aed6fdb12d8082`.
+
+## H43-D1-R1: Recover classification cost and parallel occupancy
+
+**Scope:** semantically inert cohort-spine recovery<br>
+**Level:** system<br>
+**Status:** available for execution<br>
+**Primary actor:** optimization engineer<br>
+**Supporting actors:** correctness reviewer, exclusive-host benchmark runner,
+profiler
+
+**Goal**
+
+Remove the two causal D1 blockers without adding a specialized matcher or
+changing any semantic, fixture, or decision-policy boundary.
+
+**Preconditions**
+
+- H43-D1 is complete with a `rework` decision.
+- E1 remains the semantic oracle and its candidate is reproducible.
+- The D1 plan, fixtures, thresholds, and raw evidence are frozen.
+
+**Minimal guarantee**
+
+An unsuccessful recovery leaves the ordinary public path unchanged, preserves
+all D1 evidence, and does not authorize H43-A1.
+
+**Success guarantee / postconditions**
+
+- Cohort execution derives only its required assertion split without running
+  the complete diagnostic classifier.
+- One requested worker remains single-threaded and sequential across cohorts.
+- Two or more requested workers can execute all allocated cohort partitions in
+  one scope while never exceeding the requested total worker count.
+- E1 event, ID, multiplicity, error, panic, callback-atomicity, reuse, and
+  concurrency proofs still pass.
+- The unchanged D1 matrix has no stable veto and explicitly authorizes or
+  rejects H43-A1.
+
+**Main success scenario**
+
+1. Add a minimal one-pass assertion-bearing classification for execution and
+   keep full `PatternDiagnostics` computation on the diagnostic-only path.
+2. Precompute each cohort's independent shared-candidate plan.
+3. For one requested worker, retain sequential direct cohort scans.
+4. For `workers >= 2`, schedule all cohort partitions in one scoped execution,
+   retaining deterministic result collection and full pre-delivery buffering.
+5. Extend failure injection across both cohort groups in the shared scope.
+6. Rerun E1, allocation checks, and the complete unchanged D1 campaign.
+7. Critically review the recovery before any specialization is considered.
+
+**Extensions**
+
+- If minimal classification still crosses a preparation veto, retain cohort
+  analysis as diagnostics only and reject the execution spine.
+- If concurrent groups violate atomicity, worker limits, or deterministic
+  reuse, reject the recovery rather than weakening semantics.
+- If the one-worker gain disappears, investigate the prefilter activation
+  boundary; do not compensate by moving thresholds or fixtures.
+
+**Expected evidence**
+
+- Source-frozen recovery commit and activation reports.
+- Complete E1 differential and failure receipts.
+- Allocation, preparation, scan, RSS, compile, and artifact comparisons under
+  the unchanged D1 plan.
+- Occupancy profiles for mixed-output workers `1/4/16`.
+- Written authorize/reject decision for H43-A1.
+
+**Dependencies:** H43-D1; H43-E1; unchanged G9-v3 evidence policy.
 
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
@@ -1304,6 +1400,7 @@ cohorting is worth its fixed complexity.
 | Risk | Early signal | Mitigation | Kill or redirect condition |
 |---|---|---|---|
 | Cohort abstraction slows generic H42 path | Stable one-cohort inactive guard regression | Preserve one-cohort direct path; isolate modules/artifacts; inspect codegen | Stop before specialization if causal recovery cannot meet policy. |
+| Sequential cohort groups strand requested workers | Task time remains flat while wall time and context switches rise | Use one scope for all partitions when at least two workers are requested; retain sequential one-worker execution | Block specialization until occupancy and all atomicity proofs pass together. |
 | Classifier becomes heuristic folklore | Rules lack proof provenance or require workload names | Explicit unknown states; one proof source per fact; boundary mutation tests | Reject any unprovable eligibility input. |
 | Specialized backend changes semantics | Differential mismatch or callback-before-error | Exact generic oracle; buffering; global ID invariants | Immediate block; preserve minimized counterexample. |
 | Large gain hides severe minority regressions | Opposing target/guard effects | Apply investigate outcome; profile sign-changing boundaries | Do not merge until regression cause is separated or accepted by unchanged rule. |
@@ -1314,12 +1411,12 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, and H43-E1 are complete. **H43-D1 is active** and is
-measuring the preparation, scan, allocation, RSS, binary-size, compile-time,
-and inactive-path cost of the semantically inert cohort spine.
-E1 authorizes measurement, not specialization. H43-A1 remains forbidden until
-H43-D1 demonstrates that the cohort abstraction is cheap and stable enough to
-carry a separately certified backend.
+H43-C1, H43-C2, H43-K1, H43-E1, and H43-D1 are complete. D1 found clean
+ordinary and one-cohort scan guards plus 57.58%-90.46% one-worker mixed gains,
+but it also found stable classifier preparation cost and sequential-cohort
+parallel occupancy losses. **H43-D1-R1 is the next available task.** It may
+recover only those two causal defects. H43-A1 remains blocked until the
+unchanged D1 matrix passes after recovery.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
