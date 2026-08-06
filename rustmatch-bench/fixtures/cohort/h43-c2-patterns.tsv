@@ -1,0 +1,17 @@
+1	abc
+2	^abc$
+3	\bcat\B
+4	[a-z]+
+5	é
+6	(?:ab){2,4}
+7	(?:foo|far)
+8	a*
+9	abc
+10	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+11	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+12	ab.
+13	[^a]+
+14	(?i)abc
+15	(?:foo|far){1,2}
+16	ab
+17	(?:ab)+

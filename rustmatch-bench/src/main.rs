@@ -10,7 +10,9 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use regex::{Regex, RegexSet};
-use rustmatch::{Matcher, MatcherBuilder, PatternId, ScanDiagnostics, Utf16Text};
+use rustmatch::{
+    Matcher, MatcherBuilder, PatternDiagnostics, PatternId, ScanDiagnostics, Utf16Text,
+};
 use serde::{Deserialize, Serialize};
 
 const SMOKE_PATTERN_COUNT: usize = 32;
@@ -74,6 +76,9 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             literal_tripwire().map(CommandOutput::Tripwire)
         }
         Some("harness-run") => harness_run_command(&mut arguments).map(CommandOutput::HarnessRun),
+        Some("cohort-report") => {
+            cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
+        }
         Some("compare-tripwire") => {
             comparison_paths(&mut arguments, compare_tripwire_files).map(CommandOutput::Comparison)
         }
@@ -174,6 +179,16 @@ fn harness_run_command(
     )
 }
 
+fn cohort_report_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<CohortReportReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    cohort_report(Path::new(&patterns))
+}
+
 fn comparison_paths<T>(
     arguments: &mut impl Iterator<Item = String>,
     compare: impl FnOnce(&Path, &Path) -> Result<T, String>,
@@ -187,7 +202,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -432,53 +447,10 @@ struct HarnessFixture {
 
 impl HarnessFixture {
     fn from_bytes(pattern_bytes: &[u8], corpus_bytes: &[u8]) -> Result<Self, String> {
-        if !pattern_bytes.is_ascii() {
-            return Err("harness pattern file must contain only ASCII bytes".to_owned());
-        }
         if !corpus_bytes.is_ascii() {
             return Err("harness corpus must contain only ASCII bytes".to_owned());
         }
-        let pattern_text = std::str::from_utf8(pattern_bytes)
-            .map_err(|error| format!("harness pattern file is not valid ASCII: {error}"))?;
-        let mut ids = BTreeSet::new();
-        let mut patterns = Vec::new();
-        for (line_index, source_line) in pattern_text.lines().enumerate() {
-            let line = source_line.strip_suffix('\r').unwrap_or(source_line);
-            let (id_source, expression) = line.split_once('\t').ok_or_else(|| {
-                format!(
-                    "harness pattern row {} has no tab separator",
-                    line_index + 1
-                )
-            })?;
-            if expression.is_empty() || expression.contains('\t') {
-                return Err(format!(
-                    "harness pattern row {} must contain one non-empty expression",
-                    line_index + 1
-                ));
-            }
-            let id_value = id_source.parse::<u32>().map_err(|error| {
-                format!(
-                    "invalid harness pattern ID {id_source:?} on row {}: {error}",
-                    line_index + 1
-                )
-            })?;
-            if id_value == 0 {
-                return Err(format!(
-                    "harness pattern ID on row {} must be positive",
-                    line_index + 1
-                ));
-            }
-            if !ids.insert(id_value) {
-                return Err(format!("duplicate harness pattern ID {id_value}"));
-            }
-            patterns.push(HarnessPattern {
-                id: PatternId::new(id_value),
-                expression: expression.to_owned(),
-            });
-        }
-        if patterns.is_empty() {
-            return Err("harness pattern file must contain at least one row".to_owned());
-        }
+        let patterns = parse_pattern_rows(pattern_bytes, "harness", true)?;
         let corpus_text = std::str::from_utf8(corpus_bytes)
             .map_err(|error| format!("harness corpus is not valid ASCII: {error}"))?;
         Ok(Self {
@@ -487,6 +459,203 @@ impl HarnessFixture {
             corpus_bytes: corpus_bytes.len(),
         })
     }
+}
+
+fn parse_pattern_rows(
+    pattern_bytes: &[u8],
+    description: &str,
+    require_ascii: bool,
+) -> Result<Vec<HarnessPattern>, String> {
+    if require_ascii && !pattern_bytes.is_ascii() {
+        return Err(format!(
+            "{description} pattern file must contain only ASCII bytes"
+        ));
+    }
+    let pattern_text = std::str::from_utf8(pattern_bytes).map_err(|error| {
+        let encoding = if require_ascii { "ASCII" } else { "UTF-8" };
+        format!("{description} pattern file is not valid {encoding}: {error}")
+    })?;
+    let mut ids = BTreeSet::new();
+    let mut patterns = Vec::new();
+    for (line_index, source_line) in pattern_text.lines().enumerate() {
+        let line = source_line.strip_suffix('\r').unwrap_or(source_line);
+        let (id_source, expression) = line.split_once('\t').ok_or_else(|| {
+            format!(
+                "{description} pattern row {} has no tab separator",
+                line_index + 1
+            )
+        })?;
+        if expression.is_empty() || expression.contains('\t') {
+            return Err(format!(
+                "{description} pattern row {} must contain one non-empty expression",
+                line_index + 1
+            ));
+        }
+        let id_value = id_source.parse::<u32>().map_err(|error| {
+            format!(
+                "invalid {description} pattern ID {id_source:?} on row {}: {error}",
+                line_index + 1
+            )
+        })?;
+        if id_value == 0 {
+            return Err(format!(
+                "{description} pattern ID on row {} must be positive",
+                line_index + 1
+            ));
+        }
+        if !ids.insert(id_value) {
+            return Err(format!("duplicate {description} pattern ID {id_value}"));
+        }
+        patterns.push(HarnessPattern {
+            id: PatternId::new(id_value),
+            expression: expression.to_owned(),
+        });
+    }
+    if patterns.is_empty() {
+        return Err(format!(
+            "{description} pattern file must contain at least one row"
+        ));
+    }
+    Ok(patterns)
+}
+
+fn cohort_report(pattern_path: &Path) -> Result<CohortReportReceipt, String> {
+    let pattern_bytes = fs::read(pattern_path).map_err(|error| {
+        format!(
+            "could not read cohort-report patterns {}: {error}",
+            pattern_path.display()
+        )
+    })?;
+    cohort_report_from_bytes(&pattern_bytes)
+}
+
+fn cohort_report_from_bytes(pattern_bytes: &[u8]) -> Result<CohortReportReceipt, String> {
+    let patterns = parse_pattern_rows(pattern_bytes, "cohort-report", false)?;
+    let mut builder = MatcherBuilder::new();
+    for pattern in &patterns {
+        builder
+            .add(pattern.id, &pattern.expression)
+            .map_err(|error| {
+                format!("cohort-report pattern {} was rejected: {error}", pattern.id)
+            })?;
+    }
+    let diagnostics = builder.cohort_diagnostics();
+    if patterns.len() != diagnostics.patterns().len() {
+        return Err("cohort-report diagnostics lost a registered pattern".to_owned());
+    }
+
+    let pattern_receipts = patterns
+        .iter()
+        .zip(diagnostics.patterns())
+        .map(|(pattern, facts)| pattern_diagnostic_receipt(pattern, facts))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut cohorts = Vec::with_capacity(diagnostics.cohort_count());
+    if !diagnostics.assertion_free_pattern_ids().is_empty() {
+        cohorts.push(CohortSummaryReceipt {
+            name: "assertion-free".to_owned(),
+            proof: "normalized-hir-contains-no-assertion-v1".to_owned(),
+            pattern_ids: diagnostics
+                .assertion_free_pattern_ids()
+                .iter()
+                .map(|pattern_id| pattern_id.get())
+                .collect(),
+        });
+    }
+    if !diagnostics.assertion_bearing_pattern_ids().is_empty() {
+        cohorts.push(CohortSummaryReceipt {
+            name: "assertion-bearing".to_owned(),
+            proof: "normalized-hir-contains-assertion-v1".to_owned(),
+            pattern_ids: diagnostics
+                .assertion_bearing_pattern_ids()
+                .iter()
+                .map(|pattern_id| pattern_id.get())
+                .collect(),
+        });
+    }
+
+    Ok(CohortReportReceipt {
+        schema_version: 1,
+        classifier_version: "h43-c1-v1".to_owned(),
+        proof_model_version: "normalized-hir-conservative-v1".to_owned(),
+        pattern_source_digest: byte_digest(pattern_bytes),
+        pattern_count: pattern_receipts.len(),
+        cohort_count: cohorts.len(),
+        proof_provenance: ProofProvenanceReceipt::v1(),
+        cohorts,
+        patterns: pattern_receipts,
+    })
+}
+
+fn pattern_diagnostic_receipt(
+    pattern: &HarnessPattern,
+    facts: &PatternDiagnostics,
+) -> Result<PatternDiagnosticReceipt, String> {
+    if pattern.id != facts.pattern_id() {
+        return Err(format!(
+            "cohort-report registration {} was paired with diagnostic {}",
+            pattern.id,
+            facts.pattern_id()
+        ));
+    }
+    let maximum_consumed = match (facts.maximum_consumed(), facts.has_unbounded_maximum()) {
+        (Some(units), false) => ConsumedMaximumReceipt {
+            status: "finite".to_owned(),
+            units: Some(units),
+        },
+        (None, true) => ConsumedMaximumReceipt {
+            status: "unbounded".to_owned(),
+            units: None,
+        },
+        (None, false) => ConsumedMaximumReceipt {
+            status: "impossible".to_owned(),
+            units: None,
+        },
+        (Some(_), true) => {
+            return Err(format!(
+                "cohort-report pattern {} has contradictory maximum-width facts",
+                pattern.id
+            ));
+        }
+    };
+    Ok(PatternDiagnosticReceipt {
+        pattern_id: facts.pattern_id().get(),
+        registration_ordinal: facts.registration_ordinal(),
+        expression_digest: byte_digest(pattern.expression.as_bytes()),
+        cohort_candidate: facts.cohort().to_owned(),
+        cohort_proof: if facts.uses_assertions() {
+            "normalized-hir-contains-assertion-v1".to_owned()
+        } else {
+            "normalized-hir-contains-no-assertion-v1".to_owned()
+        },
+        assertion_kinds: assertion_kinds(facts),
+        facts: PatternFactsReceipt {
+            nullable: facts.nullable(),
+            minimum_consumed_units: facts.minimum_consumed(),
+            maximum_consumed,
+            ascii_only: facts.is_ascii_only(),
+            proven_exact_literal_units: facts.proven_exact_literal_units(),
+            necessary_prefix_units: facts.necessary_prefix_units(),
+            filterable_prefix: facts.has_filterable_prefix(),
+            hir_nodes: facts.hir_nodes(),
+        },
+    })
+}
+
+fn assertion_kinds(facts: &PatternDiagnostics) -> Vec<String> {
+    let mut kinds = Vec::with_capacity(4);
+    if facts.uses_line_start() {
+        kinds.push("line-start".to_owned());
+    }
+    if facts.uses_line_end() {
+        kinds.push("line-end".to_owned());
+    }
+    if facts.uses_word_boundary() {
+        kinds.push("word-boundary".to_owned());
+    }
+    if facts.uses_non_word_boundary() {
+        kinds.push("non-word-boundary".to_owned());
+    }
+    kinds
 }
 
 fn literal_smoke() -> Result<SmokeReceipt, String> {
@@ -2251,6 +2420,7 @@ enum CommandOutput {
     Smoke(SmokeReceipt),
     Tripwire(TripwireReceipt),
     HarnessRun(HarnessRunReceipt),
+    CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
@@ -2260,6 +2430,86 @@ enum CommandOutput {
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CohortReportReceipt {
+    schema_version: u32,
+    classifier_version: String,
+    proof_model_version: String,
+    pattern_source_digest: String,
+    pattern_count: usize,
+    cohort_count: usize,
+    proof_provenance: ProofProvenanceReceipt,
+    cohorts: Vec<CohortSummaryReceipt>,
+    patterns: Vec<PatternDiagnosticReceipt>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct ProofProvenanceReceipt {
+    cohort_membership: String,
+    assertions: String,
+    nullability: String,
+    consumed_width: String,
+    ascii_domain: String,
+    necessary_prefix: String,
+    hir_complexity: String,
+}
+
+impl ProofProvenanceReceipt {
+    fn v1() -> Self {
+        Self {
+            cohort_membership: "exhaustive-normalized-hir-assertion-walk-v1".to_owned(),
+            assertions: "exhaustive-normalized-hir-assertion-walk-v1".to_owned(),
+            nullability: "normalized-hir-nullability-v1".to_owned(),
+            consumed_width: "conservative-normalized-hir-width-v1".to_owned(),
+            ascii_domain: "exhaustive-normalized-hir-consumed-domain-v1".to_owned(),
+            necessary_prefix: "conservative-normalized-hir-required-prefix-v1".to_owned(),
+            hir_complexity: "saturating-normalized-hir-node-count-v1".to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CohortSummaryReceipt {
+    name: String,
+    proof: String,
+    pattern_ids: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PatternDiagnosticReceipt {
+    pattern_id: u32,
+    registration_ordinal: usize,
+    expression_digest: String,
+    cohort_candidate: String,
+    cohort_proof: String,
+    assertion_kinds: Vec<String>,
+    facts: PatternFactsReceipt,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PatternFactsReceipt {
+    nullable: bool,
+    minimum_consumed_units: Option<usize>,
+    maximum_consumed: ConsumedMaximumReceipt,
+    ascii_only: bool,
+    proven_exact_literal_units: Option<usize>,
+    necessary_prefix_units: usize,
+    filterable_prefix: bool,
+    hir_nodes: usize,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct ConsumedMaximumReceipt {
+    status: String,
+    units: Option<usize>,
 }
 
 #[derive(Debug, Serialize)]
@@ -2805,9 +3055,10 @@ struct ComparisonReceipt {
 #[cfg(test)]
 mod tests {
     use super::{
-        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, Event, HarnessFixture,
-        HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES,
-        SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt, build_harness_matcher, compare_i6,
+        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, CohortReportReceipt, Event,
+        HarnessFixture, HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture,
+        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
+        build_harness_matcher, cohort_report_command, cohort_report_from_bytes, compare_i6,
         compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
         expand_corpus, format_unix_timestamp_utc, harness_event_count, measure_harness_scans,
         regex_events, render_scale_report, rust_event_summary_with_diagnostics,
@@ -2815,6 +3066,9 @@ mod tests {
     };
     use regex::{Regex, RegexSet};
     use std::{cell::Cell, fs, process};
+
+    const H43_C2_PATTERNS: &[u8] = include_bytes!("../fixtures/cohort/h43-c2-patterns.tsv");
+    const H43_C2_EXPECTED: &str = include_str!("../fixtures/cohort/h43-c2-expected.json");
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {
@@ -2877,6 +3131,113 @@ mod tests {
         assert!(matches!(zero_result, Err(message) if message.contains("positive")));
         assert!(matches!(tab_result, Err(message) if message.contains("one non-empty")));
         assert!(matches!(corpus_result, Err(message) if message.contains("only ASCII")));
+    }
+
+    #[test]
+    fn cohort_report_matches_versioned_golden_and_serializes_deterministically()
+    -> Result<(), String> {
+        // Prepare
+        let expected: CohortReportReceipt = serde_json::from_str(H43_C2_EXPECTED)
+            .map_err(|error| format!("invalid H43-C2 golden report: {error}"))?;
+
+        // Test
+        let first = cohort_report_from_bytes(H43_C2_PATTERNS)?;
+        let second = cohort_report_from_bytes(H43_C2_PATTERNS)?;
+
+        // Assert
+        assert_eq!(first, expected);
+        assert_eq!(second, expected);
+        assert_eq!(
+            serde_json::to_string(&first).map_err(|error| error.to_string())?,
+            serde_json::to_string(&second).map_err(|error| error.to_string())?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_boundary_mutations_change_only_proven_facts() -> Result<(), String> {
+        // Prepare
+        let patterns = concat!(
+            "1\tabc\n",
+            "2\t^abc\n",
+            "3\tab.\n",
+            "4\txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+            "5\txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+            "6\t(?:ab){2,4}\n",
+            "7\t(?:ab)+\n",
+            "8\tab\n",
+            "9\té\n",
+            "10\t[a-z]+\n",
+        );
+
+        // Test
+        let report = cohort_report_from_bytes(patterns.as_bytes())?;
+        let facts = &report.patterns;
+
+        // Assert
+        assert_eq!(facts[0].cohort_candidate, "assertion-free");
+        assert_eq!(facts[0].facts.proven_exact_literal_units, Some(3));
+        assert!(facts[0].facts.filterable_prefix);
+        assert_eq!(facts[1].cohort_candidate, "assertion-bearing");
+        assert_eq!(facts[1].assertion_kinds, ["line-start"]);
+        assert_eq!(facts[1].facts.proven_exact_literal_units, None);
+        assert_eq!(facts[1].facts.necessary_prefix_units, 3);
+        assert_eq!(facts[2].facts.necessary_prefix_units, 2);
+        assert!(!facts[2].facts.filterable_prefix);
+        assert_eq!(facts[3].facts.proven_exact_literal_units, Some(32));
+        assert_eq!(facts[4].facts.proven_exact_literal_units, None);
+        assert_eq!(facts[4].facts.necessary_prefix_units, 32);
+        assert_eq!(facts[5].facts.maximum_consumed.status, "finite");
+        assert_eq!(facts[5].facts.maximum_consumed.units, Some(8));
+        assert_eq!(facts[6].facts.maximum_consumed.status, "unbounded");
+        assert_eq!(facts[6].facts.maximum_consumed.units, None);
+        assert!(!facts[7].facts.filterable_prefix);
+        assert!(!facts[8].facts.ascii_only);
+        assert!(facts[9].facts.ascii_only);
+        assert_eq!(facts[9].facts.necessary_prefix_units, 0);
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_schema_rejects_unknown_fields() -> Result<(), String> {
+        // Prepare
+        let report = cohort_report_from_bytes(b"1\tabc\n")?;
+        let mut value = serde_json::to_value(report).map_err(|error| error.to_string())?;
+        let object = value
+            .as_object_mut()
+            .ok_or_else(|| "cohort report did not serialize as an object".to_owned())?;
+        object.insert(
+            "unversioned_selector".to_owned(),
+            serde_json::Value::Bool(true),
+        );
+
+        // Test
+        let result = serde_json::from_value::<CohortReportReceipt>(value);
+
+        // Assert
+        assert!(matches!(result, Err(error) if error.to_string().contains("unknown field")));
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_command_requires_exactly_one_pattern_path() -> Result<(), String> {
+        // Prepare
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/cohort/h43-c2-patterns.tsv");
+        let fixture = fixture.to_string_lossy().into_owned();
+
+        // Test
+        let valid = cohort_report_command(&mut vec![fixture.clone()].into_iter())?;
+        let missing = cohort_report_command(&mut Vec::<String>::new().into_iter());
+        let extra = cohort_report_command(
+            &mut vec![fixture, "unexpected-extra-argument".to_owned()].into_iter(),
+        );
+
+        // Assert
+        assert_eq!(valid.schema_version, 1);
+        assert!(matches!(missing, Err(message) if message.starts_with("usage:")));
+        assert!(matches!(extra, Err(message) if message.starts_with("usage:")));
+        Ok(())
     }
 
     #[test]
