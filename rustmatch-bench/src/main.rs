@@ -3168,6 +3168,7 @@ mod tests {
             "8\tab\n",
             "9\té\n",
             "10\t[a-z]+\n",
+            "11\t()\n",
         );
 
         // Test
@@ -3195,6 +3196,9 @@ mod tests {
         assert!(!facts[8].facts.ascii_only);
         assert!(facts[9].facts.ascii_only);
         assert_eq!(facts[9].facts.necessary_prefix_units, 0);
+        assert_eq!(facts[10].facts.minimum_consumed_units, None);
+        assert_eq!(facts[10].facts.maximum_consumed.status, "impossible");
+        assert_eq!(facts[10].facts.maximum_consumed.units, None);
         Ok(())
     }
 

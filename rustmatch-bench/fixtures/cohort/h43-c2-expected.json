@@ -2,8 +2,8 @@
   "schema_version": 1,
   "classifier_version": "h43-c1-v1",
   "proof_model_version": "normalized-hir-conservative-v1",
-  "pattern_source_digest": "fnv1a64:d0a596c2f2b7bbc8",
-  "pattern_count": 17,
+  "pattern_source_digest": "fnv1a64:5c87accb471b5c1b",
+  "pattern_count": 18,
   "cohort_count": 2,
   "proof_provenance": {
     "cohort_membership": "exhaustive-normalized-hir-assertion-walk-v1",
@@ -33,7 +33,8 @@
         14,
         15,
         16,
-        17
+        17,
+        18
       ]
     },
     {
@@ -407,6 +408,27 @@
         "necessary_prefix_units": 2,
         "filterable_prefix": false,
         "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 18,
+      "registration_ordinal": 17,
+      "expression_digest": "fnv1a64:07e11f07b4a6665a",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": null,
+        "maximum_consumed": {
+          "status": "impossible",
+          "units": null
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 1
       }
     }
   ]
