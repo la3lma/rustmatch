@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 active<br>
+**Status:** H43-D1-R1 complete with rework; H43-D1-R2 active<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -110,6 +110,7 @@ flowchart TB
         E1["H43-E1 Prove exact mixed-cohort event and failure parity"]
         D1["H43-D1 Measure cohort-only cost and code-layout effects"]
         D1R["H43-D1-R1 Recover classification cost and parallel occupancy"]
+        D1R2["H43-D1-R2 Isolate code layout and eliminate start-table allocation churn"]
     end
 
     subgraph ASSERTION[First specialized backend]
@@ -147,7 +148,8 @@ flowchart TB
     K1 --> E1
     E1 --> D1
     D1 --> D1R
-    D1R --> A1
+    D1R --> D1R2
+    D1R2 --> A1
     A1 --> A2
     A2 --> S1
     S1 --> E2
@@ -189,7 +191,8 @@ flowchart TB
     class K1 complete;
     class E1 complete;
     class D1 complete;
-    class D1R active;
+    class D1R complete;
+    class D1R2 active;
     class A1 blocked;
     class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -870,7 +873,7 @@ path activation is unproved.
 
 **Scope:** semantically inert cohort-spine recovery<br>
 **Level:** system<br>
-**Status:** active<br>
+**Status:** complete; rework required<br>
 **Primary actor:** optimization engineer<br>
 **Supporting actors:** correctness reviewer, exclusive-host benchmark runner,
 profiler
@@ -937,7 +940,7 @@ all D1 evidence, and does not authorize H43-A1.
 
 **Implementation result**
 
-- **Result:** active on 2026-08-06.
+- **Result:** complete on 2026-08-06 with a `rework` decision.
 - **Frozen candidate:**
   `2b650e980cafaed608ce8c7e8c7e9bde02e27a5e` replaces the full diagnostic
   classifier in cohort execution with the existing exact HIR assertion query.
@@ -962,7 +965,107 @@ all D1 evidence, and does not authorize H43-A1.
 - **Frozen formal plan:** `h43-d1-r1-plan.json` preserves all D1 fixtures,
   workers, cycles, resource lanes, and G9-v3 thresholds. Its SHA-256 is
   `36da2a69703d48a76c7571b74ca59fa22f9a5e57f20a8e1d59cb1eeb788bfc61`.
-- **Decision:** guarded Agogo measurement pending. H43-A1 remains blocked.
+- **Formal recovery:** the hash-bound Agogo window retained 720 timing and 108
+  resource receipts with zero correctness, Docker, GPU, or contamination
+  failures. The recovered scheduler retained 55.00% and 90.27% one-worker
+  target gains and moved every former four/sixteen-worker loss to within 1.56%
+  of ordinary execution.
+- **Remaining vetoes:** assertion-free ordinary scan regressed 15.23%, 22.35%,
+  and 10.13% at workers `1/4/16`. Mixed-balanced one-worker cohort preparation
+  regressed 24.97%; inactive mixed-balanced four-worker preparation regressed
+  5.51%. All five crossed unchanged G9-v3 block criteria.
+- **Causal separation:** baseline and candidate ordinary hot scan text is
+  byte-identical at 21,988 bytes, but cohort additions moved the linked symbol
+  by about 4.3 KiB. Extended counters show nearly unchanged instructions with
+  higher short-run cycles/cache activity. The preparation cost is driven by
+  construction of the newly eligible assertion-free start table, whose
+  transition compiler repeatedly allocates temporary vectors.
+- **Decision:** do not authorize H43-A1. Authorize one final H43-D1-R2 recovery
+  limited to compilation-unit isolation and allocation-free start-table
+  construction. The reviewed result is `h43-d1-r1-result.md`; the raw archive
+  SHA-256 is
+  `74c34a997953aba689f5cb36d33f32234303763e5683d1cb3b9259167356fa66`.
+
+## H43-D1-R2: Isolate code layout and eliminate start-table allocation churn
+
+**Scope:** final semantically inert cohort-spine recovery<br>
+**Level:** system<br>
+**Status:** active<br>
+**Primary actor:** optimization engineer<br>
+**Supporting actors:** compiler/codegen reviewer, correctness reviewer,
+exclusive-host benchmark runner
+
+**Goal**
+
+Remove R1's two newly isolated veto mechanisms without changing cohort
+eligibility, event semantics, scan scheduling, formal fixtures, or policy.
+
+**Preconditions**
+
+- H43-D1-R1 is complete with a `rework` decision and immutable evidence.
+- The recovered one-scope scheduler and all H43-E1 proofs pass.
+- R1 established byte-identical ordinary hot scan text and identified linked
+  layout/cache behavior as the inactive short-scan mechanism.
+- R1 identified repeated transition/closure vector allocation in
+  `StartTable::compile` as the cohort preparation mechanism.
+
+**Minimal guarantee**
+
+An unsuccessful R2 retains R1 unchanged, rejects the execution spine, leaves
+classification available only as diagnostics, and does not authorize H43-A1.
+
+**Success guarantee / postconditions**
+
+- Cohort-only compiler and scheduler implementation is outside the ordinary
+  API compilation unit; the one-partition ordinary source path remains direct.
+- Start-table construction reuses bounded scratch vectors and emits the exact
+  same table for every database.
+- H43-E1 and complete repository CI pass without fixture or oracle change.
+- The complete D1 matrix passes unchanged or the execution spine is rejected.
+- A written decision either authorizes H43-A1 or closes this recovery program.
+
+**Main success scenario**
+
+1. Extract cohort-only build, diagnostics, and mixed scheduling helpers into a
+   dedicated module with non-inlined boundaries from the ordinary API path.
+2. Refactor start-table epsilon closure and transition construction to write
+   into caller-owned reusable buffers.
+3. Add exhaustive old/new table-equivalence tests over generated small NFAs
+   and retain existing scan parity as the semantic backstop.
+4. Run focused preparation and short-scan screens; fail early if either causal
+   signal remains clearly above three percent.
+5. Run H43-E1 and repository CI for a surviving candidate.
+6. Freeze a fresh hash-bound plan that differs only in evidence ID and source
+   revisions, then run the complete D1 campaign on Agogo.
+
+**Extensions**
+
+- If module extraction merely moves the regression to another inactive guard,
+  reject rather than pad or hand-place code.
+- If scratch reuse changes any start-table bit or event, reject immediately.
+- If preparation passes but target scan gains disappear, reject rather than
+  enabling lazy first-use work that the frozen warmups would hide.
+- No linker padding, benchmark-specific branch, fixture identity, warmup
+  change, or threshold change is permitted.
+
+**Expected evidence**
+
+- Exact before/after start-table equivalence and allocation receipts.
+- Ordinary emitted-text hashes, linked symbol locations, and short-run
+  hardware counters.
+- Full H43-E1 compatibility evidence and repository CI.
+- Complete unchanged D1 timing, resource, compile, artifact, host, and
+  correctness receipts.
+- Reviewed authorize/reject result with an external raw archive.
+
+**Dependencies:** H43-D1-R1; H43-E1; unchanged G9-v3 evidence policy.
+
+**Implementation result**
+
+- **Result:** active on 2026-08-06.
+- **Decision boundary:** this is the final recovery allowed for the
+  semantically inert spine before H43-A1. It may optimize general compilation
+  machinery and isolate code, but may not specialize matching behavior.
 
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
@@ -1440,12 +1543,12 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, H43-E1, and H43-D1 are complete. D1 found clean
-ordinary and one-cohort scan guards plus 57.58%-90.46% one-worker mixed gains,
-but it also found stable classifier preparation cost and sequential-cohort
-parallel occupancy losses. **H43-D1-R1 is active** and may recover only those
-two causal defects. H43-A1 remains blocked until the unchanged D1 matrix passes
-after recovery.
+H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, and H43-D1-R1 are complete. R1
+recovered total parallel occupancy and retained 55.00%-90.27% one-worker mixed
+gains, but the formal matrix exposed linked-layout inactive scan vetoes and
+start-table preparation cost. **H43-D1-R2 is active** and is the final bounded
+recovery for those two causal mechanisms. H43-A1 remains blocked until the
+unchanged D1 matrix passes after recovery.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H43-D1-R1 cohort-spine recovery result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h43-d1-r1-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h43-d1-r1-result.md</div></header><main><h1>H43-D1-R1 cohort-spine recovery result</h1>
+<p><strong>Decision:</strong> rework<br />
+<strong>Measured candidate:</strong> <code>2b650e980cafaed608ce8c7e8c7e9bde02e27a5e</code><br />
+<strong>Baseline:</strong> <code>05992bf1f20e0f9384fc52fcb4a9863500e7a4da</code><br />
+<strong>Controller:</strong> <code>123585bf72e2a4f2f6531c357d9c0c4d708a5b5c</code><br />
+<strong>Policy:</strong> unchanged G9-v3 thresholds<br />
+<strong>Consequence:</strong> H43-A1 remains blocked; H43-D1-R2 is authorized</p>
+<h2>Executive result</h2>
+<p>R1 repaired the original sequential-scope occupancy failure. The four- and
+sixteen-worker mixed lanes moved from severe losses to results within 1.56% of
+ordinary execution, while the one-worker target retained gains of 55.00% and
+90.27%. Exact events, failure behavior, worker bounds, and environmental
+guards all passed.</p>
+<p>The recovery is still not admissible. Three assertion-free ordinary scan
+guards regressed by 10.13% to 22.35%, and mixed-balanced one-worker cohort
+preparation regressed 24.97%. These are formal vetoes under the unchanged
+policy, not thresholds to reinterpret.</p>
+<p>Post-window diagnostics separated the failures. The ordinary hot scan kernel
+has identical 21,988-byte machine text in baseline and candidate, but the
+added cohort code moved its linked address by about 4.3 KiB. Paired hardware
+counters found nearly unchanged instructions but higher cycles and cache
+activity during short early scans. The cohort preparation cost comes from
+building the newly eligible assertion-free start table through a transition
+compiler that repeatedly allocates temporary vectors. R2 may address only
+those two mechanisms.</p>
+<h2>Evidence integrity</h2>
+<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody>
+<tr><td>Formal window</td><td><code>2026-08-06T13:18:58Z</code> to <code>2026-08-06T13:21:46Z</code></td></tr>
+<tr><td>Plan SHA-256</td><td><code>36da2a69703d48a76c7571b74ca59fa22f9a5e57f20a8e1d59cb1eeb788bfc61</code></td></tr>
+<tr><td>Window state SHA-256</td><td><code>c04cae1a1609055ef1c8f4dcca92b28794f2968d62eb872d9b0d9a7570d1c541</code></td></tr>
+<tr><td>Summary SHA-256</td><td><code>b84408f642f612e05fdb3ecd9ad08b7c6d07e152ac5d1b2bb3f67f4bc4b707d4</code></td></tr>
+<tr><td>Receipts</td><td>720 timing; 108 resource</td></tr>
+<tr><td>Correctness</td><td>zero errors; all four activation counts exact</td></tr>
+<tr><td>Environment</td><td>zero contamination records; zero Docker events; GPU idle</td></tr>
+<tr><td>Service restoration</td><td>all three managed containers exited with restart policy <code>no</code></td></tr>
+<tr><td>Raw archive SHA-256</td><td><code>74c34a997953aba689f5cb36d33f32234303763e5683d1cb3b9259167356fa66</code></td></tr>
+</tbody></table>
+<p>The compact summary, window state, fixture manifest, service snapshot, and
+review manifest are retained in <code>docs/experiments/h43-d1-r1/</code>. The complete
+raw archive is retained outside the repository at the path in
+<code>evidence-manifest.json</code>.</p>
+<h2>Target recovery</h2>
+<p>Negative deltas are improvements. Each value is the geometric paired delta
+across fifteen cycles.</p>
+<table><thead><tr><th>Fixture</th><th style="text-align: right">Workers</th><th style="text-align: right">Cohort scan delta</th><th>Interpretation</th></tr></thead><tbody>
+<tr><td>mixed-balanced</td><td style="text-align: right">1</td><td style="text-align: right">-55.00%</td><td>large target gain retained</td></tr>
+<tr><td>mixed-balanced</td><td style="text-align: right">4</td><td style="text-align: right">+0.40%</td><td>recovered to neutral</td></tr>
+<tr><td>mixed-balanced</td><td style="text-align: right">16</td><td style="text-align: right">-1.56%</td><td>recovered to neutral/slightly faster</td></tr>
+<tr><td>mixed-output</td><td style="text-align: right">1</td><td style="text-align: right">-90.27%</td><td>about 10.3x faster</td></tr>
+<tr><td>mixed-output</td><td style="text-align: right">4</td><td style="text-align: right">+0.32%</td><td>recovered to neutral</td></tr>
+<tr><td>mixed-output</td><td style="text-align: right">16</td><td style="text-align: right">-0.76%</td><td>recovered to neutral/slightly faster</td></tr>
+</tbody></table>
+<h2>Formal blockers</h2>
+<table><thead><tr><th>Lane</th><th>Fixture</th><th style="text-align: right">Workers</th><th>Metric</th><th style="text-align: right">Delta</th><th style="text-align: right">Direction</th></tr></thead><tbody>
+<tr><td>inactive</td><td>assertion-free</td><td style="text-align: right">1</td><td>scan</td><td style="text-align: right">+15.23%</td><td style="text-align: right">slower in 13/15</td></tr>
+<tr><td>inactive</td><td>assertion-free</td><td style="text-align: right">4</td><td>scan</td><td style="text-align: right">+22.35%</td><td style="text-align: right">slower in 15/15</td></tr>
+<tr><td>inactive</td><td>assertion-free</td><td style="text-align: right">16</td><td>scan</td><td style="text-align: right">+10.13%</td><td style="text-align: right">slower in 13/15</td></tr>
+<tr><td>cohort</td><td>mixed-balanced</td><td style="text-align: right">1</td><td>prepare</td><td style="text-align: right">+24.97%</td><td style="text-align: right">slower in 15/15</td></tr>
+<tr><td>inactive</td><td>mixed-balanced</td><td style="text-align: right">4</td><td>prepare</td><td style="text-align: right">+5.51%</td><td style="text-align: right">slower in 13/15</td></tr>
+</tbody></table>
+<p>No peak-RSS comparison exceeded the one-MiB materiality boundary. Feature-mode
+rlib size increased 5.52%, default rlib size increased 0.14%, and measured
+compile time increased 3.67%; these remain costs for R2 to reduce even though
+they were not among the analyzer's five automatic timing/RSS signals.</p>
+<h2>Causal diagnostics</h2>
+<p>The baseline and candidate ordinary scan instantiations are both 21,988 bytes
+and have the same SHA-256 over emitted text:
+<code>a01640720a27c65befa3acdf6b1bec5c6acbfd94668784b26ecdb612ab0effe6</code>.
+Only relocation identities and linked placement differ. The corresponding
+linked hot symbol moved from <code>0x14efc0</code> to <code>0x1500b0</code>.</p>
+<p>Fifteen additional AB/BA <code>perf stat</code> cycles used 100 retained scans per
+process. Their median scan ratios converged to +0.39%, +0.01%, and +0.83% at
+workers 1, 4, and 16, while one-worker instructions changed -0.20% and cycles
+changed +8.21%. At four workers, instructions changed -0.81%, cycles +3.15%,
+and cache misses +8.49%. This supports a cold code-layout/cache mechanism
+rather than added semantic work. It does not invalidate the formal short-cell
+guard.</p>
+<p>For preparation, splitting the mixed database makes the assertion-free cohort
+eligible for <code>StartTable::compile</code>. That compiler explores ASCII symbol pairs
+while allocating fresh transition/closure vectors. The extra table is useful
+at scan time, but its construction algorithm is not an immutable cost.</p>
+<h2>Decision and bounded recovery</h2>
+<p>Do not authorize H43-A1 and do not alter warmups, fixtures, cycle counts, or
+thresholds. H43-D1-R2 may:</p>
+<ol>
+<li>move cohort-only build and scheduler code out of the ordinary API
+compilation unit while preserving the direct ordinary source path;</li>
+<li>make start-table closure and transition construction reuse bounded scratch
+vectors without changing the resulting table;</li>
+<li>rerun exact table-equivalence tests, H43-E1, repository CI, and the complete
+unchanged D1 matrix.</li>
+</ol>
+<p>If either ordinary short-scan guards or cohort preparation remains above the
+policy boundary after R2, the semantically inert execution spine is rejected
+and cohort classification remains diagnostics-only.</p>
+</main><footer>Generated from <code>docs/experiments/h43-d1-r1-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
