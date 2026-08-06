@@ -791,7 +791,7 @@ mod tests {
     fn repository_mermaid_inventory_is_complete() {
         let sources = markdown_sources().expect("collect Markdown");
         let diagrams = mermaid_diagrams(&sources).expect("collect Mermaid diagrams");
-        assert_eq!(diagrams.len(), 4);
+        assert_eq!(diagrams.len(), 7);
 
         let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
@@ -818,6 +818,16 @@ mod tests {
                 .expect("parse post-H11 portfolio")
                 .len(),
             1
+        );
+        let cohort_plan = std::fs::read_to_string(
+            repository_root.join("docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md"),
+        )
+        .expect("read cohort-aware matcher plan");
+        assert_eq!(
+            mermaid_blocks(&cohort_plan)
+                .expect("parse cohort-aware matcher plan")
+                .len(),
+            3
         );
     }
 }
