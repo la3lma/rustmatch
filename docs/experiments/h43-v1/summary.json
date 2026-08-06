@@ -1,0 +1,126 @@
+{
+  "automatic_disposition": "reject",
+  "blockers": [
+    "mixed-balanced preparation regressed 20.423%",
+    "mixed-output preparation regressed 32.110%",
+    "mixed-balanced added 1515 allocation calls",
+    "mixed-balanced requested 366897 extra bytes",
+    "mixed-output added 293 allocation calls",
+    "mixed-output requested 44100601 extra bytes"
+  ],
+  "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "claim": "shared-storage-carrier-feasibility-only-not-admission",
+  "evidence_id": "H43-V1-SCREEN-summary",
+  "plan_sha256": "91dfcef5d139bbbe292867f3cce94f84838460f39911743b8e061b6bf08240d9",
+  "preproved_local_evidence": {
+    "ordinary_scan_codegen_canonical_sha256": "c8fa56000a3a4ff069c2b8e83cd59d8edc9c5cae1bb4401b1b46cf2ed780d094",
+    "repository_ci": "pass",
+    "semantic_comparisons": 3628,
+    "structural_invariant": "shared compilation adds exactly one state and no edges, predicates, terminals, or pattern IDs"
+  },
+  "resources": [
+    {
+      "extra_allocation_calls": 1515,
+      "extra_requested_bytes": 366897,
+      "fixture": "mixed-balanced",
+      "ordinary_allocation_calls": 1431,
+      "ordinary_peak_live_usable_bytes": 2092080,
+      "ordinary_requested_bytes": 3362229,
+      "shared_allocation_calls": 2946,
+      "shared_peak_live_usable_bytes": 2091936,
+      "shared_requested_bytes": 3729126
+    },
+    {
+      "extra_allocation_calls": 293,
+      "extra_requested_bytes": 44100601,
+      "fixture": "mixed-output",
+      "ordinary_allocation_calls": 322,
+      "ordinary_peak_live_usable_bytes": 80448,
+      "ordinary_requested_bytes": 145429,
+      "shared_allocation_calls": 615,
+      "shared_peak_live_usable_bytes": 3226104,
+      "shared_requested_bytes": 44246030
+    }
+  ],
+  "schema_version": 1,
+  "timing": [
+    {
+      "cycles": 3,
+      "event_digest": "multiset64:e5b6d2bbf254fe3b:b33057b2ff99558f:ea129f2f5068f503",
+      "fixture": "mixed-balanced",
+      "matches_per_iteration": 64,
+      "ordinary_database_retained_bytes": 31864,
+      "ordinary_prefilter_retained_bytes": 0,
+      "ordinary_prepare_median_ns": 76625,
+      "ordinary_prepare_ns": [
+        84571,
+        72678,
+        76625
+      ],
+      "ordinary_scan_median_ns": 134040585,
+      "ordinary_scan_ns": [
+        135884687,
+        134040585,
+        133525290
+      ],
+      "parity_errors": [],
+      "prepare_median_delta_percent": 20.422838499184337,
+      "prepare_paired_geometric_delta_percent": 20.660061111636164,
+      "scan_median_gain_percent": 54.35617652668407,
+      "scan_paired_geometric_gain_percent": 54.8481586975528,
+      "shared_database_retained_bytes": 31896,
+      "shared_prefilter_retained_bytes": 2072,
+      "shared_prepare_median_ns": 92274,
+      "shared_prepare_ns": [
+        92274,
+        88387,
+        101442
+      ],
+      "shared_scan_median_ns": 61181248,
+      "shared_scan_ns": [
+        61181248,
+        59245121,
+        61762638
+      ]
+    },
+    {
+      "cycles": 3,
+      "event_digest": "multiset64:0f3d361680ca05d0:88df2a1d540f0841:4f8bccc0017fd750",
+      "fixture": "mixed-output",
+      "matches_per_iteration": 75040,
+      "ordinary_database_retained_bytes": 4024,
+      "ordinary_prefilter_retained_bytes": 0,
+      "ordinary_prepare_median_ns": 22152,
+      "ordinary_prepare_ns": [
+        24607,
+        21972,
+        22152
+      ],
+      "ordinary_scan_median_ns": 39141869,
+      "ordinary_scan_ns": [
+        39141869,
+        42218444,
+        38867019
+      ],
+      "parity_errors": [],
+      "prepare_median_delta_percent": 32.10996749729145,
+      "prepare_paired_geometric_delta_percent": 39.000817442256675,
+      "scan_median_gain_percent": 90.5289422945031,
+      "scan_paired_geometric_gain_percent": 90.7139051609725,
+      "shared_database_retained_bytes": 4056,
+      "shared_prefilter_retained_bytes": 2072,
+      "shared_prepare_median_ns": 29265,
+      "shared_prepare_ns": [
+        25058,
+        29265,
+        43863
+      ],
+      "shared_scan_median_ns": 3707149,
+      "shared_scan_ns": [
+        3788112,
+        3707149,
+        3662364
+      ]
+    }
+  ]
+}

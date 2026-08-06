@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-V1-SCREEN-preliminary-manifest",
+  "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "plan_sha256": "91dfcef5d139bbbe292867f3cce94f84838460f39911743b8e061b6bf08240d9",
+  "summary_sha256": "b5c94f55aa8ccea62305e98858caef21561dfcbad40672c41ebd81a9a0061d1e",
+  "window_state_sha256": "e8349979179b49f865e19f82fd8384694436b1992e5c092dd8705c6b86cb7cfe",
+  "service_snapshot_sha256": "34c95c061bcc291459d92818d9a527dbd610de313bcf7bd2a1405740a614ac67",
+  "fixture_manifest_sha256": "1e716f2cc9e83bf4394e231f050950db9a61912f2e76fcdc1b418cd008810997",
+  "raw_archive": "/Users/rmz/.codex/handoffs/rustmatch/h43-v1/h43-v1-screen-preliminary-3b81a3e-20260806.tar.gz",
+  "raw_archive_sha256": "19cccb9e5aa04296c02febb7f5d39311907f7692175e76c2cd5ab6b4744b3f5f",
+  "remote_archive": "/home/rmz/git/h43-v1-screen-preliminary-3b81a3e-20260806.tar.gz",
+  "status": "rework",
+  "review_note": "Timing is valid. Whole-process allocation receipts include seven scans and are diagnostic rather than construction-only evidence."
+}

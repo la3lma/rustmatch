@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-V1 shared-storage feasibility active; H43-A1 blocked<br>
+**Status:** H43-V1 complete; H43-A1 available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -195,8 +195,8 @@ flowchart TB
     class D1 complete;
     class D1R complete;
     class D1R2 blocked;
-    class V1 active;
-    class A1 blocked;
+    class V1 complete;
+    class A1 available;
     class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
@@ -1086,7 +1086,7 @@ classification available only as diagnostics, and does not authorize H43-A1.
 
 **Scope:** representation feasibility and cheap causal screen<br>
 **Level:** system<br>
-**Status:** active<br>
+**Status:** complete; runtime spine authorized<br>
 **Primary actor:** optimization engineer<br>
 **Supporting actors:** compiler/codegen reviewer, correctness reviewer,
 exclusive-host benchmark runner
@@ -1134,7 +1134,8 @@ does not authorize H43-A1.
 2. Add benchmark-only view descriptors carrying root, assertion mode, and
    cohort pattern count.
 3. Parameterize engine root initialization without changing transition or
-   terminal semantics; compile cohort-local prefilters from each view root.
+   terminal semantics; keep the carrier prefilter-neutral until a separately
+   measured view prefilter can pay for its own construction cost.
 4. Prove structural sharing and exact ordinary/view event parity locally and
    through the frozen mixed H43 fixture.
 5. Compare ordinary emitted scan text against the D1-R2 baseline artifact and
@@ -1173,11 +1174,29 @@ does not authorize H43-A1.
 
 **Dependencies:** H43-D1-R2; H43-E1; unchanged G9-v3 evidence policy.
 
+**Implementation result**
+
+- **Result:** complete with an `authorize-runtime-spine` decision at recovery
+  candidate `4f08cd9e0fc7253c4333a27b61d860b7255c7e81`.
+- **Structure and semantics:** shared compilation adds exactly one root state
+  and no edges, predicates, terminals, or IDs. Complete CI and all 3,628 H43-E1
+  comparisons pass. The ordinary scan body remains canonically identical.
+- **Preliminary screen:** eager view-prefilter construction retained 54.36%
+  and 90.53% scan gains but regressed preparation 20.42% and 32.11%. The raw
+  archive is retained; its whole-process allocations are diagnostic because
+  they include seven scans.
+- **Bounded recovery:** prefilter-neutral views remove the causal construction
+  work. Median preparation is +2.595% and -1.035%; construction adds 0-2 calls
+  and requests 178 fewer bytes. Scan gains remain 54.95% and 90.43%.
+- **Boundary:** this authorizes H43-A1, not merge. The carrier remains
+  benchmark-only and every specialized backend still owes exact focused and
+  formal G9 admission. See the [H43-V1 result](h43-v1-result.md).
+
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
 **Scope:** candidate specialized backend  
 **Level:** sea  
-**Status:** planned  
+**Status:** available<br>
 **Primary actor:** optimization engineer  
 **Supporting actors:** compiler/codegen reviewer, profiler
 
@@ -1649,13 +1668,13 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, and H43-D1-R2 are
-complete. H43-V1 is active. R2 retained 57.17%-90.16% one-worker mixed scan gains and exact
-semantics, but its predeclared early screen reproduced 13.16%-28.50% inactive
-scan regressions and 16.73%-23.19% one-worker preparation regressions. The
-two-database cohort spine is rejected, the formal matrix was not launched, and
-H43-A1 remains blocked while V1 tests a materially different shared-storage
-representation rather than another tuning pass over the rejected carrier.
+H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, H43-D1-R2, and H43-V1 are
+complete. The two-database spine remains rejected. V1's shared-storage recovery
+passes every predeclared feasibility gate with exact events, 0-2 extra build
+allocations, preparation within three percent, and 54.95%-90.43% focused scan
+gains. H43-A1 is now available to reconstruct the assertion-specialized backend
+over this carrier; no production merge is authorized before focused and formal
+G9 admission.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

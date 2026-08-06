@@ -525,6 +525,20 @@
       "decision": "Rejected before the formal 15-cycle window under the predeclared fail-early rule. No merge and no H43-A1 authorization. Retain the specialization signal; reconsider only through a materially different shared-storage cohort representation.",
       "evidence": "experiments/h43-d1-r2-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-V1",
+      "name": "Shared-storage cohort roots and database views",
+      "date": "2026-08-06",
+      "status": "investigate",
+      "baseline_revision": "3d48cb754d89da1359582627f743af87a86b342a",
+      "candidate_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+      "summary": "Compile assertion-free and assertion-bearing roots over one immutable pattern body store, with benchmark-only views and a prefilter-neutral carrier.",
+      "result": "Exact structural and event proofs pass. The recovered carrier adds 0-2 construction allocations, keeps median preparation within 2.595%, and retains 54.95%-90.43% one-worker mixed scan gains.",
+      "tradeoffs": "The balanced preparation screen passes narrowly and its paired geometric delta is 4.297%. The carrier remains benchmark-only, sequential, and buffered; no specialized backend or production selector exists yet.",
+      "decision": "Investigate. Authorize H43-A1 over the shared-storage carrier, but do not merge V1 or change production behavior before focused and formal G9 admission.",
+      "evidence": "experiments/h43-v1-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -661,13 +675,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-V1",
-      "name": "Shared-storage cohort roots and database views",
-      "status": "active benchmark-only feasibility lane",
-      "why": "H43 proved exact mixed-cohort semantics and retained 57.17%-90.16% one-worker scan gains, but independently compiling each cohort caused 16.73%-23.19% preparation regressions and roughly 1,600 extra allocation calls. V1 now compiles both cohort roots over one body store; the static invariant is one extra state with no extra compiled edges, predicates, terminals, or pattern IDs.",
-      "next_test": "Complete exact view/full-database parity and repository CI, verify ordinary emitted text, then run the predeclared focused preparation/allocation screen before any specialization.",
-      "expected_value": "Very high demonstrated narrow upside, medium representation confidence after the structural proof, high semantic and inactive-layout scrutiny",
-      "evidence": "experiments/b2-h-0043-cohort-aware-matcher-plan.md#h43-v1-prove-shared-storage-cohort-roots-and-database-views"
+      "id": "H43-A1",
+      "name": "Assertion-specialized backend over shared cohort storage",
+      "status": "available after H43-V1 feasibility authorization",
+      "why": "The prefilter-neutral shared carrier preserves exact events, avoids duplicated construction, leaves ordinary scan codegen unchanged, and retains 54.95%-90.43% focused one-worker gains. This removes the representation blocker that prevented reconstructing H24 safely.",
+      "next_test": "Reconstruct the H24 assertion backend in an isolated benchmark-only artifact, freeze proof-based eligibility, and run exact failure/callback differentials plus target, neighbor, preparation, allocation, RSS, and inactive-path screens before any formal campaign.",
+      "expected_value": "Very high demonstrated assertion-heavy upside, medium carrier confidence, high semantic, buffering, memory, and selector risk",
+      "evidence": "experiments/h43-v1-result.md"
     },
     {
       "priority": 2,
