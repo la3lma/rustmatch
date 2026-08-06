@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-C1 and H43-C2 complete; H43-K1 available but not started<br>
+**Status:** H43-C1, H43-C2, and H43-K1 complete; H43-E1 available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -184,9 +184,10 @@ flowchart TB
     class P0 complete;
     class C1 complete;
     class C2 complete;
-    class K1 available;
+    class K1 complete;
+    class E1 available;
     class A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
-    class E1,D1,E2 evidence;
+    class D1,E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
 ```
@@ -553,7 +554,7 @@ Diagnostics reveal no hidden selector and do not alter public API stability.
 
 **Scope:** matcher construction and scan orchestration  
 **Level:** sea  
-**Status:** available; not started<br>
+**Status:** complete<br>
 **Primary actor:** matcher builder and scanner  
 **Supporting actors:** application sink, semantic reviewer
 
@@ -612,15 +613,70 @@ specialized code runs.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
-- **Decision:** pending.
+- **Result:** complete at implementation commit
+  `acc56efcb21f4c4360579b70949e1b217c34df08`.
+- **Isolation boundary:** cohort compilation is available only through the
+  unpublished `benchmark-internals` control and is disabled by default. A
+  normal build retains the prior builder, matcher layout, and scan dispatch;
+  a no-default-feature build compiles the complete cohort control, layout, and
+  diagnostics out. No specialized backend or public policy API was added.
+- **Construction:** mixed registrations are stably divided from normalized HIR
+  facts into assertion-free and assertion-bearing vectors. Each vector is
+  compiled independently by the unchanged `compile_partitions`, NFA, and
+  prefilter machinery. The original `PatternId` remains in every cohort NFA,
+  so no scan-time local-to-global translation table can corrupt identity.
+- **Resource policy:** deterministic proportional allocation gives each
+  non-empty cohort at least one partition, never exceeds its pattern count,
+  and preserves the requested concurrency as an upper bound by executing
+  cohorts sequentially. The configured state-cache budget is split once across
+  all partitions and conserved exactly. Test-only diagnostics expose cohort
+  pattern/partition counts, spawned workers, retained database/prefilter bytes,
+  total cache budget, and whether delivery is buffered.
+- **One-cohort path:** when either cohort is empty, the original registration
+  vector goes directly through the ordinary compiler and scan path. One
+  partition therefore remains unbuffered; ordinary multi-partition behavior is
+  unchanged.
+- **Failure atomicity:** a mixed matcher builds a private result for the first
+  cohort, completes and joins the second cohort, and only then performs serial
+  callback delivery. A second-cohort spawn error, scan error, or worker panic
+  discards every first-cohort event. Sink panics occur only after all cohort
+  workers finish, and the immutable matcher remains reusable.
+- **Focused evidence:** seven new matcher tests cover deterministic bounded
+  partition allocation, stable global IDs, assertion separation, exact budget
+  accounting, retained-byte accounting, worker counts 1/2/4/8, repeated event
+  parity, direct one-cohort behavior, second-cohort failure and panic
+  atomicity, sink panic, and matcher reuse. The complete feature-enabled
+  library suite passes 62 tests plus properties, Miri lifecycle, 33 public
+  walking-spine tests, and doctests.
+- **Retained harness evidence:**
+  `rustmatch-bench/fixtures/cohort/h43-k1-patterns.tsv` and
+  `h43-k1-corpus.txt` contain eight interleaved registrations with duplicate
+  text and all four assertion kinds. The release harness now accepts explicit
+  `cohort-WORKERS` mode. Baseline `4` and `cohort-4` each emitted 17 events with
+  identical digest
+  `multiset64:a6b644ea5a0b8933:1ca4e5c7d1d962fa:20d01fc02c06ec5d`.
+  Activation diagnostics distinguish the paths: baseline used three spawned
+  workers and four assertion cache bypasses; cohort mode used two spawned
+  workers, two assertion bypasses, 13 cache states, and retained 4,144
+  prefilter bytes while preserving four total partitions, 2,316 database
+  bytes, and the 8,192-state budget. These figures prove path activation and
+  accounting only; K1 makes no performance claim.
+- **Repository verification:** `cargo xtask ci` passes formatting, strict
+  workspace clippy, fuzz-target checks, all workspace tests, rustdoc, MSRV,
+  generated ledger/HTML freshness, the complete Java 2.0.0-RC1 compatibility
+  oracle, differential evidence I1 through I5, and benchmark smoke.
+  `cargo test -p rustmatch --no-default-features` and strict no-default clippy
+  separately pass with 50 library tests and all cohort execution code absent.
+- **Decision:** K1 passes as a semantically inert implementation spine.
+  Authorize H43-E1 to attempt the broader generated/adversarial parity gate.
+  Do not authorize H43-D1 timing, H43-A1 specialization, selector work, or any
+  merge claim from this result alone.
 
 ## H43-E1: Prove exact mixed-cohort event and failure parity
 
 **Scope:** semantic gate  
 **Level:** system  
-**Status:** planned evidence gate  
+**Status:** available evidence gate; not started<br>
 **Primary actor:** semantic reviewer  
 **Supporting actors:** Java oracle, generated test harness, fuzz harness
 
@@ -1203,11 +1259,12 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1 and H43-C2 are complete. The next best goal is **H43-K1 only**: compile
-assertion-free and assertion-bearing cohorts with the unchanged generic backend
-while preserving a direct one-cohort path. H43-E1 remains the semantic gate and
-must prove exact event and failure parity before H43-D1 measures plumbing cost.
-H43-A1 is forbidden until both H43-E1 and H43-D1 explicitly authorize it.
+H43-C1, H43-C2, and H43-K1 are complete. The next best goal is **H43-E1 only**:
+prove broader generated, adversarial, compatibility, failure, and reuse parity
+between the ordinary and cohort modes. K1's retained smoke is implementation
+evidence, not a substitute for that semantic campaign. H43-D1 may measure
+cohort-only plumbing cost only after E1 passes. H43-A1 remains forbidden until
+both H43-E1 and H43-D1 explicitly authorize it.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

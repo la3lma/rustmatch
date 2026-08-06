@@ -7,7 +7,7 @@ main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius
 p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0043-cohort-aware-matcher-plan.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md</div></header><main><h1>B2-H-0043 cohort-aware matcher engineering plan</h1>
-<p><strong>Status:</strong> H43-C1 and H43-C2 complete; H43-K1 available but not started<br>
+<p><strong>Status:</strong> H43-C1, H43-C2, and H43-K1 complete; H43-E1 available<br>
 <strong>Plan owner:</strong> rustmatch maintainers<br />
 <strong>Created:</strong> 2026-08-06<br />
 <strong>Current source baseline:</strong> <code>79cc8e9b4438cb4cabd482789715a16ff9a834d8</code><br />
@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/04a4b6f633b971fdc326fe9fddd4239ceea4d1c9f5e46cddb1c2086681031989.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/04a4b6f633b971fdc326fe9fddd4239ceea4d1c9f5e46cddb1c2086681031989.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/04a4b6f633b971fdc326fe9fddd4239ceea4d1c9f5e46cddb1c2086681031989.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -388,7 +388,7 @@ no cohort matcher has been compiled and no performance claim is made here.</p>
 <h2>H43-K1: Compile assertion-free and assertion-bearing cohorts</h2>
 <p><strong>Scope:</strong> matcher construction and scan orchestration<br />
 <strong>Level:</strong> sea<br />
-<strong>Status:</strong> available; not started<br>
+<strong>Status:</strong> complete<br>
 <strong>Primary actor:</strong> matcher builder and scanner<br />
 <strong>Supporting actors:</strong> application sink, semantic reviewer</p>
 <p><strong>Goal</strong></p>
@@ -441,14 +441,69 @@ failure semantics.</li>
 <p><strong>Dependencies:</strong> H43-C1; UC-1, UC-2, UC-5, UC-9, and UC-12.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> not started.</li>
-<li><strong>Evidence:</strong> pending.</li>
-<li><strong>Decision:</strong> pending.</li>
+<li><strong>Result:</strong> complete at implementation commit
+<code>acc56efcb21f4c4360579b70949e1b217c34df08</code>.</li>
+<li><strong>Isolation boundary:</strong> cohort compilation is available only through the
+unpublished <code>benchmark-internals</code> control and is disabled by default. A
+normal build retains the prior builder, matcher layout, and scan dispatch;
+a no-default-feature build compiles the complete cohort control, layout, and
+diagnostics out. No specialized backend or public policy API was added.</li>
+<li><strong>Construction:</strong> mixed registrations are stably divided from normalized HIR
+facts into assertion-free and assertion-bearing vectors. Each vector is
+compiled independently by the unchanged <code>compile_partitions</code>, NFA, and
+prefilter machinery. The original <code>PatternId</code> remains in every cohort NFA,
+so no scan-time local-to-global translation table can corrupt identity.</li>
+<li><strong>Resource policy:</strong> deterministic proportional allocation gives each
+non-empty cohort at least one partition, never exceeds its pattern count,
+and preserves the requested concurrency as an upper bound by executing
+cohorts sequentially. The configured state-cache budget is split once across
+all partitions and conserved exactly. Test-only diagnostics expose cohort
+pattern/partition counts, spawned workers, retained database/prefilter bytes,
+total cache budget, and whether delivery is buffered.</li>
+<li><strong>One-cohort path:</strong> when either cohort is empty, the original registration
+vector goes directly through the ordinary compiler and scan path. One
+partition therefore remains unbuffered; ordinary multi-partition behavior is
+unchanged.</li>
+<li><strong>Failure atomicity:</strong> a mixed matcher builds a private result for the first
+cohort, completes and joins the second cohort, and only then performs serial
+callback delivery. A second-cohort spawn error, scan error, or worker panic
+discards every first-cohort event. Sink panics occur only after all cohort
+workers finish, and the immutable matcher remains reusable.</li>
+<li><strong>Focused evidence:</strong> seven new matcher tests cover deterministic bounded
+partition allocation, stable global IDs, assertion separation, exact budget
+accounting, retained-byte accounting, worker counts 1/2/4/8, repeated event
+parity, direct one-cohort behavior, second-cohort failure and panic
+atomicity, sink panic, and matcher reuse. The complete feature-enabled
+library suite passes 62 tests plus properties, Miri lifecycle, 33 public
+walking-spine tests, and doctests.</li>
+<li><strong>Retained harness evidence:</strong>
+<code>rustmatch-bench/fixtures/cohort/h43-k1-patterns.tsv</code> and
+<code>h43-k1-corpus.txt</code> contain eight interleaved registrations with duplicate
+text and all four assertion kinds. The release harness now accepts explicit
+<code>cohort-WORKERS</code> mode. Baseline <code>4</code> and <code>cohort-4</code> each emitted 17 events with
+identical digest
+<code>multiset64:a6b644ea5a0b8933:1ca4e5c7d1d962fa:20d01fc02c06ec5d</code>.
+Activation diagnostics distinguish the paths: baseline used three spawned
+workers and four assertion cache bypasses; cohort mode used two spawned
+workers, two assertion bypasses, 13 cache states, and retained 4,144
+prefilter bytes while preserving four total partitions, 2,316 database
+bytes, and the 8,192-state budget. These figures prove path activation and
+accounting only; K1 makes no performance claim.</li>
+<li><strong>Repository verification:</strong> <code>cargo xtask ci</code> passes formatting, strict
+workspace clippy, fuzz-target checks, all workspace tests, rustdoc, MSRV,
+generated ledger/HTML freshness, the complete Java 2.0.0-RC1 compatibility
+oracle, differential evidence I1 through I5, and benchmark smoke.
+<code>cargo test -p rustmatch --no-default-features</code> and strict no-default clippy
+separately pass with 50 library tests and all cohort execution code absent.</li>
+<li><strong>Decision:</strong> K1 passes as a semantically inert implementation spine.
+Authorize H43-E1 to attempt the broader generated/adversarial parity gate.
+Do not authorize H43-D1 timing, H43-A1 specialization, selector work, or any
+merge claim from this result alone.</li>
 </ul>
 <h2>H43-E1: Prove exact mixed-cohort event and failure parity</h2>
 <p><strong>Scope:</strong> semantic gate<br />
 <strong>Level:</strong> system<br />
-<strong>Status:</strong> planned evidence gate<br />
+<strong>Status:</strong> available evidence gate; not started<br>
 <strong>Primary actor:</strong> semantic reviewer<br />
 <strong>Supporting actors:</strong> Java oracle, generated test harness, fuzz harness</p>
 <p><strong>Goal</strong></p>
@@ -956,11 +1011,12 @@ cohorting is worth its fixed complexity.</p>
 <tr><td>Test cycle is too slow</td><td>Formal failures discover basic mechanism issues</td><td>Static models, microbenchmarks, phase diagnostics, focused funnel</td><td>Improve early model, but never replace final exact/formal gates.</td></tr>
 </tbody></table>
 <h2>Execution order</h2>
-<p>H43-C1 and H43-C2 are complete. The next best goal is <strong>H43-K1 only</strong>: compile
-assertion-free and assertion-bearing cohorts with the unchanged generic backend
-while preserving a direct one-cohort path. H43-E1 remains the semantic gate and
-must prove exact event and failure parity before H43-D1 measures plumbing cost.
-H43-A1 is forbidden until both H43-E1 and H43-D1 explicitly authorize it.</p>
+<p>H43-C1, H43-C2, and H43-K1 are complete. The next best goal is <strong>H43-E1 only</strong>:
+prove broader generated, adversarial, compatibility, failure, and reuse parity
+between the ordinary and cohort modes. K1's retained smoke is implementation
+evidence, not a substitute for that semantic campaign. H43-D1 may measure
+cohort-only plumbing cost only after E1 passes. H43-A1 remains forbidden until
+both H43-E1 and H43-D1 explicitly authorize it.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good
