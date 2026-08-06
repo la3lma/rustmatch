@@ -41,6 +41,8 @@
 
 mod api;
 mod case_fold;
+#[cfg(feature = "benchmark-internals")]
+mod cohort;
 mod engine;
 mod error;
 mod hir;
@@ -55,5 +57,8 @@ mod types;
 #[doc(hidden)]
 pub use api::ScanDiagnostics;
 pub use api::{Matcher, MatcherBuilder};
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+pub use cohort::{CohortDiagnostics, PatternDiagnostics};
 pub use error::Error;
 pub use types::{Match, PatternFlags, PatternId, Utf16Span, Utf16Text};

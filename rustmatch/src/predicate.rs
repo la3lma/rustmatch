@@ -112,6 +112,11 @@ impl SymbolPredicate {
     }
 
     #[cfg(feature = "benchmark-internals")]
+    pub(crate) fn is_ascii_only(&self) -> bool {
+        self.non_ascii_ranges.is_empty()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
     pub(crate) fn retained_bytes(&self) -> usize {
         size_of::<Self>().saturating_add(
             self.non_ascii_ranges

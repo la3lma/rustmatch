@@ -7,6 +7,8 @@ use std::mem::size_of;
 use std::panic;
 use std::thread;
 
+#[cfg(feature = "benchmark-internals")]
+use crate::cohort::CohortDiagnostics;
 use crate::engine;
 use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
@@ -97,6 +99,18 @@ impl MatcherBuilder {
     pub fn literal_prefilter_enabled(&mut self, enabled: bool) -> &mut Self {
         self.literal_prefilter_enabled = enabled;
         self
+    }
+
+    /// Classifies registered patterns without changing subsequent compilation.
+    ///
+    /// This diagnostic exists only for repository benchmark and differential
+    /// tooling. The result is computed on demand and is not retained by the
+    /// builder or matcher.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    #[must_use]
+    pub fn cohort_diagnostics(&self) -> CohortDiagnostics {
+        CohortDiagnostics::classify(&self.patterns)
     }
 
     /// Registers one caller-identified pattern.
@@ -755,6 +769,8 @@ fn scan_partition_shared(
 mod tests {
     use std::panic::{AssertUnwindSafe, catch_unwind};
 
+    #[cfg(feature = "benchmark-internals")]
+    use super::CohortDiagnostics;
     use super::{Matcher, MatcherBuilder};
     use crate::{Error, PatternId, Utf16Text};
 
@@ -880,6 +896,32 @@ mod tests {
         assert_send_sync::<Matcher>();
     }
 
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn cohort_diagnostics_are_stable_across_worker_partitioning() -> Result<(), Error> {
+        // Prepare
+        let (single_diagnostics, single) = cohort_test_matcher(1)?;
+        let (parallel_diagnostics, parallel) = cohort_test_matcher(4)?;
+        let input = Utf16Text::from("abc\ncat far");
+
+        // Test
+        let single_events = collect_events(&single, &input)?;
+        let parallel_events = collect_events(&parallel, &input)?;
+
+        // Assert
+        assert_eq!(single_diagnostics, parallel_diagnostics);
+        assert_eq!(parallel_events, single_events);
+        assert_eq!(
+            single_diagnostics.assertion_free_pattern_ids(),
+            [PatternId::new(10), PatternId::new(30)]
+        );
+        assert_eq!(
+            single_diagnostics.assertion_bearing_pattern_ids(),
+            [PatternId::new(20), PatternId::new(40)]
+        );
+        Ok(())
+    }
+
     fn parallel_test_matcher() -> Result<Matcher, Error> {
         let mut builder = MatcherBuilder::new();
         builder.worker_count(3);
@@ -900,6 +942,18 @@ mod tests {
             )?;
         }
         builder.build()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn cohort_test_matcher(worker_count: usize) -> Result<(CohortDiagnostics, Matcher), Error> {
+        let mut builder = MatcherBuilder::new();
+        builder.worker_count(worker_count);
+        builder.add(PatternId::new(10), "abc")?;
+        builder.add(PatternId::new(20), "^abc$")?;
+        builder.add(PatternId::new(30), "(?:far|foo)")?;
+        builder.add(PatternId::new(40), r"\bcat")?;
+        let diagnostics = builder.cohort_diagnostics();
+        builder.build().map(|matcher| (diagnostics, matcher))
     }
 
     fn collect_events(matcher: &Matcher, input: &Utf16Text) -> Result<Vec<(u32, u64, u64)>, Error> {
