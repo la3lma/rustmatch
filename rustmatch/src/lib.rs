@@ -56,7 +56,9 @@ mod types;
 pub use api::{Matcher, MatcherBuilder};
 #[cfg(feature = "benchmark-internals")]
 #[doc(hidden)]
-pub use api::{MatcherCohortDiagnostics, ScanDiagnostics};
+pub use api::{
+    MatcherCohortDiagnostics, ScanDiagnostics, SharedCohortDiagnostics, SharedCohortMatcher,
+};
 #[cfg(feature = "benchmark-internals")]
 #[doc(hidden)]
 pub use cohort::{CohortDiagnostics, PatternDiagnostics};

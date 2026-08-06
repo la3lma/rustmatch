@@ -661,13 +661,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "FUTURE-COHORT-VIEWS",
+      "id": "H43-V1",
       "name": "Shared-storage cohort roots and database views",
-      "status": "design hypothesis after H43 carrier rejection",
-      "why": "H43 proved exact mixed-cohort semantics and retained 57.17%-90.16% one-worker scan gains, but independently compiling each cohort caused 16.73%-23.19% preparation regressions and roughly 1,600 extra allocation calls. A single compiled database with lightweight cohort roots/views could preserve the separation signal without duplicating database-owned storage and construction.",
-      "next_test": "Design a multi-root PatternDatabase representation and prove that ordinary single-root compilation and scan code remain byte-identical. Build a static allocation/state-count model before implementation, then run exact view/full-database event parity and preparation screens before any specialization.",
-      "expected_value": "Very high demonstrated narrow upside, medium-low representation confidence, high compiler and semantic-proof effort, and high inactive-layout risk",
-      "evidence": "experiments/h43-d1-r2-result.md"
+      "status": "active benchmark-only feasibility lane",
+      "why": "H43 proved exact mixed-cohort semantics and retained 57.17%-90.16% one-worker scan gains, but independently compiling each cohort caused 16.73%-23.19% preparation regressions and roughly 1,600 extra allocation calls. V1 now compiles both cohort roots over one body store; the static invariant is one extra state with no extra compiled edges, predicates, terminals, or pattern IDs.",
+      "next_test": "Complete exact view/full-database parity and repository CI, verify ordinary emitted text, then run the predeclared focused preparation/allocation screen before any specialization.",
+      "expected_value": "Very high demonstrated narrow upside, medium representation confidence after the structural proof, high semantic and inactive-layout scrutiny",
+      "evidence": "experiments/b2-h-0043-cohort-aware-matcher-plan.md#h43-v1-prove-shared-storage-cohort-roots-and-database-views"
     },
     {
       "priority": 2,

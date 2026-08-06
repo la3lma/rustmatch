@@ -11,7 +11,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use regex::{Regex, RegexSet};
 use rustmatch::{
-    Matcher, MatcherBuilder, PatternDiagnostics, PatternId, ScanDiagnostics, Utf16Text,
+    Matcher, MatcherBuilder, PatternDiagnostics, PatternId, ScanDiagnostics, SharedCohortMatcher,
+    Utf16Text,
 };
 use serde::{Deserialize, Serialize};
 
@@ -202,7 +203,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; harness MODE is nfa, single, WORKERS, cohort-WORKERS, or cohort-view-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -249,7 +250,7 @@ fn harness_run(
         repeats,
         || {
             let (summary, diagnostics) =
-                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
             Ok(((summary, diagnostics), summary.count))
         },
         || harness_event_count(&matcher, &fixture.input),
@@ -364,7 +365,7 @@ fn validate_harness_count(
 fn build_harness_matcher(
     patterns: &[HarnessPattern],
     mode: HarnessMode,
-) -> Result<Matcher, String> {
+) -> Result<HarnessMatcher, String> {
     let mut builder = MatcherBuilder::new();
     match mode {
         HarnessMode::Nfa => {
@@ -374,7 +375,7 @@ fn build_harness_matcher(
                 .literal_prefilter_enabled(false);
         }
         HarnessMode::Single => {}
-        HarnessMode::Parallel(worker_count) => {
+        HarnessMode::Parallel(worker_count) | HarnessMode::SharedCohort(worker_count) => {
             builder.worker_count(worker_count);
         }
         HarnessMode::Cohort(worker_count) => {
@@ -388,17 +389,54 @@ fn build_harness_matcher(
             .add(pattern.id, &pattern.expression)
             .map_err(|error| format!("harness pattern {} was rejected: {error}", pattern.id))?;
     }
-    builder
-        .build()
-        .map_err(|error| format!("harness matcher build failed: {error}"))
+    if matches!(mode, HarnessMode::SharedCohort(_)) {
+        builder
+            .build_shared_cohort_diagnostic()
+            .map(Box::new)
+            .map(HarnessMatcher::SharedCohort)
+            .map_err(|error| format!("shared-cohort harness matcher build failed: {error}"))
+    } else {
+        builder
+            .build()
+            .map(HarnessMatcher::Standard)
+            .map_err(|error| format!("harness matcher build failed: {error}"))
+    }
 }
 
-fn harness_event_count(matcher: &Matcher, input: &Utf16Text) -> Result<usize, String> {
+fn harness_event_count(matcher: &HarnessMatcher, input: &Utf16Text) -> Result<usize, String> {
     let mut count = 0_usize;
     matcher
         .scan(input, |_| count += 1)
         .map_err(|error| format!("harness scan failed: {error}"))?;
     Ok(count)
+}
+
+#[derive(Debug)]
+enum HarnessMatcher {
+    Standard(Matcher),
+    SharedCohort(Box<SharedCohortMatcher>),
+}
+
+impl HarnessMatcher {
+    fn scan(&self, input: &Utf16Text, sink: impl FnMut(rustmatch::Match)) -> Result<(), String> {
+        match self {
+            Self::Standard(matcher) => matcher.scan(input, sink),
+            Self::SharedCohort(matcher) => matcher.scan(input, sink),
+        }
+        .map_err(|error| format!("harness scan failed: {error}"))
+    }
+
+    fn scan_with_diagnostics(
+        &self,
+        input: &Utf16Text,
+        sink: impl FnMut(rustmatch::Match),
+    ) -> Result<ScanDiagnostics, String> {
+        match self {
+            Self::Standard(matcher) => matcher.scan_with_diagnostics(input, sink),
+            Self::SharedCohort(matcher) => matcher.scan_with_diagnostics(input, sink),
+        }
+        .map_err(|error| format!("harness diagnostic scan failed: {error}"))
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -407,6 +445,7 @@ enum HarnessMode {
     Single,
     Parallel(usize),
     Cohort(usize),
+    SharedCohort(usize),
 }
 
 impl HarnessMode {
@@ -414,6 +453,20 @@ impl HarnessMode {
         match source {
             "nfa" => Ok(Self::Nfa),
             "single" => Ok(Self::Single),
+            shared if shared.starts_with("cohort-view-") => {
+                let worker_count = shared
+                    .strip_prefix("cohort-view-")
+                    .expect("matched shared cohort prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!("invalid harness mode {source:?}; expected cohort-view-1: {error}")
+                    })?;
+                if worker_count == 1 {
+                    Ok(Self::SharedCohort(worker_count))
+                } else {
+                    Err("shared-cohort feasibility mode requires exactly one worker".to_owned())
+                }
+            }
             cohort if cohort.starts_with("cohort-") => {
                 let worker_count = cohort
                     .strip_prefix("cohort-")
@@ -451,6 +504,7 @@ impl HarnessMode {
             Self::Single => "single".to_owned(),
             Self::Parallel(worker_count) => worker_count.to_string(),
             Self::Cohort(worker_count) => format!("cohort-{worker_count}"),
+            Self::SharedCohort(worker_count) => format!("cohort-view-{worker_count}"),
         }
     }
 }
@@ -1410,6 +1464,21 @@ fn rust_event_summary_with_diagnostics(
             });
         })
         .map_err(|error| format!("rustmatch diagnostic scale scan failed: {error}"))?;
+    Ok((summary, diagnostics))
+}
+
+fn harness_event_summary_with_diagnostics(
+    matcher: &HarnessMatcher,
+    input: &Utf16Text,
+) -> Result<(EventSummary, ScanDiagnostics), String> {
+    let mut summary = EventSummary::default();
+    let diagnostics = matcher.scan_with_diagnostics(input, |event| {
+        summary.add(&Event {
+            pattern_id: event.pattern_id().get(),
+            start: event.span().start(),
+            end: event.span().end(),
+        });
+    })?;
     Ok((summary, diagnostics))
 }
 
@@ -3083,9 +3152,9 @@ mod tests {
         SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
         build_harness_matcher, cohort_report_command, cohort_report_from_bytes, compare_i6,
         compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
-        expand_corpus, format_unix_timestamp_utc, harness_event_count, measure_harness_scans,
-        regex_events, render_scale_report, rust_event_summary_with_diagnostics,
-        select_literal_patterns,
+        expand_corpus, format_unix_timestamp_utc, harness_event_count,
+        harness_event_summary_with_diagnostics, measure_harness_scans, regex_events,
+        render_scale_report, select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
     use std::{cell::Cell, fs, process};
@@ -3279,6 +3348,7 @@ mod tests {
             (HarnessMode::Single, 1),
             (HarnessMode::Parallel(4), 4),
             (HarnessMode::Cohort(4), 4),
+            (HarnessMode::SharedCohort(1), 2),
         ];
         let mut reference = None;
 
@@ -3287,7 +3357,7 @@ mod tests {
             let matcher = build_harness_matcher(&fixture.patterns, mode)?;
             let count = harness_event_count(&matcher, &fixture.input)?;
             let (summary, diagnostics) =
-                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
             let evidence = (summary.count, summary.digest());
 
             // Assert

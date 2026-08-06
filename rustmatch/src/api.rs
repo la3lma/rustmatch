@@ -2,6 +2,11 @@
 
 #[cfg(feature = "benchmark-internals")]
 mod cohort_runtime;
+#[cfg(feature = "benchmark-internals")]
+mod cohort_view_runtime;
+
+#[cfg(feature = "benchmark-internals")]
+pub use cohort_view_runtime::{SharedCohortDiagnostics, SharedCohortMatcher};
 
 use std::any::Any;
 use std::collections::HashSet;
@@ -130,6 +135,28 @@ impl MatcherBuilder {
     pub fn cohort_compilation_enabled(&mut self, enabled: bool) -> &mut Self {
         self.cohort_compilation_enabled = enabled;
         self
+    }
+
+    /// Compiles a benchmark-only shared-storage cohort matcher.
+    ///
+    /// This diagnostic path compiles every pattern body once and gives the
+    /// assertion-free and assertion-bearing cohorts separate roots into that
+    /// shared database. It exists only to evaluate the H43-V1 representation
+    /// and is not part of rustmatch's supported application API.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same build errors as [`Self::build`].
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn build_shared_cohort_diagnostic(self) -> Result<SharedCohortMatcher, Error> {
+        if self.patterns.is_empty() {
+            return Err(Error::NoPatterns);
+        }
+        if self.worker_count == 0 {
+            return Err(Error::InvalidWorkerCount);
+        }
+        cohort_view_runtime::build_matcher(self)
     }
 
     /// Registers one caller-identified pattern.
@@ -994,6 +1021,8 @@ mod tests {
     #[cfg(feature = "benchmark-internals")]
     use super::CohortDiagnostics;
     #[cfg(feature = "benchmark-internals")]
+    use super::SharedCohortMatcher;
+    #[cfg(feature = "benchmark-internals")]
     use super::cohort_runtime::allocate_cohort_partitions;
     use super::{Matcher, MatcherBuilder};
     use crate::{Error, PatternId, Utf16Text};
@@ -1294,6 +1323,78 @@ mod tests {
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
+    fn shared_cohort_views_add_only_one_root_and_preserve_exact_events() -> Result<(), Error> {
+        // Prepare
+        let ordinary = mixed_cohort_test_matcher(1, 17, false)?;
+        let shared = mixed_shared_cohort_test_matcher(17)?;
+        let ordinary_database = &ordinary.partitions[0].database;
+        let structure = shared.structure_diagnostics();
+        let inputs = [
+            mixed_cohort_input(),
+            Utf16Text::from("abc\ncat far foo\naaa\nabc"),
+            Utf16Text::from("no matches here"),
+            Utf16Text::from_units(vec![0xd800, u16::from(b'a'), u16::from(b'r')]),
+        ];
+
+        // Test / Assert
+        assert_eq!(structure.state_count(), ordinary_database.state_count() + 1);
+        assert_eq!(structure.edge_count(), ordinary_database.edge_count());
+        assert_eq!(
+            structure.predicate_count(),
+            ordinary_database.predicate_count()
+        );
+        assert_eq!(
+            structure.terminal_count(),
+            ordinary_database.terminal_count()
+        );
+        assert_eq!(structure.pattern_count(), ordinary_database.pattern_count());
+        assert_eq!(structure.assertion_free_pattern_count(), 4);
+        assert_eq!(structure.assertion_bearing_pattern_count(), 4);
+        for input in &inputs {
+            assert_eq!(
+                collect_shared_events(&shared, input)?,
+                collect_events(&ordinary, input)?
+            );
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn shared_cohort_views_preserve_events_across_cache_and_prefilter_controls() -> Result<(), Error>
+    {
+        // Prepare
+        let input = mixed_cohort_input();
+
+        // Test / Assert
+        for cache_budget in [0, 1, 17, 8_192] {
+            for prefilter_enabled in [false, true] {
+                let mut ordinary_builder = MatcherBuilder::new();
+                ordinary_builder
+                    .state_cache_budget(cache_budget)
+                    .prefilter_enabled(prefilter_enabled);
+                add_mixed_patterns(&mut ordinary_builder)?;
+                let ordinary = ordinary_builder.build()?;
+
+                let mut shared_builder = MatcherBuilder::new();
+                shared_builder
+                    .state_cache_budget(cache_budget)
+                    .prefilter_enabled(prefilter_enabled);
+                add_mixed_patterns(&mut shared_builder)?;
+                let shared = shared_builder.build_shared_cohort_diagnostic()?;
+
+                assert_eq!(
+                    collect_shared_events(&shared, &input)?,
+                    collect_events(&ordinary, &input)?,
+                    "cache budget {cache_budget}, prefilter {prefilter_enabled}"
+                );
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
     fn mixed_cohort_partitions_share_one_bounded_multi_worker_scope() -> Result<(), Error> {
         // Prepare
         let matcher = mixed_cohort_test_matcher(4, 17, true)?;
@@ -1527,6 +1628,20 @@ mod tests {
             .worker_count(worker_count)
             .state_cache_budget(cache_budget)
             .cohort_compilation_enabled(cohort_enabled);
+        add_mixed_patterns(&mut builder)?;
+        builder.build()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn mixed_shared_cohort_test_matcher(cache_budget: usize) -> Result<SharedCohortMatcher, Error> {
+        let mut builder = MatcherBuilder::new();
+        builder.state_cache_budget(cache_budget);
+        add_mixed_patterns(&mut builder)?;
+        builder.build_shared_cohort_diagnostic()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn add_mixed_patterns(builder: &mut MatcherBuilder) -> Result<(), Error> {
         builder.add(PatternId::new(10), "abc")?;
         builder.add(PatternId::new(20), "^abc$")?;
         builder.add(PatternId::new(30), "(?:far|foo)")?;
@@ -1535,7 +1650,7 @@ mod tests {
         builder.add(PatternId::new(60), "foo$")?;
         builder.add(PatternId::new(70), "a+")?;
         builder.add(PatternId::new(80), r"far\B")?;
-        builder.build()
+        Ok(())
     }
 
     #[cfg(feature = "benchmark-internals")]
@@ -1544,6 +1659,23 @@ mod tests {
     }
 
     fn collect_events(matcher: &Matcher, input: &Utf16Text) -> Result<Vec<(u32, u64, u64)>, Error> {
+        let mut events = Vec::new();
+        matcher.scan(input, |matched| {
+            events.push((
+                matched.pattern_id().get(),
+                matched.span().start(),
+                matched.span().end(),
+            ));
+        })?;
+        events.sort_unstable();
+        Ok(events)
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn collect_shared_events(
+        matcher: &SharedCohortMatcher,
+        input: &Utf16Text,
+    ) -> Result<Vec<(u32, u64, u64)>, Error> {
         let mut events = Vec::new();
         matcher.scan(input, |matched| {
             events.push((

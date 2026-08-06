@@ -1,9 +1,9 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-D1-R2 rejected; two-database cohort spine closed; H43-A1 blocked<br>
+**Status:** H43-V1 shared-storage feasibility active; H43-A1 blocked<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
-**Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
+**Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
 **Decision policy:** [optimization-decision-policy.md](../optimization-decision-policy.md)  
 **Historical evidence:** [optimization-attempt-ledger.md](../optimization-attempt-ledger.md)  
 **Parent portfolio:** [post-h11-future-optimization-portfolio.md](post-h11-future-optimization-portfolio.md)
@@ -111,6 +111,7 @@ flowchart TB
         D1["H43-D1 Measure cohort-only cost and code-layout effects"]
         D1R["H43-D1-R1 Recover classification cost and parallel occupancy"]
         D1R2["H43-D1-R2 Isolate code layout and eliminate start-table allocation churn"]
+        V1["H43-V1 Prove shared-storage cohort roots and database views"]
     end
 
     subgraph ASSERTION[First specialized backend]
@@ -149,7 +150,8 @@ flowchart TB
     E1 --> D1
     D1 --> D1R
     D1R --> D1R2
-    D1R2 --> A1
+    D1R2 --> V1
+    V1 --> A1
     A1 --> A2
     A2 --> S1
     S1 --> E2
@@ -193,6 +195,7 @@ flowchart TB
     class D1 complete;
     class D1R complete;
     class D1R2 blocked;
+    class V1 active;
     class A1 blocked;
     class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -1079,6 +1082,97 @@ classification available only as diagnostics, and does not authorize H43-A1.
   a new representation hypothesis, such as shared database storage with
   lightweight cohort roots/views. See `h43-d1-r2-result.md`.
 
+## H43-V1: Prove shared-storage cohort roots and database views
+
+**Scope:** representation feasibility and cheap causal screen<br>
+**Level:** system<br>
+**Status:** active<br>
+**Primary actor:** optimization engineer<br>
+**Supporting actors:** compiler/codegen reviewer, correctness reviewer,
+exclusive-host benchmark runner
+
+**Goal**
+
+Determine whether assertion-free and assertion-bearing cohorts can retain the
+large H43 one-worker scan signal while sharing one compiled NFA, thereby
+removing the duplicated construction and retained-storage mechanism that
+rejected D1-R2.
+
+**Preconditions**
+
+- H43-D1-R2 is rejected with exact semantics and immutable evidence.
+- Its corrected causal evidence attributes 1,595 of 1,603 extra allocation
+  calls primarily to compiling a second complete pattern database.
+- The ordinary compiler already assigns global pattern ordinals at terminals,
+  so cohort roots can share pattern bodies without remapping event identity.
+- H43-A1 remains blocked and no specialized backend is present in this task.
+
+**Minimal guarantee**
+
+An unsuccessful V1 leaves production construction and the supported API
+unchanged, retains all prior evidence, records the failed representation, and
+does not authorize H43-A1.
+
+**Success guarantee / postconditions**
+
+- A benchmark-only multi-root compiler emits exactly one compiled body for
+  every pattern and one root for each assertion cohort.
+- Relative to ordinary compilation of the same mixed set, the shared form has
+  exactly one additional state, the same edge, predicate, terminal, and
+  pattern-ID counts, and no duplicated database-owned body storage.
+- View scans preserve the exact complete event multiset across cache budgets,
+  prefilter controls, assertions, duplicate expressions, no-match inputs, and
+  raw UTF-16 including isolated surrogates.
+- Default-feature production behavior and complete repository CI remain
+  unchanged.
+- A focused one-worker screen either authorizes a production-quality shared
+  storage spine or rejects V1 before any specialization.
+
+**Main success scenario**
+
+1. Compile two cohort roots and all pattern bodies into one immutable database.
+2. Add benchmark-only view descriptors carrying root, assertion mode, and
+   cohort pattern count.
+3. Parameterize engine root initialization without changing transition or
+   terminal semantics; compile cohort-local prefilters from each view root.
+4. Prove structural sharing and exact ordinary/view event parity locally and
+   through the frozen mixed H43 fixture.
+5. Compare ordinary emitted scan text against the D1-R2 baseline artifact and
+   run complete repository CI.
+6. On the exclusive host, run three alternating ordinary/shared-view pairs for
+   `mixed-balanced` and `mixed-output`, plus allocation and retained-byte cells.
+7. Authorize a runtime spine only if the causal preparation and allocation
+   vetoes are removed while useful scan gain remains.
+
+**Extensions and fail-fast rules**
+
+- Any event mismatch, duplicated terminal, unreachable cohort member, or
+  ordinary default-feature failure rejects V1 immediately.
+- More than one extra state, any extra compiled edge, predicate, terminal, or
+  pattern ID versus ordinary compilation rejects the representation.
+- More than 64 extra allocation calls or 64 KiB extra requested allocation in
+  a one-worker mixed build rejects the claimed construction fix.
+- A greater-than-three-percent median preparation regression in either focused
+  mixed fixture rejects V1 before a formal campaign.
+- If both focused mixed scan gains fall below five percent, close the carrier
+  because it no longer preserves enough of the demonstrated opportunity.
+- No fixture-specific classification, lazy warm-up work, threshold change,
+  linker padding, callback relaxation, or specialized assertion backend is
+  permitted.
+
+**Expected evidence**
+
+- Structural state, edge, predicate, terminal, pattern-ID, and retained-byte
+  receipts for ordinary and shared compilation.
+- Exact event digests and differential tests across the declared semantic
+  controls.
+- Default and benchmark-feature CI plus ordinary emitted-text comparison.
+- Alternating focused preparation/scan receipts and process allocation counts
+  from an exclusive, Docker-empty, GPU-idle host window.
+- A reviewed authorize/reject result and immutable raw archive.
+
+**Dependencies:** H43-D1-R2; H43-E1; unchanged G9-v3 evidence policy.
+
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
 **Scope:** candidate specialized backend  
@@ -1556,13 +1650,12 @@ cohorting is worth its fixed complexity.
 ## Execution order
 
 H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, and H43-D1-R2 are
-complete. R2 retained 57.17%-90.16% one-worker mixed scan gains and exact
+complete. H43-V1 is active. R2 retained 57.17%-90.16% one-worker mixed scan gains and exact
 semantics, but its predeclared early screen reproduced 13.16%-28.50% inactive
 scan regressions and 16.73%-23.19% one-worker preparation regressions. The
 two-database cohort spine is rejected, the formal matrix was not launched, and
-H43-A1 remains blocked. A successor must begin from a materially different
-shared-storage representation rather than another tuning pass over this
-carrier.
+H43-A1 remains blocked while V1 tests a materially different shared-storage
+representation rather than another tuning pass over the rejected carrier.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

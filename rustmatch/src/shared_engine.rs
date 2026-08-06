@@ -36,6 +36,7 @@ pub(crate) fn scan_with_shared_candidates_and_stats(
         .inspect(|_| starts_scanned += 1);
     scan_without_assertions_dispatch(
         database,
+        database.root(),
         input,
         state_cache_budget,
         starts,
