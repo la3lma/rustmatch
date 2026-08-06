@@ -8,7 +8,7 @@ use std::panic;
 use std::thread;
 
 #[cfg(feature = "benchmark-internals")]
-use crate::cohort::CohortDiagnostics;
+use crate::cohort::{CohortDiagnostics, PatternDiagnostics};
 use crate::engine;
 use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
@@ -29,6 +29,8 @@ pub struct MatcherBuilder {
     worker_count: usize,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
+    #[cfg(feature = "benchmark-internals")]
+    cohort_compilation_enabled: bool,
 }
 
 impl Default for MatcherBuilder {
@@ -40,6 +42,8 @@ impl Default for MatcherBuilder {
             worker_count: 1,
             prefilter_enabled: true,
             literal_prefilter_enabled: true,
+            #[cfg(feature = "benchmark-internals")]
+            cohort_compilation_enabled: false,
         }
     }
 }
@@ -113,6 +117,18 @@ impl MatcherBuilder {
         CohortDiagnostics::classify(&self.patterns)
     }
 
+    /// Enables semantically inert assertion-based cohort compilation.
+    ///
+    /// This control exists only for repository differential and benchmark
+    /// tooling. Every cohort continues to use the ordinary generic compiler
+    /// and engine. The default path remains uncohorted.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn cohort_compilation_enabled(&mut self, enabled: bool) -> &mut Self {
+        self.cohort_compilation_enabled = enabled;
+        self
+    }
+
     /// Registers one caller-identified pattern.
     ///
     /// The current executable spine accepts non-empty patterns composed of
@@ -172,16 +188,165 @@ impl MatcherBuilder {
         if self.worker_count == 0 {
             return Err(Error::InvalidWorkerCount);
         }
+        #[cfg(feature = "benchmark-internals")]
+        if self.cohort_compilation_enabled {
+            return build_cohort_matcher(self);
+        }
         let partitions =
             compile_partitions(&self.patterns, self.worker_count, self.state_cache_budget)?;
         Ok(Matcher {
             partitions,
             #[cfg(feature = "benchmark-internals")]
             requested_worker_count: self.worker_count,
+            #[cfg(feature = "benchmark-internals")]
+            cohort_layout: CohortLayout::disabled(),
             prefilter_enabled: self.prefilter_enabled,
             literal_prefilter_enabled: self.literal_prefilter_enabled,
         })
     }
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn build_cohort_matcher(builder: MatcherBuilder) -> Result<Matcher, Error> {
+    let diagnostics = CohortDiagnostics::classify(&builder.patterns);
+    let assertion_free_pattern_count = diagnostics.assertion_free_pattern_ids().len();
+    let assertion_bearing_pattern_count = diagnostics.assertion_bearing_pattern_ids().len();
+
+    if assertion_free_pattern_count == 0 || assertion_bearing_pattern_count == 0 {
+        let partitions = compile_partitions(
+            &builder.patterns,
+            builder.worker_count,
+            builder.state_cache_budget,
+        )?;
+        let partition_count = partitions.len();
+        return Ok(Matcher {
+            partitions,
+            requested_worker_count: builder.worker_count,
+            cohort_layout: CohortLayout::single(
+                assertion_free_pattern_count,
+                assertion_bearing_pattern_count,
+                partition_count,
+            ),
+            prefilter_enabled: builder.prefilter_enabled,
+            literal_prefilter_enabled: builder.literal_prefilter_enabled,
+        });
+    }
+
+    let assertion_flags = diagnostics
+        .patterns()
+        .iter()
+        .map(PatternDiagnostics::uses_assertions)
+        .collect::<Vec<_>>();
+    let mut assertion_free = Vec::with_capacity(assertion_free_pattern_count);
+    let mut assertion_bearing = Vec::with_capacity(assertion_bearing_pattern_count);
+    for (pattern, uses_assertions) in builder.patterns.into_iter().zip(assertion_flags) {
+        if uses_assertions {
+            assertion_bearing.push(pattern);
+        } else {
+            assertion_free.push(pattern);
+        }
+    }
+
+    let [
+        assertion_free_partition_count,
+        assertion_bearing_partition_count,
+    ] = allocate_cohort_partitions(
+        [assertion_free.len(), assertion_bearing.len()],
+        builder.worker_count,
+    );
+    let total_partition_count = assertion_free_partition_count + assertion_bearing_partition_count;
+    let assertion_free_cache_budget = cohort_cache_budget(
+        builder.state_cache_budget,
+        total_partition_count,
+        0,
+        assertion_free_partition_count,
+    );
+    let assertion_bearing_cache_budget = cohort_cache_budget(
+        builder.state_cache_budget,
+        total_partition_count,
+        assertion_free_partition_count,
+        assertion_bearing_partition_count,
+    );
+    let mut partitions = compile_partitions(
+        &assertion_free,
+        assertion_free_partition_count,
+        assertion_free_cache_budget,
+    )?
+    .into_vec();
+    let split_partition = partitions.len();
+    partitions.extend(
+        compile_partitions(
+            &assertion_bearing,
+            assertion_bearing_partition_count,
+            assertion_bearing_cache_budget,
+        )?
+        .into_vec(),
+    );
+    debug_assert_eq!(partitions.len(), total_partition_count);
+    debug_assert_eq!(
+        partitions
+            .iter()
+            .map(|partition| partition.state_cache_budget)
+            .sum::<usize>(),
+        builder.state_cache_budget
+    );
+
+    Ok(Matcher {
+        partitions: partitions.into_boxed_slice(),
+        requested_worker_count: builder.worker_count,
+        cohort_layout: CohortLayout {
+            enabled: true,
+            assertion_free_pattern_count,
+            assertion_bearing_pattern_count,
+            assertion_free_partition_count,
+            assertion_bearing_partition_count,
+            split_partition: Some(split_partition),
+        },
+        prefilter_enabled: builder.prefilter_enabled,
+        literal_prefilter_enabled: builder.literal_prefilter_enabled,
+    })
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn allocate_cohort_partitions(
+    pattern_counts: [usize; 2],
+    requested_worker_count: usize,
+) -> [usize; 2] {
+    debug_assert!(pattern_counts.iter().all(|&count| count > 0));
+    let total_patterns = pattern_counts.iter().sum::<usize>();
+    let target = requested_worker_count.max(2).min(total_patterns);
+    let mut allocations = [1_usize; 2];
+    while allocations.iter().sum::<usize>() < target {
+        let selected = (0..2)
+            .filter(|&index| allocations[index] < pattern_counts[index])
+            .max_by(|&left, &right| {
+                let left_pressure = (pattern_counts[left] as u128) * (allocations[right] as u128);
+                let right_pressure = (pattern_counts[right] as u128) * (allocations[left] as u128);
+                left_pressure
+                    .cmp(&right_pressure)
+                    .then_with(|| right.cmp(&left))
+            })
+            .expect("target never exceeds total cohort capacity");
+        allocations[selected] += 1;
+    }
+    allocations
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn cohort_cache_budget(
+    total_budget: usize,
+    total_partitions: usize,
+    partition_start: usize,
+    partition_count: usize,
+) -> usize {
+    let budget_per_partition = total_budget / total_partitions;
+    let extra_partitions = total_budget % total_partitions;
+    let extra_in_cohort = extra_partitions
+        .saturating_sub(partition_start)
+        .min(partition_count);
+    budget_per_partition
+        .saturating_mul(partition_count)
+        .saturating_add(extra_in_cohort)
 }
 
 fn compile_partitions(
@@ -236,8 +401,149 @@ pub struct Matcher {
     partitions: Box<[MatcherPartition]>,
     #[cfg(feature = "benchmark-internals")]
     requested_worker_count: usize,
+    #[cfg(feature = "benchmark-internals")]
+    cohort_layout: CohortLayout,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
+}
+
+#[cfg(feature = "benchmark-internals")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct CohortLayout {
+    enabled: bool,
+    assertion_free_pattern_count: usize,
+    assertion_bearing_pattern_count: usize,
+    assertion_free_partition_count: usize,
+    assertion_bearing_partition_count: usize,
+    split_partition: Option<usize>,
+}
+
+#[cfg(feature = "benchmark-internals")]
+impl CohortLayout {
+    const fn disabled() -> Self {
+        Self {
+            enabled: false,
+            assertion_free_pattern_count: 0,
+            assertion_bearing_pattern_count: 0,
+            assertion_free_partition_count: 0,
+            assertion_bearing_partition_count: 0,
+            split_partition: None,
+        }
+    }
+
+    const fn single(
+        assertion_free_pattern_count: usize,
+        assertion_bearing_pattern_count: usize,
+        partition_count: usize,
+    ) -> Self {
+        Self {
+            enabled: true,
+            assertion_free_pattern_count,
+            assertion_bearing_pattern_count,
+            assertion_free_partition_count: if assertion_free_pattern_count == 0 {
+                0
+            } else {
+                partition_count
+            },
+            assertion_bearing_partition_count: if assertion_bearing_pattern_count == 0 {
+                0
+            } else {
+                partition_count
+            },
+            split_partition: None,
+        }
+    }
+
+    fn cohort_count(self) -> usize {
+        usize::from(self.assertion_free_pattern_count > 0)
+            + usize::from(self.assertion_bearing_pattern_count > 0)
+    }
+}
+
+/// Immutable cohort-layout facts for repository evidence tooling.
+///
+/// This type exists only with `benchmark-internals` and is not part of the
+/// supported application API.
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MatcherCohortDiagnostics {
+    enabled: bool,
+    cohort_count: usize,
+    assertion_free_pattern_count: usize,
+    assertion_bearing_pattern_count: usize,
+    assertion_free_partition_count: usize,
+    assertion_bearing_partition_count: usize,
+    total_partition_count: usize,
+    total_cache_budget: usize,
+    assertion_free_retained_bytes: usize,
+    assertion_bearing_retained_bytes: usize,
+    spawned_workers: usize,
+    buffers_before_delivery: bool,
+}
+
+#[cfg(feature = "benchmark-internals")]
+#[doc(hidden)]
+impl MatcherCohortDiagnostics {
+    #[must_use]
+    pub const fn enabled(self) -> bool {
+        self.enabled
+    }
+
+    #[must_use]
+    pub const fn cohort_count(self) -> usize {
+        self.cohort_count
+    }
+
+    #[must_use]
+    pub const fn assertion_free_pattern_count(self) -> usize {
+        self.assertion_free_pattern_count
+    }
+
+    #[must_use]
+    pub const fn assertion_bearing_pattern_count(self) -> usize {
+        self.assertion_bearing_pattern_count
+    }
+
+    #[must_use]
+    pub const fn assertion_free_partition_count(self) -> usize {
+        self.assertion_free_partition_count
+    }
+
+    #[must_use]
+    pub const fn assertion_bearing_partition_count(self) -> usize {
+        self.assertion_bearing_partition_count
+    }
+
+    #[must_use]
+    pub const fn total_partition_count(self) -> usize {
+        self.total_partition_count
+    }
+
+    #[must_use]
+    pub const fn total_cache_budget(self) -> usize {
+        self.total_cache_budget
+    }
+
+    #[must_use]
+    pub const fn assertion_free_retained_bytes(self) -> usize {
+        self.assertion_free_retained_bytes
+    }
+
+    #[must_use]
+    pub const fn assertion_bearing_retained_bytes(self) -> usize {
+        self.assertion_bearing_retained_bytes
+    }
+
+    #[must_use]
+    pub const fn spawned_workers(self) -> usize {
+        self.spawned_workers
+    }
+
+    #[must_use]
+    pub const fn buffers_before_delivery(self) -> bool {
+        self.buffers_before_delivery
+    }
 }
 
 #[derive(Debug)]
@@ -245,6 +551,15 @@ struct MatcherPartition {
     database: PatternDatabase,
     prefilter: Prefilter,
     state_cache_budget: usize,
+}
+
+#[cfg(feature = "benchmark-internals")]
+impl MatcherPartition {
+    fn retained_bytes(&self) -> usize {
+        self.database
+            .retained_bytes()
+            .saturating_add(self.prefilter.retained_bytes())
+    }
 }
 
 /// Scan-local cache counters intended only for the repository benchmark lane.
@@ -409,6 +724,60 @@ impl ScanDiagnostics {
 }
 
 impl Matcher {
+    /// Returns the immutable cohort layout selected at build time.
+    ///
+    /// This diagnostic exists only for repository benchmark and differential
+    /// tooling. It does not alter matcher execution.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    #[must_use]
+    pub fn cohort_execution_diagnostics(&self) -> MatcherCohortDiagnostics {
+        let split_partition = self
+            .cohort_layout
+            .split_partition
+            .unwrap_or(self.partitions.len());
+        let assertion_free_retained_bytes = if self.cohort_layout.assertion_free_pattern_count > 0 {
+            self.partitions[..split_partition]
+                .iter()
+                .map(MatcherPartition::retained_bytes)
+                .sum()
+        } else {
+            0
+        };
+        let assertion_bearing_start = if self.cohort_layout.split_partition.is_some() {
+            split_partition
+        } else {
+            0
+        };
+        let assertion_bearing_retained_bytes =
+            if self.cohort_layout.assertion_bearing_pattern_count > 0 {
+                self.partitions[assertion_bearing_start..]
+                    .iter()
+                    .map(MatcherPartition::retained_bytes)
+                    .sum()
+            } else {
+                0
+            };
+        MatcherCohortDiagnostics {
+            enabled: self.cohort_layout.enabled,
+            cohort_count: self.cohort_layout.cohort_count(),
+            assertion_free_pattern_count: self.cohort_layout.assertion_free_pattern_count,
+            assertion_bearing_pattern_count: self.cohort_layout.assertion_bearing_pattern_count,
+            assertion_free_partition_count: self.cohort_layout.assertion_free_partition_count,
+            assertion_bearing_partition_count: self.cohort_layout.assertion_bearing_partition_count,
+            total_partition_count: self.partitions.len(),
+            total_cache_budget: self
+                .partitions
+                .iter()
+                .map(|partition| partition.state_cache_budget)
+                .sum(),
+            assertion_free_retained_bytes,
+            assertion_bearing_retained_bytes,
+            spawned_workers: self.spawned_worker_count(),
+            buffers_before_delivery: self.partitions.len() > 1,
+        }
+    }
+
     /// Scans one input and invokes `sink` for every match.
     ///
     /// For each pattern and eligible start position, the callback receives the
@@ -502,18 +871,58 @@ impl Matcher {
         BeforeScan: Fn(usize) + Sync,
     {
         debug_assert!(self.partitions.len() > 1);
-        let shared_plan = self.shared_candidate_plan(input)?;
+        #[cfg(feature = "benchmark-internals")]
+        if let Some(split_partition) = self.cohort_split_partition() {
+            let mut outputs = self.scan_partition_group_with_hooks(
+                &self.partitions[..split_partition],
+                0,
+                input,
+                before_spawn,
+                before_scan,
+            )?;
+            outputs.extend(self.scan_partition_group_with_hooks(
+                &self.partitions[split_partition..],
+                split_partition,
+                input,
+                before_spawn,
+                before_scan,
+            )?);
+            return Ok(ParallelScanOutput::new(outputs));
+        }
+        let partitions = self.scan_partition_group_with_hooks(
+            &self.partitions,
+            0,
+            input,
+            before_spawn,
+            before_scan,
+        )?;
+        Ok(ParallelScanOutput::new(partitions))
+    }
+
+    fn scan_partition_group_with_hooks<BeforeSpawn, BeforeScan>(
+        &self,
+        partitions: &[MatcherPartition],
+        partition_offset: usize,
+        input: &Utf16Text,
+        before_spawn: &BeforeSpawn,
+        before_scan: &BeforeScan,
+    ) -> Result<Vec<PartitionScanOutput>, Error>
+    where
+        BeforeSpawn: Fn(usize) -> Result<(), Error>,
+        BeforeScan: Fn(usize) + Sync,
+    {
+        debug_assert!(!partitions.is_empty());
+        let shared_plan = self.shared_candidate_plan(partitions, input)?;
         thread::scope(|scope| {
-            let mut handles = Vec::with_capacity(self.partitions.len() - 1);
+            let mut handles = Vec::with_capacity(partitions.len().saturating_sub(1));
             let mut spawn_error = None;
-            for (partition_index, partition) in self.partitions.iter().enumerate().skip(1) {
+            for (local_index, partition) in partitions.iter().enumerate().skip(1) {
+                let partition_index = partition_offset + local_index;
                 if let Err(error) = before_spawn(partition_index) {
                     spawn_error = Some(error);
                     break;
                 }
-                let shared = shared_plan
-                    .as_ref()
-                    .map(|plan| plan.partition(partition_index));
+                let shared = shared_plan.as_ref().map(|plan| plan.partition(local_index));
                 let worker = thread::Builder::new()
                     .name(format!("rustmatch-worker-{partition_index}"))
                     .spawn_scoped(scope, move || {
@@ -529,7 +938,7 @@ impl Matcher {
                         }
                     });
                 if let Ok(handle) = worker {
-                    handles.push((partition_index, handle));
+                    handles.push((local_index, handle));
                 } else {
                     spawn_error = Some(Error::WorkerUnavailable);
                     break;
@@ -537,11 +946,11 @@ impl Matcher {
             }
 
             let caller_result = if spawn_error.is_none() {
-                before_scan(0);
+                before_scan(partition_offset);
                 Some(match shared_plan.as_ref().map(|plan| plan.partition(0)) {
-                    Some(shared) => scan_partition_shared(&self.partitions[0], input, shared),
+                    Some(shared) => scan_partition_shared(&partitions[0], input, shared),
                     None => scan_partition(
-                        &self.partitions[0],
+                        &partitions[0],
                         input,
                         self.prefilter_enabled,
                         self.literal_prefilter_enabled,
@@ -551,7 +960,7 @@ impl Matcher {
                 None
             };
             let mut outputs: Vec<Option<PartitionScanOutput>> =
-                (0..self.partitions.len()).map(|_| None).collect();
+                (0..partitions.len()).map(|_| None).collect();
             let mut scan_error = None;
             if let Some(result) = caller_result {
                 match result {
@@ -560,9 +969,9 @@ impl Matcher {
                 }
             }
             let mut worker_panic: Option<Box<dyn Any + Send + 'static>> = None;
-            for (partition_index, handle) in handles {
+            for (local_index, handle) in handles {
                 match handle.join() {
-                    Ok(Ok(output)) => outputs[partition_index] = Some(output),
+                    Ok(Ok(output)) => outputs[local_index] = Some(output),
                     Ok(Err(error)) => {
                         if scan_error.is_none() {
                             scan_error = Some(error);
@@ -586,24 +995,24 @@ impl Matcher {
                 .into_iter()
                 .map(|output| output.expect("every successful partition returned output"))
                 .collect::<Vec<_>>();
-            Ok(ParallelScanOutput::new(partitions))
+            Ok(partitions)
         })
     }
 
     fn shared_candidate_plan(
         &self,
+        partitions: &[MatcherPartition],
         input: &Utf16Text,
     ) -> Result<Option<shared_candidate::SharedCandidatePlan>, Error> {
         if !shared_candidate::is_eligible(
-            self.partitions.len(),
+            partitions.len(),
             input.units().len(),
             self.prefilter_enabled,
             self.literal_prefilter_enabled,
         ) {
             return Ok(None);
         }
-        let prefilters = self
-            .partitions
+        let prefilters = partitions
             .iter()
             .map(|partition| &partition.prefilter)
             .collect::<Vec<_>>();
@@ -616,11 +1025,48 @@ impl Matcher {
     }
 
     #[cfg(feature = "benchmark-internals")]
+    fn cohort_split_partition(&self) -> Option<usize> {
+        self.cohort_layout.split_partition
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn spawned_worker_count(&self) -> usize {
+        self.cohort_split_partition().map_or_else(
+            || self.partitions.len().saturating_sub(1),
+            |split_partition| {
+                split_partition.saturating_sub(1)
+                    + self
+                        .partitions
+                        .len()
+                        .saturating_sub(split_partition)
+                        .saturating_sub(1)
+            },
+        )
+    }
+
+    #[cfg(all(test, feature = "benchmark-internals"))]
+    fn scan_parallel_with_hooks_and_deliver<BeforeSpawn, BeforeScan>(
+        &self,
+        input: &Utf16Text,
+        before_spawn: &BeforeSpawn,
+        before_scan: &BeforeScan,
+        mut sink: impl FnMut(Match),
+    ) -> Result<(), Error>
+    where
+        BeforeSpawn: Fn(usize) -> Result<(), Error>,
+        BeforeScan: Fn(usize) + Sync,
+    {
+        let output = self.scan_parallel_with_hooks(input, before_spawn, before_scan)?;
+        output.deliver(&mut sink);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
     fn diagnostics(&self, stats: engine::ScanStats, buffered_events: usize) -> ScanDiagnostics {
         ScanDiagnostics {
             requested_worker_count: self.requested_worker_count,
             partition_count: self.partitions.len(),
-            spawned_workers: self.partitions.len().saturating_sub(1),
+            spawned_workers: self.spawned_worker_count(),
             database_retained_bytes: self
                 .partitions
                 .iter()
@@ -767,10 +1213,12 @@ fn scan_partition_shared(
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "benchmark-internals")]
+    use std::cell::Cell;
     use std::panic::{AssertUnwindSafe, catch_unwind};
 
     #[cfg(feature = "benchmark-internals")]
-    use super::CohortDiagnostics;
+    use super::{CohortDiagnostics, allocate_cohort_partitions};
     use super::{Matcher, MatcherBuilder};
     use crate::{Error, PatternId, Utf16Text};
 
@@ -922,6 +1370,234 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn cohort_partition_allocation_is_bounded_balanced_and_deterministic() {
+        // Prepare / Test / Assert
+        assert_eq!(allocate_cohort_partitions([8, 2], 1), [1, 1]);
+        assert_eq!(allocate_cohort_partitions([8, 2], 4), [3, 1]);
+        assert_eq!(allocate_cohort_partitions([8, 2], 8), [6, 2]);
+        assert_eq!(allocate_cohort_partitions([1, 9], 4), [1, 3]);
+        assert_eq!(allocate_cohort_partitions([4, 4], 99), [4, 4]);
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn mixed_cohorts_preserve_global_ids_and_total_resource_budgets() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+
+        // Test
+        let layout = matcher.cohort_execution_diagnostics();
+        let assertion_free_ids = matcher.partitions[..2]
+            .iter()
+            .flat_map(|partition| {
+                (0..partition.database.pattern_count())
+                    .map(|ordinal| partition.database.pattern_id(ordinal).get())
+            })
+            .collect::<Vec<_>>();
+        let assertion_bearing_ids = matcher.partitions[2..]
+            .iter()
+            .flat_map(|partition| {
+                (0..partition.database.pattern_count())
+                    .map(|ordinal| partition.database.pattern_id(ordinal).get())
+            })
+            .collect::<Vec<_>>();
+
+        // Assert
+        assert!(layout.enabled());
+        assert_eq!(layout.cohort_count(), 2);
+        assert_eq!(layout.assertion_free_pattern_count(), 4);
+        assert_eq!(layout.assertion_bearing_pattern_count(), 4);
+        assert_eq!(layout.assertion_free_partition_count(), 2);
+        assert_eq!(layout.assertion_bearing_partition_count(), 2);
+        assert_eq!(layout.total_partition_count(), 4);
+        assert_eq!(layout.total_cache_budget(), 9);
+        assert!(layout.assertion_free_retained_bytes() > 0);
+        assert!(layout.assertion_bearing_retained_bytes() > 0);
+        assert_eq!(layout.spawned_workers(), 2);
+        assert!(layout.buffers_before_delivery());
+        assert_eq!(assertion_free_ids, [10, 30, 50, 70]);
+        assert_eq!(assertion_bearing_ids, [20, 40, 60, 80]);
+        assert!(
+            matcher.partitions[..2]
+                .iter()
+                .all(|partition| !partition.database.uses_assertions())
+        );
+        assert!(
+            matcher.partitions[2..]
+                .iter()
+                .all(|partition| partition.database.uses_assertions())
+        );
+        assert_eq!(
+            matcher
+                .partitions
+                .iter()
+                .map(|partition| partition.state_cache_budget)
+                .collect::<Vec<_>>(),
+            [3, 2, 2, 2]
+        );
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn one_cohort_keeps_the_direct_unbuffered_scan_path() -> Result<(), Error> {
+        // Prepare
+        let mut assertion_free_builder = MatcherBuilder::new();
+        assertion_free_builder.cohort_compilation_enabled(true);
+        assertion_free_builder.add(PatternId::new(1), "abc")?;
+        let assertion_free = assertion_free_builder.build()?;
+        let mut assertion_bearing_builder = MatcherBuilder::new();
+        assertion_bearing_builder.cohort_compilation_enabled(true);
+        assertion_bearing_builder.add(PatternId::new(2), "^abc$")?;
+        let assertion_bearing = assertion_bearing_builder.build()?;
+        let input = Utf16Text::from("abc");
+
+        // Test
+        let free_scan = assertion_free.scan_with_diagnostics(&input, |_| {})?;
+        let bearing_scan = assertion_bearing.scan_with_diagnostics(&input, |_| {})?;
+        let free_layout = assertion_free.cohort_execution_diagnostics();
+        let bearing_layout = assertion_bearing.cohort_execution_diagnostics();
+
+        // Assert
+        assert_eq!(free_layout.cohort_count(), 1);
+        assert_eq!(free_layout.assertion_free_pattern_count(), 1);
+        assert_eq!(free_layout.assertion_bearing_pattern_count(), 0);
+        assert_eq!(bearing_layout.cohort_count(), 1);
+        assert_eq!(bearing_layout.assertion_free_pattern_count(), 0);
+        assert_eq!(bearing_layout.assertion_bearing_pattern_count(), 1);
+        assert!(free_layout.assertion_free_retained_bytes() > 0);
+        assert_eq!(free_layout.assertion_bearing_retained_bytes(), 0);
+        assert_eq!(bearing_layout.assertion_free_retained_bytes(), 0);
+        assert!(bearing_layout.assertion_bearing_retained_bytes() > 0);
+        assert!(!free_layout.buffers_before_delivery());
+        assert!(!bearing_layout.buffers_before_delivery());
+        assert_eq!(free_scan.buffered_events(), 0);
+        assert_eq!(bearing_scan.buffered_events(), 0);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn mixed_cohorts_match_the_unsplit_multiset_across_worker_counts() -> Result<(), Error> {
+        // Prepare
+        let input = mixed_cohort_input();
+
+        // Test / Assert
+        for worker_count in [1, 2, 4, 8] {
+            let baseline = mixed_cohort_test_matcher(worker_count, 17, false)?;
+            let cohort = mixed_cohort_test_matcher(worker_count, 17, true)?;
+            let expected = collect_events(&baseline, &input)?;
+            let first = collect_events(&cohort, &input)?;
+            let second = collect_events(&cohort, &input)?;
+            let mut diagnostic_events = Vec::new();
+            let scan_diagnostics = cohort.scan_with_diagnostics(&input, |matched| {
+                diagnostic_events.push((
+                    matched.pattern_id().get(),
+                    matched.span().start(),
+                    matched.span().end(),
+                ));
+            })?;
+            diagnostic_events.sort_unstable();
+
+            assert_eq!(first, expected, "worker count {worker_count}");
+            assert_eq!(second, expected, "worker count {worker_count}");
+            assert_eq!(diagnostic_events, expected, "worker count {worker_count}");
+            assert_eq!(scan_diagnostics.buffered_events(), expected.len());
+            assert_eq!(scan_diagnostics.cache_budget(), 17);
+            let layout = cohort.cohort_execution_diagnostics();
+            assert_eq!(layout.total_cache_budget(), 17);
+            if worker_count == 1 {
+                assert_eq!(layout.total_partition_count(), 2);
+                assert_eq!(layout.spawned_workers(), 0);
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn second_cohort_failure_discards_first_cohort_events_before_delivery() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+        let input = mixed_cohort_input();
+        let delivered = Cell::new(0_usize);
+        let second_cohort_worker = 3;
+        let before_spawn = |partition_index| {
+            if partition_index == second_cohort_worker {
+                Err(Error::WorkerUnavailable)
+            } else {
+                Ok(())
+            }
+        };
+
+        // Test
+        let result =
+            matcher.scan_parallel_with_hooks_and_deliver(&input, &before_spawn, &|_| {}, |_| {
+                delivered.set(delivered.get() + 1);
+            });
+
+        // Assert
+        assert!(matches!(result, Err(Error::WorkerUnavailable)));
+        assert_eq!(delivered.get(), 0);
+        assert!(!collect_events(&matcher, &input)?.is_empty());
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn second_cohort_panic_precedes_delivery_and_matcher_remains_reusable() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+        let input = mixed_cohort_input();
+        let delivered = Cell::new(0_usize);
+        let second_cohort_worker_partition = 3;
+
+        // Test
+        let panic_result = catch_unwind(AssertUnwindSafe(|| {
+            let _ = matcher.scan_parallel_with_hooks_and_deliver(
+                &input,
+                &|_| Ok(()),
+                &|partition_index| {
+                    assert_ne!(
+                        partition_index, second_cohort_worker_partition,
+                        "controlled second-cohort panic"
+                    );
+                },
+                |_| {
+                    delivered.set(delivered.get() + 1);
+                },
+            );
+        }));
+        let recovered = collect_events(&matcher, &input)?;
+
+        // Assert
+        assert!(panic_result.is_err());
+        assert_eq!(delivered.get(), 0);
+        assert!(!recovered.is_empty());
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn sink_panic_after_cohort_success_leaves_matcher_reusable() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(4, 9, true)?;
+        let input = mixed_cohort_input();
+
+        // Test
+        let panic_result = catch_unwind(AssertUnwindSafe(|| {
+            let _ = matcher.scan(&input, |_| panic!("controlled cohort sink panic"));
+        }));
+        let recovered = collect_events(&matcher, &input)?;
+
+        // Assert
+        assert!(panic_result.is_err());
+        assert!(!recovered.is_empty());
+        Ok(())
+    }
+
     fn parallel_test_matcher() -> Result<Matcher, Error> {
         let mut builder = MatcherBuilder::new();
         builder.worker_count(3);
@@ -954,6 +1630,33 @@ mod tests {
         builder.add(PatternId::new(40), r"\bcat")?;
         let diagnostics = builder.cohort_diagnostics();
         builder.build().map(|matcher| (diagnostics, matcher))
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn mixed_cohort_test_matcher(
+        worker_count: usize,
+        cache_budget: usize,
+        cohort_enabled: bool,
+    ) -> Result<Matcher, Error> {
+        let mut builder = MatcherBuilder::new();
+        builder
+            .worker_count(worker_count)
+            .state_cache_budget(cache_budget)
+            .cohort_compilation_enabled(cohort_enabled);
+        builder.add(PatternId::new(10), "abc")?;
+        builder.add(PatternId::new(20), "^abc$")?;
+        builder.add(PatternId::new(30), "(?:far|foo)")?;
+        builder.add(PatternId::new(40), r"\bcat")?;
+        builder.add(PatternId::new(50), "abc")?;
+        builder.add(PatternId::new(60), "foo$")?;
+        builder.add(PatternId::new(70), "a+")?;
+        builder.add(PatternId::new(80), r"far\B")?;
+        builder.build()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn mixed_cohort_input() -> Utf16Text {
+        Utf16Text::from("abc\ncat far foo\naaa\nabc")
     }
 
     fn collect_events(matcher: &Matcher, input: &Utf16Text) -> Result<Vec<(u32, u64, u64)>, Error> {

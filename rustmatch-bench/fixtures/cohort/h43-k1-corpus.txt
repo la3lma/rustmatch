@@ -1,0 +1,4 @@
+abc
+cat far foo
+aaa
+abc

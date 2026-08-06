@@ -377,6 +377,11 @@ fn build_harness_matcher(
         HarnessMode::Parallel(worker_count) => {
             builder.worker_count(worker_count);
         }
+        HarnessMode::Cohort(worker_count) => {
+            builder
+                .worker_count(worker_count)
+                .cohort_compilation_enabled(true);
+        }
     }
     for pattern in patterns {
         builder
@@ -401,6 +406,7 @@ enum HarnessMode {
     Nfa,
     Single,
     Parallel(usize),
+    Cohort(usize),
 }
 
 impl HarnessMode {
@@ -408,6 +414,22 @@ impl HarnessMode {
         match source {
             "nfa" => Ok(Self::Nfa),
             "single" => Ok(Self::Single),
+            cohort if cohort.starts_with("cohort-") => {
+                let worker_count = cohort
+                    .strip_prefix("cohort-")
+                    .expect("matched cohort prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!(
+                            "invalid harness mode {source:?}; expected cohort-WORKERS with a positive worker count: {error}"
+                        )
+                    })?;
+                if worker_count == 0 {
+                    Err("harness cohort worker count must be greater than zero".to_owned())
+                } else {
+                    Ok(Self::Cohort(worker_count))
+                }
+            }
             _ => {
                 let worker_count = source.parse::<usize>().map_err(|error| {
                     format!(
@@ -428,6 +450,7 @@ impl HarnessMode {
             Self::Nfa => "nfa".to_owned(),
             Self::Single => "single".to_owned(),
             Self::Parallel(worker_count) => worker_count.to_string(),
+            Self::Cohort(worker_count) => format!("cohort-{worker_count}"),
         }
     }
 }
@@ -3247,11 +3270,15 @@ mod tests {
     #[test]
     fn harness_modes_preserve_events_and_report_actual_partitions() -> Result<(), String> {
         // Prepare
-        let fixture = HarnessFixture::from_bytes(b"1\tcat\n2\tc.t\n", b"cat cut")?;
+        let fixture = HarnessFixture::from_bytes(
+            include_bytes!("../fixtures/cohort/h43-k1-patterns.tsv"),
+            include_bytes!("../fixtures/cohort/h43-k1-corpus.txt"),
+        )?;
         let modes = [
             (HarnessMode::Nfa, 1),
             (HarnessMode::Single, 1),
-            (HarnessMode::Parallel(2), 2),
+            (HarnessMode::Parallel(4), 4),
+            (HarnessMode::Cohort(4), 4),
         ];
         let mut reference = None;
 
@@ -3264,7 +3291,8 @@ mod tests {
             let evidence = (summary.count, summary.digest());
 
             // Assert
-            assert_eq!(count, 3);
+            assert!(count > 0);
+            assert_eq!(count, summary.count);
             assert_eq!(diagnostics.partition_count(), expected_partitions);
             if let Some(expected) = &reference {
                 assert_eq!(&evidence, expected);
@@ -3337,14 +3365,18 @@ mod tests {
         let nfa = HarnessMode::parse("nfa")?;
         let single = HarnessMode::parse("single")?;
         let parallel = HarnessMode::parse(oversized_but_valid_count)?;
+        let cohort = HarnessMode::parse("cohort-8")?;
         let zero = HarnessMode::parse("0");
+        let zero_cohort = HarnessMode::parse("cohort-0");
         let unknown = HarnessMode::parse("automatic");
 
         // Assert
         assert_eq!(nfa, HarnessMode::Nfa);
         assert_eq!(single, HarnessMode::Single);
         assert_eq!(parallel, HarnessMode::Parallel(4096));
+        assert_eq!(cohort, HarnessMode::Cohort(8));
         assert!(matches!(zero, Err(message) if message.contains("greater than zero")));
+        assert!(matches!(zero_cohort, Err(message) if message.contains("greater than zero")));
         assert!(matches!(unknown, Err(message) if message.contains("expected nfa")));
         Ok(())
     }

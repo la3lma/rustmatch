@@ -53,10 +53,10 @@ mod prefilter;
 mod shared_candidate;
 mod types;
 
+pub use api::{Matcher, MatcherBuilder};
 #[cfg(feature = "benchmark-internals")]
 #[doc(hidden)]
-pub use api::ScanDiagnostics;
-pub use api::{Matcher, MatcherBuilder};
+pub use api::{MatcherCohortDiagnostics, ScanDiagnostics};
 #[cfg(feature = "benchmark-internals")]
 #[doc(hidden)]
 pub use cohort::{CohortDiagnostics, PatternDiagnostics};
