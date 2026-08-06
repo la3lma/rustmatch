@@ -5,6 +5,7 @@
   "claim": "shared-storage-carrier-feasibility-only-not-admission",
   "representation_baseline_revision": "3d48cb754d89da1359582627f743af87a86b342a",
   "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "candidate_tree": "80bb945b4277314724fe9136166b47eca0808d3f",
   "runner": "agogo.local",
   "cpu_set": "0-15",
   "timing_cycles": 3,

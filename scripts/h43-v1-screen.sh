@@ -7,7 +7,7 @@ plan=${H43_V1_PLAN:-$repository_root/docs/experiments/h43-v1-screen-plan.json}
 candidate_root=${H43_V1_CANDIDATE_ROOT:?set H43_V1_CANDIDATE_ROOT to the frozen candidate worktree}
 run_root=${H43_V1_RUN_ROOT:?set H43_V1_RUN_ROOT to a fresh evidence directory}
 
-for command in cargo cc docker jq nvidia-smi python3 sha256sum taskset; do
+for command in cargo cc docker jq nvidia-smi python3 sha256sum tar taskset; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "required H43-V1 command is unavailable: $command" >&2
     exit 2
@@ -15,6 +15,7 @@ for command in cargo cc docker jq nvidia-smi python3 sha256sum taskset; do
 done
 
 candidate_revision=$(jq -r .candidate_revision "$plan")
+candidate_tree=$(jq -r .candidate_tree "$plan")
 evidence_id=$(jq -r .evidence_id "$plan")
 cpu_set=$(jq -r .cpu_set "$plan")
 timing_cycles=$(jq -r .timing_cycles "$plan")
@@ -22,13 +23,30 @@ warmups=$(jq -r .warmup_scans "$plan")
 repeats=$(jq -r .retained_scans "$plan")
 runner_label="$(hostname) | $(uname -m) | cpu-set $cpu_set"
 
-if [[ $(git -C "$candidate_root" rev-parse HEAD) != "$candidate_revision" ]]; then
-  echo "$evidence_id candidate revision mismatch" >&2
-  exit 2
-fi
-if [[ -n $(git -C "$candidate_root" status --porcelain) ]]; then
-  echo "$evidence_id candidate worktree is dirty" >&2
-  exit 2
+if git -C "$candidate_root" rev-parse --git-dir >/dev/null 2>&1; then
+  if [[ $(git -C "$candidate_root" rev-parse HEAD) != "$candidate_revision" ]]; then
+    echo "$evidence_id candidate revision mismatch" >&2
+    exit 2
+  fi
+  if [[ $(git -C "$candidate_root" rev-parse HEAD^{tree}) != "$candidate_tree" ]]; then
+    echo "$evidence_id candidate tree mismatch" >&2
+    exit 2
+  fi
+  if [[ -n $(git -C "$candidate_root" status --porcelain) ]]; then
+    echo "$evidence_id candidate worktree is dirty" >&2
+    exit 2
+  fi
+else
+  candidate_archive=${H43_V1_CANDIDATE_ARCHIVE:?set H43_V1_CANDIDATE_ARCHIVE for an archive-backed candidate}
+  archive_revision=$(git get-tar-commit-id < "$candidate_archive")
+  if [[ $archive_revision != "$candidate_revision" ]]; then
+    echo "$evidence_id candidate archive revision mismatch" >&2
+    exit 2
+  fi
+  if ! tar --compare --file "$candidate_archive" --directory "$candidate_root" >/dev/null; then
+    echo "$evidence_id extracted candidate differs from its retained Git archive" >&2
+    exit 2
+  fi
 fi
 if [[ -e $run_root ]]; then
   echo "$evidence_id run root already exists: $run_root" >&2
