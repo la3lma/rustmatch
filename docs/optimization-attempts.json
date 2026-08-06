@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-08-04",
+  "last_reviewed": "2026-08-06",
   "policy_version": "G9-v3",
   "policy_effective_date": "2026-08-04",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes certification. A demonstrated regression above 2% through 3% requires investigation and normally blocks merge. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. An explicit owner-authorized production exception may override the merge hold, but it never relabels the formal evidence as admission-eligible and must retain the adverse result and residual risk.",
@@ -511,6 +511,20 @@
         "baseline_millis": 19.528476,
         "candidate_millis": 7.083
       }
+    },
+    {
+      "id": "B2-H-0043",
+      "name": "Cohort-aware two-database matcher spine",
+      "date": "2026-08-06",
+      "status": "rejected",
+      "baseline_revision": "05992bf1f20e0f9384fc52fcb4a9863500e7a4da",
+      "candidate_revision": "9bb4ad8f1b50db701ec1ecea66d9fdb73f2fae07",
+      "summary": "Conservatively classify assertion-free and assertion-bearing patterns, compile independent exact databases, and schedule both cohorts while preserving the union of exact events.",
+      "result": "H43-E1 passed 3,628 semantic comparisons. The final recovery retained 57.17%-90.16% one-worker mixed scan gains, but an early unchanged-policy screen reproduced 13.16%-28.50% inactive assertion-free scan regressions and 16.73%-23.19% one-worker mixed preparation regressions, each with 3 of 3 adverse pairs.",
+      "tradeoffs": "Start-table scratch reuse removed only 8 of 1,603 extra mixed-balanced allocation calls; compiling a second complete database left 1,595 extra calls. Out-of-line cohort scheduling did not remove the cold inactive-path layout effect. The screen retained exact activation, zero correctness errors, clean Docker/GPU guards, and all raw receipts.",
+      "decision": "Rejected before the formal 15-cycle window under the predeclared fail-early rule. No merge and no H43-A1 authorization. Retain the specialization signal; reconsider only through a materially different shared-storage cohort representation.",
+      "evidence": "experiments/h43-d1-r2-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -647,6 +661,16 @@
   "future_candidates": [
     {
       "priority": 1,
+      "id": "FUTURE-COHORT-VIEWS",
+      "name": "Shared-storage cohort roots and database views",
+      "status": "design hypothesis after H43 carrier rejection",
+      "why": "H43 proved exact mixed-cohort semantics and retained 57.17%-90.16% one-worker scan gains, but independently compiling each cohort caused 16.73%-23.19% preparation regressions and roughly 1,600 extra allocation calls. A single compiled database with lightweight cohort roots/views could preserve the separation signal without duplicating database-owned storage and construction.",
+      "next_test": "Design a multi-root PatternDatabase representation and prove that ordinary single-root compilation and scan code remain byte-identical. Build a static allocation/state-count model before implementation, then run exact view/full-database event parity and preparation screens before any specialization.",
+      "expected_value": "Very high demonstrated narrow upside, medium-low representation confidence, high compiler and semantic-proof effort, and high inactive-layout risk",
+      "evidence": "experiments/h43-d1-r2-result.md"
+    },
+    {
+      "priority": 2,
       "id": "FUTURE-LITERAL-EXACT",
       "name": "Exact literal-only backend",
       "status": "next active diagnostic",
@@ -656,7 +680,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 2,
+      "priority": 3,
       "id": "B2-H-0006",
       "name": "Exact input-parallel semantic scanning",
       "status": "semantic design reviewed; phase diagnostic pending",
@@ -666,7 +690,7 @@
       "evidence": "experiments/b2-h-0006-input-parallel-design.md"
     },
     {
-      "priority": 3,
+      "priority": 4,
       "id": "FUTURE-LAYOUT",
       "name": "Transition-table and scratch-state locality",
       "status": "profiling required",
@@ -676,7 +700,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 4,
+      "priority": 5,
       "id": "FUTURE-BITPARALLEL",
       "name": "General bit-parallel regex execution",
       "status": "strategic research track",
@@ -686,7 +710,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 5,
+      "priority": 6,
       "id": "FUTURE-PHASE-FUSION",
       "name": "Fused persistent planning and semantic phases",
       "status": "dormant pending new phase evidence",
@@ -696,7 +720,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 6,
+      "priority": 7,
       "id": "FUTURE-SELECTOR",
       "name": "Adaptive workload-path selector",
       "status": "dependency-blocked",
@@ -706,7 +730,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 7,
+      "priority": 8,
       "id": "FUTURE-ROUTE",
       "name": "Partition-aware H11 candidate routing",
       "status": "evaluated as H39; rejected under frozen focused screen",
@@ -716,7 +740,7 @@
       "evidence": "experiments/b2-h-0039-partition-routing.md"
     },
     {
-      "priority": 8,
+      "priority": 9,
       "id": "FUTURE-SIMD",
       "name": "SIMD shared candidate discovery",
       "status": "H42 merged by owner exception; Wuthering recovery remains",
@@ -726,7 +750,7 @@
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4/docs/lab-notebook/2026-08-04-b2-h-0042-formal-g9-v3.md"
     },
     {
-      "priority": 9,
+      "priority": 10,
       "id": "FUTURE-ASSERT",
       "name": "Pinned H24 assertion-prefix opportunity",
       "status": "pinned research hold after H38; no active implementation",

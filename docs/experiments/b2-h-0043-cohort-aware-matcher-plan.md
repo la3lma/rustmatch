@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-D1-R1 complete with rework; H43-D1-R2 active<br>
+**Status:** H43-D1-R2 rejected; two-database cohort spine closed; H43-A1 blocked<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -192,7 +192,7 @@ flowchart TB
     class E1 complete;
     class D1 complete;
     class D1R complete;
-    class D1R2 active;
+    class D1R2 blocked;
     class A1 blocked;
     class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -990,7 +990,7 @@ all D1 evidence, and does not authorize H43-A1.
 
 **Scope:** final semantically inert cohort-spine recovery<br>
 **Level:** system<br>
-**Status:** active<br>
+**Status:** complete; rejected at the early causal screen<br>
 **Primary actor:** optimization engineer<br>
 **Supporting actors:** compiler/codegen reviewer, correctness reviewer,
 exclusive-host benchmark runner
@@ -1062,10 +1062,22 @@ classification available only as diagnostics, and does not authorize H43-A1.
 
 **Implementation result**
 
-- **Result:** active on 2026-08-06.
-- **Decision boundary:** this is the final recovery allowed for the
-  semantically inert spine before H43-A1. It may optimize general compilation
-  machinery and isolate code, but may not specialize matching behavior.
+- **Result:** rejected on 2026-08-06 at candidate
+  `9bb4ad8f1b50db701ec1ecea66d9fdb73f2fae07`.
+- **Correctness:** the unchanged H43-E1 campaign reproduced all 3,628
+  comparisons and its frozen aggregate digest; complete repository CI passed.
+- **Early screen:** assertion-free inactive scans regressed 13.16%-28.50%
+  with 3/3 adverse pairs at workers 1/4/16. One-worker mixed preparation
+  regressed 16.73%-23.19%, also with 3/3 adverse pairs. The formal matrix was
+  correctly not launched.
+- **Corrected mechanism:** reusable start-table scratch removed only 8 of
+  1,603 extra `mixed-balanced` allocation calls. The remaining 1,595 arise
+  primarily from compiling a second complete pattern database. Moving cohort
+  scheduling out of `api.rs` did not remove the inactive cold-layout effect.
+- **Decision:** close the semantically inert two-database spine, retain the
+  large one-worker scan signal, and keep H43-A1 blocked. Any successor must be
+  a new representation hypothesis, such as shared database storage with
+  lightweight cohort roots/views. See `h43-d1-r2-result.md`.
 
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
 
@@ -1543,12 +1555,14 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, and H43-D1-R1 are complete. R1
-recovered total parallel occupancy and retained 55.00%-90.27% one-worker mixed
-gains, but the formal matrix exposed linked-layout inactive scan vetoes and
-start-table preparation cost. **H43-D1-R2 is active** and is the final bounded
-recovery for those two causal mechanisms. H43-A1 remains blocked until the
-unchanged D1 matrix passes after recovery.
+H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, and H43-D1-R2 are
+complete. R2 retained 57.17%-90.16% one-worker mixed scan gains and exact
+semantics, but its predeclared early screen reproduced 13.16%-28.50% inactive
+scan regressions and 16.73%-23.19% one-worker preparation regressions. The
+two-database cohort spine is rejected, the formal matrix was not launched, and
+H43-A1 remains blocked. A successor must begin from a materially different
+shared-storage representation rather than another tuning pass over this
+carrier.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-D1-R2-SCREEN-retained",
+  "baseline_revision": "05992bf1f20e0f9384fc52fcb4a9863500e7a4da",
+  "candidate_revision": "9bb4ad8f1b50db701ec1ecea66d9fdb73f2fae07",
+  "screen_only": true,
+  "formal_admission_run": false,
+  "decision": "reject-before-formal-window",
+  "plan_sha256": "3a263c8df1fe8c1d7faaad82fc06bc8a3f820593c5da6a553283e134ea449c53",
+  "window_state_sha256": "474f56f8fd463a28be202356d40239d4979088e7361e97caeda1661b2f417bc3",
+  "summary_sha256": "4d9d6467c656469ab80b74497cd34aac49491d7c2da3afeb4f12700f47181d04",
+  "fixture_manifest_sha256": "0a5ec51848e177226fd66b09ce6144051e64d8458907a46c4aac7d2ebea6e648",
+  "service_snapshot_sha256": "c4f6869e0537879525fb76ca62a1acc0375c16b698178b7d85bcdd4614412cce",
+  "timing_receipts": 144,
+  "resource_receipts": 36,
+  "correctness_errors": 0,
+  "external_archive": "/Users/rmz/.codex/handoffs/rmatch-performance-measurements/h43-d1-r2/h43-d1-r2-screen-evidence.tar.gz",
+  "external_archive_sha256": "fc69919b1b393bd525209f9103fb06ace6246f12e5059dc890d933f3e91098a2"
+}
