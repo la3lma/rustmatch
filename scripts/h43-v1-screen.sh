@@ -197,6 +197,17 @@ candidate_binary="$candidate_target/release/rustmatch-bench"
 sha256sum "$candidate_binary" > "$run_root/artifacts/benchmark-binary-sha256.txt"
 file "$candidate_binary" > "$run_root/artifacts/benchmark-binary-file.txt"
 
+prepare_probe_root="$run_root/build/prepare-probe"
+mkdir -p "$prepare_probe_root/src"
+cp "$repository_root/tools/h43_v1_prepare_probe.rs" "$prepare_probe_root/src/main.rs"
+printf '[package]\nname = "h43-v1-prepare-probe"\nversion = "0.0.0"\nedition = "2024"\n\n[workspace]\n\n[dependencies]\nrustmatch = { path = "%s/rustmatch", features = ["benchmark-internals"] }\n' \
+  "$candidate_root" > "$prepare_probe_root/Cargo.toml"
+CARGO_TARGET_DIR="$candidate_target" cargo build --offline --release \
+  --manifest-path "$prepare_probe_root/Cargo.toml" \
+  > "$run_root/build/prepare-probe-build.log" 2>&1
+prepare_probe_binary="$candidate_target/release/h43-v1-prepare-probe"
+sha256sum "$prepare_probe_binary" > "$run_root/artifacts/prepare-probe-binary-sha256.txt"
+
 run_timing_cell() {
   local fixture=$1 cycle=$2 variant=$3 mode=$4
   local stem="$fixture-c$(printf '%02d' "$cycle")-$variant"
@@ -227,22 +238,20 @@ for fixture in "${fixture_ids[@]}"; do
 done
 
 run_resource_cell() {
-  local fixture=$1 variant=$2 mode=$3
+  local fixture=$1 variant=$2
   local stem="$fixture-$variant"
   checkpoint "resource-$stem"
-  RUSTMATCH_BENCH_REVISION="$candidate_revision" RUSTMATCH_BENCH_RUNNER="$runner_label" \
-    env LD_PRELOAD="$run_root/artifacts/h43-v1-alloc-shim.so" \
-      RMATCH_ALLOC_RECEIPT="$run_root/receipts/resources/$stem.alloc.json" \
-      taskset -c "$cpu_set" "$candidate_binary" harness-run \
-        "$run_root/fixtures/$fixture.tsv" "$run_root/fixtures/$fixture.txt" \
-        "$repeats" "$warmups" "$mode" \
-        > "$run_root/receipts/resources/$stem.json"
+  env LD_PRELOAD="$run_root/artifacts/h43-v1-alloc-shim.so" \
+    RMATCH_ALLOC_RECEIPT="$run_root/receipts/resources/$stem.alloc.json" \
+    taskset -c "$cpu_set" "$prepare_probe_binary" \
+      "$run_root/fixtures/$fixture.tsv" "$variant" \
+      > "$run_root/receipts/resources/$stem.json"
   jq -e '.allocator == "glibc-interposition-v1"' "$run_root/receipts/resources/$stem.alloc.json" >/dev/null
 }
 
 for fixture in "${fixture_ids[@]}"; do
-  run_resource_cell "$fixture" ordinary 1
-  run_resource_cell "$fixture" shared cohort-view-1
+  run_resource_cell "$fixture" ordinary
+  run_resource_cell "$fixture" shared
 done
 
 checkpoint analyze

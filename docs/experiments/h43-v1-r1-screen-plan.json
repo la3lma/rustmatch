@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-V1-R1-SCREEN",
+  "policy": "G9-v3",
+  "claim": "prefilter-neutral-shared-storage-carrier-recovery-feasibility-only-not-admission",
+  "representation_baseline_revision": "3d48cb754d89da1359582627f743af87a86b342a",
+  "recovery_from_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "candidate_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+  "candidate_tree": "6693c201a5d397c24dc4ea849e130384561a117e",
+  "runner": "agogo.local",
+  "cpu_set": "0-15",
+  "timing_cycles": 3,
+  "warmup_scans": 2,
+  "retained_scans": 5,
+  "resource_cycles": 1,
+  "thresholds": {
+    "maximum_extra_allocation_calls": 64,
+    "maximum_extra_requested_bytes": 65536,
+    "maximum_preparation_regression_percent": 3.0,
+    "minimum_useful_scan_gain_percent": 5.0
+  },
+  "fixtures": [
+    {
+      "id": "mixed-balanced",
+      "pattern_family": "32 exact literals plus 32 exact line assertions",
+      "pattern_count": 64,
+      "corpus_bytes": 524288,
+      "expected_cohorts": 2,
+      "role": "shared-storage construction and balanced mixed scan target"
+    },
+    {
+      "id": "mixed-output",
+      "pattern_family": "8 duplicate consuming expressions plus 8 duplicate asserted expressions",
+      "pattern_count": 16,
+      "corpus_bytes": 16384,
+      "expected_cohorts": 2,
+      "role": "shared-storage construction and buffered-output scan target"
+    }
+  ],
+  "required_lanes": [
+    "candidate-ordinary-versus-shared-view-one-worker",
+    "exact-event-count-and-digest-parity",
+    "preparation-only-process-allocation-counting",
+    "explicit-retained-byte-accounting",
+    "docker-gpu-and-host-window-guard"
+  ],
+  "preproved_local_evidence": {
+    "structural_invariant": "shared compilation adds exactly one state and no edges, predicates, terminals, or pattern IDs",
+    "semantic_comparisons": 3628,
+    "targeted_recovery_tests": "pass",
+    "strict_all_feature_clippy": "pass",
+    "ordinary_scan_codegen_canonical_sha256": "c8fa56000a3a4ff069c2b8e83cd59d8edc9c5cae1bb4401b1b46cf2ed780d094"
+  },
+  "preliminary_window": {
+    "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+    "raw_archive_sha256": "19cccb9e5aa04296c02febb7f5d39311907f7692175e76c2cd5ab6b4744b3f5f",
+    "balanced_scan_gain_percent": 54.356,
+    "output_scan_gain_percent": 90.529,
+    "balanced_preparation_regression_percent": 20.423,
+    "output_preparation_regression_percent": 32.110,
+    "allocation_note": "whole-process allocation receipts include seven scans and are diagnostic only"
+  }
+}
