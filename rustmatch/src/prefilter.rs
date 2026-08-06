@@ -77,14 +77,19 @@ pub(crate) struct Prefilter {
 }
 
 impl Prefilter {
-    #[cfg(test)]
-    pub(crate) const fn empty() -> Self {
+    #[cfg(any(test, feature = "benchmark-internals"))]
+    pub(crate) const fn disabled() -> Self {
         Self {
             start_table: None,
             literal: None,
             literal_unavailable: PrefilterBypass::Disabled,
             retained_bytes: 0,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) const fn empty() -> Self {
+        Self::disabled()
     }
 
     pub(crate) fn compile(patterns: &[HirPattern], database: &PatternDatabase) -> Self {
@@ -98,51 +103,6 @@ impl Prefilter {
         }
 
         let start_table = StartTable::compile(database);
-        let (literal, literal_unavailable) = if patterns.len() < MIN_LITERAL_PATTERN_COUNT {
-            (None, PrefilterBypass::PatternCount)
-        } else {
-            let hints = patterns
-                .iter()
-                .enumerate()
-                .map(|(ordinal, pattern)| {
-                    NecessaryLiteral::from_pattern(ordinal, pattern.expression())
-                })
-                .collect::<Option<Vec<_>>>();
-            match hints {
-                Some(hints) => (
-                    Some(LiteralPrefilter::compile(&hints)),
-                    PrefilterBypass::None,
-                ),
-                None => (None, PrefilterBypass::Unfilterable),
-            }
-        };
-        let retained_bytes = start_table.as_ref().map_or(0, StartTable::retained_bytes)
-            + literal.as_ref().map_or(0, LiteralPrefilter::retained_bytes);
-        Self {
-            start_table,
-            literal,
-            literal_unavailable,
-            retained_bytes,
-        }
-    }
-
-    #[cfg(feature = "benchmark-internals")]
-    pub(crate) fn compile_view(
-        patterns: &[HirPattern],
-        database: &PatternDatabase,
-        root: StateId,
-        uses_assertions: bool,
-    ) -> Self {
-        if uses_assertions {
-            return Self {
-                start_table: None,
-                literal: None,
-                literal_unavailable: PrefilterBypass::Assertions,
-                retained_bytes: 0,
-            };
-        }
-
-        let start_table = Some(StartTable::compile_view(database, root));
         let (literal, literal_unavailable) = if patterns.len() < MIN_LITERAL_PATTERN_COUNT {
             (None, PrefilterBypass::PatternCount)
         } else {
@@ -384,40 +344,6 @@ impl StartTable {
             first_ascii,
             pair_ascii,
         })
-    }
-
-    #[cfg(feature = "benchmark-internals")]
-    fn compile_view(database: &PatternDatabase, view_root: StateId) -> Self {
-        let mut closure = ClosureScratch::new(database.state_count());
-        let mut root = Vec::new();
-        closure.epsilon_closure_into(database, &[view_root], &mut root);
-        let mut first_states = Vec::new();
-        let mut second_states = Vec::new();
-        let mut first_ascii = [0_u64; 2];
-        let mut pair_ascii = Box::new([0_u64; 256]);
-        for first in 0_u16..128 {
-            closure.transition_into(database, &root, first, &mut first_states);
-            if first_states.is_empty() {
-                continue;
-            }
-            set_bit(&mut first_ascii, usize::from(first));
-            let accepts_after_first = first_states
-                .iter()
-                .any(|&state| !database.terminals_at(state).is_empty());
-            for second in 0_u16..128 {
-                if accepts_after_first || {
-                    closure.transition_into(database, &first_states, second, &mut second_states);
-                    !second_states.is_empty()
-                } {
-                    let pair = usize::from(first) * 128 + usize::from(second);
-                    set_bit(pair_ascii.as_mut(), pair);
-                }
-            }
-        }
-        Self {
-            first_ascii,
-            pair_ascii,
-        }
     }
 
     #[cfg(test)]

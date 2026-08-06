@@ -223,55 +223,32 @@ impl SharedCohortMatcher {
     }
 }
 
-pub(super) fn build_matcher(builder: MatcherBuilder) -> Result<SharedCohortMatcher, Error> {
+pub(super) fn build_matcher(builder: &MatcherBuilder) -> Result<SharedCohortMatcher, Error> {
     let shared = nfa::compile_shared_cohorts(&builder.patterns)?;
     let (database, assertion_free_descriptor, assertion_bearing_descriptor) = shared.into_parts();
-    let mut assertion_free_patterns = Vec::with_capacity(assertion_free_descriptor.pattern_count);
-    let mut assertion_bearing_patterns =
-        Vec::with_capacity(assertion_bearing_descriptor.pattern_count);
-    for pattern in builder.patterns {
-        if pattern.expression().uses_assertions() {
-            assertion_bearing_patterns.push(pattern);
-        } else {
-            assertion_free_patterns.push(pattern);
-        }
-    }
-
-    let cohort_count = usize::from(!assertion_free_patterns.is_empty())
-        + usize::from(!assertion_bearing_patterns.is_empty());
-    let free_cache_budget = if assertion_free_patterns.is_empty() {
+    let cohort_count = usize::from(assertion_free_descriptor.pattern_count > 0)
+        + usize::from(assertion_bearing_descriptor.pattern_count > 0);
+    let free_cache_budget = if assertion_free_descriptor.pattern_count == 0 {
         0
     } else {
         builder.state_cache_budget / cohort_count + builder.state_cache_budget % cohort_count
     };
-    let bearing_cache_budget = if assertion_bearing_patterns.is_empty() {
+    let bearing_cache_budget = if assertion_bearing_descriptor.pattern_count == 0 {
         0
     } else {
         builder.state_cache_budget / cohort_count
     };
-    let assertion_free_prefilter = Prefilter::compile_view(
-        &assertion_free_patterns,
-        &database,
-        assertion_free_descriptor.root,
-        assertion_free_descriptor.uses_assertions,
-    );
-    let assertion_bearing_prefilter = Prefilter::compile_view(
-        &assertion_bearing_patterns,
-        &database,
-        assertion_bearing_descriptor.root,
-        assertion_bearing_descriptor.uses_assertions,
-    );
 
     Ok(SharedCohortMatcher {
         database,
         assertion_free: SharedCohortView {
             descriptor: assertion_free_descriptor,
-            prefilter: assertion_free_prefilter,
+            prefilter: Prefilter::disabled(),
             state_cache_budget: free_cache_budget,
         },
         assertion_bearing: SharedCohortView {
             descriptor: assertion_bearing_descriptor,
-            prefilter: assertion_bearing_prefilter,
+            prefilter: Prefilter::disabled(),
             state_cache_budget: bearing_cache_budget,
         },
         requested_worker_count: builder.worker_count,

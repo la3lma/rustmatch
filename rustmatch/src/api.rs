@@ -156,7 +156,7 @@ impl MatcherBuilder {
         if self.worker_count == 0 {
             return Err(Error::InvalidWorkerCount);
         }
-        cohort_view_runtime::build_matcher(self)
+        cohort_view_runtime::build_matcher(&self)
     }
 
     /// Registers one caller-identified pattern.
@@ -1350,6 +1350,7 @@ mod tests {
         assert_eq!(structure.pattern_count(), ordinary_database.pattern_count());
         assert_eq!(structure.assertion_free_pattern_count(), 4);
         assert_eq!(structure.assertion_bearing_pattern_count(), 4);
+        assert_eq!(structure.prefilter_retained_bytes(), 0);
         for input in &inputs {
             assert_eq!(
                 collect_shared_events(&shared, input)?,
