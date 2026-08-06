@@ -8,7 +8,7 @@ use std::panic;
 use std::thread;
 
 #[cfg(feature = "benchmark-internals")]
-use crate::cohort::{CohortDiagnostics, PatternDiagnostics};
+use crate::cohort::CohortDiagnostics;
 use crate::engine;
 use crate::hir::HirPattern;
 use crate::nfa::{self, PatternDatabase};
@@ -208,9 +208,12 @@ impl MatcherBuilder {
 
 #[cfg(feature = "benchmark-internals")]
 fn build_cohort_matcher(builder: MatcherBuilder) -> Result<Matcher, Error> {
-    let diagnostics = CohortDiagnostics::classify(&builder.patterns);
-    let assertion_free_pattern_count = diagnostics.assertion_free_pattern_ids().len();
-    let assertion_bearing_pattern_count = diagnostics.assertion_bearing_pattern_ids().len();
+    let assertion_bearing_pattern_count = builder
+        .patterns
+        .iter()
+        .filter(|pattern| pattern.expression().uses_assertions())
+        .count();
+    let assertion_free_pattern_count = builder.patterns.len() - assertion_bearing_pattern_count;
 
     if assertion_free_pattern_count == 0 || assertion_bearing_pattern_count == 0 {
         let partitions = compile_partitions(
@@ -232,15 +235,10 @@ fn build_cohort_matcher(builder: MatcherBuilder) -> Result<Matcher, Error> {
         });
     }
 
-    let assertion_flags = diagnostics
-        .patterns()
-        .iter()
-        .map(PatternDiagnostics::uses_assertions)
-        .collect::<Vec<_>>();
     let mut assertion_free = Vec::with_capacity(assertion_free_pattern_count);
     let mut assertion_bearing = Vec::with_capacity(assertion_bearing_pattern_count);
-    for (pattern, uses_assertions) in builder.patterns.into_iter().zip(assertion_flags) {
-        if uses_assertions {
+    for pattern in builder.patterns {
+        if pattern.expression().uses_assertions() {
             assertion_bearing.push(pattern);
         } else {
             assertion_free.push(pattern);
@@ -873,21 +871,29 @@ impl Matcher {
         debug_assert!(self.partitions.len() > 1);
         #[cfg(feature = "benchmark-internals")]
         if let Some(split_partition) = self.cohort_split_partition() {
-            let mut outputs = self.scan_partition_group_with_hooks(
-                &self.partitions[..split_partition],
-                0,
-                input,
-                before_spawn,
-                before_scan,
-            )?;
-            outputs.extend(self.scan_partition_group_with_hooks(
-                &self.partitions[split_partition..],
+            if self.requested_worker_count == 1 {
+                let mut outputs = self.scan_partition_group_with_hooks(
+                    &self.partitions[..split_partition],
+                    0,
+                    input,
+                    before_spawn,
+                    before_scan,
+                )?;
+                outputs.extend(self.scan_partition_group_with_hooks(
+                    &self.partitions[split_partition..],
+                    split_partition,
+                    input,
+                    before_spawn,
+                    before_scan,
+                )?);
+                return Ok(ParallelScanOutput::new(outputs));
+            }
+            return self.scan_cohort_partition_groups_with_hooks(
                 split_partition,
                 input,
                 before_spawn,
                 before_scan,
-            )?);
-            return Ok(ParallelScanOutput::new(outputs));
+            );
         }
         let partitions = self.scan_partition_group_with_hooks(
             &self.partitions,
@@ -896,6 +902,118 @@ impl Matcher {
             before_spawn,
             before_scan,
         )?;
+        Ok(ParallelScanOutput::new(partitions))
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn scan_cohort_partition_groups_with_hooks<BeforeSpawn, BeforeScan>(
+        &self,
+        split_partition: usize,
+        input: &Utf16Text,
+        before_spawn: &BeforeSpawn,
+        before_scan: &BeforeScan,
+    ) -> Result<ParallelScanOutput, Error>
+    where
+        BeforeSpawn: Fn(usize) -> Result<(), Error>,
+        BeforeScan: Fn(usize) + Sync,
+    {
+        debug_assert!(self.requested_worker_count > 1);
+        let assertion_free = &self.partitions[..split_partition];
+        let assertion_bearing = &self.partitions[split_partition..];
+        let assertion_free_plan = self.shared_candidate_plan(assertion_free, input)?;
+        let assertion_bearing_plan = self.shared_candidate_plan(assertion_bearing, input)?;
+        let partitions = thread::scope(|scope| {
+            let mut handles = Vec::with_capacity(self.partitions.len().saturating_sub(1));
+            let mut spawn_error = None;
+            for (partition_index, partition) in self.partitions.iter().enumerate().skip(1) {
+                if let Err(error) = before_spawn(partition_index) {
+                    spawn_error = Some(error);
+                    break;
+                }
+                let shared = if partition_index < split_partition {
+                    assertion_free_plan
+                        .as_ref()
+                        .map(|plan| plan.partition(partition_index))
+                } else {
+                    assertion_bearing_plan
+                        .as_ref()
+                        .map(|plan| plan.partition(partition_index - split_partition))
+                };
+                let worker = thread::Builder::new()
+                    .name(format!("rustmatch-worker-{partition_index}"))
+                    .spawn_scoped(scope, move || {
+                        before_scan(partition_index);
+                        match shared {
+                            Some(shared) => scan_partition_shared(partition, input, shared),
+                            None => scan_partition(
+                                partition,
+                                input,
+                                self.prefilter_enabled,
+                                self.literal_prefilter_enabled,
+                            ),
+                        }
+                    });
+                if let Ok(handle) = worker {
+                    handles.push((partition_index, handle));
+                } else {
+                    spawn_error = Some(Error::WorkerUnavailable);
+                    break;
+                }
+            }
+
+            let caller_result = if spawn_error.is_none() {
+                before_scan(0);
+                Some(
+                    match assertion_free_plan.as_ref().map(|plan| plan.partition(0)) {
+                        Some(shared) => scan_partition_shared(&self.partitions[0], input, shared),
+                        None => scan_partition(
+                            &self.partitions[0],
+                            input,
+                            self.prefilter_enabled,
+                            self.literal_prefilter_enabled,
+                        ),
+                    },
+                )
+            } else {
+                None
+            };
+            let mut outputs: Vec<Option<PartitionScanOutput>> =
+                (0..self.partitions.len()).map(|_| None).collect();
+            let mut scan_error = None;
+            if let Some(result) = caller_result {
+                match result {
+                    Ok(output) => outputs[0] = Some(output),
+                    Err(error) => scan_error = Some(error),
+                }
+            }
+            let mut worker_panic: Option<Box<dyn Any + Send + 'static>> = None;
+            for (partition_index, handle) in handles {
+                match handle.join() {
+                    Ok(Ok(output)) => outputs[partition_index] = Some(output),
+                    Ok(Err(error)) => {
+                        if scan_error.is_none() {
+                            scan_error = Some(error);
+                        }
+                    }
+                    Err(payload) => {
+                        if worker_panic.is_none() {
+                            worker_panic = Some(payload);
+                        }
+                    }
+                }
+            }
+
+            if let Some(payload) = worker_panic {
+                panic::resume_unwind(payload);
+            }
+            if let Some(error) = spawn_error.or(scan_error) {
+                return Err(error);
+            }
+            Ok(outputs
+                .into_iter()
+                .map(|output| output.expect("every successful partition returned output"))
+                .collect::<Vec<_>>())
+        })?;
         Ok(ParallelScanOutput::new(partitions))
     }
 
@@ -1034,12 +1152,16 @@ impl Matcher {
         self.cohort_split_partition().map_or_else(
             || self.partitions.len().saturating_sub(1),
             |split_partition| {
-                split_partition.saturating_sub(1)
-                    + self
-                        .partitions
-                        .len()
-                        .saturating_sub(split_partition)
-                        .saturating_sub(1)
+                if self.requested_worker_count == 1 {
+                    split_partition.saturating_sub(1)
+                        + self
+                            .partitions
+                            .len()
+                            .saturating_sub(split_partition)
+                            .saturating_sub(1)
+                } else {
+                    self.partitions.len().saturating_sub(1)
+                }
             },
         )
     }
@@ -1216,6 +1338,10 @@ mod tests {
     #[cfg(feature = "benchmark-internals")]
     use std::cell::Cell;
     use std::panic::{AssertUnwindSafe, catch_unwind};
+    #[cfg(feature = "benchmark-internals")]
+    use std::sync::{Condvar, Mutex};
+    #[cfg(feature = "benchmark-internals")]
+    use std::time::Duration;
 
     #[cfg(feature = "benchmark-internals")]
     use super::{CohortDiagnostics, allocate_cohort_partitions};
@@ -1415,7 +1541,7 @@ mod tests {
         assert_eq!(layout.total_cache_budget(), 9);
         assert!(layout.assertion_free_retained_bytes() > 0);
         assert!(layout.assertion_bearing_retained_bytes() > 0);
-        assert_eq!(layout.spawned_workers(), 2);
+        assert_eq!(layout.spawned_workers(), 3);
         assert!(layout.buffers_before_delivery());
         assert_eq!(assertion_free_ids, [10, 30, 50, 70]);
         assert_eq!(assertion_bearing_ids, [20, 40, 60, 80]);
@@ -1518,18 +1644,72 @@ mod tests {
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
+    fn mixed_cohort_partitions_share_one_bounded_multi_worker_scope() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(4, 17, true)?;
+        let input = mixed_cohort_input();
+        let starts = ScanStartGate::new(4);
+
+        // Test
+        let output = matcher.scan_parallel_with_hooks(&input, &|_| Ok(()), &|partition_index| {
+            starts.enter(partition_index);
+        })?;
+        let mut entered = starts.entered();
+        entered.sort_unstable();
+
+        // Assert
+        assert_eq!(entered, [0, 1, 2, 3]);
+        assert_eq!(output.partitions.len(), 4);
+        assert_eq!(matcher.spawned_worker_count(), 3);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn one_requested_worker_keeps_mixed_cohorts_sequential() -> Result<(), Error> {
+        // Prepare
+        let matcher = mixed_cohort_test_matcher(1, 17, true)?;
+        let input = mixed_cohort_input();
+        let spawn_count = Cell::new(0_usize);
+        let scan_order = Mutex::new(Vec::new());
+
+        // Test
+        let output = matcher.scan_parallel_with_hooks(
+            &input,
+            &|_| {
+                spawn_count.set(spawn_count.get() + 1);
+                Ok(())
+            },
+            &|partition_index| {
+                scan_order
+                    .lock()
+                    .expect("scan order lock must not be poisoned")
+                    .push(partition_index);
+            },
+        )?;
+
+        // Assert
+        assert_eq!(spawn_count.get(), 0);
+        assert_eq!(
+            *scan_order
+                .lock()
+                .expect("scan order lock must not be poisoned"),
+            [0, 1]
+        );
+        assert_eq!(output.partitions.len(), 2);
+        assert_eq!(matcher.spawned_worker_count(), 0);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
     fn every_cohort_spawn_failure_precedes_delivery_and_preserves_reuse() -> Result<(), Error> {
         // Prepare / Test / Assert
         let input = mixed_cohort_input();
         let mut injected_failures = 0;
         for worker_count in [2, 3, 4, 8] {
             let matcher = mixed_cohort_test_matcher(worker_count, 9, true)?;
-            let split = matcher
-                .cohort_split_partition()
-                .expect("mixed matcher has a cohort split");
-            let spawnable_partitions = (1..split)
-                .chain(split + 1..matcher.partitions.len())
-                .collect::<Vec<_>>();
+            let spawnable_partitions = (1..matcher.partitions.len()).collect::<Vec<_>>();
             for failed_partition in spawnable_partitions {
                 let delivered = Cell::new(0_usize);
                 let before_spawn = |partition_index| {
@@ -1553,7 +1733,7 @@ mod tests {
             }
         }
 
-        assert_eq!(injected_failures, 9);
+        assert_eq!(injected_failures, 13);
         Ok(())
     }
 
@@ -1723,5 +1903,53 @@ mod tests {
     fn place(input: &mut [u16], start: usize, text: &str) {
         let encoded = text.encode_utf16().collect::<Vec<_>>();
         input[start..start + encoded.len()].copy_from_slice(&encoded);
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    struct ScanStartGate {
+        expected: usize,
+        entered: Mutex<Vec<usize>>,
+        all_entered: Condvar,
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    impl ScanStartGate {
+        fn new(expected: usize) -> Self {
+            Self {
+                expected,
+                entered: Mutex::new(Vec::with_capacity(expected)),
+                all_entered: Condvar::new(),
+            }
+        }
+
+        fn enter(&self, partition_index: usize) {
+            let mut entered = self
+                .entered
+                .lock()
+                .expect("scan-start gate must not be poisoned");
+            entered.push(partition_index);
+            if entered.len() == self.expected {
+                self.all_entered.notify_all();
+                return;
+            }
+            let (entered, _) = self
+                .all_entered
+                .wait_timeout_while(entered, Duration::from_secs(2), |entered| {
+                    entered.len() < self.expected
+                })
+                .expect("scan-start gate must not be poisoned");
+            assert_eq!(
+                entered.len(),
+                self.expected,
+                "all cohort partitions must start before any partition scans"
+            );
+        }
+
+        fn entered(&self) -> Vec<usize> {
+            self.entered
+                .lock()
+                .expect("scan-start gate must not be poisoned")
+                .clone()
+        }
     }
 }
