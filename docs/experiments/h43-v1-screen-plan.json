@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-V1-SCREEN",
+  "policy": "G9-v3",
+  "claim": "shared-storage-carrier-feasibility-only-not-admission",
+  "representation_baseline_revision": "3d48cb754d89da1359582627f743af87a86b342a",
+  "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "runner": "agogo.local",
+  "cpu_set": "0-15",
+  "timing_cycles": 3,
+  "warmup_scans": 2,
+  "retained_scans": 5,
+  "resource_cycles": 1,
+  "thresholds": {
+    "maximum_extra_allocation_calls": 64,
+    "maximum_extra_requested_bytes": 65536,
+    "maximum_preparation_regression_percent": 3.0,
+    "minimum_useful_scan_gain_percent": 5.0
+  },
+  "fixtures": [
+    {
+      "id": "mixed-balanced",
+      "pattern_family": "32 exact literals plus 32 exact line assertions",
+      "pattern_count": 64,
+      "corpus_bytes": 524288,
+      "expected_cohorts": 2,
+      "role": "shared-storage construction and balanced mixed scan target"
+    },
+    {
+      "id": "mixed-output",
+      "pattern_family": "8 duplicate consuming expressions plus 8 duplicate asserted expressions",
+      "pattern_count": 16,
+      "corpus_bytes": 16384,
+      "expected_cohorts": 2,
+      "role": "shared-storage construction and buffered-output scan target"
+    }
+  ],
+  "required_lanes": [
+    "candidate-ordinary-versus-shared-view-one-worker",
+    "exact-event-count-and-digest-parity",
+    "process-allocation-counting-outside-timed-cells",
+    "explicit-retained-byte-accounting",
+    "docker-gpu-and-host-window-guard"
+  ],
+  "preproved_local_evidence": {
+    "structural_invariant": "shared compilation adds exactly one state and no edges, predicates, terminals, or pattern IDs",
+    "semantic_comparisons": 3628,
+    "repository_ci": "pass",
+    "ordinary_scan_codegen_canonical_sha256": "c8fa56000a3a4ff069c2b8e83cd59d8edc9c5cae1bb4401b1b46cf2ed780d094"
+  }
+}
