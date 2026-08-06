@@ -183,19 +183,28 @@ impl SharedCohortMatcher {
             if view.descriptor.pattern_count == 0 {
                 continue;
             }
-            let stats = engine::scan_view_with_stats(
-                engine::ViewScanConfig {
-                    database: &self.database,
-                    root: view.descriptor.root,
-                    uses_assertions: view.descriptor.uses_assertions,
-                    prefilter: &view.prefilter,
-                    state_cache_budget: view.state_cache_budget,
-                    prefilter_enabled: self.prefilter_enabled,
-                    literal_prefilter_enabled: self.literal_prefilter_enabled,
-                },
-                input,
-                |matched| events.push(matched),
-            )?;
+            let stats = if view.descriptor.uses_assertions {
+                engine::scan_assertion_view_with_stats(
+                    &self.database,
+                    view.descriptor.root,
+                    &view.prefilter,
+                    input,
+                    self.prefilter_enabled,
+                    self.literal_prefilter_enabled,
+                    |matched| events.push(matched),
+                )?
+            } else {
+                debug_assert_eq!(view.descriptor.root, self.database.root());
+                engine::scan_with_stats(
+                    &self.database,
+                    &view.prefilter,
+                    input,
+                    view.state_cache_budget,
+                    self.prefilter_enabled,
+                    self.literal_prefilter_enabled,
+                    |matched| events.push(matched),
+                )?
+            };
             if let Some(existing) = &mut combined {
                 existing.merge_partition(stats);
             } else {

@@ -310,7 +310,7 @@ pub(crate) fn compile_shared_cohorts(
         predicates: predicates.into_boxed_slice(),
         terminal_ordinals: terminal_ordinals.into_boxed_slice(),
         pattern_ids: pattern_ids.into_boxed_slice(),
-        uses_assertions: assertion_bearing_pattern_count > 0,
+        uses_assertions: false,
     };
     Ok(SharedCohortCompilation {
         database,

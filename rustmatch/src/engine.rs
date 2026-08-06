@@ -9,18 +9,6 @@ use crate::{Error, Match, Utf16Span, Utf16Text};
 
 pub(crate) const DEFAULT_STATE_CACHE_BUDGET: usize = 8_192;
 
-#[cfg(feature = "benchmark-internals")]
-#[derive(Clone, Copy)]
-pub(crate) struct ViewScanConfig<'a> {
-    pub(crate) database: &'a PatternDatabase,
-    pub(crate) root: StateId,
-    pub(crate) uses_assertions: bool,
-    pub(crate) prefilter: &'a Prefilter,
-    pub(crate) state_cache_budget: usize,
-    pub(crate) prefilter_enabled: bool,
-    pub(crate) literal_prefilter_enabled: bool,
-}
-
 #[path = "shared_engine.rs"]
 mod shared;
 pub(crate) use shared::scan_with_shared_candidates_and_stats;
@@ -68,7 +56,7 @@ pub(crate) fn scan_with_stats(
     };
 
     if database.uses_assertions() {
-        scan_with_assertions(database, database.root(), input, &mut sink)?;
+        scan_with_assertions(database, input, &mut sink)?;
         metrics.assertion_bypasses = 1;
         metrics.prefilter_starts_scanned = units.len();
     } else {
@@ -77,7 +65,6 @@ pub(crate) fn scan_with_stats(
                 metrics.prefilter_starts_scanned = units.len();
                 scan_without_assertions_dispatch(
                     database,
-                    database.root(),
                     input,
                     state_cache_budget,
                     0..units.len(),
@@ -92,7 +79,6 @@ pub(crate) fn scan_with_stats(
                     .inspect(|_| starts_scanned += 1);
                 scan_without_assertions_dispatch(
                     database,
-                    database.root(),
                     input,
                     state_cache_budget,
                     starts,
@@ -105,7 +91,6 @@ pub(crate) fn scan_with_stats(
                 metrics.prefilter_starts_scanned = candidates.count();
                 scan_without_assertions_dispatch(
                     database,
-                    database.root(),
                     input,
                     state_cache_budget,
                     candidates.iter(),
@@ -120,17 +105,17 @@ pub(crate) fn scan_with_stats(
 }
 
 #[cfg(feature = "benchmark-internals")]
-pub(crate) fn scan_view_with_stats(
-    config: ViewScanConfig<'_>,
+pub(crate) fn scan_assertion_view_with_stats(
+    database: &PatternDatabase,
+    root: StateId,
+    prefilter: &Prefilter,
     input: &Utf16Text,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
     mut sink: impl FnMut(Match),
 ) -> Result<ScanStats, Error> {
     let units = input.units();
-    let plan = config.prefilter.plan(
-        units,
-        config.prefilter_enabled,
-        config.literal_prefilter_enabled,
-    );
+    let plan = prefilter.plan(units, prefilter_enabled, literal_prefilter_enabled);
     let mut metrics = ScanStats {
         prefilter_path: plan.path(),
         prefilter_bypass: plan.bypass(),
@@ -140,62 +125,14 @@ pub(crate) fn scan_view_with_stats(
         prefilter_candidate_starts: plan.candidate_count(),
         ..ScanStats::default()
     };
-
-    if config.uses_assertions {
-        scan_with_assertions(config.database, config.root, input, &mut sink)?;
-        metrics.assertion_bypasses = 1;
-        metrics.prefilter_starts_scanned = units.len();
-    } else {
-        match &plan {
-            ScanPlan::All { .. } => {
-                metrics.prefilter_starts_scanned = units.len();
-                scan_without_assertions_dispatch(
-                    config.database,
-                    config.root,
-                    input,
-                    config.state_cache_budget,
-                    0..units.len(),
-                    &mut metrics,
-                    &mut sink,
-                )?;
-            }
-            ScanPlan::StartTable { table, .. } => {
-                let mut starts_scanned = 0_usize;
-                let starts = (0..units.len())
-                    .filter(|&start| table.allows(units, start))
-                    .inspect(|_| starts_scanned += 1);
-                scan_without_assertions_dispatch(
-                    config.database,
-                    config.root,
-                    input,
-                    config.state_cache_budget,
-                    starts,
-                    &mut metrics,
-                    &mut sink,
-                )?;
-                metrics.prefilter_starts_scanned = starts_scanned;
-            }
-            ScanPlan::Candidates { candidates, .. } => {
-                metrics.prefilter_starts_scanned = candidates.count();
-                scan_without_assertions_dispatch(
-                    config.database,
-                    config.root,
-                    input,
-                    config.state_cache_budget,
-                    candidates.iter(),
-                    &mut metrics,
-                    &mut sink,
-                )?;
-            }
-        }
-    }
-    metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
+    scan_assertion_view(database, root, input, &mut sink)?;
+    metrics.assertion_bypasses = 1;
+    metrics.prefilter_starts_scanned = units.len();
     Ok(metrics)
 }
 
 fn scan_without_assertions_dispatch(
     database: &PatternDatabase,
-    root: StateId,
     input: &Utf16Text,
     state_cache_budget: usize,
     starts: impl Iterator<Item = usize>,
@@ -203,17 +140,9 @@ fn scan_without_assertions_dispatch(
     sink: impl FnMut(Match),
 ) -> Result<(), Error> {
     if state_cache_budget == 0 {
-        scan_without_assertions_nfa(database, root, input, starts, sink)
+        scan_without_assertions_nfa(database, input, starts, sink)
     } else {
-        scan_without_assertions_cached(
-            database,
-            root,
-            input,
-            state_cache_budget,
-            starts,
-            metrics,
-            sink,
-        )
+        scan_without_assertions_cached(database, input, state_cache_budget, starts, metrics, sink)
     }
 }
 
@@ -221,7 +150,6 @@ fn scan_without_assertions_dispatch(
 // support is pay-for-use and must not enlarge the ordinary transition path.
 fn scan_without_assertions_nfa(
     database: &PatternDatabase,
-    root: StateId,
     input: &Utf16Text,
     starts: impl Iterator<Item = usize>,
     mut sink: impl FnMut(Match),
@@ -233,7 +161,7 @@ fn scan_without_assertions_nfa(
         scratch.reset_start();
         extend_epsilon_closure(
             database,
-            root,
+            database.root(),
             &mut scratch.active,
             &mut scratch.active_seen,
             &mut scratch.stack,
@@ -291,7 +219,6 @@ fn scan_without_assertions_nfa(
 
 fn scan_without_assertions_cached(
     database: &PatternDatabase,
-    root: StateId,
     input: &Utf16Text,
     state_cache_budget: usize,
     starts: impl Iterator<Item = usize>,
@@ -300,7 +227,7 @@ fn scan_without_assertions_cached(
 ) -> Result<(), Error> {
     let units = input.units();
     let mut scratch = Scratch::new(database);
-    let mut cache = DeterministicCache::new(database, root, state_cache_budget, &mut scratch);
+    let mut cache = DeterministicCache::new(database, state_cache_budget, &mut scratch);
 
     for start in starts {
         scratch.reset_cached_start();
@@ -474,17 +401,12 @@ struct DeterministicCache {
 }
 
 impl DeterministicCache {
-    fn new(
-        database: &PatternDatabase,
-        root: StateId,
-        budget: usize,
-        scratch: &mut Scratch,
-    ) -> Self {
+    fn new(database: &PatternDatabase, budget: usize, scratch: &mut Scratch) -> Self {
         debug_assert!(budget > 0);
         scratch.reset_start();
         extend_epsilon_closure(
             database,
-            root,
+            database.root(),
             &mut scratch.active,
             &mut scratch.active_seen,
             &mut scratch.stack,
@@ -681,6 +603,74 @@ impl ScanStats {
 }
 
 fn scan_with_assertions(
+    database: &PatternDatabase,
+    input: &Utf16Text,
+    mut sink: impl FnMut(Match),
+) -> Result<(), Error> {
+    let units = input.units();
+    let mut scratch = Scratch::new(database);
+
+    for start in 0..units.len() {
+        scratch.reset_start();
+        extend_assertion_closure(
+            database,
+            database.root(),
+            AssertionPosition::before(units, start),
+            &mut scratch.active,
+            &mut scratch.active_seen,
+            &mut scratch.stack,
+        );
+
+        for (position, &symbol) in units.iter().enumerate().skip(start) {
+            scratch.reset_next();
+            let next_position = position.checked_add(1).ok_or(Error::InputTooLarge)?;
+            for &state in &scratch.active {
+                for edge in database.edges_from(state) {
+                    if database.edge_matches(edge.kind, symbol) {
+                        extend_assertion_closure(
+                            database,
+                            edge.target,
+                            AssertionPosition::after(units, next_position),
+                            &mut scratch.next,
+                            &mut scratch.next_seen,
+                            &mut scratch.stack,
+                        );
+                    }
+                }
+            }
+            let end = position_utf16(next_position)?;
+            for &state in &scratch.next {
+                for &ordinal in database.terminals_at(state) {
+                    record_terminal(
+                        &mut scratch.best_end,
+                        &mut scratch.touched_ordinals,
+                        ordinal,
+                        end,
+                    );
+                }
+            }
+            std::mem::swap(&mut scratch.active, &mut scratch.next);
+            std::mem::swap(&mut scratch.active_seen, &mut scratch.next_seen);
+            if scratch.active.is_empty() {
+                break;
+            }
+        }
+
+        let start_utf16 = position_utf16(start)?;
+        scratch.touched_ordinals.sort_unstable();
+        for &ordinal in &scratch.touched_ordinals {
+            let end_utf16 = scratch.best_end[ordinal].expect("a touched terminal has an end");
+            sink(Match::new(
+                database.pattern_id(ordinal),
+                Utf16Span::from_bounds(start_utf16, end_utf16),
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn scan_assertion_view(
     database: &PatternDatabase,
     root: StateId,
     input: &Utf16Text,
