@@ -22,6 +22,8 @@ timing_cycles=$(jq -r .timing_cycles "$plan")
 warmups=$(jq -r .warmup_scans "$plan")
 repeats=$(jq -r .retained_scans "$plan")
 runner_label="$(hostname) | $(uname -m) | cpu-set $cpu_set"
+candidate_archive=""
+candidate_manifest=""
 
 if git -C "$candidate_root" rev-parse --git-dir >/dev/null 2>&1; then
   if [[ $(git -C "$candidate_root" rev-parse HEAD) != "$candidate_revision" ]]; then
@@ -38,13 +40,20 @@ if git -C "$candidate_root" rev-parse --git-dir >/dev/null 2>&1; then
   fi
 else
   candidate_archive=${H43_V1_CANDIDATE_ARCHIVE:?set H43_V1_CANDIDATE_ARCHIVE for an archive-backed candidate}
+  candidate_manifest=${H43_V1_CANDIDATE_MANIFEST:?set H43_V1_CANDIDATE_MANIFEST for an archive-backed candidate}
   archive_revision=$(git get-tar-commit-id < "$candidate_archive")
   if [[ $archive_revision != "$candidate_revision" ]]; then
     echo "$evidence_id candidate archive revision mismatch" >&2
     exit 2
   fi
-  if ! tar --compare --file "$candidate_archive" --directory "$candidate_root" >/dev/null; then
-    echo "$evidence_id extracted candidate differs from its retained Git archive" >&2
+  if ! (cd "$candidate_root" && sha256sum --check --quiet "$candidate_manifest"); then
+    echo "$evidence_id extracted candidate fails its retained content manifest" >&2
+    exit 2
+  fi
+  manifest_files=$(wc -l < "$candidate_manifest")
+  extracted_files=$(find "$candidate_root" -type f | wc -l)
+  if [[ $manifest_files != "$extracted_files" ]]; then
+    echo "$evidence_id extracted candidate file count differs from its retained manifest" >&2
     exit 2
   fi
 fi
@@ -75,6 +84,8 @@ started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 plan_sha256=$(sha256sum "$plan" | awk '{print $1}')
 generator_sha256=$(sha256sum "$repository_root/tools/h43_d1_fixtures.py" | awk '{print $1}')
 shim_sha256=$(sha256sum "$repository_root/tools/h43_d1_alloc_shim.c" | awk '{print $1}')
+candidate_archive_sha256=${candidate_archive:+$(sha256sum "$candidate_archive" | awk '{print $1}')}
+candidate_manifest_sha256=${candidate_manifest:+$(sha256sum "$candidate_manifest" | awk '{print $1}')}
 window_error=""
 guard_pid=""
 events_pid=""
@@ -129,10 +140,13 @@ jq -n \
   --arg fixture_generator_sha256 "$generator_sha256" \
   --arg allocation_shim_sha256 "$shim_sha256" \
   --arg candidate_revision "$candidate_revision" \
+  --arg candidate_tree "$candidate_tree" \
+  --arg candidate_archive_sha256 "$candidate_archive_sha256" \
+  --arg candidate_manifest_sha256 "$candidate_manifest_sha256" \
   --arg rustc "$(rustc -Vv)" \
   --arg cargo "$(cargo -V)" \
   --argjson docker "$(docker ps -a --no-trunc --format '{{json .}}' | jq -s .)" \
-  '{schema_version:1,started_utc:$started_utc,hostname:$hostname,kernel:$kernel,plan_sha256:$plan_sha256,fixture_generator_sha256:$fixture_generator_sha256,allocation_shim_sha256:$allocation_shim_sha256,candidate_revision:$candidate_revision,rustc:$rustc,cargo:$cargo,docker:$docker}' \
+  '{schema_version:1,started_utc:$started_utc,hostname:$hostname,kernel:$kernel,plan_sha256:$plan_sha256,fixture_generator_sha256:$fixture_generator_sha256,allocation_shim_sha256:$allocation_shim_sha256,candidate_revision:$candidate_revision,candidate_tree:$candidate_tree,candidate_archive_sha256:$candidate_archive_sha256,candidate_manifest_sha256:$candidate_manifest_sha256,rustc:$rustc,cargo:$cargo,docker:$docker}' \
   > "$run_root/host/service-snapshot.json"
 lscpu > "$run_root/host/lscpu.txt"
 nvidia-smi -q 2>/dev/null > "$run_root/host/gpu-before.txt" || true
