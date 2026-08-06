@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-C1 complete; H43-C2 available; cohort compilation deferred  
+**Status:** H43-C1 and H43-C2 complete; H43-K1 available but not started<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -183,8 +183,9 @@ flowchart TB
     class L6 blocked;
     class P0 complete;
     class C1 complete;
-    class C2 available;
-    class K1,A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
+    class C2 complete;
+    class K1 available;
+    class A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E1,D1,E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
@@ -438,7 +439,7 @@ construction and scans remain byte-for-byte behaviorally equivalent.
   width boundaries, the 32-unit exact-prefix cap, worker-count invariance, and
   identical events after diagnostic inspection.
 - **Repository evidence:** `cargo xtask ci` passes the full workspace, clippy,
-  fuzz-target linting, 54 library tests, 33 public-spine tests, Java oracle and
+  fuzz-target linting, 55 library tests, 33 public-spine tests, Java oracle and
   differential fixtures, rustdoc, MSRV, HTML/ledger freshness, and benchmark
   smoke. `cargo test -p rustmatch --no-default-features` separately passes 50
   library tests, properties, the public spine, and doctests with classification
@@ -450,7 +451,7 @@ construction and scans remain byte-for-byte behaviorally equivalent.
 
 **Scope:** internal observability  
 **Level:** sea  
-**Status:** available  
+**Status:** complete<br>
 **Primary actor:** optimization engineer  
 **Supporting actors:** benchmark harness, maintainer
 
@@ -493,15 +494,66 @@ Diagnostics reveal no hidden selector and do not alter public API stability.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
-- **Decision:** pending.
+- **Result:** complete at implementation commit
+  `e00de88b81f23d5286d7109a3a5628ab91e925d6`, with the impossible-HIR golden
+  extension retained at `9934b7efb72fd5a8393e1e8433ca3561296695d0`.
+- **Report surface:** the unpublished benchmark adapter now accepts
+  `cohort-report PATTERNS.tsv`. It reads UTF-8 patterns, validates IDs and
+  syntax through `MatcherBuilder::add`, calls the on-demand C1 diagnostic, and
+  emits schema version 1. It deliberately does **not** call `build` or `scan`.
+- **Retention boundary:** reports contain stable pattern IDs, registration
+  ordinals, and FNV-1a source/expression digests rather than raw regular
+  expressions. Cohort summaries and pattern facts remain in registration
+  order. `serde(deny_unknown_fields)` rejects accidental unversioned fields.
+- **Golden evidence:**
+  `rustmatch-bench/fixtures/cohort/h43-c2-patterns.tsv` and
+  `h43-c2-expected.json` bind 18 registrations across literals, duplicate text
+  under distinct IDs, all four assertion kinds, predicates, Unicode,
+  nullability, bounded and unbounded repetition, alternation, case folding,
+  the 32-unit proof cap, and an impossible normalized HIR.
+- **Boundary evidence:** one focused mutation matrix proves the following
+  neighboring transitions without enabling execution:
+
+  | Boundary | Frozen examples | Expected diagnostic change |
+  |---|---|---|
+  | Assertion-free to assertion-bearing | `abc` / `^abc` | Cohort and `line-start` only; required prefix remains three units. |
+  | Exact literal to wildcard suffix | `abc` / `ab.` | Exact proof disappears, required prefix falls to two, and dot makes the consumed domain non-ASCII. |
+  | Exact-proof cap | 32 / 33 `x` units | Exact proof changes from 32 to absent while the conservative prefix remains capped at 32. |
+  | Finite to unbounded width | `(?:ab){2,4}` / `(?:ab)+` | Maximum status changes from finite eight units to unbounded. |
+  | Prefix filter floor | `ab` / `abc` | Filterability changes only at the existing three-unit floor. |
+  | ASCII to Unicode literal | `abc` / `é` | ASCII-domain fact changes; Unicode remains an exact one-unit UTF-16 literal. |
+  | Possible to impossible HIR | `abc` / `()` | Minimum becomes absent and maximum status becomes explicit `impossible`. |
+
+- **Proof provenance:** schema v1 records the proof algorithm for each fact:
+
+  | Fact | Conservative proof recorded in the receipt |
+  |---|---|
+  | Cohort and assertion kinds | Exhaustive walk of normalized HIR assertion nodes. |
+  | Nullability | Normalized HIR nullability metadata. |
+  | Consumed width | Conservative recursive HIR width algebra with finite, unbounded, and impossible states kept distinct. |
+  | ASCII-only domain | Exhaustive consumed-symbol and predicate-domain walk. |
+  | Necessary prefix | Conservative required-prefix derivation capped at 32 UTF-16 units. |
+  | Complexity | Saturating normalized-HIR node count. |
+
+- **Focused verification:** all 33 benchmark-adapter tests pass, including
+  golden equality, byte-stable repeated serialization, strict unknown-field
+  rejection, exact command arity, and the boundary matrix. The release command
+  exactly reproduces the checked-in golden JSON.
+- **Repository verification:** `cargo xtask ci` passes formatting, clippy,
+  fuzz-target linting, 55 library tests, 33 public-spine tests, compatibility
+  and Java differential evidence, rustdoc, MSRV, generated evidence freshness,
+  and benchmark smoke. `cargo test -p rustmatch --no-default-features`
+  separately passes 50 library tests, properties, 33 public-spine tests, and
+  doctests with all cohort/report internals absent.
+- **Decision:** C2 passes. Classification is now inspectable, hash-bound, and
+  falsifiable before it can control execution. H43-K1 is dependency-ready, but
+  no cohort matcher has been compiled and no performance claim is made here.
 
 ## H43-K1: Compile assertion-free and assertion-bearing cohorts
 
 **Scope:** matcher construction and scan orchestration  
 **Level:** sea  
-**Status:** planned  
+**Status:** available; not started<br>
 **Primary actor:** matcher builder and scanner  
 **Supporting actors:** application sink, semantic reviewer
 
@@ -1151,11 +1203,11 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1 is complete. The next best goal is **H43-C2 only**: freeze a versioned,
-deterministic diagnostic schema and golden reports while execution remains
-unchanged. H43-K1 is technically dependency-ready but intentionally deferred
-until C2 has made classification boundaries easy to inspect and review. H43-A1
-is forbidden until H43-E1 and H43-D1 explicitly authorize it.
+H43-C1 and H43-C2 are complete. The next best goal is **H43-K1 only**: compile
+assertion-free and assertion-bearing cohorts with the unchanged generic backend
+while preserving a direct one-cohort path. H43-E1 remains the semantic gate and
+must prove exact event and failure parity before H43-D1 measures plumbing cost.
+H43-A1 is forbidden until both H43-E1 and H43-D1 explicitly authorize it.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

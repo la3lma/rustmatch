@@ -7,7 +7,7 @@ main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius
 p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0043-cohort-aware-matcher-plan.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md</div></header><main><h1>B2-H-0043 cohort-aware matcher engineering plan</h1>
-<p><strong>Status:</strong> H43-C1 complete; H43-C2 available; cohort compilation deferred<br />
+<p><strong>Status:</strong> H43-C1 and H43-C2 complete; H43-K1 available but not started<br>
 <strong>Plan owner:</strong> rustmatch maintainers<br />
 <strong>Created:</strong> 2026-08-06<br />
 <strong>Current source baseline:</strong> <code>79cc8e9b4438cb4cabd482789715a16ff9a834d8</code><br />
@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/d142d3e3743774d902fbd60722df24c2a598571399bf896e317965b39d9d82c1.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/d142d3e3743774d902fbd60722df24c2a598571399bf896e317965b39d9d82c1.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/d142d3e3743774d902fbd60722df24c2a598571399bf896e317965b39d9d82c1.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/6a5ea74f574700e9be6a4e9f113f26884cbfd53ff48b4e1f0e3af39cebd5fe1d.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -268,7 +268,7 @@ duplicate text with distinct IDs, all assertion-kind facts, finite/unbounded
 width boundaries, the 32-unit exact-prefix cap, worker-count invariance, and
 identical events after diagnostic inspection.</li>
 <li><strong>Repository evidence:</strong> <code>cargo xtask ci</code> passes the full workspace, clippy,
-fuzz-target linting, 54 library tests, 33 public-spine tests, Java oracle and
+fuzz-target linting, 55 library tests, 33 public-spine tests, Java oracle and
 differential fixtures, rustdoc, MSRV, HTML/ledger freshness, and benchmark
 smoke. <code>cargo test -p rustmatch --no-default-features</code> separately passes 50
 library tests, properties, the public spine, and doctests with classification
@@ -279,7 +279,7 @@ authorize H43-K1 cohort compilation or any specialized backend.</li>
 <h2>H43-C2: Add analysis diagnostics and classifier proof tests</h2>
 <p><strong>Scope:</strong> internal observability<br />
 <strong>Level:</strong> sea<br />
-<strong>Status:</strong> available<br />
+<strong>Status:</strong> complete<br>
 <strong>Primary actor:</strong> optimization engineer<br />
 <strong>Supporting actors:</strong> benchmark harness, maintainer</p>
 <p><strong>Goal</strong></p>
@@ -316,14 +316,79 @@ unfilterable sets.</li>
 <p><strong>Dependencies:</strong> H43-C1; benchmark evidence schema conventions from B1/B2.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> not started.</li>
-<li><strong>Evidence:</strong> pending.</li>
-<li><strong>Decision:</strong> pending.</li>
+<li>
+<p><strong>Result:</strong> complete at implementation commit
+<code>e00de88b81f23d5286d7109a3a5628ab91e925d6</code>, with the impossible-HIR golden
+extension retained at <code>9934b7efb72fd5a8393e1e8433ca3561296695d0</code>.</p>
+</li>
+<li>
+<p><strong>Report surface:</strong> the unpublished benchmark adapter now accepts
+<code>cohort-report PATTERNS.tsv</code>. It reads UTF-8 patterns, validates IDs and
+syntax through <code>MatcherBuilder::add</code>, calls the on-demand C1 diagnostic, and
+emits schema version 1. It deliberately does <strong>not</strong> call <code>build</code> or <code>scan</code>.</p>
+</li>
+<li>
+<p><strong>Retention boundary:</strong> reports contain stable pattern IDs, registration
+ordinals, and FNV-1a source/expression digests rather than raw regular
+expressions. Cohort summaries and pattern facts remain in registration
+order. <code>serde(deny_unknown_fields)</code> rejects accidental unversioned fields.</p>
+</li>
+<li>
+<p><strong>Golden evidence:</strong>
+<code>rustmatch-bench/fixtures/cohort/h43-c2-patterns.tsv</code> and
+<code>h43-c2-expected.json</code> bind 18 registrations across literals, duplicate text
+under distinct IDs, all four assertion kinds, predicates, Unicode,
+nullability, bounded and unbounded repetition, alternation, case folding,
+the 32-unit proof cap, and an impossible normalized HIR.</p>
+</li>
+<li>
+<p><strong>Boundary evidence:</strong> one focused mutation matrix proves the following
+neighboring transitions without enabling execution:</p>
+<table><thead><tr><th>Boundary</th><th>Frozen examples</th><th>Expected diagnostic change</th></tr></thead><tbody>
+<tr><td>Assertion-free to assertion-bearing</td><td><code>abc</code> / <code>^abc</code></td><td>Cohort and <code>line-start</code> only; required prefix remains three units.</td></tr>
+<tr><td>Exact literal to wildcard suffix</td><td><code>abc</code> / <code>ab.</code></td><td>Exact proof disappears, required prefix falls to two, and dot makes the consumed domain non-ASCII.</td></tr>
+<tr><td>Exact-proof cap</td><td>32 / 33 <code>x</code> units</td><td>Exact proof changes from 32 to absent while the conservative prefix remains capped at 32.</td></tr>
+<tr><td>Finite to unbounded width</td><td><code>(?:ab){2,4}</code> / <code>(?:ab)+</code></td><td>Maximum status changes from finite eight units to unbounded.</td></tr>
+<tr><td>Prefix filter floor</td><td><code>ab</code> / <code>abc</code></td><td>Filterability changes only at the existing three-unit floor.</td></tr>
+<tr><td>ASCII to Unicode literal</td><td><code>abc</code> / <code>é</code></td><td>ASCII-domain fact changes; Unicode remains an exact one-unit UTF-16 literal.</td></tr>
+<tr><td>Possible to impossible HIR</td><td><code>abc</code> / <code>()</code></td><td>Minimum becomes absent and maximum status becomes explicit <code>impossible</code>.</td></tr>
+</tbody></table>
+</li>
+<li>
+<p><strong>Proof provenance:</strong> schema v1 records the proof algorithm for each fact:</p>
+<table><thead><tr><th>Fact</th><th>Conservative proof recorded in the receipt</th></tr></thead><tbody>
+<tr><td>Cohort and assertion kinds</td><td>Exhaustive walk of normalized HIR assertion nodes.</td></tr>
+<tr><td>Nullability</td><td>Normalized HIR nullability metadata.</td></tr>
+<tr><td>Consumed width</td><td>Conservative recursive HIR width algebra with finite, unbounded, and impossible states kept distinct.</td></tr>
+<tr><td>ASCII-only domain</td><td>Exhaustive consumed-symbol and predicate-domain walk.</td></tr>
+<tr><td>Necessary prefix</td><td>Conservative required-prefix derivation capped at 32 UTF-16 units.</td></tr>
+<tr><td>Complexity</td><td>Saturating normalized-HIR node count.</td></tr>
+</tbody></table>
+</li>
+<li>
+<p><strong>Focused verification:</strong> all 33 benchmark-adapter tests pass, including
+golden equality, byte-stable repeated serialization, strict unknown-field
+rejection, exact command arity, and the boundary matrix. The release command
+exactly reproduces the checked-in golden JSON.</p>
+</li>
+<li>
+<p><strong>Repository verification:</strong> <code>cargo xtask ci</code> passes formatting, clippy,
+fuzz-target linting, 55 library tests, 33 public-spine tests, compatibility
+and Java differential evidence, rustdoc, MSRV, generated evidence freshness,
+and benchmark smoke. <code>cargo test -p rustmatch --no-default-features</code>
+separately passes 50 library tests, properties, 33 public-spine tests, and
+doctests with all cohort/report internals absent.</p>
+</li>
+<li>
+<p><strong>Decision:</strong> C2 passes. Classification is now inspectable, hash-bound, and
+falsifiable before it can control execution. H43-K1 is dependency-ready, but
+no cohort matcher has been compiled and no performance claim is made here.</p>
+</li>
 </ul>
 <h2>H43-K1: Compile assertion-free and assertion-bearing cohorts</h2>
 <p><strong>Scope:</strong> matcher construction and scan orchestration<br />
 <strong>Level:</strong> sea<br />
-<strong>Status:</strong> planned<br />
+<strong>Status:</strong> available; not started<br>
 <strong>Primary actor:</strong> matcher builder and scanner<br />
 <strong>Supporting actors:</strong> application sink, semantic reviewer</p>
 <p><strong>Goal</strong></p>
@@ -891,11 +956,11 @@ cohorting is worth its fixed complexity.</p>
 <tr><td>Test cycle is too slow</td><td>Formal failures discover basic mechanism issues</td><td>Static models, microbenchmarks, phase diagnostics, focused funnel</td><td>Improve early model, but never replace final exact/formal gates.</td></tr>
 </tbody></table>
 <h2>Execution order</h2>
-<p>H43-C1 is complete. The next best goal is <strong>H43-C2 only</strong>: freeze a versioned,
-deterministic diagnostic schema and golden reports while execution remains
-unchanged. H43-K1 is technically dependency-ready but intentionally deferred
-until C2 has made classification boundaries easy to inspect and review. H43-A1
-is forbidden until H43-E1 and H43-D1 explicitly authorize it.</p>
+<p>H43-C1 and H43-C2 are complete. The next best goal is <strong>H43-K1 only</strong>: compile
+assertion-free and assertion-bearing cohorts with the unchanged generic backend
+while preserving a direct one-cohort path. H43-E1 remains the semantic gate and
+must prove exact event and failure parity before H43-D1 measures plumbing cost.
+H43-A1 is forbidden until both H43-E1 and H43-D1 explicitly authorize it.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good
