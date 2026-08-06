@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 available<br>
+**Status:** H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 active<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -186,7 +186,7 @@ flowchart TB
     class C2 complete;
     class K1 complete;
     class E1 complete;
-    class D1 available;
+    class D1 active;
     class A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
@@ -774,7 +774,7 @@ input, seed, source identity, and diagnostic report.
 
 **Scope:** diagnostic performance and resources  
 **Level:** system  
-**Status:** available evidence task
+**Status:** active<br>
 **Primary actor:** performance reviewer  
 **Supporting actors:** exclusive-host benchmark runner, profiler
 
@@ -823,8 +823,20 @@ path activation is unproved.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
+- **Result:** active on 2026-08-06.
+- **Frozen comparison:** pre-K1 baseline
+  `05992bf1f20e0f9384fc52fcb4a9863500e7a4da` versus semantically certified
+  E1 implementation `1356197d1581ad28f6cba822d91e2d6bd5aff04d`.
+- **Frozen plan:** `h43-d1-plan.json` defines fifteen alternating cycles,
+  workers `1/4/16`, four one- and two-cohort regimes, untimed resource cells,
+  compile and artifact lanes, and unchanged G9-v3 investigation/veto
+  thresholds. `tools/h43_d1_fixtures.py`, `scripts/h43-d1-campaign.sh`, and the
+  Linux allocation shim are the hash-bound controller inputs.
+- **Pre-window smoke:** all four generated fixtures have their exact planned
+  byte and pattern counts, activate the expected one or two cohorts, and emit
+  identical ordinary/cohort event counts and digests. These local observations
+  are correctness/setup checks only and are not admissible timing evidence.
+- **Evidence:** guarded Agogo measurement pending.
 - **Decision:** pending.
 
 ## H43-A1: Reconstruct H24 assertion backend in an isolated artifact
@@ -1302,9 +1314,9 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, and H43-E1 are complete. The next best goal is
-**H43-D1 only**: measure the preparation, scan, allocation, RSS, binary-size,
-compile-time, and inactive-path cost of the semantically inert cohort spine.
+H43-C1, H43-C2, H43-K1, and H43-E1 are complete. **H43-D1 is active** and is
+measuring the preparation, scan, allocation, RSS, binary-size, compile-time,
+and inactive-path cost of the semantically inert cohort spine.
 E1 authorizes measurement, not specialization. H43-A1 remains forbidden until
 H43-D1 demonstrates that the cohort abstraction is cheap and stable enough to
 carry a separately certified backend.

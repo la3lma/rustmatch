@@ -7,7 +7,7 @@ main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius
 p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0043-cohort-aware-matcher-plan.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md</div></header><main><h1>B2-H-0043 cohort-aware matcher engineering plan</h1>
-<p><strong>Status:</strong> H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 available<br>
+<p><strong>Status:</strong> H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 active<br>
 <strong>Plan owner:</strong> rustmatch maintainers<br />
 <strong>Created:</strong> 2026-08-06<br />
 <strong>Current source baseline:</strong> <code>79cc8e9b4438cb4cabd482789715a16ff9a834d8</code><br />
@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/f8a34326190d52487f58db81ca208914112b6c1f03a3880500469c36e45fdcd1.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/f8a34326190d52487f58db81ca208914112b6c1f03a3880500469c36e45fdcd1.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/f8a34326190d52487f58db81ca208914112b6c1f03a3880500469c36e45fdcd1.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/6ba91f49266cc575357df31f016ef60f3b4a0f18b9806314c4cb039597c29ad9.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -593,7 +593,7 @@ merge claim from E1 alone.</li>
 <h2>H43-D1: Measure cohort-only cost and code-layout effects</h2>
 <p><strong>Scope:</strong> diagnostic performance and resources<br />
 <strong>Level:</strong> system<br />
-<strong>Status:</strong> available evidence task
+<strong>Status:</strong> active<br>
 <strong>Primary actor:</strong> performance reviewer<br />
 <strong>Supporting actors:</strong> exclusive-host benchmark runner, profiler</p>
 <p><strong>Goal</strong></p>
@@ -636,8 +636,20 @@ are measured separately.</li>
 <p><strong>Dependencies:</strong> H43-E1; G9 evidence discipline; lessons from H9-H42.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> not started.</li>
-<li><strong>Evidence:</strong> pending.</li>
+<li><strong>Result:</strong> active on 2026-08-06.</li>
+<li><strong>Frozen comparison:</strong> pre-K1 baseline
+<code>05992bf1f20e0f9384fc52fcb4a9863500e7a4da</code> versus semantically certified
+E1 implementation <code>1356197d1581ad28f6cba822d91e2d6bd5aff04d</code>.</li>
+<li><strong>Frozen plan:</strong> <code>h43-d1-plan.json</code> defines fifteen alternating cycles,
+workers <code>1/4/16</code>, four one- and two-cohort regimes, untimed resource cells,
+compile and artifact lanes, and unchanged G9-v3 investigation/veto
+thresholds. <code>tools/h43_d1_fixtures.py</code>, <code>scripts/h43-d1-campaign.sh</code>, and the
+Linux allocation shim are the hash-bound controller inputs.</li>
+<li><strong>Pre-window smoke:</strong> all four generated fixtures have their exact planned
+byte and pattern counts, activate the expected one or two cohorts, and emit
+identical ordinary/cohort event counts and digests. These local observations
+are correctness/setup checks only and are not admissible timing evidence.</li>
+<li><strong>Evidence:</strong> guarded Agogo measurement pending.</li>
 <li><strong>Decision:</strong> pending.</li>
 </ul>
 <h2>H43-A1: Reconstruct H24 assertion backend in an isolated artifact</h2>
@@ -1053,9 +1065,9 @@ cohorting is worth its fixed complexity.</p>
 <tr><td>Test cycle is too slow</td><td>Formal failures discover basic mechanism issues</td><td>Static models, microbenchmarks, phase diagnostics, focused funnel</td><td>Improve early model, but never replace final exact/formal gates.</td></tr>
 </tbody></table>
 <h2>Execution order</h2>
-<p>H43-C1, H43-C2, H43-K1, and H43-E1 are complete. The next best goal is
-<strong>H43-D1 only</strong>: measure the preparation, scan, allocation, RSS, binary-size,
-compile-time, and inactive-path cost of the semantically inert cohort spine.
+<p>H43-C1, H43-C2, H43-K1, and H43-E1 are complete. <strong>H43-D1 is active</strong> and is
+measuring the preparation, scan, allocation, RSS, binary-size, compile-time,
+and inactive-path cost of the semantically inert cohort spine.
 E1 authorizes measurement, not specialization. H43-A1 remains forbidden until
 H43-D1 demonstrates that the cohort abstraction is cheap and stable enough to
 carry a separately certified backend.</p>
