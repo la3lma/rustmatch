@@ -242,8 +242,9 @@ measure_compile() {
     --manifest-path "$root/Cargo.toml" --package rustmatch \
     --features benchmark-internals >/dev/null
   for cycle in $(seq 1 "$compile_cycles"); do
-    CARGO_TARGET_DIR="$target" cargo clean \
-      --manifest-path "$root/Cargo.toml" --package rustmatch >/dev/null
+    # A metadata-only touch forces the measured crate to rebuild while retaining
+    # already-built dependencies and leaving the source identity unchanged.
+    touch "$root/rustmatch/src/lib.rs"
     host_checkpoint "compile-$variant-$cycle"
     /usr/bin/time -f '{"max_rss_kb":%M,"elapsed_seconds":%e,"user_seconds":%U,"system_seconds":%S,"major_faults":%F,"minor_faults":%R,"voluntary_context_switches":%w,"involuntary_context_switches":%c}' \
       -o "$run_root/build/compile-$variant/cycle-$(printf '%02d' "$cycle").json" \
