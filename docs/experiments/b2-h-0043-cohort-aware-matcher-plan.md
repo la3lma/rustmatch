@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-C1, H43-C2, and H43-K1 complete; H43-E1 available<br>
+**Status:** H43-C1, H43-C2, H43-K1, and H43-E1 complete; H43-D1 available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `79cc8e9b4438cb4cabd482789715a16ff9a834d8`  
@@ -185,9 +185,10 @@ flowchart TB
     class C1 complete;
     class C2 complete;
     class K1 complete;
-    class E1 available;
+    class E1 complete;
+    class D1 available;
     class A1,A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
-    class D1,E2 evidence;
+    class E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
 ```
@@ -676,7 +677,7 @@ specialized code runs.
 
 **Scope:** semantic gate  
 **Level:** system  
-**Status:** available evidence gate; not started<br>
+**Status:** complete<br>
 **Primary actor:** semantic reviewer  
 **Supporting actors:** Java oracle, generated test harness, fuzz harness
 
@@ -723,15 +724,57 @@ input, seed, source identity, and diagnostic report.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
-- **Decision:** pending.
+- **Result:** complete on 2026-08-06 at implementation commit
+  `1356197d1581ad28f6cba822d91e2d6bd5aff04d`.
+- **Frozen receipt:**
+  `compat/expected/h43-e1-cohort-parity-v1.json` has SHA-256
+  `16b1f607d996045f9d6ad20f5b8d26a670f19586c804cbc3e106df2bc6bbe6b1`.
+  Its deterministic campaign uses seed `0x43e12026` and records 222 cases,
+  3,628 ordinary/cohort comparisons, 5,394 reference events, and aggregate
+  event digest `fnv1a64:359bc776d9cd1aba`.
+- **Compatibility and adversarial coverage:** both modes agree with all six
+  retained Java fixture families and their hash-bound expected results. Ten
+  explicit adversarial cases and 96 generated mixed cases cover duplicate
+  text under distinct IDs, overlaps, repetitions, flags, every assertion
+  kind, nullable expressions, Unicode, supplementary characters, isolated
+  UTF-16 surrogates, empty/one-unit/64-KiB inputs, no-match and output-heavy
+  scans, and 66-pattern oversubscription.
+- **Execution matrix:** every accepted case sweeps workers
+  `1/2/3/4/8/128`, cache budgets `0/1/8192`, and two scans of each immutable
+  matcher. Mixed cases additionally prove that exactly two cohorts activate
+  and that total worker and cache budgets are conserved.
+- **Error and atomicity evidence:** ordinary and cohort construction return
+  the same typed result for no patterns, empty and malformed patterns,
+  unsupported syntax, duplicate IDs, and zero workers. Private hooks inject
+  all nine spawnable cohort-worker failures and all 19 caller/worker
+  partition panic positions across worker counts `1/2/3/4/8`; each occurs
+  before callback delivery and leaves the matcher reusable. Separate tests
+  prove sink-panic reuse and simultaneous-scan parity in both modes. Rust OOM
+  is not a recoverable public error and no allocator-failure claim is made.
+- **Independent dynamic evidence:** `cohort-parity` completed 10,000
+  libFuzzer executions from seed `264913658` in 12 seconds with 2,159
+  coverage points, 7,999 features, and no failure artifact. Focused Miri ran
+  the mixed-cohort multi-worker parity test in 41.77 seconds with no undefined
+  behavior. The strict golden command reproduced the checked-in receipt.
+- **Repository verification:** the feature-enabled suite passes 63 library
+  tests plus all integrations and doctests; the compatibility adapter passes
+  14 tests; strict Clippy passes for rustmatch, the adapter, xtask, and the new
+  fuzz target. The no-default-features build passes 50 library tests, all
+  public integrations and doctests, and strict Clippy with cohort internals
+  absent. `cargo xtask ci` passed every code, Java, MSRV, rustdoc, and evidence
+  gate; its pre-render run stopped only at the expected stale HTML mirror,
+  which this result update regenerates and re-verifies.
+- **Decision:** E1 passes. Cohorting is semantically invisible over the
+  retained, generated, adversarial, fault-injected, concurrent, and raw
+  UTF-16 evidence envelope. Authorize H43-D1 to measure cohort-only cost and
+  layout effects. Do not authorize H43-A1 specialization, selector work, or a
+  merge claim from E1 alone.
 
 ## H43-D1: Measure cohort-only cost and code-layout effects
 
 **Scope:** diagnostic performance and resources  
 **Level:** system  
-**Status:** planned evidence task  
+**Status:** available evidence task
 **Primary actor:** performance reviewer  
 **Supporting actors:** exclusive-host benchmark runner, profiler
 
@@ -1259,12 +1302,12 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, and H43-K1 are complete. The next best goal is **H43-E1 only**:
-prove broader generated, adversarial, compatibility, failure, and reuse parity
-between the ordinary and cohort modes. K1's retained smoke is implementation
-evidence, not a substitute for that semantic campaign. H43-D1 may measure
-cohort-only plumbing cost only after E1 passes. H43-A1 remains forbidden until
-both H43-E1 and H43-D1 explicitly authorize it.
+H43-C1, H43-C2, H43-K1, and H43-E1 are complete. The next best goal is
+**H43-D1 only**: measure the preparation, scan, allocation, RSS, binary-size,
+compile-time, and inactive-path cost of the semantically inert cohort spine.
+E1 authorizes measurement, not specialization. H43-A1 remains forbidden until
+H43-D1 demonstrates that the cohort abstraction is cheap and stable enough to
+carry a separately certified backend.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
