@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-V1 complete; H43-A1 available<br>
+**Status:** H43-A1 focused investigation complete; H43-A1-P1 available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -116,9 +116,14 @@ flowchart TB
 
     subgraph ASSERTION[First specialized backend]
         A1["H43-A1 Reconstruct H24 assertion backend in isolated artifact"]
+        A1P1["H43-A1-P1 Isolate the preparation spike"]
         A2["H43-A2 Tune eligibility and fallback from causal evidence"]
         S1["H43-S1 Freeze deterministic automatic selector"]
         E2["H43-E2 Run focused semantic, memory, and performance gates"]
+    end
+
+    subgraph RISK[Explicit risk-tier contingency]
+        X1["H43-X1 Freeze a two-key experimental backend contract"]
     end
 
     subgraph ADMISSION[Admission and productization]
@@ -152,7 +157,9 @@ flowchart TB
     D1R --> D1R2
     D1R2 --> V1
     V1 --> A1
-    A1 --> A2
+    A1 --> A1P1
+    A1P1 --> A2
+    A1P1 -. if conservative recovery closes .-> X1
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -196,8 +203,9 @@ flowchart TB
     class D1R complete;
     class D1R2 blocked;
     class V1 complete;
-    class A1 available;
-    class A2,S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
+    class A1 complete;
+    class A1P1 available;
+    class A2,S1,X1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
@@ -1196,7 +1204,7 @@ does not authorize H43-A1.
 
 **Scope:** candidate specialized backend  
 **Level:** sea  
-**Status:** in progress; investigation contract frozen<br>
+**Status:** complete; exact artifact rejected, mechanism investigated<br>
 **Primary actor:** optimization engineer  
 **Supporting actors:** compiler/codegen reviewer, profiler
 
@@ -1254,14 +1262,91 @@ scan planning time without changing the generic engine.
 
 **Implementation result**
 
-- **Result:** investigation started on 2026-08-07 from source baseline
-  `4e83f540edda2cbcd2d29c25549f05e692d8fec5`. The first candidate is restricted
-  to the benchmark-only shared assertion view and retains a forced generic
-  control; no automatic selector or public API is authorized.
-- **Evidence:** `docs/experiments/h43-a1-investigation-plan.json` freezes source
-  correspondence to H22/H24, exact semantics, target, neighbor, inactive,
-  preparation, allocation, RSS, and code-isolation gates before implementation.
-- **Decision:** pending.
+- **Result:** candidate `8ad52d9600cb7de3c98ee345fd82fb06f9e7d429`
+  is restricted to the benchmark-only shared assertion view and retains a
+  forced generic control. Exact target scans improved 99.510% and 99.755%
+  paired-geometrically, about 204x and 408x throughput. No event, activation,
+  allocation-call, material RSS, Docker, GPU, or host-integrity gate failed.
+- **Evidence:** the frozen contract is
+  `docs/experiments/h43-a1-investigation-plan.json`; the hash-bound focused
+  screen closed cleanly and is reviewed in
+  [h43-a1-result.md](h43-a1-result.md).
+- **Decision:** the exact candidate is machine-rejected because one transient
+  adversarial preparation pair moved the paired geometric result to a 20.366%
+  regression. The mechanism is `investigate` under the high-discrepancy rule;
+  no merge, automatic selector, or public API is authorized. H43-A1-P1 is the
+  only active conservative successor.
+
+## H43-A1-P1: Isolate the preparation spike
+
+**Scope:** causal preparation measurement<br>
+**Level:** sea<br>
+**Status:** available<br>
+**Primary actor:** evidence engineer<br>
+**Supporting actors:** compiler/codegen reviewer, allocator reviewer
+
+**Goal**
+
+Determine whether H43-A1 adds a systematic matcher-construction cost or whether
+the rejecting aggregate was produced by process-level startup interference.
+This task explains the result; it does not remove or rerun the rejected cell.
+
+**Preconditions**
+
+- H43-A1 is complete with immutable machine rejection and retained receipts.
+- The failing cycle's matcher and unrelated input preparation spikes are both
+  visible in the raw evidence.
+- Generic and specialized build entry points invoke the same shared compiler
+  and differ only in the final policy bit.
+
+**Minimal guarantee**
+
+Historical H43-A1 measurements, thresholds, and disposition remain unchanged.
+
+**Success guarantee / postconditions**
+
+- A phase-local AB/BA microscope reports construction time and allocations
+  without filesystem input preparation or process startup in the timed region.
+- At least 31 independent builds per order distinguish systematic cost from a
+  single transient spike.
+- The result either authorizes H43-A2 causal eligibility work or closes the
+  conservative automatic path.
+
+**Main success scenario**
+
+1. Freeze the candidate, compiler, fixtures, AB/BA order, repetitions, and
+   numeric interpretation before measurement.
+2. Parse each fixture once outside the timed region.
+3. Alternate generic and specialized matcher construction in one process.
+4. Record per-build time, allocation calls, requested bytes, and retained
+   database size.
+5. Repeat on the assertion target, adversarial assertion guard, and ordinary
+   literal guard.
+6. Compare static call paths and generated build symbols.
+7. Retain a written authorize/close decision without changing H43-A1.
+
+**Reject / redirect criteria**
+
+- A repeatable greater-than-three-percent specialized construction cost closes
+  automatic H43-A2 work for this representation.
+- Allocation or retained-size differences unexplained by the four-byte policy
+  field close the candidate.
+- A neutral discriminator may authorize H43-A2, but it cannot admit H43-A1 or
+  substitute for a later complete G9 campaign.
+
+**Expected evidence**
+
+- Frozen discriminator plan and source hashes.
+- Raw per-build AB/BA timings and allocation receipts.
+- Static build-path comparison and reviewed causal decision.
+
+**Dependencies:** H43-A1; unchanged G9-v3 historical ruling.
+
+**Implementation result**
+
+- **Result:** not started.
+- **Evidence:** pending.
+- **Decision:** available for execution.
 
 ## H43-A2: Tune eligibility and fallback from causal evidence
 
@@ -1589,6 +1674,73 @@ If public control is not clearly beneficial and supportable, keep it internal.
 - **Evidence:** pending.
 - **Decision:** pending.
 
+## H43-X1: Freeze a two-key experimental backend contract
+
+**Scope:** explicit opt-in risk governance and API design<br>
+**Level:** sea<br>
+**Status:** contingency; not authorized for implementation<br>
+**Primary actor:** repository owner<br>
+**Supporting actors:** API reviewer, semantic reviewer, evidence engineer
+
+**Goal**
+
+Provide a bounded route for exact but performance-risky specialization if the
+conservative automatic selector cannot pass, while keeping every default user
+on the current certified matcher.
+
+**Preconditions**
+
+- H43-A1-P1 or H43-A2 has closed the automatic path with retained evidence.
+- The specialized backend remains exact and resource-bounded.
+- The owner explicitly authorizes API design rather than threshold relaxation.
+
+**Minimal guarantee**
+
+The experimental backend requires both a non-default Cargo feature and an
+explicit runtime builder choice. Feature-disabled and runtime-off behavior is
+unchanged.
+
+**Success guarantee / postconditions**
+
+- The opt-in contract, fallback, diagnostics, SemVer status, and evidence rules
+  are reviewed before source implementation.
+- Correctness, memory safety, failure atomicity, and honest documentation remain
+  absolute gates.
+- Performance risk applies only to callers who deliberately request the policy.
+
+**Main success scenario**
+
+1. Review the [risk-tier design](h43-explicit-risk-tier-design.md).
+2. Freeze feature and runtime API names without exposing internal backend
+   structure as a permanent promise.
+3. Define static ineligibility errors and dynamic exact fallback reasons.
+4. Prove compile-time absence and runtime non-activation for default users.
+5. Run complete semantic and resource gates plus an explicitly labeled opt-in
+   performance envelope.
+6. Request a separate owner decision before publication or later promotion.
+
+**Reject criteria**
+
+- Any semantic, callback, failure, memory-safety, or reuse mismatch.
+- Any default-path dispatch, codegen, or performance effect.
+- Benchmark-specific routing or silent fallback.
+- Unbounded candidate storage or misleading universal-speed claims.
+
+**Expected evidence**
+
+- Reviewed API and SemVer record.
+- Feature-disabled and runtime-off artifact comparison.
+- Complete exactness and resource receipts.
+- Public documentation of target gains and adverse opt-in cells together.
+
+**Dependencies:** H43-A1-P1 close decision; explicit owner authorization.
+
+**Implementation result**
+
+- **Result:** design only.
+- **Evidence:** [h43-explicit-risk-tier-design.md](h43-explicit-risk-tier-design.md).
+- **Decision:** defer while the conservative discriminator remains available.
+
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
 **Scope:** durable project communication  
@@ -1673,13 +1825,15 @@ cohorting is worth its fixed complexity.
 
 ## Execution order
 
-H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, H43-D1-R2, and H43-V1 are
-complete. The two-database spine remains rejected. V1's shared-storage recovery
-passes every predeclared feasibility gate with exact events, 0-2 extra build
-allocations, preparation within three percent, and 54.95%-90.43% focused scan
-gains. H43-A1 is now available to reconstruct the assertion-specialized backend
-over this carrier; no production merge is authorized before focused and formal
-G9 admission.
+H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, H43-D1-R2, H43-V1, and the
+H43-A1 focused investigation are complete. The two-database spine remains
+rejected. H43-A1's exact artifact is also machine-rejected, while its mechanism
+remains investigated after reproducing about 204x-408x paired-geometric target
+throughput with exact events and stable resources. H43-A1-P1 is now available
+to distinguish a systematic build cost from the single correlated preparation
+spike. H43-X1 is a documented explicit-risk contingency only; no production
+merge, automatic selector, experimental API, or formal G9 campaign is
+authorized yet.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

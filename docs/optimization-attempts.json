@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-08-06",
+  "last_reviewed": "2026-08-07",
   "policy_version": "G9-v3",
   "policy_effective_date": "2026-08-04",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes certification. A demonstrated regression above 2% through 3% requires investigation and normally blocks merge. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. An explicit owner-authorized production exception may override the merge hold, but it never relabels the formal evidence as admission-eligible and must retain the adverse result and residual risk.",
@@ -539,6 +539,20 @@
       "decision": "Investigate. Authorize H43-A1 over the shared-storage carrier, but do not merge V1 or change production behavior before focused and formal G9 admission.",
       "evidence": "experiments/h43-v1-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-A1",
+      "name": "Isolated assertion-prefix backend over shared cohort storage",
+      "date": "2026-08-07",
+      "status": "investigate",
+      "baseline_revision": "4e83f540edda2cbcd2d29c25549f05e692d8fec5",
+      "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+      "summary": "Reconstruct the H24 assertion-prefix candidate scanner only inside H43-V1's benchmark-only shared assertion view, with one exact binary exposing forced generic and forced specialized modes and no production selector.",
+      "result": "Exact 1 MiB and 2 MiB assertion targets improved 99.510% and 99.755% paired-geometrically, about 204x and 408x throughput. Events and activation were exact, allocation calls were unchanged, requested bytes increased by four, and RSS remained immaterial. The frozen analyzer rejected the artifact because one of thirteen inactive adversarial preparation pairs spiked enough to make its paired geometric preparation delta 20.366%.",
+      "tradeoffs": "The rejecting cycle also raised unrelated input preparation from 0.772 ms to 10.709 ms while matcher preparation rose from 0.250 ms to 3.539 ms. The other twelve pairs clustered, specialized median preparation was 1.713% faster, both build entry points use the same compiler before storing one policy bit, and the ordinary no-feature scanner disassembly was unchanged. Post-hoc exclusion and rerunning until pass remain prohibited.",
+      "decision": "The exact artifact is machine-rejected, unmerged, and excluded from the progress graph. The mechanism is investigate under G9-v3's high-discrepancy rule. Authorize only H43-A1-P1, a phase-local preparation discriminator; retain a two-key experimental backend only as a separately governed contingency.",
+      "evidence": "experiments/h43-a1-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -675,13 +689,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-A1",
-      "name": "Assertion-specialized backend over shared cohort storage",
-      "status": "available after H43-V1 feasibility authorization",
-      "why": "The prefilter-neutral shared carrier preserves exact events, avoids duplicated construction, leaves ordinary scan codegen unchanged, and retains 54.95%-90.43% focused one-worker gains. This removes the representation blocker that prevented reconstructing H24 safely.",
-      "next_test": "Reconstruct the H24 assertion backend in an isolated benchmark-only artifact, freeze proof-based eligibility, and run exact failure/callback differentials plus target, neighbor, preparation, allocation, RSS, and inactive-path screens before any formal campaign.",
-      "expected_value": "Very high demonstrated assertion-heavy upside, medium carrier confidence, high semantic, buffering, memory, and selector risk",
-      "evidence": "experiments/h43-v1-result.md"
+      "id": "H43-A1-P1",
+      "name": "Assertion-backend preparation discriminator",
+      "status": "available after H43-A1 high-discrepancy review",
+      "why": "H43-A1 reproduced exact 204x-408x paired-geometric target throughput with unchanged allocation count and stable RSS. Its sole machine blocker is a preparation aggregate dominated by one process that simultaneously spiked unrelated input preparation; static inspection finds identical build machinery apart from a final policy bit.",
+      "next_test": "Freeze a phase-local single-process AB/BA microscope with at least 31 builds per order, parse fixtures outside the timed region, retain allocation receipts, and compare target, adversarial assertion, and ordinary literal construction. Do not alter or rerun away the rejected H43-A1 window.",
+      "expected_value": "Exceptional demonstrated assertion-heavy upside, high mechanism confidence, medium measurement confidence, and high selector/API risk",
+      "evidence": "experiments/h43-a1-result.md"
     },
     {
       "priority": 2,

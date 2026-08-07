@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H43-A1 isolated assertion-prefix backend result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h43-a1-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h43-a1-result.md</div></header><main><h1>H43-A1 isolated assertion-prefix backend result</h1>
+<p><strong>Date:</strong> 2026-08-07<br>
+<strong>Candidate:</strong> <code>8ad52d9600cb7de3c98ee345fd82fb06f9e7d429</code><br>
+<strong>Runner:</strong> <code>6bfe6c94d8d79e0a2a3de86a42c6ad16cfb95108</code><br>
+<strong>Policy:</strong> G9-v3 focused investigation, not admission<br>
+<strong>Machine disposition:</strong> rejected<br>
+<strong>Learning disposition:</strong> investigate<br>
+<strong>Production state:</strong> unchanged; no merge candidate</p>
+<h2>Decision</h2>
+<p>H43-A1 recovered the H24 mechanism over H43-V1's single shared pattern store
+without exposing an automatic selector or public API. It reproduced exceptional
+exact scan gains and kept ordinary production code out of the benchmark-only
+feature. The exact focused artifact is nevertheless machine-rejected because
+one of thirteen adversarial preparation pairs produced a 20.366% geometric
+regression under the frozen analyzer.</p>
+<p>That ruling is immutable. It does not erase the stronger causal evidence: the
+failing aggregate is dominated by one transient cycle in which specialized
+preparation rose from 0.250 ms to 3.539 ms while unrelated input preparation
+simultaneously rose from 0.772 ms to 10.709 ms. The other twelve preparation
+pairs cluster around 0.220-0.474 ms, specialized median preparation is 1.713%
+faster, allocation counts are identical, and the two build functions invoke
+the same compiler before storing one different boolean. This is a
+high-discrepancy <code>investigate</code> result, not permission to discard the outlier or
+admit the candidate.</p>
+<h2>What was tested</h2>
+<ul>
+<li>The source correspondence, eligibility rule, target cells, inactive guards,
+memory limits, and numeric thresholds were frozen before measurement.</li>
+<li>One exact benchmark binary supplied both forced-generic <code>cohort-view-1</code> and
+forced-specialized <code>cohort-assert-1</code> modes.</li>
+<li>Thirteen adjacent alternating process cycles used two warmups and five
+retained scans per mode on an exclusive <code>agogo.local</code> CPU set.</li>
+<li>Exact event digest, event count, activation, allocations, requested bytes,
+peak RSS, Docker, GPU, managed-service, and host-workload evidence were
+mandatory.</li>
+<li>Workspace tests, failure atomicity, callback-panic reuse, short-input,
+prefix-mismatch, dense-input fallback, and ordinary production codegen gates
+passed before timing.</li>
+</ul>
+<h2>Results</h2>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Generic median</th><th style="text-align: right">Specialized median</th><th style="text-align: right">Paired geometric result</th><th>Exactness / activation</th></tr></thead><tbody>
+<tr><td>assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">7.739 s</td><td style="text-align: right">37.726 ms</td><td style="text-align: right">99.510% less scan time, about 204.3x throughput</td><td>exact; activated</td></tr>
+<tr><td>assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">15.405 s</td><td style="text-align: right">37.656 ms</td><td style="text-align: right">99.755% less scan time, about 407.6x throughput</td><td>exact; activated</td></tr>
+<tr><td>adversarial assertions, 256 patterns, 1 MiB</td><td style="text-align: right">1.387 s</td><td style="text-align: right">1.398 s</td><td style="text-align: right">3.006% faster scan; 20.366% slower preparation</td><td>exact; did not activate</td></tr>
+<tr><td>ordinary literals, 1,000 patterns, 1 MiB</td><td style="text-align: right">4.189 ms</td><td style="text-align: right">4.315 ms</td><td style="text-align: right">0.776% slower scan; 2.444% slower preparation</td><td>exact; did not activate</td></tr>
+</tbody></table>
+<p>The target throughput multipliers above are derived from the paired geometric
+scan result. The direct ratio of aggregate medians is about 205.1x at 1 MiB and
+409.1x at 2 MiB. Both views are retained so the report does not imply false
+precision from one summary statistic.</p>
+<p>No cell reported an event or activation error. The specialized representation
+added zero allocation calls and four requested bytes. Peak RSS changed by
+-0.46% through 0.00%, far below the frozen one-MiB absolute materiality rule.
+The host guard recorded zero contamination lines and zero Docker events.</p>
+<h2>Why the artifact is still rejected</h2>
+<p>The frozen analyzer evaluates paired geometric preparation deltas. Adversarial
+cycle 5 measured a 1,314.5% specialized preparation spike, which is sufficient
+to move the thirteen-pair aggregate beyond the unchanged three-percent veto.
+Post-hoc removal would change the test series and is prohibited. A second
+fresh window cannot be run merely until a favorable sample appears.</p>
+<p>The raw cycle is also evidence against a systematic compiler regression:</p>
+<ul>
+<li>input preparation spiked by about 13.9x in the same specialized process;</li>
+<li>matcher preparation spiked by about 14.1x;</li>
+<li>allocation calls and usable-byte peaks remained identical;</li>
+<li>the specialized backend did not activate on this guard;</li>
+<li>the specialized preparation median across all cycles was lower; and</li>
+<li>the ordinary production scanner's canonical disassembly hash was unchanged
+between baseline and the no-feature candidate build.</li>
+</ul>
+<p>The candidate therefore remains rejected, while the mechanism receives the
+separate G9-v3 high-discrepancy <code>investigate</code> disposition.</p>
+<h2>Next conservative discriminator</h2>
+<p>H43-A1-P1 should measure construction without changing this result. Freeze a
+single-process AB/BA preparation microscope that parses the fixture once,
+alternates the two build entry points, records at least 31 independent builds
+per order, and reports allocations plus phase-local timings. Its purpose is to
+test the causal claim that preparation is identical apart from the final
+policy bit; it is not an admission substitute.</p>
+<ul>
+<li>If the discriminator finds a repeatable greater-than-three-percent build
+cost, stop automatic H43-A2 work and preserve the cause.</li>
+<li>If it is neutral and allocation-equivalent, H43-A2 may investigate static
+eligibility and density boundaries under fresh predeclared guards.</li>
+<li>Any eventual production artifact must still pass the unchanged complete
+formal campaign. This focused result cannot admit or merge code.</li>
+</ul>
+<h2>Risk-tier contingency</h2>
+<p>An explicit experimental backend remains a separate fallback if conservative
+automatic selection cannot pass. The <a href="h43-explicit-risk-tier-design.html">risk-tier design</a>
+requires both a non-default Cargo feature and a deliberate runtime builder
+choice, preserves exact fallback and all semantic gates, and keeps the current
+default artifact unchanged. It is a governance and API option, not a way to
+relabel H43-A1 or weaken its historical guardrails.</p>
+<h2>Evidence</h2>
+<ul>
+<li><a href="../evidence/h43/a1/8ad52d9/README.html">Reviewed evidence index</a></li>
+<li><a href="../../../../evidence/h43/a1/8ad52d9/frozen-plan.json">Frozen focused plan</a></li>
+<li><a href="../../../../evidence/h43/a1/8ad52d9/summary.json">Analyzer summary</a></li>
+<li><a href="../../../../evidence/h43/a1/8ad52d9/window-state.json">Window state</a></li>
+<li><a href="../../../../evidence/h43/a1/8ad52d9/analyzer-console.json">Analyzer console</a></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/h43-a1-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>
