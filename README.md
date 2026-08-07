@@ -38,40 +38,50 @@ project.
 
 ## Current performance snapshot
 
-This historical snapshot predates the new
+Fresh results for revision `7dd80c0` use the
 [two-product benchmark contract](docs/benchmarking/default-vs-experimental.md).
-Future public updates will show a primary **generic/default** panel and a
-separate, unmistakably labeled **experimental oracle** panel. The latter may
-choose the fastest exact opt-in matcher for each known workload and therefore
-demonstrates tuned capability rather than robust default behavior.
+Ratios are Rustmatch throughput divided by the retained reference throughput,
+so values above `1.0x` favor Rustmatch.
 
-The latest exact overlap snapshot measures the current H42 production source
-(`c6f221b`) against retained, unchanged Java rmatch, Rust `regex::RegexSet`,
-and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
-throughput divided by the reference throughput, so values above `1.0x` favor
-Rustmatch.
+### Generic/default
+
+This primary panel measures exactly `MatcherBuilder::new()` with no worker,
+cache, prefilter, cohort, or experimental override. It is a feature-off release
+build and uses the public default of one worker.
 
 | Reference | Contract | Exact overlap | Rust wins | Geometric mean | Median | Range |
 |---|---|---:|---:|---:|---:|---:|
-| Java rmatch | Same complete event contract | 9 groups | 9/9 | **44.543x** | 80.983x | 2.738x-126.566x |
-| Rust `regex::RegexSet` | Different output contract | 8 groups | 4/8 | **2.288x** | 1.086x | 0.194x-27.154x |
-| Hyperscan | Native-reference diagnostic | 8 groups | 2/8 | **0.308x (30.8%)** | 0.402x | 0.011x-3.637x |
+| Java rmatch | Same complete event contract | 9 groups | 9/9 | **5.539x** | 6.402x | 2.758x-6.977x |
+| Rust `regex::RegexSet` | Different output contract | 8 groups | 1/8 | **0.256x (25.6%)** | 0.498x | 0.0136x-1.447x |
+| Hyperscan | Native-reference diagnostic | 8 groups | 0/8 | **0.0424x (4.24%)** | 0.0307x | 0.0113x-0.284x |
 
-The result is competitive rather than universal: Rustmatch wins every
-same-contract Java comparison, leads RegexSet on geometric mean while splitting
-the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
-two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
-RegexSet, and 0.210x Hyperscan, so the current source improves those
-geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
-the directly comparable complete-event reference. RegexSet and Hyperscan use
-different native semantics, so those measurements are useful performance
-references rather than fairness claims.
+Rustmatch wins every same-contract Java comparison. The RegexSet and Hyperscan
+numbers are useful speed references, but their native output contracts differ
+from Rustmatch's complete `(pattern_id, start, end)` event stream. This default
+panel is intentionally less flattering than the older
+[tuned-worker H42 snapshot](docs/experiments/h42-cross-engine-snapshot.md): it
+defines a new public-default series rather than relabeling or moving the
+goalposts of that historical experiment.
 
-This is an exact nine-group admission-overlap update, not a new full-dataset
-rerun. H42's formal outcome remains `investigate` because its Wuthering guard
-was 2.111% below H11; it entered production through an explicit owner-authorized
-exception. See the [cell-level comparison, method, and retained
-receipts](docs/experiments/h42-cross-engine-snapshot.md).
+### Experimental oracle-selected capability
+
+This secondary panel is deliberately workload-tuned. It explicitly enables the
+`assertion-prefix-v1` backend after seeing the exact expressions and corpus,
+forbids fallback, and makes **no** claim about default behavior, automatic
+selection, or unseen workloads.
+
+| Workload | Public default | Experimental | Speedup | Outcome |
+|---|---:|---:|---:|---|
+| Assertion boundary, 1,000 patterns, 1 MiB | 1.009 Mbit/s | 232.207 Mbit/s | **230.05x** | Eligible and exact |
+| Assertion boundary, 1,000 patterns, 2 MiB | 1.012 Mbit/s | 461.144 Mbit/s | **455.52x** | Eligible and exact |
+| Adversarial assertions, 256 patterns, 1 MiB | 5.676 Mbit/s | N/A | N/A | Correctly refused |
+| Ordinary literals, 1,000 patterns, 1 MiB | 4,643.490 Mbit/s | N/A | N/A | Correctly refused |
+
+Each cell used five independent processes, two warmups, and five retained scans
+per process on the exclusive Agogo host. All 85 receipts passed semantic
+validation; the clean guarded window had no contamination and restored all
+services. See the [cell-level results and methodology](docs/benchmarking/default-vs-experimental-results.md)
+and the [hash-bound evidence archive](https://github.com/la3lma/rmatch-performance-measurements/tree/c2a3e25bfcfe91371902557524a81374dd87a824/docs/benchmarking/readme-default-experimental-v1).
 
 ## TL;DR
 

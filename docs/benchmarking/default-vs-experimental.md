@@ -1,6 +1,6 @@
 # Default and experimental benchmark products
 
-**Status:** contract and runners implemented; first exclusive-host campaign pending
+**Status:** contract, runners, and first exclusive-host campaign complete
 
 **Applies to:** public comparisons produced after 2026-08-07
 
@@ -141,5 +141,7 @@ experimental candidate receipts with
 Local tests cover product-identity separation, default feature isolation,
 static and dynamic experimental ineligibility, exact experimental activation,
 receipt validation, and oracle selection. These tests certify the machinery,
-not performance. New public numbers require a fresh exclusive-host campaign
-under this contract.
+not performance. The first formal campaign is published in the
+[default and experimental results](default-vs-experimental-results.md). New
+public numbers require another fresh exclusive-host campaign under this
+contract.
