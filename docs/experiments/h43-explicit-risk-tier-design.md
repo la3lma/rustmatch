@@ -1,6 +1,6 @@
 # H43 explicit assertion-prefix capability strategy
 
-**Status:** strategy mapped; source implementation not yet authorized<br>
+**Status:** X1.1 contract frozen by ADR-0009; isolated prototype authorized<br>
 **Owner direction:** preserve the measured 205x-409x scan opportunity for
 deliberate use without changing ordinary matcher performance<br>
 **Policy relationship:** additive experimental product contract; the rejected
@@ -312,8 +312,14 @@ Ring 2 requires a new frozen selector, causal near-boundary guards, and the same
 complete formal G9 campaign required of any default optimization. Every H43-A1
 rejection and every Ring 1 adverse cell remains part of that review.
 
-## Immediate next action
+## Completed discriminator and immediate next action
 
-Execute H43-A1-P1, then freeze X1.1 as an ADR. This gives the experimental path
-a principled start while retaining the current conservative investigation
-order and without touching production source prematurely.
+H43-A1-P1 completed with neutral phase-local construction effects and exact
+allocation and structure equivalence. Its [reviewed result](h43-a1-p1-result.md)
+authorizes both H43-A2 and the X1.1 contract. [ADR-0009](../adr/0009-explicit-experimental-matcher.md)
+freezes the separate-type boundary and authorizes an isolated source prototype.
+
+The next action is X1.2: extract the existing benchmark-only mechanism behind
+the versioned feature and separate matcher type, then run local exactness and
+feature-off plus feature-on/runtime-unused default-isolation gates. Do not begin
+exclusive-host utility timing until those lanes pass.

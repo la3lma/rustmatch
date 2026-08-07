@@ -7,7 +7,7 @@ main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius
 p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/b2-h-0043-cohort-aware-matcher-plan.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md</div></header><main><h1>B2-H-0043 cohort-aware matcher engineering plan</h1>
-<p><strong>Status:</strong> H43-A1 focused investigation complete; H43-A1-P1 available<br>
+<p><strong>Status:</strong> H43-A1-P1 complete; H43-A2 available; X1.1 ADR accepted<br>
 <strong>Plan owner:</strong> rustmatch maintainers<br />
 <strong>Created:</strong> 2026-08-06<br />
 <strong>Current source baseline:</strong> <code>3d48cb754d89da1359582627f743af87a86b342a</code><br />
@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/9309ca75365cc11cc79e072499ee233dc35e4a555f7e89d9ce09af0c4b0b2853.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/9309ca75365cc11cc79e072499ee233dc35e4a555f7e89d9ce09af0c4b0b2853.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/9309ca75365cc11cc79e072499ee233dc35e4a555f7e89d9ce09af0c4b0b2853.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -1041,13 +1041,13 @@ screen closed cleanly and is reviewed in
 <li><strong>Decision:</strong> the exact candidate is machine-rejected because one transient
 adversarial preparation pair moved the paired geometric result to a 20.366%
 regression. The mechanism is <code>investigate</code> under the high-discrepancy rule;
-no merge, automatic selector, or public API is authorized. H43-A1-P1 is the
-only active conservative successor.</li>
+no merge, automatic selector, or public API is authorized. H43-A1-P1 later
+resolved the causal preparation question without changing this ruling.</li>
 </ul>
 <h2>H43-A1-P1: Isolate the preparation spike</h2>
 <p><strong>Scope:</strong> causal preparation measurement<br>
 <strong>Level:</strong> sea<br>
-<strong>Status:</strong> available<br>
+<strong>Status:</strong> complete<br>
 <strong>Primary actor:</strong> evidence engineer<br>
 <strong>Supporting actors:</strong> compiler/codegen reviewer, allocator reviewer</p>
 <p><strong>Goal</strong></p>
@@ -1104,15 +1104,20 @@ substitute for a later complete G9 campaign.</li>
 <p><strong>Dependencies:</strong> H43-A1; unchanged G9-v3 historical ruling.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> not started.</li>
-<li><strong>Evidence:</strong> pending.</li>
-<li><strong>Decision:</strong> available for execution.</li>
+<li><strong>Result:</strong> the clean Agogo window retained 31 AB and 31 BA pairs for each of
+three fixtures, 372 builds total. Paired-geometric effects were <code>+0.0681%</code>,
+<code>-0.0274%</code>, and <code>+0.0057%</code>; every paired allocation count, requested-byte
+total, and retained structure was identical.</li>
+<li><strong>Evidence:</strong> <a href="h43-a1-p1-result.html">h43-a1-p1-result.md</a> and the
+<a href="../evidence/h43/a1-p1/8ad52d9/README.html">reviewed evidence package</a>.</li>
+<li><strong>Decision:</strong> authorize H43-A2 and the X1.1 ADR. Preserve H43-A1's exact
+machine rejection unchanged.</li>
 </ul>
 <h2>H43-A2: Tune eligibility and fallback from causal evidence</h2>
-<p><strong>Scope:</strong> conservative assertion-cohort eligibility<br />
-<strong>Level:</strong> sea<br />
-<strong>Status:</strong> planned<br />
-<strong>Primary actor:</strong> selector designer<br />
+<p><strong>Scope:</strong> conservative assertion-cohort eligibility<br>
+<strong>Level:</strong> sea<br>
+<strong>Status:</strong> available<br>
+<strong>Primary actor:</strong> selector designer<br>
 <strong>Supporting actors:</strong> profiler, semantic and performance reviewers</p>
 <p><strong>Goal</strong></p>
 <p>Separate the pattern/input conditions that produce assertion-backend gains
@@ -1395,7 +1400,7 @@ than silently choosing another backend.</li>
 <h2>H43-X1: Freeze a two-key experimental backend contract</h2>
 <p><strong>Scope:</strong> explicit opt-in risk governance and API design<br>
 <strong>Level:</strong> sea<br>
-<strong>Status:</strong> strategy mapped; source implementation not yet authorized<br>
+<strong>Status:</strong> complete; ADR-0009 accepted for prototype<br>
 <strong>Primary actor:</strong> repository owner<br>
 <strong>Supporting actors:</strong> API reviewer, semantic reviewer, evidence engineer</p>
 <p><strong>Goal</strong></p>
@@ -1404,7 +1409,7 @@ conservative automatic selector cannot pass, while keeping every default user
 on the current certified matcher.</p>
 <p><strong>Preconditions</strong></p>
 <ul>
-<li>H43-A1-P1 or H43-A2 has closed the automatic path with retained evidence.</li>
+<li>H43-A1-P1 has resolved the preparation question with retained evidence.</li>
 <li>The specialized backend remains exact and resource-bounded.</li>
 <li>The owner explicitly authorizes API design rather than threshold relaxation.</li>
 </ul>
@@ -1445,14 +1450,52 @@ performance envelope.</li>
 <li>Complete exactness and resource receipts.</li>
 <li>Public documentation of target gains and adverse opt-in cells together.</li>
 </ul>
-<p><strong>Dependencies:</strong> H43-A1-P1 close decision; explicit owner authorization.</p>
+<p><strong>Dependencies:</strong> H43-A1-P1 decision; explicit owner authorization.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> three-ring product boundary, separate-type API direction, and
-independent default-safety, exactness, and utility lanes are mapped.</li>
-<li><strong>Evidence:</strong> <a href="h43-explicit-risk-tier-design.html">h43-explicit-risk-tier-design.md</a>.</li>
-<li><strong>Decision:</strong> execute H43-A1-P1 next, then freeze the X1.1 API/evidence ADR;
-no production source is authorized by the strategy document alone.</li>
+<li><strong>Result:</strong> the three-ring product boundary, separate-type API, explicit scan
+policies, diagnostics, SemVer boundary, and independent default-safety,
+exactness, and utility lanes are frozen.</li>
+<li><strong>Evidence:</strong> <a href="../adr/0009-explicit-experimental-matcher.html">ADR-0009</a>, the
+<a href="h43-explicit-risk-tier-design.html">explicit capability strategy</a>, and the
+<a href="h43-a1-p1-result.html">H43-A1-P1 result</a>.</li>
+<li><strong>Decision:</strong> authorize X1.2 as an isolated benchmark-internal source
+prototype. No publication, production merge, or exclusive-host utility
+timing is authorized until local exactness and default isolation pass.</li>
+</ul>
+<h2>H43-X2: Build isolated separate-type prototype</h2>
+<p><strong>Scope:</strong> non-default experimental source boundary<br>
+<strong>Level:</strong> sea<br>
+<strong>Status:</strong> available<br>
+<strong>Primary actor:</strong> API and optimization engineer<br>
+<strong>Supporting actors:</strong> semantic reviewer, codegen reviewer</p>
+<p><strong>Goal</strong></p>
+<p>Extract the proven H43-A1 mechanism behind the versioned non-default feature
+and separate matcher type without changing normal <code>Matcher</code> layout or dispatch.</p>
+<p><strong>Preconditions</strong></p>
+<ul>
+<li>H43-A1-P1 authorizes the X1.1 ADR.</li>
+<li>ADR-0009 freezes the separate-type and explicit-policy boundaries.</li>
+<li>The existing benchmark-only mechanism remains exact and resource-bounded.</li>
+</ul>
+<p><strong>Minimal guarantee</strong></p>
+<p>Feature-off and feature-on/runtime-unused normal matcher code remains
+semantically and structurally unchanged.</p>
+<p><strong>Success guarantee / postconditions</strong></p>
+<ul>
+<li>The separate builder, matcher, errors, policies, and report compile only
+behind <code>unstable-assertion-prefix-v1</code>.</li>
+<li><code>RequireSpecialized</code> refuses before callback delivery when specialization
+cannot activate; <code>AllowExactFallback</code> reports the exact fallback reason.</li>
+<li>Local exactness, callback/failure/reuse, overflow, and feature-isolation gates
+pass before any exclusive-host timing is authorized.</li>
+</ul>
+<p><strong>Dependencies:</strong> H43-X1; ADR-0009.</p>
+<p><strong>Implementation result</strong></p>
+<ul>
+<li><strong>Result:</strong> not started.</li>
+<li><strong>Evidence:</strong> pending.</li>
+<li><strong>Decision:</strong> available for execution.</li>
 </ul>
 <h2>H43-DOC: Update ledger, comparison snapshot, and HTML universe</h2>
 <p><strong>Scope:</strong> durable project communication<br />
@@ -1529,11 +1572,11 @@ cohorting is worth its fixed complexity.</p>
 H43-A1 focused investigation are complete. The two-database spine remains
 rejected. H43-A1's exact artifact is also machine-rejected, while its mechanism
 remains investigated after reproducing about 204x-408x paired-geometric target
-throughput with exact events and stable resources. H43-A1-P1 is now available
-to distinguish a systematic build cost from the single correlated preparation
-spike. H43-X1 is a documented explicit-risk contingency only; no production
-merge, automatic selector, experimental API, or formal G9 campaign is
-authorized yet.</p>
+throughput with exact events and stable resources. H43-A1-P1 completed with
+neutral phase-local build effects and exact resource equivalence, authorizing
+H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
+isolated H43-X2 prototype are available. No production merge, publication,
+automatic selector, or formal G9 campaign is authorized yet.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good

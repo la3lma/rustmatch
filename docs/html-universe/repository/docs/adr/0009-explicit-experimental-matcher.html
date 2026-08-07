@@ -1,0 +1,152 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ADR-0009: Isolate explicit experimental matchers from the certified default · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../adr/0009-explicit-experimental-matcher.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/adr/0009-explicit-experimental-matcher.md</div></header><main><h1>ADR-0009: Isolate explicit experimental matchers from the certified default</h1>
+<ul>
+<li><strong>Status:</strong> Accepted for prototype; not accepted for publication</li>
+<li><strong>Date:</strong> 2026-08-07</li>
+<li><strong>Decision owners:</strong> rustmatch maintainers</li>
+</ul>
+<h2>Context</h2>
+<p>H43-A1 reproduced an exact assertion-prefix mechanism with about 204x and 408x
+paired-geometric target throughput at one and two MiB. Its exact focused
+artifact remains machine-rejected because one fresh-process preparation pair
+moved an inactive guard beyond the unchanged three-percent veto.</p>
+<p>H43-A1-P1 subsequently timed only the two shared-cohort build entry points in
+one process. Across 372 retained builds, its three pooled effects were
+<code>+0.0681%</code>, <code>-0.0274%</code>, and <code>+0.0057%</code>; allocations, requested bytes, and
+retained structures were identical in every pair. This resolves the causal
+preparation question but does not rewrite the H43-A1 ruling.</p>
+<p>The project wants expert callers to be able to request this narrow capability
+without adding a branch, field, layout change, or automatic selector to the
+ordinary matcher. Cargo feature unification means a feature flag alone cannot
+prove deliberate application intent.</p>
+<h2>Decision</h2>
+<p>The first source prototype will use two independent opt-in keys:</p>
+<ol>
+<li>a narrow, non-default, versioned Cargo feature named
+<code>unstable-assertion-prefix-v1</code>; and</li>
+<li>explicit construction of a separate type under
+<code>rustmatch::experimental::assertion_prefix_v1</code>.</li>
+</ol>
+<p>The normal <code>MatcherBuilder</code>, <code>Matcher</code>, and <code>Error</code> types receive no new field,
+variant, method, or scan dispatch for this capability. Enabling the feature
+without constructing the separate type must leave ordinary behavior and hot
+code unchanged.</p>
+<p>The provisional prototype surface is:</p>
+<pre><code class="language-rust,ignore">use rustmatch::experimental::assertion_prefix_v1::{
+    AssertionPrefixMatcherBuilder, ScanPolicy,
+};
+
+let mut builder = AssertionPrefixMatcherBuilder::new();
+builder.add(PatternId::new(1), r"\bABCDE[0-9]+")?;
+let matcher = builder.build()?;
+let report = matcher.scan_with_policy(
+    &amp;input,
+    ScanPolicy::RequireSpecialized,
+    |matched| matches.push(matched),
+)?;
+assert!(report.specialized_backend_activated());
+</code></pre>
+<p>Exact names may change before publication, but the separate-type and explicit
+policy boundaries may not.</p>
+<h2>Eligibility and fallback contract</h2>
+<p>Static semantic eligibility is decided at construction. Ineligible pattern
+sets return a typed experimental build error rather than silently producing an
+ordinary matcher. The v1 proof requires an assertion-bearing cohort whose
+patterns share the documented nonzero five-unit ASCII consumed prefix and meet
+the frozen minimum cohort size.</p>
+<p>Dynamic input suitability is selected explicitly on every scan:</p>
+<ul>
+<li><code>RequireSpecialized</code> returns a typed refusal before callback delivery when
+the frozen input-size or density rule would not activate specialization.</li>
+<li><code>AllowExactFallback</code> permits the current generic exact scanner and returns a
+report containing the fallback reason.</li>
+</ul>
+<p>No scan policy implements <code>Default</code>. The caller must name the desired behavior.
+Reports expose requested policy, static eligibility, activated backend,
+fallback reason, candidate count, and retained candidate bytes. No benchmark
+identity, fixture hash, expected output, timing history, or machine identity
+may participate in routing.</p>
+<h2>Error and semantic boundary</h2>
+<p>Experimental construction and scan errors live inside the versioned module and
+wrap ordinary <code>rustmatch::Error</code> where appropriate. They do not expand the
+certified default error enum merely to support an unpublished capability.</p>
+<p>The experimental label permits performance variance, not semantic variance.
+Exact event multisets, UTF-16 coordinates, assertions, callback atomicity,
+panic/reuse behavior, checked arithmetic, and bounded memory remain absolute
+gates.</p>
+<h2>Stability policy</h2>
+<p>The feature and module are not part of the default 0.1.0 surface. Before any
+crates.io publication, the project must choose one of these outcomes:</p>
+<ul>
+<li>stabilize the versioned v1 surface for the complete <code>0.1.x</code> line;</li>
+<li>move it to a separately versioned companion crate; or</li>
+<li>keep it unpublished and remove the prototype.</li>
+</ul>
+<p>The word <code>unstable</code> is a warning, not a hidden SemVer waiver. If the feature is
+published in <code>0.1.x</code>, removing or incompatibly changing its public API requires
+at least <code>0.2.0</code> and a migration note. Performance magnitude is not a SemVer
+guarantee; exact behavior and observability are.</p>
+<h2>Admission lanes</h2>
+<p>The prototype may be proposed for a non-default merge only after three
+independent lanes pass:</p>
+<ol>
+<li><strong>Default safety:</strong> feature absent and feature present/runtime-unused normal
+matcher semantics, layout, hot-symbol disassembly, and performance satisfy
+the existing G9-v3 rules.</li>
+<li><strong>Explicit exactness:</strong> differential semantics, failures, callback panic and
+reuse, overflow, allocation, RSS, and bounded-storage gates pass.</li>
+<li><strong>Explicit utility:</strong> target, boundary, fallback, adversarial, preparation,
+and total-work <code>T_build + N * T_scan</code> evidence supports the published
+capability envelope.</li>
+</ol>
+<p>Passing these lanes authorizes only the explicit v1 capability. Any future
+automatic selector requires its own full unchanged G9 campaign.</p>
+<h2>Consequences</h2>
+<ul>
+<li>Ordinary users cannot pay an experimental runtime branch or object-layout
+cost merely because another dependency enables a Cargo feature.</li>
+<li>Expert intent is visible in source and in every scan report.</li>
+<li>The exceptional target opportunity can be tested as a real product surface
+without relabeling H43-A1 or changing its benchmark series.</li>
+<li>The same compiler and engine remain private; the prototype should reuse them
+through narrow <code>pub(crate)</code> seams rather than exposing internal NFA types.</li>
+<li>A separate type duplicates a small amount of builder/API plumbing. That is
+accepted to protect the default boundary.</li>
+<li>README cross-engine numbers continue to describe the certified default. Any
+opt-in comparison must be labeled separately.</li>
+</ul>
+<h2>Rejected alternatives</h2>
+<p>Adding <code>ExperimentalBackend</code> to <code>MatcherBuilder</code> is rejected for v1 because it
+can change normal object layout and dispatch. A feature flag without a separate
+type is rejected because Cargo unification is not deliberate runtime intent.
+Silent generic fallback is rejected because it can hide the absence of the
+requested speedup. A companion crate is deferred because splitting private
+compiler machinery would create more default-code churn before demand is
+proven. Automatic selection remains blocked on full G9 evidence.</p>
+<h2>Evidence and implementation gate</h2>
+<ul>
+<li><a href="../experiments/h43-a1-result.html">H43-A1 result</a></li>
+<li><a href="../experiments/h43-a1-p1-result.html">H43-A1-P1 result</a></li>
+<li><a href="../experiments/h43-explicit-risk-tier-design.html">Explicit capability strategy</a></li>
+</ul>
+<p>This ADR authorizes a benchmark-internal source prototype and local semantic
+tests. It does not authorize publication, merge into the release baseline, or
+formal performance claims. Exclusive-host timing begins only after the source
+prototype passes local exactness and both default-isolation configurations.</p>
+</main><footer>Generated from <code>docs/adr/0009-explicit-experimental-matcher.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

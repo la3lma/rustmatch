@@ -20,6 +20,11 @@ and scan failures.</li>
 <p>Compiler, HIR, NFA, prefilter, partition, cache, and SIMD types remain private.
 The <code>benchmark-internals</code> feature exposes hidden diagnostics only for retained
 repository measurement tooling. Applications must not rely on that feature.</p>
+<p>ADR-0009 authorizes an isolated <code>unstable-assertion-prefix-v1</code> prototype behind
+a non-default feature and separate matcher type. That prototype is not part of
+the reviewed 0.1.0 surface and is not authorized for publication. Before any
+publication, its versioned API must either receive an explicit <code>0.1.x</code>
+compatibility promise, move to a companion crate, or be removed.</p>
 <p>The review confirms these deliberate contracts:</p>
 <ul>
 <li>Rejected registration does not modify or reserve an ID in the builder.</li>

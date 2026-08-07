@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-A1 focused investigation complete; H43-A1-P1 available<br>
+**Status:** H43-A1-P1 complete; H43-A2 available; X1.1 ADR accepted<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -124,6 +124,7 @@ flowchart TB
 
     subgraph RISK[Explicit risk-tier contingency]
         X1["H43-X1 Freeze a two-key experimental backend contract"]
+        X2["H43-X2 Build isolated separate-type prototype"]
     end
 
     subgraph ADMISSION[Admission and productization]
@@ -159,7 +160,8 @@ flowchart TB
     V1 --> A1
     A1 --> A1P1
     A1P1 --> A2
-    A1P1 -. if conservative recovery closes .-> X1
+    A1P1 --> X1
+    X1 --> X2
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -204,8 +206,9 @@ flowchart TB
     class D1R2 blocked;
     class V1 complete;
     class A1 complete;
-    class A1P1 available;
-    class A2,S1,X1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
+    class A1P1,X1 complete;
+    class A2,X2 available;
+    class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
     class B2,HARD,REL complete;
@@ -1274,14 +1277,14 @@ scan planning time without changing the generic engine.
 - **Decision:** the exact candidate is machine-rejected because one transient
   adversarial preparation pair moved the paired geometric result to a 20.366%
   regression. The mechanism is `investigate` under the high-discrepancy rule;
-  no merge, automatic selector, or public API is authorized. H43-A1-P1 is the
-  only active conservative successor.
+  no merge, automatic selector, or public API is authorized. H43-A1-P1 later
+  resolved the causal preparation question without changing this ruling.
 
 ## H43-A1-P1: Isolate the preparation spike
 
 **Scope:** causal preparation measurement<br>
 **Level:** sea<br>
-**Status:** available<br>
+**Status:** complete<br>
 **Primary actor:** evidence engineer<br>
 **Supporting actors:** compiler/codegen reviewer, allocator reviewer
 
@@ -1344,16 +1347,21 @@ Historical H43-A1 measurements, thresholds, and disposition remain unchanged.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
-- **Decision:** available for execution.
+- **Result:** the clean Agogo window retained 31 AB and 31 BA pairs for each of
+  three fixtures, 372 builds total. Paired-geometric effects were `+0.0681%`,
+  `-0.0274%`, and `+0.0057%`; every paired allocation count, requested-byte
+  total, and retained structure was identical.
+- **Evidence:** [h43-a1-p1-result.md](h43-a1-p1-result.md) and the
+  [reviewed evidence package](../evidence/h43/a1-p1/8ad52d9/README.md).
+- **Decision:** authorize H43-A2 and the X1.1 ADR. Preserve H43-A1's exact
+  machine rejection unchanged.
 
 ## H43-A2: Tune eligibility and fallback from causal evidence
 
-**Scope:** conservative assertion-cohort eligibility  
-**Level:** sea  
-**Status:** planned  
-**Primary actor:** selector designer  
+**Scope:** conservative assertion-cohort eligibility<br>
+**Level:** sea<br>
+**Status:** available<br>
+**Primary actor:** selector designer<br>
 **Supporting actors:** profiler, semantic and performance reviewers
 
 **Goal**
@@ -1678,7 +1686,7 @@ If public control is not clearly beneficial and supportable, keep it internal.
 
 **Scope:** explicit opt-in risk governance and API design<br>
 **Level:** sea<br>
-**Status:** strategy mapped; source implementation not yet authorized<br>
+**Status:** complete; ADR-0009 accepted for prototype<br>
 **Primary actor:** repository owner<br>
 **Supporting actors:** API reviewer, semantic reviewer, evidence engineer
 
@@ -1690,7 +1698,7 @@ on the current certified matcher.
 
 **Preconditions**
 
-- H43-A1-P1 or H43-A2 has closed the automatic path with retained evidence.
+- H43-A1-P1 has resolved the preparation question with retained evidence.
 - The specialized backend remains exact and resource-bounded.
 - The owner explicitly authorizes API design rather than threshold relaxation.
 
@@ -1733,15 +1741,60 @@ feature-present/runtime-unused normal matcher behavior is unchanged.
 - Complete exactness and resource receipts.
 - Public documentation of target gains and adverse opt-in cells together.
 
-**Dependencies:** H43-A1-P1 close decision; explicit owner authorization.
+**Dependencies:** H43-A1-P1 decision; explicit owner authorization.
 
 **Implementation result**
 
-- **Result:** three-ring product boundary, separate-type API direction, and
-  independent default-safety, exactness, and utility lanes are mapped.
-- **Evidence:** [h43-explicit-risk-tier-design.md](h43-explicit-risk-tier-design.md).
-- **Decision:** execute H43-A1-P1 next, then freeze the X1.1 API/evidence ADR;
-  no production source is authorized by the strategy document alone.
+- **Result:** the three-ring product boundary, separate-type API, explicit scan
+  policies, diagnostics, SemVer boundary, and independent default-safety,
+  exactness, and utility lanes are frozen.
+- **Evidence:** [ADR-0009](../adr/0009-explicit-experimental-matcher.md), the
+  [explicit capability strategy](h43-explicit-risk-tier-design.md), and the
+  [H43-A1-P1 result](h43-a1-p1-result.md).
+- **Decision:** authorize X1.2 as an isolated benchmark-internal source
+  prototype. No publication, production merge, or exclusive-host utility
+  timing is authorized until local exactness and default isolation pass.
+
+## H43-X2: Build isolated separate-type prototype
+
+**Scope:** non-default experimental source boundary<br>
+**Level:** sea<br>
+**Status:** available<br>
+**Primary actor:** API and optimization engineer<br>
+**Supporting actors:** semantic reviewer, codegen reviewer
+
+**Goal**
+
+Extract the proven H43-A1 mechanism behind the versioned non-default feature
+and separate matcher type without changing normal `Matcher` layout or dispatch.
+
+**Preconditions**
+
+- H43-A1-P1 authorizes the X1.1 ADR.
+- ADR-0009 freezes the separate-type and explicit-policy boundaries.
+- The existing benchmark-only mechanism remains exact and resource-bounded.
+
+**Minimal guarantee**
+
+Feature-off and feature-on/runtime-unused normal matcher code remains
+semantically and structurally unchanged.
+
+**Success guarantee / postconditions**
+
+- The separate builder, matcher, errors, policies, and report compile only
+  behind `unstable-assertion-prefix-v1`.
+- `RequireSpecialized` refuses before callback delivery when specialization
+  cannot activate; `AllowExactFallback` reports the exact fallback reason.
+- Local exactness, callback/failure/reuse, overflow, and feature-isolation gates
+  pass before any exclusive-host timing is authorized.
+
+**Dependencies:** H43-X1; ADR-0009.
+
+**Implementation result**
+
+- **Result:** not started.
+- **Evidence:** pending.
+- **Decision:** available for execution.
 
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
@@ -1831,11 +1884,11 @@ H43-C1, H43-C2, H43-K1, H43-E1, H43-D1, H43-D1-R1, H43-D1-R2, H43-V1, and the
 H43-A1 focused investigation are complete. The two-database spine remains
 rejected. H43-A1's exact artifact is also machine-rejected, while its mechanism
 remains investigated after reproducing about 204x-408x paired-geometric target
-throughput with exact events and stable resources. H43-A1-P1 is now available
-to distinguish a systematic build cost from the single correlated preparation
-spike. H43-X1 is a documented explicit-risk contingency only; no production
-merge, automatic selector, experimental API, or formal G9 campaign is
-authorized yet.
+throughput with exact events and stable resources. H43-A1-P1 completed with
+neutral phase-local build effects and exact resource equivalence, authorizing
+H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
+isolated H43-X2 prototype are available. No production merge, publication,
+automatic selector, or formal G9 campaign is authorized yet.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

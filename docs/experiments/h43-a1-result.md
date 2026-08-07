@@ -98,6 +98,12 @@ policy bit; it is not an admission substitute.
 - Any eventual production artifact must still pass the unchanged complete
   formal campaign. This focused result cannot admit or merge code.
 
+H43-A1-P1 completed on 2026-08-07. Its 372 phase-local builds found paired
+construction effects of `+0.0681%`, `-0.0274%`, and `+0.0057%`, with identical
+allocations, requested bytes, and retained structure in every pair. The
+[reviewed result](h43-a1-p1-result.md) authorizes H43-A2 and the X1.1 ADR. It
+does not change this artifact's machine rejection.
+
 ## Risk-tier contingency
 
 An explicit experimental backend remains a separate fallback if conservative
