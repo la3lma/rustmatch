@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-A1-FOCUSED-SCREEN",
+  "policy": "G9-v3-investigation",
+  "claim": "forced-generic-versus-forced-assertion-specialized-investigation-not-admission",
+  "investigation_plan_sha256": "18b458ae896ee8791b66d7a06b537a9183d188ae5c52f25fbc784e8a7cb04772",
+  "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+  "candidate_tree": "fdbd8aec276a1519e28f53f1337c689bc73cdbf8",
+  "runner": "agogo.local",
+  "cpu_set": "0-15",
+  "timing_cycles": 13,
+  "warmup_scans": 2,
+  "retained_scans": 5,
+  "resource_cycles": 1,
+  "thresholds": {
+    "minimum_target_scan_gain_percent": 5.0,
+    "investigate_regression_percent_exclusive": 2.0,
+    "maximum_guard_regression_percent": 3.0,
+    "peak_rss_absolute_materiality_bytes": 1048576,
+    "maximum_extra_build_allocation_calls": 64,
+    "maximum_extra_build_requested_bytes": 65536
+  },
+  "fixtures": [
+    {
+      "id": "target-assertion-boundary-1000-1m-w1",
+      "role": "target",
+      "pattern_file": "assertion-boundary-1000.tsv",
+      "pattern_count": 1000,
+      "pattern_sha256": "80ded42e964dcbc601cbec3dfb3eb72eb045a69ef4f3dcf82d1c6dbcdace8d9c",
+      "corpus_file": "sparse-1m.bin",
+      "corpus_bytes": 1048576,
+      "corpus_sha256": "4a71e1762bdd2a9976118c65aa8875435bef9abdd507965dbd15853d01b6948c",
+      "expected_specialized_activation": 1
+    },
+    {
+      "id": "target-assertion-boundary-1000-2m-w1",
+      "role": "target",
+      "pattern_file": "assertion-boundary-1000.tsv",
+      "pattern_count": 1000,
+      "pattern_sha256": "80ded42e964dcbc601cbec3dfb3eb72eb045a69ef4f3dcf82d1c6dbcdace8d9c",
+      "corpus_file": "sparse-2m.bin",
+      "corpus_bytes": 2097152,
+      "corpus_sha256": "25c0959ca9e93ce265a598bdd8f8199692d277d4a395875a1d621877568fa265",
+      "expected_specialized_activation": 1
+    },
+    {
+      "id": "neighbor-assertion-adversarial-256-1m-w1",
+      "role": "guard",
+      "pattern_file": "assertion-adversarial-256.tsv",
+      "pattern_count": 256,
+      "pattern_sha256": "4591a5001aeaf038cc8ad635284eda629e92af5acf3ad078791e2ff7263f5666",
+      "corpus_file": "adversarial-1m.bin",
+      "corpus_bytes": 1048576,
+      "corpus_sha256": "b1528b7884944065ff9631196c4153b633d05012384c75e835cadc29d44dbdfd",
+      "expected_specialized_activation": 0
+    },
+    {
+      "id": "guard-ordinary-literals-1000-1m-w1",
+      "role": "guard",
+      "pattern_file": "ordinary-literals-1000.tsv",
+      "pattern_count": 1000,
+      "pattern_sha256": "94271d55599e9d868aab750d38f8cbcb0fb8cf4bf00958fcabf23c4b62f91e60",
+      "corpus_file": "sparse-1m.bin",
+      "corpus_bytes": 1048576,
+      "corpus_sha256": "4a71e1762bdd2a9976118c65aa8875435bef9abdd507965dbd15853d01b6948c",
+      "expected_specialized_activation": 0
+    }
+  ],
+  "required_lanes": [
+    "same-binary-forced-generic-versus-forced-specialized",
+    "thirteen-alternating-process-cycles",
+    "exact-event-count-and-digest-parity",
+    "explicit-specialized-activation-or-fallback",
+    "construction-only-allocation-accounting",
+    "process-peak-rss-with-one-mib-materiality",
+    "docker-gpu-service-and-host-window-guard"
+  ],
+  "stop_condition": "Any semantic, activation, source, fixture, Docker, GPU, service, or host-integrity mismatch rejects the window. A target scan gain below five percent rejects this mechanism. A repeatable guard regression above three percent rejects advancement. A regression above two through three percent or a high discrepancy retains an investigate disposition. This screen cannot admit or merge H43-A1."
+}
