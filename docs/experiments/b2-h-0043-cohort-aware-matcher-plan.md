@@ -206,8 +206,8 @@ flowchart TB
     class D1R2 blocked;
     class V1 complete;
     class A1 complete;
-    class A1P1,X1 complete;
-    class A2,X2 available;
+    class A1P1,X1,X2 complete;
+    class A2 available;
     class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
     class G1,R1,G9 gate;
@@ -1360,7 +1360,7 @@ Historical H43-A1 measurements, thresholds, and disposition remain unchanged.
 
 **Scope:** conservative assertion-cohort eligibility<br>
 **Level:** sea<br>
-**Status:** available<br>
+**Status:** complete<br>
 **Primary actor:** selector designer<br>
 **Supporting actors:** profiler, semantic and performance reviewers
 
@@ -1792,9 +1792,16 @@ semantically and structurally unchanged.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
-- **Decision:** available for execution.
+- **Result:** implementation `ff1ac2f` adds the separate feature-gated builder,
+  matcher, typed errors, explicit scan policies, and activation/fallback report.
+  Six focused tests and all existing semantic suites pass. Baseline,
+  feature-off, and feature-on/runtime-unused builds have identical normal type
+  layouts, event digest, and six normalized ordinary hot-symbol hashes.
+- **Evidence:** [reviewed X2 result](h43-x2-result.md) and
+  [local certification receipt](../evidence/h43/x2/ff1ac2f/README.md).
+- **Decision:** complete. Authorize a fresh X1.5 explicit utility plan and
+  exclusive-host window. Publication, production merge, and automatic routing
+  remain unauthorized.
 
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
@@ -1887,8 +1894,10 @@ remains investigated after reproducing about 204x-408x paired-geometric target
 throughput with exact events and stable resources. H43-A1-P1 completed with
 neutral phase-local build effects and exact resource equivalence, authorizing
 H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
-isolated H43-X2 prototype are available. No production merge, publication,
-automatic selector, or formal G9 campaign is authorized yet.
+isolated H43-X2 prototype completed its local semantic and default-isolation
+gates. H43-A2 remains available, and X1.5 explicit-capability utility evidence
+is now authorized. No production merge, publication, automatic selector, or
+formal G9 campaign is authorized yet.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

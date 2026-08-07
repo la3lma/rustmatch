@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-X2-local-certification",
+  "recorded_date": "2026-08-07",
+  "disposition": "passed-local-gates",
+  "baseline_revision": "e4a7a65efe7f06aa8dbf42ca04aa1d3e7ebc4668",
+  "candidate_revision": "ff1ac2fdd0fe1370c33709aff9451c15c017f5fa",
+  "candidate_tree": "efc83981432816a98662b8ec6b40a6c2465d2407",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "target": "x86_64-apple-darwin",
+  "configurations": [
+    "baseline-feature-off",
+    "candidate-feature-off",
+    "candidate-feature-on-runtime-unused"
+  ],
+  "default_probe": {
+    "baseline-feature-off": {
+      "matcher_builder_size": 96,
+      "matcher_builder_align": 8,
+      "matcher_size": 24,
+      "matcher_align": 8,
+      "error_size": 24,
+      "error_align": 8,
+      "event_count": 4,
+      "event_digest": "9b418452fceef3cc"
+    },
+    "candidate-feature-off": {
+      "matcher_builder_size": 96,
+      "matcher_builder_align": 8,
+      "matcher_size": 24,
+      "matcher_align": 8,
+      "error_size": 24,
+      "error_align": 8,
+      "event_count": 4,
+      "event_digest": "9b418452fceef3cc"
+    },
+    "candidate-feature-on-runtime-unused": {
+      "matcher_builder_size": 96,
+      "matcher_builder_align": 8,
+      "matcher_size": 24,
+      "matcher_align": 8,
+      "error_size": 24,
+      "error_align": 8,
+      "event_count": 4,
+      "event_digest": "9b418452fceef3cc"
+    }
+  },
+  "normalized_hot_symbol_sha256": {
+    "matcher_builder_build": "c46f015a2fc91f4f7f9bde7343dc9a6ebed865491b9225b6eaa6ebc4345f76ca",
+    "matcher_builder_add_with_flags": "b9a6736fbeb36ac5cb94eef7612c174a142ecaed8850cf3623bc35d4fe98e9c1",
+    "matcher_scan_parallel": "6ffd6832aa7e4182ed0caa1dbda34b9bedad7e4f0c11b5dd89970e53dcbb5616",
+    "scan_partition": "89b8c10b59338e6488c389e917dec43321f1c983512846edcb34ee2aac949735",
+    "compute_transition": "7ae0df7489d75d0efbdad74cc6666edd80bd9fd8294c44aef81dae40671056e3",
+    "extend_epsilon_closure": "53d8d2e0b1666919f0599a41e4e292e1767cdbf4fa123402897a9c325b56a988"
+  },
+  "normalization": "llvm-objdump --demangle --no-show-raw-insn; remove instruction addresses and comments; normalize RIP displacements and absolute branch targets; hash remaining instruction text",
+  "tests": {
+    "feature_off": "passed: 51 unit, 1 miri-release, 2 property, 33 walking-spine, 1 doctest",
+    "feature_on_only": "passed: 57 unit including 6 X2 policy tests, 1 miri-release, 2 property, 33 walking-spine, 1 doctest",
+    "all_features": "passed: 79 unit, 1 miri-release, 2 property, 33 walking-spine, 1 doctest; release soak intentionally ignored",
+    "clippy_all_targets_all_features": "passed with -D warnings",
+    "rustdoc_all_features": "passed with -D warnings",
+    "workspace_ci": "passed: cargo xtask ci, including Java differential oracles, H43-E1 semantic parity, and B0 benchmark smoke"
+  },
+  "authorization": "exclusive-host X1.5 utility design and timing may begin; publication, release-baseline merge, and automatic selection remain unauthorized"
+}

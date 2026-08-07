@@ -85,7 +85,7 @@ hidden retries, or silent fallback after an externally visible failure.</li>
 <p>Color carries the same status vocabulary as the repository roadmap. Solid
 arrows are execution dependencies. Dotted arrows are evidence or policy inputs
 that do not themselves authorize execution.</p>
-<figure class="mermaid-diagram"><a href="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/63ace3a7dd74d04ddef2eb8737834f9e7b6c232bd88ca25b76da127657284c88.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/49bb659f3af80b5ac9b109e46c3d5c510fd7b7fdc718b8819612802bc2386750.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/49bb659f3af80b5ac9b109e46c3d5c510fd7b7fdc718b8819612802bc2386750.svg" alt="Task dependency graph diagram"></a><figcaption>Task dependency graph · <a href="../../../assets/mermaid/49bb659f3af80b5ac9b109e46c3d5c510fd7b7fdc718b8819612802bc2386750.svg">Open full-size SVG</a></figcaption></figure>
 <h2>Proposed runtime architecture</h2>
 <p>The classifier produces proof-bearing facts, not a backend recommendation.
 The frozen selector maps those facts and documented scan facts to eligible
@@ -1116,7 +1116,7 @@ machine rejection unchanged.</li>
 <h2>H43-A2: Tune eligibility and fallback from causal evidence</h2>
 <p><strong>Scope:</strong> conservative assertion-cohort eligibility<br>
 <strong>Level:</strong> sea<br>
-<strong>Status:</strong> available<br>
+<strong>Status:</strong> complete<br>
 <strong>Primary actor:</strong> selector designer<br>
 <strong>Supporting actors:</strong> profiler, semantic and performance reviewers</p>
 <p><strong>Goal</strong></p>
@@ -1493,9 +1493,16 @@ pass before any exclusive-host timing is authorized.</li>
 <p><strong>Dependencies:</strong> H43-X1; ADR-0009.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> not started.</li>
-<li><strong>Evidence:</strong> pending.</li>
-<li><strong>Decision:</strong> available for execution.</li>
+<li><strong>Result:</strong> implementation <code>ff1ac2f</code> adds the separate feature-gated builder,
+matcher, typed errors, explicit scan policies, and activation/fallback report.
+Six focused tests and all existing semantic suites pass. Baseline,
+feature-off, and feature-on/runtime-unused builds have identical normal type
+layouts, event digest, and six normalized ordinary hot-symbol hashes.</li>
+<li><strong>Evidence:</strong> <a href="h43-x2-result.html">reviewed X2 result</a> and
+<a href="../evidence/h43/x2/ff1ac2f/README.html">local certification receipt</a>.</li>
+<li><strong>Decision:</strong> complete. Authorize a fresh X1.5 explicit utility plan and
+exclusive-host window. Publication, production merge, and automatic routing
+remain unauthorized.</li>
 </ul>
 <h2>H43-DOC: Update ledger, comparison snapshot, and HTML universe</h2>
 <p><strong>Scope:</strong> durable project communication<br />
@@ -1575,8 +1582,10 @@ remains investigated after reproducing about 204x-408x paired-geometric target
 throughput with exact events and stable resources. H43-A1-P1 completed with
 neutral phase-local build effects and exact resource equivalence, authorizing
 H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
-isolated H43-X2 prototype are available. No production merge, publication,
-automatic selector, or formal G9 campaign is authorized yet.</p>
+isolated H43-X2 prototype completed its local semantic and default-isolation
+gates. H43-A2 remains available, and X1.5 explicit-capability utility evidence
+is now authorized. No production merge, publication, automatic selector, or
+formal G9 campaign is authorized yet.</p>
 <p>The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal
 admission gate. Early models may stop bad ideas; they may not certify good
