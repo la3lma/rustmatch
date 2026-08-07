@@ -1678,7 +1678,7 @@ If public control is not clearly beneficial and supportable, keep it internal.
 
 **Scope:** explicit opt-in risk governance and API design<br>
 **Level:** sea<br>
-**Status:** contingency; not authorized for implementation<br>
+**Status:** strategy mapped; source implementation not yet authorized<br>
 **Primary actor:** repository owner<br>
 **Supporting actors:** API reviewer, semantic reviewer, evidence engineer
 
@@ -1696,9 +1696,9 @@ on the current certified matcher.
 
 **Minimal guarantee**
 
-The experimental backend requires both a non-default Cargo feature and an
-explicit runtime builder choice. Feature-disabled and runtime-off behavior is
-unchanged.
+The experimental backend requires both a narrow non-default Cargo feature and
+construction of a separate experimental matcher type. Feature-disabled and
+feature-present/runtime-unused normal matcher behavior is unchanged.
 
 **Success guarantee / postconditions**
 
@@ -1710,9 +1710,9 @@ unchanged.
 
 **Main success scenario**
 
-1. Review the [risk-tier design](h43-explicit-risk-tier-design.md).
-2. Freeze feature and runtime API names without exposing internal backend
-   structure as a permanent promise.
+1. Review the [explicit capability strategy](h43-explicit-risk-tier-design.md).
+2. Freeze the versioned feature, separate matcher type, and scan-policy API
+   without adding fields, variants, or dispatch to normal `Matcher`.
 3. Define static ineligibility errors and dynamic exact fallback reasons.
 4. Prove compile-time absence and runtime non-activation for default users.
 5. Run complete semantic and resource gates plus an explicitly labeled opt-in
@@ -1737,9 +1737,11 @@ unchanged.
 
 **Implementation result**
 
-- **Result:** design only.
+- **Result:** three-ring product boundary, separate-type API direction, and
+  independent default-safety, exactness, and utility lanes are mapped.
 - **Evidence:** [h43-explicit-risk-tier-design.md](h43-explicit-risk-tier-design.md).
-- **Decision:** defer while the conservative discriminator remains available.
+- **Decision:** execute H43-A1-P1 next, then freeze the X1.1 API/evidence ADR;
+  no production source is authorized by the strategy document alone.
 
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 

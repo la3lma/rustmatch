@@ -101,11 +101,11 @@ policy bit; it is not an admission substitute.
 ## Risk-tier contingency
 
 An explicit experimental backend remains a separate fallback if conservative
-automatic selection cannot pass. The [risk-tier design](h43-explicit-risk-tier-design.md)
-requires both a non-default Cargo feature and a deliberate runtime builder
-choice, preserves exact fallback and all semantic gates, and keeps the current
-default artifact unchanged. It is a governance and API option, not a way to
-relabel H43-A1 or weaken its historical guardrails.
+automatic selection cannot pass. The [explicit capability strategy](h43-explicit-risk-tier-design.md)
+requires both a narrow non-default Cargo feature and deliberate construction of
+a separate matcher type, preserves exact fallback and all semantic gates, and
+keeps the current default artifact unchanged. It is a governance and API
+option, not a way to relabel H43-A1 or weaken its historical guardrails.
 
 ## Evidence
 

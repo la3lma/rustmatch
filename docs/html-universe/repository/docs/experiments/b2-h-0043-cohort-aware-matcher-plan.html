@@ -1395,7 +1395,7 @@ than silently choosing another backend.</li>
 <h2>H43-X1: Freeze a two-key experimental backend contract</h2>
 <p><strong>Scope:</strong> explicit opt-in risk governance and API design<br>
 <strong>Level:</strong> sea<br>
-<strong>Status:</strong> contingency; not authorized for implementation<br>
+<strong>Status:</strong> strategy mapped; source implementation not yet authorized<br>
 <strong>Primary actor:</strong> repository owner<br>
 <strong>Supporting actors:</strong> API reviewer, semantic reviewer, evidence engineer</p>
 <p><strong>Goal</strong></p>
@@ -1409,9 +1409,9 @@ on the current certified matcher.</p>
 <li>The owner explicitly authorizes API design rather than threshold relaxation.</li>
 </ul>
 <p><strong>Minimal guarantee</strong></p>
-<p>The experimental backend requires both a non-default Cargo feature and an
-explicit runtime builder choice. Feature-disabled and runtime-off behavior is
-unchanged.</p>
+<p>The experimental backend requires both a narrow non-default Cargo feature and
+construction of a separate experimental matcher type. Feature-disabled and
+feature-present/runtime-unused normal matcher behavior is unchanged.</p>
 <p><strong>Success guarantee / postconditions</strong></p>
 <ul>
 <li>The opt-in contract, fallback, diagnostics, SemVer status, and evidence rules
@@ -1422,9 +1422,9 @@ absolute gates.</li>
 </ul>
 <p><strong>Main success scenario</strong></p>
 <ol>
-<li>Review the <a href="h43-explicit-risk-tier-design.html">risk-tier design</a>.</li>
-<li>Freeze feature and runtime API names without exposing internal backend
-structure as a permanent promise.</li>
+<li>Review the <a href="h43-explicit-risk-tier-design.html">explicit capability strategy</a>.</li>
+<li>Freeze the versioned feature, separate matcher type, and scan-policy API
+without adding fields, variants, or dispatch to normal <code>Matcher</code>.</li>
 <li>Define static ineligibility errors and dynamic exact fallback reasons.</li>
 <li>Prove compile-time absence and runtime non-activation for default users.</li>
 <li>Run complete semantic and resource gates plus an explicitly labeled opt-in
@@ -1448,9 +1448,11 @@ performance envelope.</li>
 <p><strong>Dependencies:</strong> H43-A1-P1 close decision; explicit owner authorization.</p>
 <p><strong>Implementation result</strong></p>
 <ul>
-<li><strong>Result:</strong> design only.</li>
+<li><strong>Result:</strong> three-ring product boundary, separate-type API direction, and
+independent default-safety, exactness, and utility lanes are mapped.</li>
 <li><strong>Evidence:</strong> <a href="h43-explicit-risk-tier-design.html">h43-explicit-risk-tier-design.md</a>.</li>
-<li><strong>Decision:</strong> defer while the conservative discriminator remains available.</li>
+<li><strong>Decision:</strong> execute H43-A1-P1 next, then freeze the X1.1 API/evidence ADR;
+no production source is authorized by the strategy document alone.</li>
 </ul>
 <h2>H43-DOC: Update ledger, comparison snapshot, and HTML universe</h2>
 <p><strong>Scope:</strong> durable project communication<br />
