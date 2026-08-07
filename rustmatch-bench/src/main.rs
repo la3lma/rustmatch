@@ -10,6 +10,11 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use regex::{Regex, RegexSet};
+#[cfg(feature = "experimental-showcase")]
+use rustmatch::experimental::assertion_prefix_v1::{
+    AssertionPrefixMatcher, AssertionPrefixMatcherBuilder, BuildError as ExperimentalBuildError,
+    ScanBackend as ExperimentalScanBackend, ScanError as ExperimentalScanError, ScanPolicy,
+};
 use rustmatch::{
     Matcher, MatcherBuilder, PatternDiagnostics, PatternId, ScanDiagnostics, SharedCohortMatcher,
     Utf16Text,
@@ -77,6 +82,13 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             literal_tripwire().map(CommandOutput::Tripwire)
         }
         Some("harness-run") => harness_run_command(&mut arguments).map(CommandOutput::HarnessRun),
+        Some("generic-run") => {
+            generic_run_command(&mut arguments).map(CommandOutput::BenchmarkProduct)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        Some("experimental-run") => {
+            experimental_run_command(&mut arguments).map(CommandOutput::BenchmarkProduct)
+        }
         Some("cohort-report") => {
             cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
         }
@@ -180,6 +192,61 @@ fn harness_run_command(
     )
 }
 
+fn generic_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<BenchmarkProductReceipt, String> {
+    let (patterns, corpus, repeats, warmups) = benchmark_product_arguments(arguments)?;
+    benchmark_product_run(
+        Path::new(&patterns),
+        Path::new(&corpus),
+        repeats,
+        warmups,
+        BenchmarkProductBackend::Default,
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn experimental_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<BenchmarkProductReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let repeats = parse_positive_usize("repeat count", arguments.next())?;
+    let warmups = parse_positive_usize("warm-up count", arguments.next())?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = match backend.as_str() {
+        "assertion-prefix-v1" => BenchmarkProductBackend::AssertionPrefixV1,
+        _ => {
+            return Err(format!(
+                "unknown experimental backend {backend:?}; expected assertion-prefix-v1"
+            ));
+        }
+    };
+    benchmark_product_run(
+        Path::new(&patterns),
+        Path::new(&corpus),
+        repeats,
+        warmups,
+        backend,
+    )
+}
+
+fn benchmark_product_arguments(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<(String, String, usize, usize), String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let repeats = parse_positive_usize("repeat count", arguments.next())?;
+    let warmups = parse_positive_usize("warm-up count", arguments.next())?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    Ok((patterns, corpus, repeats, warmups))
+}
+
 fn cohort_report_command(
     arguments: &mut impl Iterator<Item = String>,
 ) -> Result<CohortReportReceipt, String> {
@@ -203,7 +270,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -296,6 +363,363 @@ fn harness_run(
         diagnostics: diagnostics.into(),
         correctness: "pass",
     })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BenchmarkProductBackend {
+    Default,
+    #[cfg(feature = "experimental-showcase")]
+    AssertionPrefixV1,
+}
+
+fn benchmark_product_run(
+    pattern_path: &Path,
+    corpus_path: &Path,
+    repeats: usize,
+    warmups: usize,
+    backend: BenchmarkProductBackend,
+) -> Result<BenchmarkProductReceipt, String> {
+    let input_started = Instant::now();
+    let pattern_bytes = fs::read(pattern_path).map_err(|error| {
+        format!(
+            "could not read benchmark-product patterns {}: {error}",
+            pattern_path.display()
+        )
+    })?;
+    let corpus_bytes = fs::read(corpus_path).map_err(|error| {
+        format!(
+            "could not read benchmark-product corpus {}: {error}",
+            corpus_path.display()
+        )
+    })?;
+    let fixture = HarnessFixture::from_bytes(&pattern_bytes, &corpus_bytes)?;
+    let input_prepare_ns = nanos(input_started.elapsed());
+
+    match backend {
+        BenchmarkProductBackend::Default => {
+            benchmark_default_product(&fixture, input_prepare_ns, repeats, warmups)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        BenchmarkProductBackend::AssertionPrefixV1 => {
+            benchmark_assertion_prefix_product(&fixture, input_prepare_ns, repeats, warmups)
+        }
+    }
+}
+
+fn benchmark_default_product(
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    repeats: usize,
+    warmups: usize,
+) -> Result<BenchmarkProductReceipt, String> {
+    let prepare_started = Instant::now();
+    let matcher = build_harness_matcher(&fixture.patterns, HarnessMode::Single)?;
+    let prepare_ns = nanos(prepare_started.elapsed());
+    let measurements = measure_harness_scans(
+        warmups,
+        repeats,
+        || {
+            let (summary, diagnostics) =
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+            Ok(((summary, diagnostics), summary.count))
+        },
+        || harness_event_count(&matcher, &fixture.input),
+    )?;
+    let (summary, diagnostics) = measurements.evidence;
+    measured_product_receipt(
+        BenchmarkProductMetadata::generic_default(),
+        fixture,
+        MeasuredProductEvidence {
+            input_prepare_ns,
+            prepare_ns,
+            warmup_ns: measurements.warmup_ns,
+            scan_ns: measurements.scan_ns,
+            summary,
+            diagnostics: Some(diagnostics.into()),
+            backend_activation: None,
+        },
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn benchmark_assertion_prefix_product(
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    repeats: usize,
+    warmups: usize,
+) -> Result<BenchmarkProductReceipt, String> {
+    let metadata = BenchmarkProductMetadata::assertion_prefix_v1();
+    let prepare_started = Instant::now();
+    let mut builder = AssertionPrefixMatcherBuilder::new();
+    for pattern in &fixture.patterns {
+        builder
+            .add(pattern.id, &pattern.expression)
+            .map_err(|error| {
+                format!(
+                    "experimental pattern {} was rejected during registration: {error}",
+                    pattern.id
+                )
+            })?;
+    }
+    let matcher = match builder.build() {
+        Ok(matcher) => matcher,
+        Err(ExperimentalBuildError::Ineligible(reason)) => {
+            return Ok(ineligible_product_receipt(
+                metadata,
+                fixture,
+                input_prepare_ns,
+                nanos(prepare_started.elapsed()),
+                "static",
+                reason.to_string(),
+            ));
+        }
+        Err(error) => {
+            return Err(format!(
+                "experimental assertion-prefix matcher build failed: {error}"
+            ));
+        }
+    };
+    let prepare_ns = nanos(prepare_started.elapsed());
+    let first_started = Instant::now();
+    let (summary, first_report) = match assertion_prefix_event_summary(&matcher, &fixture.input) {
+        Ok(evidence) => evidence,
+        Err(ExperimentalScanError::SpecializationUnavailable { reason }) => {
+            return Ok(ineligible_product_receipt(
+                metadata,
+                fixture,
+                input_prepare_ns,
+                prepare_ns,
+                "dynamic",
+                format!("{reason:?}"),
+            ));
+        }
+        Err(error) => {
+            return Err(format!(
+                "experimental assertion-prefix activation scan failed: {error}"
+            ));
+        }
+    };
+    let first_ns = nanos(first_started.elapsed());
+    let mut warmup_ns = Vec::with_capacity(warmups);
+    let mut scan_ns = Vec::with_capacity(repeats);
+    if warmups == 0 {
+        scan_ns.push(first_ns);
+    } else {
+        warmup_ns.push(first_ns);
+    }
+    while warmup_ns.len() < warmups {
+        let started = Instant::now();
+        let count = assertion_prefix_event_count(&matcher, &fixture.input)?;
+        warmup_ns.push(nanos(started.elapsed()));
+        validate_harness_count("experimental warm-up", count, summary.count)?;
+    }
+    while scan_ns.len() < repeats {
+        let started = Instant::now();
+        let count = assertion_prefix_event_count(&matcher, &fixture.input)?;
+        scan_ns.push(nanos(started.elapsed()));
+        validate_harness_count("experimental measurement", count, summary.count)?;
+    }
+    let eligibility = first_report.static_eligibility();
+    measured_product_receipt(
+        metadata,
+        fixture,
+        MeasuredProductEvidence {
+            input_prepare_ns,
+            prepare_ns,
+            warmup_ns,
+            scan_ns,
+            summary,
+            diagnostics: None,
+            backend_activation: Some(BackendActivationReceipt {
+                activated_backend: match first_report.activated_backend() {
+                    ExperimentalScanBackend::AssertionPrefixV1 => "assertion-prefix-v1",
+                    ExperimentalScanBackend::GenericExactFallback => "generic-exact-fallback",
+                    _ => "unknown-nonexhaustive-backend",
+                },
+                assertion_pattern_count: eligibility.assertion_pattern_count(),
+                shared_ascii_prefix: String::from_utf8_lossy(&eligibility.shared_ascii_prefix())
+                    .into_owned(),
+                candidate_count: first_report.candidate_count(),
+                candidate_bytes: first_report.candidate_bytes(),
+            }),
+        },
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_event_summary(
+    matcher: &AssertionPrefixMatcher,
+    input: &Utf16Text,
+) -> Result<
+    (
+        EventSummary,
+        rustmatch::experimental::assertion_prefix_v1::ScanReport,
+    ),
+    ExperimentalScanError,
+> {
+    let mut summary = EventSummary::default();
+    let report = matcher.scan_with_policy(input, ScanPolicy::RequireSpecialized, |event| {
+        summary.add(&Event {
+            pattern_id: event.pattern_id().get(),
+            start: event.span().start(),
+            end: event.span().end(),
+        });
+    })?;
+    Ok((summary, report))
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_event_count(
+    matcher: &AssertionPrefixMatcher,
+    input: &Utf16Text,
+) -> Result<usize, String> {
+    let mut count = 0_usize;
+    let report = matcher
+        .scan_with_policy(input, ScanPolicy::RequireSpecialized, |_| count += 1)
+        .map_err(|error| format!("experimental assertion-prefix scan failed: {error}"))?;
+    if !report.specialized_backend_activated() {
+        return Err("experimental assertion-prefix scan unexpectedly fell back".to_owned());
+    }
+    Ok(count)
+}
+
+fn measured_product_receipt(
+    metadata: BenchmarkProductMetadata,
+    fixture: &HarnessFixture,
+    evidence: MeasuredProductEvidence,
+) -> Result<BenchmarkProductReceipt, String> {
+    let median_scan_ns = median(&mut evidence.scan_ns.clone());
+    if median_scan_ns == 0 {
+        return Err("benchmark-product median scan time must be positive".to_owned());
+    }
+    let throughput_bytes = u32::try_from(fixture.corpus_bytes).map_err(|_| {
+        "benchmark-product corpus exceeds the 4 GiB throughput-reporting limit".to_owned()
+    })?;
+    let throughput_nanos = u64::try_from(median_scan_ns)
+        .map_err(|_| "benchmark-product scan duration exceeds u64 nanoseconds".to_owned())?;
+    let throughput_mbit_per_second = f64::from(throughput_bytes) * 8.0
+        / Duration::from_nanos(throughput_nanos).as_secs_f64()
+        / 1_000_000.0;
+    Ok(BenchmarkProductReceipt {
+        schema_version: 1,
+        runner_version: "rustmatch-benchmark-product-v1",
+        engine: metadata.engine,
+        benchmark_product: metadata.benchmark_product,
+        selection_policy: metadata.selection_policy,
+        workload_tuned: metadata.workload_tuned,
+        robustness_claim: metadata.robustness_claim,
+        selected_backend: metadata.selected_backend,
+        feature_profile: metadata.feature_profile,
+        candidate_status: "measured",
+        ineligibility: None,
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_units: fixture.input.as_units().len(),
+        input_prepare_ns: evidence.input_prepare_ns,
+        prepare_ns: evidence.prepare_ns,
+        warmup_ns: evidence.warmup_ns,
+        scan_ns: evidence.scan_ns,
+        median_scan_ns: Some(median_scan_ns),
+        throughput_mbit_per_second: Some(throughput_mbit_per_second),
+        matches_per_iteration: Some(evidence.summary.count),
+        event_digest: Some(evidence.summary.digest()),
+        diagnostics: evidence.diagnostics,
+        backend_activation: evidence.backend_activation,
+        correctness: "pass",
+    })
+}
+
+#[derive(Debug)]
+struct MeasuredProductEvidence {
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+    summary: EventSummary,
+    diagnostics: Option<CacheDiagnosticsReceipt>,
+    backend_activation: Option<BackendActivationReceipt>,
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn ineligible_product_receipt(
+    metadata: BenchmarkProductMetadata,
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    stage: &'static str,
+    reason: String,
+) -> BenchmarkProductReceipt {
+    BenchmarkProductReceipt {
+        schema_version: 1,
+        runner_version: "rustmatch-benchmark-product-v1",
+        engine: metadata.engine,
+        benchmark_product: metadata.benchmark_product,
+        selection_policy: metadata.selection_policy,
+        workload_tuned: metadata.workload_tuned,
+        robustness_claim: metadata.robustness_claim,
+        selected_backend: metadata.selected_backend,
+        feature_profile: metadata.feature_profile,
+        candidate_status: "ineligible",
+        ineligibility: Some(IneligibilityReceipt { stage, reason }),
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_units: fixture.input.as_units().len(),
+        input_prepare_ns,
+        prepare_ns,
+        warmup_ns: Vec::new(),
+        scan_ns: Vec::new(),
+        median_scan_ns: None,
+        throughput_mbit_per_second: None,
+        matches_per_iteration: None,
+        event_digest: None,
+        diagnostics: None,
+        backend_activation: None,
+        correctness: "not-run-ineligible",
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct BenchmarkProductMetadata {
+    engine: &'static str,
+    benchmark_product: &'static str,
+    selection_policy: &'static str,
+    workload_tuned: bool,
+    robustness_claim: &'static str,
+    selected_backend: &'static str,
+    feature_profile: &'static str,
+}
+
+impl BenchmarkProductMetadata {
+    const fn generic_default() -> Self {
+        Self {
+            engine: "rustmatch-rust-default",
+            benchmark_product: "generic-default-v1",
+            selection_policy: "none-default-settings",
+            workload_tuned: false,
+            robustness_claim: "default-behavior-over-published-matrix",
+            selected_backend: "default",
+            feature_profile: "benchmark-internals;no-experimental-features",
+        }
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    const fn assertion_prefix_v1() -> Self {
+        Self {
+            engine: "rustmatch-rust-experimental",
+            benchmark_product: "experimental-oracle-candidate-v1",
+            selection_policy: "externally-retrospective-best-exact-per-cell",
+            workload_tuned: true,
+            robustness_claim: "none-workload-specific-capability-only",
+            selected_backend: "assertion-prefix-v1",
+            feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -2543,6 +2967,7 @@ enum CommandOutput {
     Smoke(SmokeReceipt),
     Tripwire(TripwireReceipt),
     HarnessRun(HarnessRunReceipt),
+    BenchmarkProduct(BenchmarkProductReceipt),
     CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
@@ -2553,6 +2978,59 @@ enum CommandOutput {
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
+}
+
+#[derive(Debug, Serialize)]
+struct BenchmarkProductReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    engine: &'static str,
+    benchmark_product: &'static str,
+    selection_policy: &'static str,
+    workload_tuned: bool,
+    robustness_claim: &'static str,
+    selected_backend: &'static str,
+    feature_profile: &'static str,
+    candidate_status: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ineligibility: Option<IneligibilityReceipt>,
+    revision: String,
+    rust_version: String,
+    expression_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    median_scan_ns: Option<u128>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    throughput_mbit_per_second: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    matches_per_iteration: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    event_digest: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    diagnostics: Option<CacheDiagnosticsReceipt>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    backend_activation: Option<BackendActivationReceipt>,
+    correctness: &'static str,
+}
+
+#[derive(Debug, Serialize)]
+struct IneligibilityReceipt {
+    stage: &'static str,
+    reason: String,
+}
+
+#[derive(Debug, Serialize)]
+struct BackendActivationReceipt {
+    activated_backend: &'static str,
+    assertion_pattern_count: usize,
+    shared_ascii_prefix: String,
+    candidate_count: usize,
+    candidate_bytes: usize,
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -3179,21 +3657,166 @@ struct ComparisonReceipt {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "experimental-showcase")]
+    use super::benchmark_assertion_prefix_product;
     use super::{
-        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, CohortReportReceipt, Event,
-        HarnessFixture, HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture,
-        SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt,
-        build_harness_matcher, cohort_report_command, cohort_report_from_bytes, compare_i6,
-        compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
-        expand_corpus, format_unix_timestamp_utc, harness_event_count,
+        BenchmarkProductMetadata, CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture,
+        CohortReportReceipt, Event, HarnessFixture, HarnessMode, I6ScanReceipt, I7ScanReceipt,
+        LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt,
+        TripwireReceipt, benchmark_default_product, build_harness_matcher, cohort_report_command,
+        cohort_report_from_bytes, compare_i6, compare_i7, compare_i7_wuthering, compare_tripwire,
+        compare_wuthering_tripwire, expand_corpus, format_unix_timestamp_utc, harness_event_count,
         harness_event_summary_with_diagnostics, measure_harness_scans, regex_events,
         render_scale_report, select_literal_patterns,
     };
     use regex::{Regex, RegexSet};
+    #[cfg(feature = "experimental-showcase")]
+    use std::fmt::Write as _;
     use std::{cell::Cell, fs, process};
 
     const H43_C2_PATTERNS: &[u8] = include_bytes!("../fixtures/cohort/h43-c2-patterns.tsv");
     const H43_C2_EXPECTED: &str = include_str!("../fixtures/cohort/h43-c2-expected.json");
+
+    #[test]
+    fn generic_product_is_explicitly_default_and_not_workload_tuned() -> Result<(), String> {
+        // Prepare
+        let fixture = HarnessFixture::from_bytes(b"1\tcat\n2\tdog\n", b"cat and dog")?;
+
+        // Test
+        let receipt = benchmark_default_product(&fixture, 1, 1, 1)?;
+
+        // Assert
+        assert_eq!(receipt.engine, "rustmatch-rust-default");
+        assert_eq!(receipt.benchmark_product, "generic-default-v1");
+        assert_eq!(receipt.selection_policy, "none-default-settings");
+        assert!(!receipt.workload_tuned);
+        assert_eq!(receipt.selected_backend, "default");
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.matches_per_iteration, Some(2));
+        assert_eq!(receipt.correctness, "pass");
+        assert!(receipt.diagnostics.is_some());
+        assert!(receipt.backend_activation.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn benchmark_product_metadata_never_conflates_generic_and_experimental() {
+        // Prepare and test
+        let generic = BenchmarkProductMetadata::generic_default();
+
+        // Assert
+        assert_eq!(generic.engine, "rustmatch-rust-default");
+        assert_eq!(
+            generic.robustness_claim,
+            "default-behavior-over-published-matrix"
+        );
+        #[cfg(feature = "experimental-showcase")]
+        {
+            let experimental = BenchmarkProductMetadata::assertion_prefix_v1();
+            assert_ne!(generic.engine, experimental.engine);
+            assert_ne!(generic.benchmark_product, experimental.benchmark_product);
+            assert!(experimental.workload_tuned);
+            assert_eq!(
+                experimental.robustness_claim,
+                "none-workload-specific-capability-only"
+            );
+        }
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_retains_static_ineligibility() -> Result<(), String> {
+        // Prepare
+        let fixture = HarnessFixture::from_bytes(b"1\tplain\n", b"plain")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+
+        // Assert
+        assert_eq!(receipt.engine, "rustmatch-rust-experimental");
+        assert_eq!(receipt.candidate_status, "ineligible");
+        assert_eq!(receipt.correctness, "not-run-ineligible");
+        assert_eq!(
+            receipt.ineligibility.as_ref().map(|value| value.stage),
+            Some("static")
+        );
+        assert!(receipt.scan_ns.is_empty());
+        assert_eq!(receipt.matches_per_iteration, None);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_retains_dynamic_refusal() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), b"word0001")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+
+        // Assert
+        assert_eq!(receipt.candidate_status, "ineligible");
+        assert_eq!(
+            receipt.ineligibility.as_ref().map(|value| value.stage),
+            Some("dynamic")
+        );
+        assert!(
+            receipt
+                .ineligibility
+                .as_ref()
+                .is_some_and(|value| value.reason.contains("InputTooShort"))
+        );
+        assert!(receipt.warmup_ns.is_empty());
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_activates_exact_backend_and_reports_evidence() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let mut corpus = vec![b' '; 1024 * 1024];
+        corpus[4_096..4_104].copy_from_slice(b"word0001");
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), &corpus)?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+
+        // Assert
+        assert_eq!(
+            receipt.benchmark_product,
+            "experimental-oracle-candidate-v1"
+        );
+        assert_eq!(
+            receipt.selection_policy,
+            "externally-retrospective-best-exact-per-cell"
+        );
+        assert!(receipt.workload_tuned);
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.matches_per_iteration, Some(1));
+        assert_eq!(receipt.warmup_ns.len(), 1);
+        assert_eq!(receipt.scan_ns.len(), 1);
+        let activation = receipt
+            .backend_activation
+            .as_ref()
+            .ok_or_else(|| "experimental receipt lacks activation evidence".to_owned())?;
+        assert_eq!(activation.activated_backend, "assertion-prefix-v1");
+        assert_eq!(activation.assertion_pattern_count, 256);
+        assert_eq!(activation.shared_ascii_prefix, "word0");
+        assert!(activation.candidate_count >= 1);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    fn assertion_prefix_patterns() -> String {
+        let mut patterns = String::new();
+        for ordinal in 0..256_u32 {
+            writeln!(patterns, "{}\t\\bword{ordinal:04}\\b", ordinal + 1)
+                .expect("writing to a String cannot fail");
+        }
+        patterns
+    }
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {

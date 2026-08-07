@@ -38,6 +38,13 @@ project.
 
 ## Current performance snapshot
 
+This historical snapshot predates the new
+[two-product benchmark contract](docs/benchmarking/default-vs-experimental.md).
+Future public updates will show a primary **generic/default** panel and a
+separate, unmistakably labeled **experimental oracle** panel. The latter may
+choose the fastest exact opt-in matcher for each known workload and therefore
+demonstrates tuned capability rather than robust default behavior.
+
 The latest exact overlap snapshot measures the current H42 production source
 (`c6f221b`) against retained, unchanged Java rmatch, Rust `regex::RegexSet`,
 and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch

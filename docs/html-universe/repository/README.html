@@ -45,6 +45,12 @@ lifetimes, enums, dense integer-indexed storage, contiguous memory, fearless
 parallelism, and a small public API. This is not a Java-to-Rust transliteration
 project.</p>
 <h2>Current performance snapshot</h2>
+<p>This historical snapshot predates the new
+<a href="docs/benchmarking/default-vs-experimental.html">two-product benchmark contract</a>.
+Future public updates will show a primary <strong>generic/default</strong> panel and a
+separate, unmistakably labeled <strong>experimental oracle</strong> panel. The latter may
+choose the fastest exact opt-in matcher for each known workload and therefore
+demonstrates tuned capability rather than robust default behavior.</p>
 <p>The latest exact overlap snapshot measures the current H42 production source
 (<code>c6f221b</code>) against retained, unchanged Java rmatch, Rust <code>regex::RegexSet</code>,
 and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
