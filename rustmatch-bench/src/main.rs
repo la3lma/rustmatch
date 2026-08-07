@@ -203,7 +203,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; harness MODE is nfa, single, WORKERS, cohort-WORKERS, or cohort-view-1".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -375,7 +375,9 @@ fn build_harness_matcher(
                 .literal_prefilter_enabled(false);
         }
         HarnessMode::Single => {}
-        HarnessMode::Parallel(worker_count) | HarnessMode::SharedCohort(worker_count) => {
+        HarnessMode::Parallel(worker_count)
+        | HarnessMode::SharedCohort(worker_count)
+        | HarnessMode::SharedAssertion(worker_count) => {
             builder.worker_count(worker_count);
         }
         HarnessMode::Cohort(worker_count) => {
@@ -395,6 +397,14 @@ fn build_harness_matcher(
             .map(Box::new)
             .map(HarnessMatcher::SharedCohort)
             .map_err(|error| format!("shared-cohort harness matcher build failed: {error}"))
+    } else if matches!(mode, HarnessMode::SharedAssertion(_)) {
+        builder
+            .build_shared_cohort_assertion_diagnostic()
+            .map(Box::new)
+            .map(HarnessMatcher::SharedCohort)
+            .map_err(|error| {
+                format!("shared assertion-cohort harness matcher build failed: {error}")
+            })
     } else {
         builder
             .build()
@@ -446,6 +456,7 @@ enum HarnessMode {
     Parallel(usize),
     Cohort(usize),
     SharedCohort(usize),
+    SharedAssertion(usize),
 }
 
 impl HarnessMode {
@@ -465,6 +476,25 @@ impl HarnessMode {
                     Ok(Self::SharedCohort(worker_count))
                 } else {
                     Err("shared-cohort feasibility mode requires exactly one worker".to_owned())
+                }
+            }
+            shared if shared.starts_with("cohort-assert-") => {
+                let worker_count = shared
+                    .strip_prefix("cohort-assert-")
+                    .expect("matched shared assertion prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!(
+                            "invalid harness mode {source:?}; expected cohort-assert-1: {error}"
+                        )
+                    })?;
+                if worker_count == 1 {
+                    Ok(Self::SharedAssertion(worker_count))
+                } else {
+                    Err(
+                        "assertion specialization diagnostic requires exactly one worker"
+                            .to_owned(),
+                    )
                 }
             }
             cohort if cohort.starts_with("cohort-") => {
@@ -505,6 +535,7 @@ impl HarnessMode {
             Self::Parallel(worker_count) => worker_count.to_string(),
             Self::Cohort(worker_count) => format!("cohort-{worker_count}"),
             Self::SharedCohort(worker_count) => format!("cohort-view-{worker_count}"),
+            Self::SharedAssertion(worker_count) => format!("cohort-assert-{worker_count}"),
         }
     }
 }
@@ -2961,6 +2992,7 @@ struct CacheDiagnosticsReceipt {
     fallback_transitions: u64,
     cache_table_bytes: usize,
     assertion_bypasses: u64,
+    assertion_prefix_activations: u64,
     prefilter_path: String,
     prefilter_bypass: String,
     prefilter_retained_bytes: usize,
@@ -2987,6 +3019,7 @@ impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
             fallback_transitions: value.fallback_transitions(),
             cache_table_bytes: value.cache_table_bytes(),
             assertion_bypasses: value.assertion_bypasses(),
+            assertion_prefix_activations: value.assertion_prefix_activations(),
             prefilter_path: value.prefilter_path().to_owned(),
             prefilter_bypass: value.prefilter_bypass().to_owned(),
             prefilter_retained_bytes: value.prefilter_retained_bytes(),
@@ -3349,6 +3382,7 @@ mod tests {
             (HarnessMode::Parallel(4), 4),
             (HarnessMode::Cohort(4), 4),
             (HarnessMode::SharedCohort(1), 2),
+            (HarnessMode::SharedAssertion(1), 2),
         ];
         let mut reference = None;
 
@@ -3436,6 +3470,8 @@ mod tests {
         let single = HarnessMode::parse("single")?;
         let parallel = HarnessMode::parse(oversized_but_valid_count)?;
         let cohort = HarnessMode::parse("cohort-8")?;
+        let shared = HarnessMode::parse("cohort-view-1")?;
+        let assertion = HarnessMode::parse("cohort-assert-1")?;
         let zero = HarnessMode::parse("0");
         let zero_cohort = HarnessMode::parse("cohort-0");
         let unknown = HarnessMode::parse("automatic");
@@ -3445,6 +3481,8 @@ mod tests {
         assert_eq!(single, HarnessMode::Single);
         assert_eq!(parallel, HarnessMode::Parallel(4096));
         assert_eq!(cohort, HarnessMode::Cohort(8));
+        assert_eq!(shared, HarnessMode::SharedCohort(1));
+        assert_eq!(assertion, HarnessMode::SharedAssertion(1));
         assert!(matches!(zero, Err(message) if message.contains("greater than zero")));
         assert!(matches!(zero_cohort, Err(message) if message.contains("greater than zero")));
         assert!(matches!(unknown, Err(message) if message.contains("expected nfa")));

@@ -7,6 +7,13 @@ use crate::nfa::{EdgeKind, PatternDatabase, StateId};
 use crate::prefilter::{Prefilter, PrefilterBypass, PrefilterPath, ScanPlan};
 use crate::{Error, Match, Utf16Span, Utf16Text};
 
+#[cfg(feature = "benchmark-internals")]
+#[derive(Clone, Copy)]
+pub(crate) struct AssertionPrefixView {
+    pub(crate) root: StateId,
+    pub(crate) prefix: [u8; 5],
+}
+
 pub(crate) const DEFAULT_STATE_CACHE_BUDGET: usize = 8_192;
 
 #[path = "shared_engine.rs"]
@@ -128,6 +135,48 @@ pub(crate) fn scan_assertion_view_with_stats(
     scan_assertion_view(database, root, input, &mut sink)?;
     metrics.assertion_bypasses = 1;
     metrics.prefilter_starts_scanned = units.len();
+    Ok(metrics)
+}
+
+#[cfg(feature = "benchmark-internals")]
+pub(crate) fn scan_assertion_prefix_view_with_stats(
+    database: &PatternDatabase,
+    view: AssertionPrefixView,
+    prefilter: &Prefilter,
+    input: &Utf16Text,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
+    mut sink: impl FnMut(Match),
+) -> Result<ScanStats, Error> {
+    let units = input.units();
+    let plan = prefilter.plan_assertion_prefix(
+        view.prefix,
+        units,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+    );
+    let mut metrics = ScanStats {
+        prefilter_path: plan.path(),
+        prefilter_bypass: plan.bypass(),
+        prefilter_retained_bytes: plan.retained_bytes(),
+        prefilter_candidate_bytes: plan.candidate_bytes(),
+        prefilter_admissions: plan.admissions(),
+        prefilter_candidate_starts: plan.candidate_count(),
+        assertion_bypasses: 1,
+        ..ScanStats::default()
+    };
+    match &plan {
+        ScanPlan::Candidates { candidates, .. } => {
+            metrics.assertion_prefix_activations = 1;
+            metrics.prefilter_starts_scanned = candidates.count();
+            scan_assertion_view_starts(database, view.root, input, candidates.iter(), &mut sink)?;
+        }
+        ScanPlan::All { .. } | ScanPlan::StartTable { .. } => {
+            metrics.prefilter_starts_scanned = units.len();
+            scan_assertion_view(database, view.root, input, &mut sink)?;
+        }
+    }
+    metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
     Ok(metrics)
 }
 
@@ -550,6 +599,8 @@ pub(crate) struct ScanStats {
     pub(crate) fallback_transitions: u64,
     pub(crate) cache_table_bytes: usize,
     pub(crate) assertion_bypasses: u64,
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) assertion_prefix_activations: u64,
     pub(crate) prefilter_path: PrefilterPath,
     pub(crate) prefilter_bypass: PrefilterBypass,
     pub(crate) prefilter_retained_bytes: usize,
@@ -575,6 +626,9 @@ impl ScanStats {
         self.assertion_bypasses = self
             .assertion_bypasses
             .saturating_add(other.assertion_bypasses);
+        self.assertion_prefix_activations = self
+            .assertion_prefix_activations
+            .saturating_add(other.assertion_prefix_activations);
         if self.prefilter_path != other.prefilter_path {
             self.prefilter_path = PrefilterPath::MixedParallel;
         }
@@ -674,12 +728,23 @@ fn scan_assertion_view(
     database: &PatternDatabase,
     root: StateId,
     input: &Utf16Text,
+    sink: impl FnMut(Match),
+) -> Result<(), Error> {
+    scan_assertion_view_starts(database, root, input, 0..input.units().len(), sink)
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn scan_assertion_view_starts(
+    database: &PatternDatabase,
+    root: StateId,
+    input: &Utf16Text,
+    starts: impl Iterator<Item = usize>,
     mut sink: impl FnMut(Match),
 ) -> Result<(), Error> {
     let units = input.units();
     let mut scratch = Scratch::new(database);
 
-    for start in 0..units.len() {
+    for start in starts {
         scratch.reset_start();
         extend_assertion_closure(
             database,

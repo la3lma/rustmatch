@@ -1196,7 +1196,7 @@ does not authorize H43-A1.
 
 **Scope:** candidate specialized backend  
 **Level:** sea  
-**Status:** available<br>
+**Status:** in progress; investigation contract frozen<br>
 **Primary actor:** optimization engineer  
 **Supporting actors:** compiler/codegen reviewer, profiler
 
@@ -1254,8 +1254,13 @@ scan planning time without changing the generic engine.
 
 **Implementation result**
 
-- **Result:** not started.
-- **Evidence:** pending.
+- **Result:** investigation started on 2026-08-07 from source baseline
+  `4e83f540edda2cbcd2d29c25549f05e692d8fec5`. The first candidate is restricted
+  to the benchmark-only shared assertion view and retains a forced generic
+  control; no automatic selector or public API is authorized.
+- **Evidence:** `docs/experiments/h43-a1-investigation-plan.json` freezes source
+  correspondence to H22/H24, exact semantics, target, neighbor, inactive,
+  preparation, allocation, RSS, and code-isolation gates before implementation.
 - **Decision:** pending.
 
 ## H43-A2: Tune eligibility and fallback from causal evidence

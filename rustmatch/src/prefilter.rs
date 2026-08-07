@@ -131,6 +131,48 @@ impl Prefilter {
         }
     }
 
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) fn plan_assertion_prefix(
+        &self,
+        prefix: [u8; 5],
+        input: &[u16],
+        enabled: bool,
+        literal_enabled: bool,
+    ) -> ScanPlan<'_> {
+        if !enabled {
+            return self.start_or_all(PrefilterBypass::Disabled);
+        }
+        if !literal_enabled {
+            return self.start_or_all(PrefilterBypass::LiteralDisabled);
+        }
+        if input.len() < MIN_LITERAL_INPUT_UNITS {
+            return self.start_or_all(PrefilterBypass::InputSize);
+        }
+
+        let sample_len = input.len().min(DENSITY_SAMPLE_UNITS);
+        let mut sample = CandidateBitmap::new(sample_len);
+        let mut admissions = 0_u64;
+        scan_assertion_prefix(prefix, input, 0..sample_len, &mut sample, &mut admissions);
+        if sample.count().saturating_mul(2) >= sample_len {
+            return self.start_or_all(PrefilterBypass::DenseSample);
+        }
+
+        let mut candidates = CandidateBitmap::new(input.len());
+        candidates.copy_prefix(&sample);
+        scan_assertion_prefix(
+            prefix,
+            input,
+            sample_len..input.len(),
+            &mut candidates,
+            &mut admissions,
+        );
+        ScanPlan::Candidates {
+            candidates,
+            admissions,
+            retained_bytes: self.retained_bytes,
+        }
+    }
+
     pub(crate) fn plan<'a>(
         &'a self,
         input: &[u16],
@@ -207,6 +249,30 @@ impl Prefilter {
 
     pub(crate) const fn retained_bytes(&self) -> usize {
         self.retained_bytes
+    }
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn scan_assertion_prefix(
+    prefix: [u8; 5],
+    input: &[u16],
+    starts: std::ops::Range<usize>,
+    candidates: &mut CandidateBitmap,
+    admissions: &mut u64,
+) {
+    for start in starts {
+        let Some(actual) = input.get(start..start.saturating_add(prefix.len())) else {
+            continue;
+        };
+        if !actual
+            .iter()
+            .zip(prefix)
+            .all(|(&symbol, expected)| symbol == u16::from(expected))
+        {
+            continue;
+        }
+        *admissions = admissions.saturating_add(1);
+        candidates.insert(start);
     }
 }
 
@@ -1030,6 +1096,23 @@ mod tests {
         assert_eq!(plan.path(), PrefilterPath::StartTable);
         assert_eq!(plan.bypass(), PrefilterBypass::DenseSample);
         Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn dense_assertion_prefix_sample_falls_back_before_full_bitmap_allocation() {
+        // Prepare
+        let prefilter = Prefilter::disabled();
+        let input = vec![u16::from(b'a'); MIN_LITERAL_INPUT_UNITS];
+
+        // Test
+        let plan = prefilter.plan_assertion_prefix(*b"aaaaa", &input, true, true);
+
+        // Assert
+        assert_eq!(plan.path(), PrefilterPath::AllStarts);
+        assert_eq!(plan.bypass(), PrefilterBypass::DenseSample);
+        assert_eq!(plan.candidate_bytes(), 0);
+        assert_eq!(plan.candidate_count(), 0);
     }
 
     #[test]

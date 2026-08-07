@@ -29,6 +29,8 @@ pub struct SharedCohortDiagnostics {
     assertion_bearing_pattern_count: usize,
     database_retained_bytes: usize,
     prefilter_retained_bytes: usize,
+    assertion_prefix_available: bool,
+    assertion_specialization_enabled: bool,
 }
 
 impl SharedCohortDiagnostics {
@@ -85,6 +87,18 @@ impl SharedCohortDiagnostics {
     pub const fn prefilter_retained_bytes(self) -> usize {
         self.prefilter_retained_bytes
     }
+
+    /// Whether the assertion view proves one shared five-unit ASCII prefix.
+    #[must_use]
+    pub const fn assertion_prefix_available(self) -> bool {
+        self.assertion_prefix_available
+    }
+
+    /// Whether this diagnostic matcher may activate the specialized scanner.
+    #[must_use]
+    pub const fn assertion_specialization_enabled(self) -> bool {
+        self.assertion_specialization_enabled
+    }
 }
 
 /// Benchmark-only matcher over two roots in one compiled pattern database.
@@ -97,6 +111,7 @@ pub struct SharedCohortMatcher {
     requested_worker_count: usize,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
+    assertion_specialization_enabled: bool,
 }
 
 impl SharedCohortMatcher {
@@ -117,6 +132,12 @@ impl SharedCohortMatcher {
                 .prefilter
                 .retained_bytes()
                 .saturating_add(self.assertion_bearing.prefilter.retained_bytes()),
+            assertion_prefix_available: self
+                .assertion_bearing
+                .descriptor
+                .assertion_ascii_five()
+                .is_some(),
+            assertion_specialization_enabled: self.assertion_specialization_enabled,
         }
     }
 
@@ -163,6 +184,7 @@ impl SharedCohortMatcher {
             fallback_transitions: stats.fallback_transitions,
             cache_table_bytes: stats.cache_table_bytes,
             assertion_bypasses: stats.assertion_bypasses,
+            assertion_prefix_activations: stats.assertion_prefix_activations,
             prefilter_path: stats.prefilter_path,
             prefilter_bypass: stats.prefilter_bypass,
             prefilter_retained_bytes: stats.prefilter_retained_bytes,
@@ -184,15 +206,32 @@ impl SharedCohortMatcher {
                 continue;
             }
             let stats = if view.descriptor.uses_assertions {
-                engine::scan_assertion_view_with_stats(
-                    &self.database,
-                    view.descriptor.root,
-                    &view.prefilter,
-                    input,
-                    self.prefilter_enabled,
-                    self.literal_prefilter_enabled,
-                    |matched| events.push(matched),
-                )?
+                match (
+                    self.assertion_specialization_enabled,
+                    view.descriptor.assertion_ascii_five(),
+                ) {
+                    (true, Some(prefix)) => engine::scan_assertion_prefix_view_with_stats(
+                        &self.database,
+                        engine::AssertionPrefixView {
+                            root: view.descriptor.root,
+                            prefix,
+                        },
+                        &view.prefilter,
+                        input,
+                        self.prefilter_enabled,
+                        self.literal_prefilter_enabled,
+                        |matched| events.push(matched),
+                    )?,
+                    _ => engine::scan_assertion_view_with_stats(
+                        &self.database,
+                        view.descriptor.root,
+                        &view.prefilter,
+                        input,
+                        self.prefilter_enabled,
+                        self.literal_prefilter_enabled,
+                        |matched| events.push(matched),
+                    )?,
+                }
             } else {
                 debug_assert_eq!(view.descriptor.root, self.database.root());
                 engine::scan_with_stats(
@@ -223,7 +262,10 @@ impl SharedCohortMatcher {
     }
 }
 
-pub(super) fn build_matcher(builder: &MatcherBuilder) -> Result<SharedCohortMatcher, Error> {
+pub(super) fn build_matcher(
+    builder: &MatcherBuilder,
+    assertion_specialization_enabled: bool,
+) -> Result<SharedCohortMatcher, Error> {
     let shared = nfa::compile_shared_cohorts(&builder.patterns)?;
     let (database, assertion_free_descriptor, assertion_bearing_descriptor) = shared.into_parts();
     let cohort_count = usize::from(assertion_free_descriptor.pattern_count > 0)
@@ -254,5 +296,6 @@ pub(super) fn build_matcher(builder: &MatcherBuilder) -> Result<SharedCohortMatc
         requested_worker_count: builder.worker_count,
         prefilter_enabled: builder.prefilter_enabled,
         literal_prefilter_enabled: builder.literal_prefilter_enabled,
+        assertion_specialization_enabled,
     })
 }

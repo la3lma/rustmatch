@@ -156,7 +156,27 @@ impl MatcherBuilder {
         if self.worker_count == 0 {
             return Err(Error::InvalidWorkerCount);
         }
-        cohort_view_runtime::build_matcher(&self)
+        cohort_view_runtime::build_matcher(&self, false)
+    }
+
+    /// Compiles a benchmark-only shared matcher with forced assertion-prefix specialization.
+    ///
+    /// This diagnostic switch never changes the supported production matcher.
+    /// Ineligible assertion cohorts retain the exact generic assertion scanner.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same build errors as [`Self::build`].
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    pub fn build_shared_cohort_assertion_diagnostic(self) -> Result<SharedCohortMatcher, Error> {
+        if self.patterns.is_empty() {
+            return Err(Error::NoPatterns);
+        }
+        if self.worker_count == 0 {
+            return Err(Error::InvalidWorkerCount);
+        }
+        cohort_view_runtime::build_matcher(&self, true)
     }
 
     /// Registers one caller-identified pattern.
@@ -468,6 +488,7 @@ pub struct ScanDiagnostics {
     fallback_transitions: u64,
     cache_table_bytes: usize,
     assertion_bypasses: u64,
+    assertion_prefix_activations: u64,
     prefilter_path: crate::prefilter::PrefilterPath,
     prefilter_bypass: crate::prefilter::PrefilterBypass,
     prefilter_retained_bytes: usize,
@@ -547,6 +568,12 @@ impl ScanDiagnostics {
     #[must_use]
     pub const fn assertion_bypasses(self) -> u64 {
         self.assertion_bypasses
+    }
+
+    /// Number of assertion-bearing views routed through exact prefix candidates.
+    #[must_use]
+    pub const fn assertion_prefix_activations(self) -> u64 {
+        self.assertion_prefix_activations
     }
 
     /// Candidate-start path selected for this scan.
@@ -880,6 +907,7 @@ impl Matcher {
             fallback_transitions: stats.fallback_transitions,
             cache_table_bytes: stats.cache_table_bytes,
             assertion_bypasses: stats.assertion_bypasses,
+            assertion_prefix_activations: stats.assertion_prefix_activations,
             prefilter_path: stats.prefilter_path,
             prefilter_bypass: stats.prefilter_bypass,
             prefilter_retained_bytes: stats.prefilter_retained_bytes,
@@ -1396,6 +1424,118 @@ mod tests {
 
     #[cfg(feature = "benchmark-internals")]
     #[test]
+    fn shared_assertion_prefix_view_preserves_events_and_reports_activation() -> Result<(), Error> {
+        // Prepare
+        let specialized = assertion_prefix_shared_matcher(true, false)?;
+        let mut units = vec![u16::from(b' '); 1024 * 1024];
+        place_ascii(&mut units, 4_096, "word0001");
+        place_ascii(&mut units, 524_288, "word0042");
+        let raw_start = 900_000;
+        units[raw_start - 1] = 0xd800;
+        place_ascii(&mut units, raw_start, "word0255");
+        units[raw_start + 8] = 0xdc00;
+        let input = Utf16Text::from_units(units);
+
+        // Test
+        let specialized_events = collect_shared_events(&specialized, &input)?;
+        let mut diagnostic_events = Vec::new();
+        let diagnostics = specialized.scan_with_diagnostics(&input, |matched| {
+            diagnostic_events.push((
+                matched.pattern_id().get(),
+                matched.span().start(),
+                matched.span().end(),
+            ));
+        })?;
+        diagnostic_events.sort_unstable();
+
+        // Assert
+        let expected = vec![
+            (2, 4_096, 4_104),
+            (43, 524_288, 524_296),
+            (256, raw_start as u64, (raw_start + 8) as u64),
+        ];
+        assert_eq!(specialized_events, expected);
+        assert_eq!(diagnostic_events, expected);
+        assert!(
+            specialized
+                .structure_diagnostics()
+                .assertion_prefix_available()
+        );
+        assert!(
+            specialized
+                .structure_diagnostics()
+                .assertion_specialization_enabled()
+        );
+        assert_eq!(diagnostics.assertion_prefix_activations(), 1);
+        assert_eq!(diagnostics.prefilter_path(), "literal-prefilter");
+        assert!(diagnostics.prefilter_starts_skipped() > input.as_units().len() * 99 / 100);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn shared_assertion_prefix_view_falls_back_for_uncertain_and_short_inputs() -> Result<(), Error>
+    {
+        // Prepare
+        let uncertain_generic = assertion_prefix_shared_matcher(false, true)?;
+        let uncertain_specialized = assertion_prefix_shared_matcher(true, true)?;
+        let eligible_specialized = assertion_prefix_shared_matcher(true, false)?;
+        let uncertain_input = Utf16Text::from("word0001 other0255");
+        let short_input = Utf16Text::from("word0001 word0042");
+
+        // Test
+        let uncertain_events = collect_shared_events(&uncertain_specialized, &uncertain_input)?;
+        let generic_events = collect_shared_events(&uncertain_generic, &uncertain_input)?;
+        let mut short_events = Vec::new();
+        let short_diagnostics =
+            eligible_specialized.scan_with_diagnostics(&short_input, |matched| {
+                short_events.push((
+                    matched.pattern_id().get(),
+                    matched.span().start(),
+                    matched.span().end(),
+                ));
+            })?;
+        short_events.sort_unstable();
+
+        // Assert
+        assert_eq!(uncertain_events, generic_events);
+        assert!(
+            !uncertain_specialized
+                .structure_diagnostics()
+                .assertion_prefix_available()
+        );
+        assert_eq!(
+            collect_shared_events(&eligible_specialized, &short_input)?,
+            short_events
+        );
+        assert_eq!(short_diagnostics.assertion_prefix_activations(), 0);
+        assert_eq!(short_diagnostics.prefilter_bypass(), "input-size");
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn shared_assertion_prefix_view_is_reusable_after_callback_panic() -> Result<(), Error> {
+        // Prepare
+        let matcher = assertion_prefix_shared_matcher(true, false)?;
+        let mut units = vec![u16::from(b' '); 1024 * 1024];
+        place_ascii(&mut units, 4_096, "word0001");
+        let input = Utf16Text::from_units(units);
+
+        // Test
+        let panic_result = catch_unwind(AssertUnwindSafe(|| {
+            let _ = matcher.scan(&input, |_| panic!("controlled callback panic"));
+        }));
+        let recovered = collect_shared_events(&matcher, &input)?;
+
+        // Assert
+        assert!(panic_result.is_err());
+        assert_eq!(recovered, [(2, 4_096, 4_104)]);
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
     fn mixed_cohort_partitions_share_one_bounded_multi_worker_scope() -> Result<(), Error> {
         // Prepare
         let matcher = mixed_cohort_test_matcher(4, 17, true)?;
@@ -1639,6 +1779,34 @@ mod tests {
         builder.state_cache_budget(cache_budget);
         add_mixed_patterns(&mut builder)?;
         builder.build_shared_cohort_diagnostic()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn assertion_prefix_shared_matcher(
+        specialized: bool,
+        add_mismatched_prefix: bool,
+    ) -> Result<SharedCohortMatcher, Error> {
+        let mut builder = MatcherBuilder::new();
+        for ordinal in 0..256_u32 {
+            let expression = if add_mismatched_prefix && ordinal == 255 {
+                r"\bother0255\b".to_owned()
+            } else {
+                format!(r"\bword{ordinal:04}\b")
+            };
+            builder.add(PatternId::new(ordinal + 1), &expression)?;
+        }
+        if specialized {
+            builder.build_shared_cohort_assertion_diagnostic()
+        } else {
+            builder.build_shared_cohort_diagnostic()
+        }
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn place_ascii(units: &mut [u16], start: usize, value: &str) {
+        for (offset, byte) in value.bytes().enumerate() {
+            units[start + offset] = u16::from(byte);
+        }
     }
 
     #[cfg(feature = "benchmark-internals")]

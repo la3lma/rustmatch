@@ -77,6 +77,14 @@ pub(crate) struct PatternDatabaseView {
     pub(crate) root: StateId,
     pub(crate) uses_assertions: bool,
     pub(crate) pattern_count: usize,
+    assertion_ascii_five: [u8; 5],
+}
+
+#[cfg(feature = "benchmark-internals")]
+impl PatternDatabaseView {
+    pub(crate) fn assertion_ascii_five(&self) -> Option<[u8; 5]> {
+        (self.assertion_ascii_five != [0; 5]).then_some(self.assertion_ascii_five)
+    }
 }
 
 #[cfg(feature = "benchmark-internals")]
@@ -254,11 +262,26 @@ pub(crate) fn compile_shared_cohorts(
     let mut predicate_ids = HashMap::new();
     let mut assertion_free_pattern_count = 0_usize;
     let mut assertion_bearing_pattern_count = 0_usize;
+    let mut assertion_ascii_five = None;
+    let mut assertion_prefix_possible = true;
 
     for (ordinal, pattern) in patterns.iter().enumerate() {
         let uses_assertions = pattern.expression().uses_assertions();
         let cohort_root = if uses_assertions {
             assertion_bearing_pattern_count += 1;
+            if assertion_prefix_possible {
+                match strict_assertion_ascii_five(pattern.expression()) {
+                    Some(prefix)
+                        if assertion_ascii_five.is_none_or(|expected| expected == prefix) =>
+                    {
+                        assertion_ascii_five = Some(prefix);
+                    }
+                    _ => {
+                        assertion_prefix_possible = false;
+                        assertion_ascii_five = None;
+                    }
+                }
+            }
             assertion_bearing_root
         } else {
             assertion_free_pattern_count += 1;
@@ -318,13 +341,48 @@ pub(crate) fn compile_shared_cohorts(
             root: assertion_free_root,
             uses_assertions: false,
             pattern_count: assertion_free_pattern_count,
+            assertion_ascii_five: [0; 5],
         },
         assertion_bearing: PatternDatabaseView {
             root: assertion_bearing_root,
             uses_assertions: true,
             pattern_count: assertion_bearing_pattern_count,
+            assertion_ascii_five: assertion_ascii_five
+                .filter(|_| assertion_bearing_pattern_count >= 256)
+                .unwrap_or([0; 5]),
         },
     })
+}
+
+#[cfg(feature = "benchmark-internals")]
+fn strict_assertion_ascii_five(expression: &Hir) -> Option<[u8; 5]> {
+    let Hir::Sequence(expressions) = expression else {
+        return None;
+    };
+    let mut prefix = [0_u8; 5];
+    let mut symbols = 0_usize;
+    let mut saw_assertion = false;
+    for expression in expressions {
+        if symbols == 0 {
+            match expression {
+                Hir::Assertion(_) => {
+                    saw_assertion = true;
+                    continue;
+                }
+                Hir::Epsilon => continue,
+                _ => {}
+            }
+        }
+        let Hir::Symbol(symbol @ 1..128) = expression else {
+            return None;
+        };
+        prefix[symbols] = u8::try_from(*symbol).ok()?;
+        symbols += 1;
+        if symbols == prefix.len() {
+            return saw_assertion.then_some(prefix);
+        }
+    }
+    None
 }
 
 fn compile_expression(
