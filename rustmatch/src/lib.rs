@@ -45,6 +45,8 @@ mod case_fold;
 mod cohort;
 mod engine;
 mod error;
+#[cfg(feature = "unstable-assertion-prefix-v1")]
+pub mod experimental;
 mod hir;
 mod nfa;
 mod parser;

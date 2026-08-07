@@ -5,8 +5,8 @@ use std::mem::size_of;
 use crate::hir::{Hir, HirPattern};
 use crate::nfa::{EdgeKind, PatternDatabase, StateId};
 
-const MIN_LITERAL_PATTERN_COUNT: usize = 256;
-const MIN_LITERAL_INPUT_UNITS: usize = 1024 * 1024;
+pub(crate) const MIN_LITERAL_PATTERN_COUNT: usize = 256;
+pub(crate) const MIN_LITERAL_INPUT_UNITS: usize = 1024 * 1024;
 const MIN_LITERAL_UNITS: usize = 3;
 const MAX_LITERAL_UNITS: usize = 32;
 const DENSITY_SAMPLE_UNITS: usize = 64 * 1024;
@@ -20,7 +20,10 @@ pub(crate) enum PrefilterPath {
     AllStarts,
     StartTable,
     Literal,
-    #[cfg(feature = "benchmark-internals")]
+    #[cfg(any(
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     MixedParallel,
 }
 
@@ -47,8 +50,24 @@ pub(crate) enum PrefilterBypass {
     InputSize,
     Unfilterable,
     DenseSample,
-    #[cfg(feature = "benchmark-internals")]
+    #[cfg(any(
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     MixedParallel,
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum AssertionPrefixDecision {
+    Activated,
+    Disabled,
+    LiteralDisabled,
+    InputSize,
+    DenseSample,
 }
 
 #[cfg(feature = "benchmark-internals")]
@@ -77,7 +96,11 @@ pub(crate) struct Prefilter {
 }
 
 impl Prefilter {
-    #[cfg(any(test, feature = "benchmark-internals"))]
+    #[cfg(any(
+        test,
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     pub(crate) const fn disabled() -> Self {
         Self {
             start_table: None,
@@ -131,22 +154,34 @@ impl Prefilter {
         }
     }
 
-    #[cfg(feature = "benchmark-internals")]
+    #[cfg(any(
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     pub(crate) fn plan_assertion_prefix(
         &self,
         prefix: [u8; 5],
         input: &[u16],
         enabled: bool,
         literal_enabled: bool,
-    ) -> ScanPlan<'_> {
+    ) -> (ScanPlan<'_>, AssertionPrefixDecision) {
         if !enabled {
-            return self.start_or_all(PrefilterBypass::Disabled);
+            return (
+                self.start_or_all(PrefilterBypass::Disabled),
+                AssertionPrefixDecision::Disabled,
+            );
         }
         if !literal_enabled {
-            return self.start_or_all(PrefilterBypass::LiteralDisabled);
+            return (
+                self.start_or_all(PrefilterBypass::LiteralDisabled),
+                AssertionPrefixDecision::LiteralDisabled,
+            );
         }
         if input.len() < MIN_LITERAL_INPUT_UNITS {
-            return self.start_or_all(PrefilterBypass::InputSize);
+            return (
+                self.start_or_all(PrefilterBypass::InputSize),
+                AssertionPrefixDecision::InputSize,
+            );
         }
 
         let sample_len = input.len().min(DENSITY_SAMPLE_UNITS);
@@ -154,7 +189,10 @@ impl Prefilter {
         let mut admissions = 0_u64;
         scan_assertion_prefix(prefix, input, 0..sample_len, &mut sample, &mut admissions);
         if sample.count().saturating_mul(2) >= sample_len {
-            return self.start_or_all(PrefilterBypass::DenseSample);
+            return (
+                self.start_or_all(PrefilterBypass::DenseSample),
+                AssertionPrefixDecision::DenseSample,
+            );
         }
 
         let mut candidates = CandidateBitmap::new(input.len());
@@ -166,10 +204,41 @@ impl Prefilter {
             &mut candidates,
             &mut admissions,
         );
-        ScanPlan::Candidates {
-            candidates,
-            admissions,
-            retained_bytes: self.retained_bytes,
+        (
+            ScanPlan::Candidates {
+                candidates,
+                admissions,
+                retained_bytes: self.retained_bytes,
+            },
+            AssertionPrefixDecision::Activated,
+        )
+    }
+
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) fn preflight_assertion_prefix(
+        prefix: [u8; 5],
+        input: &[u16],
+        enabled: bool,
+        literal_enabled: bool,
+    ) -> AssertionPrefixDecision {
+        if !enabled {
+            return AssertionPrefixDecision::Disabled;
+        }
+        if !literal_enabled {
+            return AssertionPrefixDecision::LiteralDisabled;
+        }
+        if input.len() < MIN_LITERAL_INPUT_UNITS {
+            return AssertionPrefixDecision::InputSize;
+        }
+
+        let sample_len = input.len().min(DENSITY_SAMPLE_UNITS);
+        let mut sample = CandidateBitmap::new(sample_len);
+        let mut admissions = 0_u64;
+        scan_assertion_prefix(prefix, input, 0..sample_len, &mut sample, &mut admissions);
+        if sample.count().saturating_mul(2) >= sample_len {
+            AssertionPrefixDecision::DenseSample
+        } else {
+            AssertionPrefixDecision::Activated
         }
     }
 
@@ -252,7 +321,10 @@ impl Prefilter {
     }
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 fn scan_assertion_prefix(
     prefix: [u8; 5],
     input: &[u16],
@@ -943,6 +1015,8 @@ pub(crate) fn contains_bit(words: &[u64], bit: usize) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "benchmark-internals")]
+    use super::AssertionPrefixDecision;
     use super::{
         CandidateBitmap, LiteralPrefilter, MIN_LITERAL_INPUT_UNITS, NecessaryLiteral, Prefilter,
         PrefilterBypass, PrefilterPath, StartTable, necessary_prefix,
@@ -1106,9 +1180,10 @@ mod tests {
         let input = vec![u16::from(b'a'); MIN_LITERAL_INPUT_UNITS];
 
         // Test
-        let plan = prefilter.plan_assertion_prefix(*b"aaaaa", &input, true, true);
+        let (plan, decision) = prefilter.plan_assertion_prefix(*b"aaaaa", &input, true, true);
 
         // Assert
+        assert_eq!(decision, AssertionPrefixDecision::DenseSample);
         assert_eq!(plan.path(), PrefilterPath::AllStarts);
         assert_eq!(plan.bypass(), PrefilterBypass::DenseSample);
         assert_eq!(plan.candidate_bytes(), 0);

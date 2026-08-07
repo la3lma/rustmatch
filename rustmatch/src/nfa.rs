@@ -71,7 +71,10 @@ pub(crate) struct PatternDatabase {
     uses_assertions: bool,
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct PatternDatabaseView {
     pub(crate) root: StateId,
@@ -80,14 +83,20 @@ pub(crate) struct PatternDatabaseView {
     assertion_ascii_five: [u8; 5],
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 impl PatternDatabaseView {
     pub(crate) fn assertion_ascii_five(&self) -> Option<[u8; 5]> {
         (self.assertion_ascii_five != [0; 5]).then_some(self.assertion_ascii_five)
     }
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 #[derive(Debug)]
 pub(crate) struct SharedCohortCompilation {
     database: PatternDatabase,
@@ -95,7 +104,10 @@ pub(crate) struct SharedCohortCompilation {
     assertion_bearing: PatternDatabaseView,
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 impl SharedCohortCompilation {
     pub(crate) fn into_parts(self) -> (PatternDatabase, PatternDatabaseView, PatternDatabaseView) {
         (self.database, self.assertion_free, self.assertion_bearing)
@@ -249,7 +261,10 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
     })
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 pub(crate) fn compile_shared_cohorts(
     patterns: &[HirPattern],
 ) -> Result<SharedCohortCompilation, Error> {
@@ -354,7 +369,10 @@ pub(crate) fn compile_shared_cohorts(
     })
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 fn strict_assertion_ascii_five(expression: &Hir) -> Option<[u8; 5]> {
     let Hir::Sequence(expressions) = expression else {
         return None;

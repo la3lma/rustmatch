@@ -2,9 +2,17 @@
 
 #[cfg(feature = "benchmark-internals")]
 mod cohort_runtime;
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 mod cohort_view_runtime;
 
+#[cfg(all(
+    feature = "unstable-assertion-prefix-v1",
+    not(feature = "benchmark-internals")
+))]
+pub(crate) use cohort_view_runtime::SharedCohortMatcher;
 #[cfg(feature = "benchmark-internals")]
 pub use cohort_view_runtime::{SharedCohortDiagnostics, SharedCohortMatcher};
 
@@ -170,6 +178,17 @@ impl MatcherBuilder {
     #[cfg(feature = "benchmark-internals")]
     #[doc(hidden)]
     pub fn build_shared_cohort_assertion_diagnostic(self) -> Result<SharedCohortMatcher, Error> {
+        if self.patterns.is_empty() {
+            return Err(Error::NoPatterns);
+        }
+        if self.worker_count == 0 {
+            return Err(Error::InvalidWorkerCount);
+        }
+        cohort_view_runtime::build_matcher(&self, true)
+    }
+
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) fn build_assertion_prefix_experimental(self) -> Result<SharedCohortMatcher, Error> {
         if self.patterns.is_empty() {
             return Err(Error::NoPatterns);
         }

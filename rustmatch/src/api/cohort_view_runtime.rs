@@ -1,13 +1,16 @@
-//! Benchmark-only shared-storage cohort representation.
+//! Internal shared-storage cohort representation.
 
+#[cfg(feature = "benchmark-internals")]
 use std::mem::size_of;
 
 use crate::engine;
 use crate::nfa::{self, PatternDatabase, PatternDatabaseView};
-use crate::prefilter::Prefilter;
+use crate::prefilter::{AssertionPrefixDecision, Prefilter};
 use crate::{Error, Match, Utf16Text};
 
-use super::{MatcherBuilder, ScanDiagnostics};
+use super::MatcherBuilder;
+#[cfg(feature = "benchmark-internals")]
+use super::ScanDiagnostics;
 
 #[derive(Debug)]
 struct SharedCohortView {
@@ -16,7 +19,22 @@ struct SharedCohortView {
     state_cache_budget: usize,
 }
 
+struct BufferedScan {
+    events: Vec<Match>,
+    stats: engine::ScanStats,
+    assertion_prefix_decision: Option<AssertionPrefixDecision>,
+}
+
+#[cfg(feature = "unstable-assertion-prefix-v1")]
+pub(crate) struct ExperimentalScan {
+    pub(crate) events: Vec<Match>,
+    pub(crate) decision: AssertionPrefixDecision,
+    pub(crate) candidate_count: usize,
+    pub(crate) candidate_bytes: usize,
+}
+
 /// Structural facts about one benchmark-only shared cohort database.
+#[cfg(feature = "benchmark-internals")]
 #[doc(hidden)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SharedCohortDiagnostics {
@@ -33,6 +51,7 @@ pub struct SharedCohortDiagnostics {
     assertion_specialization_enabled: bool,
 }
 
+#[cfg(feature = "benchmark-internals")]
 impl SharedCohortDiagnostics {
     /// Number of NFA states retained by the shared database.
     #[must_use]
@@ -108,6 +127,7 @@ pub struct SharedCohortMatcher {
     database: PatternDatabase,
     assertion_free: SharedCohortView,
     assertion_bearing: SharedCohortView,
+    #[cfg(feature = "benchmark-internals")]
     requested_worker_count: usize,
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
@@ -116,6 +136,7 @@ pub struct SharedCohortMatcher {
 
 impl SharedCohortMatcher {
     /// Returns immutable storage facts for H43-V1 evidence.
+    #[cfg(feature = "benchmark-internals")]
     #[must_use]
     pub fn structure_diagnostics(&self) -> SharedCohortDiagnostics {
         SharedCohortDiagnostics {
@@ -141,14 +162,51 @@ impl SharedCohortMatcher {
         }
     }
 
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) fn assertion_prefix(&self) -> Option<[u8; 5]> {
+        self.assertion_bearing.descriptor.assertion_ascii_five()
+    }
+
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) const fn assertion_pattern_count(&self) -> usize {
+        self.assertion_bearing.descriptor.pattern_count
+    }
+
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) fn preflight_experimental(&self, input: &Utf16Text) -> AssertionPrefixDecision {
+        Prefilter::preflight_assertion_prefix(
+            self.assertion_bearing
+                .descriptor
+                .assertion_ascii_five()
+                .expect("an eligible experimental matcher has an assertion prefix"),
+            input.units(),
+            self.prefilter_enabled,
+            self.literal_prefilter_enabled,
+        )
+    }
+
+    #[cfg(feature = "unstable-assertion-prefix-v1")]
+    pub(crate) fn scan_experimental(&self, input: &Utf16Text) -> Result<ExperimentalScan, Error> {
+        let scan = self.scan_buffered(input)?;
+        Ok(ExperimentalScan {
+            events: scan.events,
+            decision: scan
+                .assertion_prefix_decision
+                .expect("an eligible experimental matcher has an assertion-prefix view"),
+            candidate_count: scan.stats.prefilter_candidate_starts,
+            candidate_bytes: scan.stats.prefilter_candidate_bytes,
+        })
+    }
+
     /// Scans both cohort roots and delivers events only after both succeed.
     ///
     /// # Errors
     ///
     /// Returns [`Error::InputTooLarge`] if an input coordinate overflows.
+    #[cfg(feature = "benchmark-internals")]
     pub fn scan(&self, input: &Utf16Text, mut sink: impl FnMut(Match)) -> Result<(), Error> {
-        let (events, _) = self.scan_buffered(input)?;
-        for matched in events {
+        let scan = self.scan_buffered(input)?;
+        for matched in scan.events {
             sink(matched);
         }
         Ok(())
@@ -159,16 +217,18 @@ impl SharedCohortMatcher {
     /// # Errors
     ///
     /// Returns [`Error::InputTooLarge`] if an input coordinate overflows.
+    #[cfg(feature = "benchmark-internals")]
     pub fn scan_with_diagnostics(
         &self,
         input: &Utf16Text,
         mut sink: impl FnMut(Match),
     ) -> Result<ScanDiagnostics, Error> {
-        let (events, stats) = self.scan_buffered(input)?;
-        let buffered_events = events.len();
-        for matched in events {
+        let scan = self.scan_buffered(input)?;
+        let buffered_events = scan.events.len();
+        for matched in scan.events {
             sink(matched);
         }
+        let stats = scan.stats;
         Ok(ScanDiagnostics {
             requested_worker_count: self.requested_worker_count,
             partition_count: self.cohort_count(),
@@ -184,7 +244,10 @@ impl SharedCohortMatcher {
             fallback_transitions: stats.fallback_transitions,
             cache_table_bytes: stats.cache_table_bytes,
             assertion_bypasses: stats.assertion_bypasses,
-            assertion_prefix_activations: stats.assertion_prefix_activations,
+            assertion_prefix_activations: u64::from(matches!(
+                scan.assertion_prefix_decision,
+                Some(AssertionPrefixDecision::Activated)
+            )),
             prefilter_path: stats.prefilter_path,
             prefilter_bypass: stats.prefilter_bypass,
             prefilter_retained_bytes: stats.prefilter_retained_bytes,
@@ -198,9 +261,10 @@ impl SharedCohortMatcher {
         })
     }
 
-    fn scan_buffered(&self, input: &Utf16Text) -> Result<(Vec<Match>, engine::ScanStats), Error> {
+    fn scan_buffered(&self, input: &Utf16Text) -> Result<BufferedScan, Error> {
         let mut events = Vec::new();
         let mut combined: Option<engine::ScanStats> = None;
+        let mut assertion_prefix_decision = None;
         for view in [&self.assertion_free, &self.assertion_bearing] {
             if view.descriptor.pattern_count == 0 {
                 continue;
@@ -210,18 +274,22 @@ impl SharedCohortMatcher {
                     self.assertion_specialization_enabled,
                     view.descriptor.assertion_ascii_five(),
                 ) {
-                    (true, Some(prefix)) => engine::scan_assertion_prefix_view_with_stats(
-                        &self.database,
-                        engine::AssertionPrefixView {
-                            root: view.descriptor.root,
-                            prefix,
-                        },
-                        &view.prefilter,
-                        input,
-                        self.prefilter_enabled,
-                        self.literal_prefilter_enabled,
-                        |matched| events.push(matched),
-                    )?,
+                    (true, Some(prefix)) => {
+                        let scan = engine::scan_assertion_prefix_view_with_stats(
+                            &self.database,
+                            engine::AssertionPrefixView {
+                                root: view.descriptor.root,
+                                prefix,
+                            },
+                            &view.prefilter,
+                            input,
+                            self.prefilter_enabled,
+                            self.literal_prefilter_enabled,
+                            |matched| events.push(matched),
+                        )?;
+                        assertion_prefix_decision = Some(scan.decision);
+                        scan.stats
+                    }
                     _ => engine::scan_assertion_view_with_stats(
                         &self.database,
                         view.descriptor.root,
@@ -250,12 +318,14 @@ impl SharedCohortMatcher {
                 combined = Some(stats);
             }
         }
-        Ok((
+        Ok(BufferedScan {
             events,
-            combined.expect("a built matcher has at least one populated cohort"),
-        ))
+            stats: combined.expect("a built matcher has at least one populated cohort"),
+            assertion_prefix_decision,
+        })
     }
 
+    #[cfg(feature = "benchmark-internals")]
     fn cohort_count(&self) -> usize {
         usize::from(self.assertion_free.descriptor.pattern_count > 0)
             + usize::from(self.assertion_bearing.descriptor.pattern_count > 0)
@@ -293,6 +363,7 @@ pub(super) fn build_matcher(
             prefilter: Prefilter::disabled(),
             state_cache_budget: bearing_cache_budget,
         },
+        #[cfg(feature = "benchmark-internals")]
         requested_worker_count: builder.worker_count,
         prefilter_enabled: builder.prefilter_enabled,
         literal_prefilter_enabled: builder.literal_prefilter_enabled,

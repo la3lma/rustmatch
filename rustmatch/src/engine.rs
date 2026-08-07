@@ -7,7 +7,10 @@ use crate::nfa::{EdgeKind, PatternDatabase, StateId};
 use crate::prefilter::{Prefilter, PrefilterBypass, PrefilterPath, ScanPlan};
 use crate::{Error, Match, Utf16Span, Utf16Text};
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 #[derive(Clone, Copy)]
 pub(crate) struct AssertionPrefixView {
     pub(crate) root: StateId,
@@ -111,7 +114,10 @@ pub(crate) fn scan_with_stats(
     Ok(metrics)
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 pub(crate) fn scan_assertion_view_with_stats(
     database: &PatternDatabase,
     root: StateId,
@@ -138,7 +144,19 @@ pub(crate) fn scan_assertion_view_with_stats(
     Ok(metrics)
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+pub(crate) struct AssertionPrefixScan {
+    pub(crate) stats: ScanStats,
+    pub(crate) decision: crate::prefilter::AssertionPrefixDecision,
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 pub(crate) fn scan_assertion_prefix_view_with_stats(
     database: &PatternDatabase,
     view: AssertionPrefixView,
@@ -147,9 +165,9 @@ pub(crate) fn scan_assertion_prefix_view_with_stats(
     prefilter_enabled: bool,
     literal_prefilter_enabled: bool,
     mut sink: impl FnMut(Match),
-) -> Result<ScanStats, Error> {
+) -> Result<AssertionPrefixScan, Error> {
     let units = input.units();
-    let plan = prefilter.plan_assertion_prefix(
+    let (plan, decision) = prefilter.plan_assertion_prefix(
         view.prefix,
         units,
         prefilter_enabled,
@@ -167,7 +185,6 @@ pub(crate) fn scan_assertion_prefix_view_with_stats(
     };
     match &plan {
         ScanPlan::Candidates { candidates, .. } => {
-            metrics.assertion_prefix_activations = 1;
             metrics.prefilter_starts_scanned = candidates.count();
             scan_assertion_view_starts(database, view.root, input, candidates.iter(), &mut sink)?;
         }
@@ -177,7 +194,10 @@ pub(crate) fn scan_assertion_prefix_view_with_stats(
         }
     }
     metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
-    Ok(metrics)
+    Ok(AssertionPrefixScan {
+        stats: metrics,
+        decision,
+    })
 }
 
 fn scan_without_assertions_dispatch(
@@ -612,7 +632,10 @@ pub(crate) struct ScanStats {
 }
 
 impl ScanStats {
-    #[cfg(feature = "benchmark-internals")]
+    #[cfg(any(
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     pub(crate) fn merge_partition(&mut self, other: Self) {
         self.cache_states = self.cache_states.saturating_add(other.cache_states);
         self.cache_hits = self.cache_hits.saturating_add(other.cache_hits);
@@ -626,9 +649,12 @@ impl ScanStats {
         self.assertion_bypasses = self
             .assertion_bypasses
             .saturating_add(other.assertion_bypasses);
-        self.assertion_prefix_activations = self
-            .assertion_prefix_activations
-            .saturating_add(other.assertion_prefix_activations);
+        #[cfg(feature = "benchmark-internals")]
+        {
+            self.assertion_prefix_activations = self
+                .assertion_prefix_activations
+                .saturating_add(other.assertion_prefix_activations);
+        }
         if self.prefilter_path != other.prefilter_path {
             self.prefilter_path = PrefilterPath::MixedParallel;
         }
@@ -723,7 +749,10 @@ fn scan_with_assertions(
     Ok(())
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 fn scan_assertion_view(
     database: &PatternDatabase,
     root: StateId,
@@ -733,7 +762,10 @@ fn scan_assertion_view(
     scan_assertion_view_starts(database, root, input, 0..input.units().len(), sink)
 }
 
-#[cfg(feature = "benchmark-internals")]
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
 fn scan_assertion_view_starts(
     database: &PatternDatabase,
     root: StateId,
