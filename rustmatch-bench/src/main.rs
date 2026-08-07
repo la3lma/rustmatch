@@ -202,6 +202,8 @@ fn generic_run_command(
         repeats,
         warmups,
         BenchmarkProductBackend::Default,
+        #[cfg(feature = "experimental-showcase")]
+        None,
     )
 }
 
@@ -214,6 +216,15 @@ fn experimental_run_command(
     let repeats = parse_positive_usize("repeat count", arguments.next())?;
     let warmups = parse_positive_usize("warm-up count", arguments.next())?;
     let backend = arguments.next().ok_or_else(usage)?;
+    let policy = match arguments.next().as_deref() {
+        None | Some("require-specialized") => ExperimentalProductPolicy::RequireSpecialized,
+        Some("allow-exact-fallback") => ExperimentalProductPolicy::AllowExactFallback,
+        Some(policy) => {
+            return Err(format!(
+                "unknown experimental scan policy {policy:?}; expected require-specialized or allow-exact-fallback"
+            ));
+        }
+    };
     if arguments.next().is_some() {
         return Err(usage());
     }
@@ -231,6 +242,7 @@ fn experimental_run_command(
         repeats,
         warmups,
         backend,
+        Some(policy),
     )
 }
 
@@ -270,7 +282,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -372,12 +384,39 @@ enum BenchmarkProductBackend {
     AssertionPrefixV1,
 }
 
+#[cfg(feature = "experimental-showcase")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ExperimentalProductPolicy {
+    RequireSpecialized,
+    AllowExactFallback,
+}
+
+#[cfg(feature = "experimental-showcase")]
+impl ExperimentalProductPolicy {
+    const fn scan_policy(self) -> ScanPolicy {
+        match self {
+            Self::RequireSpecialized => ScanPolicy::RequireSpecialized,
+            Self::AllowExactFallback => ScanPolicy::AllowExactFallback,
+        }
+    }
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::RequireSpecialized => "require-specialized",
+            Self::AllowExactFallback => "allow-exact-fallback",
+        }
+    }
+}
+
 fn benchmark_product_run(
     pattern_path: &Path,
     corpus_path: &Path,
     repeats: usize,
     warmups: usize,
     backend: BenchmarkProductBackend,
+    #[cfg(feature = "experimental-showcase")] experimental_policy: Option<
+        ExperimentalProductPolicy,
+    >,
 ) -> Result<BenchmarkProductReceipt, String> {
     let input_started = Instant::now();
     let pattern_bytes = fs::read(pattern_path).map_err(|error| {
@@ -400,9 +439,15 @@ fn benchmark_product_run(
             benchmark_default_product(&fixture, input_prepare_ns, repeats, warmups)
         }
         #[cfg(feature = "experimental-showcase")]
-        BenchmarkProductBackend::AssertionPrefixV1 => {
-            benchmark_assertion_prefix_product(&fixture, input_prepare_ns, repeats, warmups)
-        }
+        BenchmarkProductBackend::AssertionPrefixV1 => benchmark_assertion_prefix_product(
+            &fixture,
+            input_prepare_ns,
+            repeats,
+            warmups,
+            experimental_policy.ok_or_else(|| {
+                "experimental benchmark product requires an explicit scan policy".to_owned()
+            })?,
+        ),
     }
 }
 
@@ -447,6 +492,7 @@ fn benchmark_assertion_prefix_product(
     input_prepare_ns: u128,
     repeats: usize,
     warmups: usize,
+    policy: ExperimentalProductPolicy,
 ) -> Result<BenchmarkProductReceipt, String> {
     let metadata = BenchmarkProductMetadata::assertion_prefix_v1();
     let prepare_started = Instant::now();
@@ -481,24 +527,25 @@ fn benchmark_assertion_prefix_product(
     };
     let prepare_ns = nanos(prepare_started.elapsed());
     let first_started = Instant::now();
-    let (summary, first_report) = match assertion_prefix_event_summary(&matcher, &fixture.input) {
-        Ok(evidence) => evidence,
-        Err(ExperimentalScanError::SpecializationUnavailable { reason }) => {
-            return Ok(ineligible_product_receipt(
-                metadata,
-                fixture,
-                input_prepare_ns,
-                prepare_ns,
-                "dynamic",
-                format!("{reason:?}"),
-            ));
-        }
-        Err(error) => {
-            return Err(format!(
-                "experimental assertion-prefix activation scan failed: {error}"
-            ));
-        }
-    };
+    let (summary, first_report) =
+        match assertion_prefix_event_summary(&matcher, &fixture.input, policy.scan_policy()) {
+            Ok(evidence) => evidence,
+            Err(ExperimentalScanError::SpecializationUnavailable { reason }) => {
+                return Ok(ineligible_product_receipt(
+                    metadata,
+                    fixture,
+                    input_prepare_ns,
+                    prepare_ns,
+                    "dynamic",
+                    format!("{reason:?}"),
+                ));
+            }
+            Err(error) => {
+                return Err(format!(
+                    "experimental assertion-prefix activation scan failed: {error}"
+                ));
+            }
+        };
     let first_ns = nanos(first_started.elapsed());
     let mut warmup_ns = Vec::with_capacity(warmups);
     let mut scan_ns = Vec::with_capacity(repeats);
@@ -509,17 +556,27 @@ fn benchmark_assertion_prefix_product(
     }
     while warmup_ns.len() < warmups {
         let started = Instant::now();
-        let count = assertion_prefix_event_count(&matcher, &fixture.input)?;
+        let count = assertion_prefix_event_count(
+            &matcher,
+            &fixture.input,
+            policy.scan_policy(),
+            &first_report,
+        )?;
         warmup_ns.push(nanos(started.elapsed()));
         validate_harness_count("experimental warm-up", count, summary.count)?;
     }
     while scan_ns.len() < repeats {
         let started = Instant::now();
-        let count = assertion_prefix_event_count(&matcher, &fixture.input)?;
+        let count = assertion_prefix_event_count(
+            &matcher,
+            &fixture.input,
+            policy.scan_policy(),
+            &first_report,
+        )?;
         scan_ns.push(nanos(started.elapsed()));
         validate_harness_count("experimental measurement", count, summary.count)?;
     }
-    let eligibility = first_report.static_eligibility();
+    let backend_activation = assertion_prefix_activation_receipt(policy, &first_report);
     measured_product_receipt(
         metadata,
         fixture,
@@ -530,26 +587,38 @@ fn benchmark_assertion_prefix_product(
             scan_ns,
             summary,
             diagnostics: None,
-            backend_activation: Some(BackendActivationReceipt {
-                activated_backend: match first_report.activated_backend() {
-                    ExperimentalScanBackend::AssertionPrefixV1 => "assertion-prefix-v1",
-                    ExperimentalScanBackend::GenericExactFallback => "generic-exact-fallback",
-                    _ => "unknown-nonexhaustive-backend",
-                },
-                assertion_pattern_count: eligibility.assertion_pattern_count(),
-                shared_ascii_prefix: String::from_utf8_lossy(&eligibility.shared_ascii_prefix())
-                    .into_owned(),
-                candidate_count: first_report.candidate_count(),
-                candidate_bytes: first_report.candidate_bytes(),
-            }),
+            backend_activation: Some(backend_activation),
         },
     )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_activation_receipt(
+    policy: ExperimentalProductPolicy,
+    report: &rustmatch::experimental::assertion_prefix_v1::ScanReport,
+) -> BackendActivationReceipt {
+    let eligibility = report.static_eligibility();
+    BackendActivationReceipt {
+        requested_scan_policy: policy.label(),
+        activated_backend: match report.activated_backend() {
+            ExperimentalScanBackend::AssertionPrefixV1 => "assertion-prefix-v1",
+            ExperimentalScanBackend::GenericExactFallback => "generic-exact-fallback",
+            _ => "unknown-nonexhaustive-backend",
+        },
+        assertion_pattern_count: eligibility.assertion_pattern_count(),
+        shared_ascii_prefix: String::from_utf8_lossy(&eligibility.shared_ascii_prefix())
+            .into_owned(),
+        candidate_count: report.candidate_count(),
+        candidate_bytes: report.candidate_bytes(),
+        fallback_reason: report.fallback_reason().map(|reason| format!("{reason:?}")),
+    }
 }
 
 #[cfg(feature = "experimental-showcase")]
 fn assertion_prefix_event_summary(
     matcher: &AssertionPrefixMatcher,
     input: &Utf16Text,
+    policy: ScanPolicy,
 ) -> Result<
     (
         EventSummary,
@@ -558,7 +627,7 @@ fn assertion_prefix_event_summary(
     ExperimentalScanError,
 > {
     let mut summary = EventSummary::default();
-    let report = matcher.scan_with_policy(input, ScanPolicy::RequireSpecialized, |event| {
+    let report = matcher.scan_with_policy(input, policy, |event| {
         summary.add(&Event {
             pattern_id: event.pattern_id().get(),
             start: event.span().start(),
@@ -572,13 +641,18 @@ fn assertion_prefix_event_summary(
 fn assertion_prefix_event_count(
     matcher: &AssertionPrefixMatcher,
     input: &Utf16Text,
+    policy: ScanPolicy,
+    expected: &rustmatch::experimental::assertion_prefix_v1::ScanReport,
 ) -> Result<usize, String> {
     let mut count = 0_usize;
     let report = matcher
-        .scan_with_policy(input, ScanPolicy::RequireSpecialized, |_| count += 1)
+        .scan_with_policy(input, policy, |_| count += 1)
         .map_err(|error| format!("experimental assertion-prefix scan failed: {error}"))?;
-    if !report.specialized_backend_activated() {
-        return Err("experimental assertion-prefix scan unexpectedly fell back".to_owned());
+    if report.requested_policy() != expected.requested_policy()
+        || report.activated_backend() != expected.activated_backend()
+        || report.fallback_reason() != expected.fallback_reason()
+    {
+        return Err("experimental assertion-prefix activation changed between scans".to_owned());
     }
     Ok(count)
 }
@@ -704,7 +778,11 @@ impl BenchmarkProductMetadata {
             workload_tuned: false,
             robustness_claim: "default-behavior-over-published-matrix",
             selected_backend: "default",
-            feature_profile: "benchmark-internals;no-experimental-features",
+            feature_profile: if cfg!(feature = "experimental-showcase") {
+                "benchmark-internals;experimental-showcase-enabled-unused"
+            } else {
+                "benchmark-internals;no-experimental-features"
+            },
         }
     }
 
@@ -3026,11 +3104,14 @@ struct IneligibilityReceipt {
 
 #[derive(Debug, Serialize)]
 struct BackendActivationReceipt {
+    requested_scan_policy: &'static str,
     activated_backend: &'static str,
     assertion_pattern_count: usize,
     shared_ascii_prefix: String,
     candidate_count: usize,
     candidate_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fallback_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -3657,8 +3738,6 @@ struct ComparisonReceipt {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "experimental-showcase")]
-    use super::benchmark_assertion_prefix_product;
     use super::{
         BenchmarkProductMetadata, CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture,
         CohortReportReceipt, Event, HarnessFixture, HarnessMode, I6ScanReceipt, I7ScanReceipt,
@@ -3669,6 +3748,8 @@ mod tests {
         harness_event_summary_with_diagnostics, measure_harness_scans, regex_events,
         render_scale_report, select_literal_patterns,
     };
+    #[cfg(feature = "experimental-showcase")]
+    use super::{ExperimentalProductPolicy, benchmark_assertion_prefix_product};
     use regex::{Regex, RegexSet};
     #[cfg(feature = "experimental-showcase")]
     use std::fmt::Write as _;
@@ -3730,7 +3811,13 @@ mod tests {
         let fixture = HarnessFixture::from_bytes(b"1\tplain\n", b"plain")?;
 
         // Test
-        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
 
         // Assert
         assert_eq!(receipt.engine, "rustmatch-rust-experimental");
@@ -3753,7 +3840,13 @@ mod tests {
         let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), b"word0001")?;
 
         // Test
-        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
 
         // Assert
         assert_eq!(receipt.candidate_status, "ineligible");
@@ -3781,7 +3874,13 @@ mod tests {
         let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), &corpus)?;
 
         // Test
-        let receipt = benchmark_assertion_prefix_product(&fixture, 1, 1, 1)?;
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
 
         // Assert
         assert_eq!(
@@ -3801,10 +3900,49 @@ mod tests {
             .backend_activation
             .as_ref()
             .ok_or_else(|| "experimental receipt lacks activation evidence".to_owned())?;
+        assert_eq!(activation.requested_scan_policy, "require-specialized");
         assert_eq!(activation.activated_backend, "assertion-prefix-v1");
+        assert_eq!(activation.fallback_reason, None);
         assert_eq!(activation.assertion_pattern_count, 256);
         assert_eq!(activation.shared_ascii_prefix, "word0");
         assert!(activation.candidate_count >= 1);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_reports_exact_short_input_fallback() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), b"word0001")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::AllowExactFallback,
+        )?;
+
+        // Assert
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.correctness, "pass");
+        assert_eq!(receipt.matches_per_iteration, Some(1));
+        let activation = receipt
+            .backend_activation
+            .as_ref()
+            .ok_or_else(|| "fallback receipt lacks activation evidence".to_owned())?;
+        assert_eq!(activation.requested_scan_policy, "allow-exact-fallback");
+        assert_eq!(activation.activated_backend, "generic-exact-fallback");
+        assert!(
+            activation
+                .fallback_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("InputTooShort"))
+        );
+        assert_eq!(activation.candidate_count, 0);
+        assert_eq!(activation.candidate_bytes, 0);
         Ok(())
     }
 
