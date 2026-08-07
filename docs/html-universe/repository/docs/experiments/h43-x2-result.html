@@ -68,15 +68,15 @@ metadata.</p>
 <code>MatcherBuilder</code>, <code>Matcher</code>, or <code>Error</code>. Feature-only state lives in the
 separate matcher, and specialization activation is not added to ordinary
 <code>ScanStats</code>.</p>
-<h2>Remaining gates</h2>
-<p>X1.5 must freeze and run a new explicit-capability utility campaign. It must
-measure target, one-unit-below-boundary, sparse/dense boundary, fallback,
-prefix-mismatch, mixed-cohort, preparation, allocations, RSS, and total work
-for at least <code>N = 1</code> and <code>N = 10</code>. It must prove the capability envelope and
-break-even count without changing H43-A1's historical result.</p>
-<p>Publication and merge into the release baseline remain blocked until that
-window, critical review, API/SemVer review, and owner admission decision all
-pass. Any automatic selector remains a separate full G9 program.</p>
+<h2>Formal follow-up</h2>
+<p>X1.5 completed all required target, one-unit-below-boundary, density, fallback,
+prefix-mismatch, mixed-cohort, preparation, allocation, RSS, <code>N = 1</code>, and
+<code>N = 10</code> lanes. The <a href="h43-x1-5-formal-admission-result.html">formal result</a>
+retains 232.54x and 456.05x target scan speedups and complete default safety,
+but one 2.688833% preparation regression yields <code>investigate</code>.</p>
+<p>Publication and merge into the release baseline remain blocked. H43-X1.6 is a
+construction-only causal discriminator; any automatic selector remains a
+separate full G9 program.</p>
 <h2>Evidence</h2>
 <ul>
 <li><a href="../evidence/h43/x2/ff1ac2f/README.html">Local evidence index</a></li>

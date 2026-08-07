@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-A1-P1 complete; H43-A2 available; X1.1 ADR accepted<br>
+**Status:** H43-X1.5 complete with `investigate`; H43-X1.6 available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -125,6 +125,8 @@ flowchart TB
     subgraph RISK[Explicit risk-tier contingency]
         X1["H43-X1 Freeze a two-key experimental backend contract"]
         X2["H43-X2 Build isolated separate-type prototype"]
+        X15["H43-X1.5 Run formal explicit admission"]
+        X16["H43-X1.6 Isolate construction signal"]
     end
 
     subgraph ADMISSION[Admission and productization]
@@ -162,6 +164,8 @@ flowchart TB
     A1P1 --> A2
     A1P1 --> X1
     X1 --> X2
+    X2 --> X15
+    X15 --> X16
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -207,6 +211,8 @@ flowchart TB
     class V1 complete;
     class A1 complete;
     class A1P1,X1,X2 complete;
+    class X15 blocked;
+    class X16 available;
     class A2 available;
     class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -1803,6 +1809,76 @@ semantically and structurally unchanged.
   exclusive-host window. Publication, production merge, and automatic routing
   remain unauthorized.
 
+## H43-X1.5: Run formal explicit-capability admission
+
+**Scope:** feature-gated explicit utility and default isolation<br>
+**Level:** system<br>
+**Status:** complete; investigate<br>
+**Primary actor:** exclusive-host campaign runner<br>
+**Supporting actors:** semantic reviewer, evidence auditor, release reviewer
+
+**Goal**
+
+Measure the separate assertion matcher as an honestly requested experimental
+capability while independently proving that ordinary matcher behavior remains
+inside the unchanged G9-v3 boundary.
+
+**Preconditions**
+
+- H43-X2 has passed local exactness and both default-isolation configurations.
+- The exact source, feature-off/on artifacts, fixtures, runner, and decision
+  thresholds are frozen before timing.
+- Agogo is exclusive, managed services are stopped, and Docker/GPU/CPU guards
+  are active.
+
+**Minimal guarantee**
+
+No semantic, activation, fallback, resource, or default-safety defect may be
+traded for target speed. Rejected windows remain separate and unadmitted.
+
+**Success guarantee / postconditions**
+
+- Same-binary calibration, nine default guards, exact explicit targets,
+  activated boundaries, fallback disclosures, functional refusals,
+  allocations, RSS, and total-work economics are retained.
+- Every paired cell has 15 adjacent AB/BA cycles, two warmups, and five
+  retained scans per process.
+- An independent audit reproduces the machine decision from raw receipts.
+
+**Main success scenario**
+
+1. Build and hash exact feature-off and feature-on artifacts.
+2. Freeze all fixture event counts, digests, policies, and G9-v3 thresholds.
+3. Pass exact Linux CI and MSRV checks.
+4. Run calibration before the complete paired matrix.
+5. Run functional refusals and allocation probes.
+6. Recompute the analyzer independently and archive accepted and rejected
+   evidence.
+7. Admit only if every ring passes; otherwise retain the exact disposition and
+   authorize at most a causally narrower successor.
+
+**Expected evidence**
+
+- Frozen plan and artifact hashes.
+- 1,158 timed receipts plus four functional probes.
+- Machine analysis, host/window state, rejected-window evidence, restoration
+  receipt, independent audit, and reviewed result.
+
+**Dependencies:** H43-X1; H43-X2; ADR-0009; G9-v3.
+
+**Implementation result**
+
+- **Result:** the clean 5-hour-7-minute window retained 1,020 formal paired,
+  120 calibration, and 18 allocation receipts. Both targets passed scan and
+  total-work gates at 232.54x and 456.05x with 15/15 positive cycles. All nine
+  default guards, four functional probes, exact fallbacks, allocations, and
+  provenance gates passed. The 2 MiB target's preparation metric regressed
+  2.688833% with 13/15 adverse cycles.
+- **Evidence:** [reviewed X1.5 result](h43-x1-5-formal-admission-result.md) and
+  [curated evidence](../evidence/h43/x1.5/a5b86c2/README.md).
+- **Decision:** `investigate`; no merge or publication. Authorize H43-X1.6 as
+  a construction-only discriminator without changing this frozen result.
+
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
 **Scope:** durable project communication  
@@ -1895,9 +1971,11 @@ throughput with exact events and stable resources. H43-A1-P1 completed with
 neutral phase-local build effects and exact resource equivalence, authorizing
 H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
 isolated H43-X2 prototype completed its local semantic and default-isolation
-gates. H43-A2 remains available, and X1.5 explicit-capability utility evidence
-is now authorized. No production merge, publication, automatic selector, or
-formal G9 campaign is authorized yet.
+gates. H43-A2 remains available. X1.5 completed the full explicit-capability
+utility assay with complete default safety and exceptional target gains, but
+one 2.688833% preparation regression yields `investigate`. H43-X1.6 is
+authorized to isolate that phase. No production merge, publication, or
+automatic selector is authorized.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

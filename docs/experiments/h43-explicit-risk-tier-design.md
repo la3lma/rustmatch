@@ -1,6 +1,6 @@
 # H43 explicit assertion-prefix capability strategy
 
-**Status:** X2 locally certified; X1.5 explicit utility evidence authorized<br>
+**Status:** X1.5 complete with `investigate`; X1.6 discriminator authorized<br>
 **Owner direction:** preserve the measured 205x-409x scan opportunity for
 deliberate use without changing ordinary matcher performance<br>
 **Policy relationship:** additive experimental product contract; the rejected
@@ -324,8 +324,14 @@ feature and separate matcher type. Its [reviewed result](h43-x2-result.md)
 records passing local exactness plus feature-off and
 feature-on/runtime-unused default-isolation gates.
 
-The next action is X1.5: freeze a new explicit-capability utility plan and run
-it in a fresh exclusive-host window. The plan must publish target and boundary
-behavior, fallback costs, build and scan phases, allocations, RSS,
-`T_total(1)`, `T_total(10)`, and break-even scan count. Passing that window is
-necessary but not sufficient for publication or merge.
+X1.5 completed the full explicit-capability utility plan in a clean
+exclusive-host window. Its [reviewed result](h43-x1-5-formal-admission-result.md)
+records 232.54x and 456.05x paired target scan speedups, exact boundary and
+fallback behavior, identical allocation probes, complete default safety, and
+passing `T_total(1)` and `T_total(10)`. One 2 MiB preparation metric regressed
+2.688833%, so the unchanged outcome is `investigate`, not publication or merge.
+
+The next action is X1.6: isolate exact separate-type construction from corpus
+I/O and scan work in a frozen same-pattern discriminator. A confirmed cost must
+be repaired before the full assay is repeated. A neutral result may inform an
+owner review but cannot rewrite the immutable X1.5 disposition.

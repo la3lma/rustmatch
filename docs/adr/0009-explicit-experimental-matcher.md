@@ -150,12 +150,16 @@ proven. Automatic selection remains blocked on full G9 evidence.
 - [H43-A1-P1 result](../experiments/h43-a1-p1-result.md)
 - [Explicit capability strategy](../experiments/h43-explicit-risk-tier-design.md)
 - [H43-X2 local result](../experiments/h43-x2-result.md)
+- [H43-X1.5 formal result](../experiments/h43-x1-5-formal-admission-result.md)
 
 This ADR authorizes a benchmark-internal source prototype and local semantic
 tests. It does not authorize publication, merge into the release baseline, or
 formal performance claims. Exclusive-host timing begins only after the source
 prototype passes local exactness and both default-isolation configurations.
 
-H43-X2 passed those local gates at implementation `ff1ac2f`. A fresh X1.5
-explicit utility campaign is therefore authorized; all publication and merge
-restrictions above remain in force.
+H43-X2 passed those local gates at implementation `ff1ac2f`. H43-X1.5 then
+completed the full explicit utility assay at `a5b86c2`: default safety,
+correctness, activation, allocation, scan, and total-work gates passed, but the
+2 MiB target's preparation metric regressed 2.688833%. The unchanged G9-v3
+disposition is `investigate`. Publication and merge remain unauthorized while
+H43-X1.6 isolates that construction signal.

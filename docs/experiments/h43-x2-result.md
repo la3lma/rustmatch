@@ -71,17 +71,17 @@ The implementation adds no field, variant, method, or scan branch to normal
 separate matcher, and specialization activation is not added to ordinary
 `ScanStats`.
 
-## Remaining gates
+## Formal follow-up
 
-X1.5 must freeze and run a new explicit-capability utility campaign. It must
-measure target, one-unit-below-boundary, sparse/dense boundary, fallback,
-prefix-mismatch, mixed-cohort, preparation, allocations, RSS, and total work
-for at least `N = 1` and `N = 10`. It must prove the capability envelope and
-break-even count without changing H43-A1's historical result.
+X1.5 completed all required target, one-unit-below-boundary, density, fallback,
+prefix-mismatch, mixed-cohort, preparation, allocation, RSS, `N = 1`, and
+`N = 10` lanes. The [formal result](h43-x1-5-formal-admission-result.md)
+retains 232.54x and 456.05x target scan speedups and complete default safety,
+but one 2.688833% preparation regression yields `investigate`.
 
-Publication and merge into the release baseline remain blocked until that
-window, critical review, API/SemVer review, and owner admission decision all
-pass. Any automatic selector remains a separate full G9 program.
+Publication and merge into the release baseline remain blocked. H43-X1.6 is a
+construction-only causal discriminator; any automatic selector remains a
+separate full G9 program.
 
 ## Evidence
 

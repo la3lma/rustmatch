@@ -68,20 +68,25 @@ goalposts of that historical experiment.
 This secondary panel is deliberately workload-tuned. It explicitly enables the
 `assertion-prefix-v1` backend after seeing the exact expressions and corpus,
 forbids fallback, and makes **no** claim about default behavior, automatic
-selection, or unseen workloads.
+selection, or unseen workloads. The exact candidate is **investigate, not
+merged or published**, because one independent preparation metric crossed the
+unchanged 2% investigation boundary.
 
 | Workload | Public default | Experimental | Speedup | Outcome |
 |---|---:|---:|---:|---|
-| Assertion boundary, 1,000 patterns, 1 MiB | 1.009 Mbit/s | 232.207 Mbit/s | **230.05x** | Eligible and exact |
-| Assertion boundary, 1,000 patterns, 2 MiB | 1.012 Mbit/s | 461.144 Mbit/s | **455.52x** | Eligible and exact |
-| Adversarial assertions, 256 patterns, 1 MiB | 5.676 Mbit/s | N/A | N/A | Correctly refused |
-| Ordinary literals, 1,000 patterns, 1 MiB | 4,643.490 Mbit/s | N/A | N/A | Correctly refused |
+| Assertion boundary, 1,000 patterns, 1 MiB | 0.992 Mbit/s | 230.480 Mbit/s | **232.54x** | Scan and total work pass |
+| Assertion boundary, 1,000 patterns, 2 MiB | 0.994 Mbit/s | 456.151 Mbit/s | **456.05x** | Scan passes; preparation investigate |
+| Nine historical default guards | unchanged public matcher | N/A | N/A | All metrics below 2% |
+| Four static/dynamic refusal probes | exact refusal | N/A | N/A | All passed |
 
-Each cell used five independent processes, two warmups, and five retained scans
-per process on the exclusive Agogo host. All 85 receipts passed semantic
-validation; the clean guarded window had no contamination and restored all
-services. See the [cell-level results and methodology](docs/benchmarking/default-vs-experimental-results.md)
-and the [hash-bound evidence archive](https://github.com/la3lma/rmatch-performance-measurements/tree/c2a3e25bfcfe91371902557524a81374dd87a824/docs/benchmarking/readme-default-experimental-v1).
+The formal assay used 15 adjacent AB/BA crossover cycles, two warmups, and five
+retained scans per process. All 1,158 timed receipts, four functional probes,
+and 4,658 accepted evidence files passed semantic and provenance validation;
+no timing contamination occurred. The sole blocker was a 2.688833% preparation
+regression on the 2 MiB target, with 13 of 15 cycles adverse and no 3% veto.
+See the [formal result](docs/experiments/h43-x1-5-formal-admission-result.md),
+the earlier [two-product methodology](docs/benchmarking/default-vs-experimental-results.md),
+and the [curated evidence](docs/evidence/h43/x1.5/a5b86c2/README.md).
 
 ## TL;DR
 

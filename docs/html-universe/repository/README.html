@@ -69,18 +69,23 @@ goalposts of that historical experiment.</p>
 <p>This secondary panel is deliberately workload-tuned. It explicitly enables the
 <code>assertion-prefix-v1</code> backend after seeing the exact expressions and corpus,
 forbids fallback, and makes <strong>no</strong> claim about default behavior, automatic
-selection, or unseen workloads.</p>
+selection, or unseen workloads. The exact candidate is <strong>investigate, not
+merged or published</strong>, because one independent preparation metric crossed the
+unchanged 2% investigation boundary.</p>
 <table><thead><tr><th>Workload</th><th style="text-align: right">Public default</th><th style="text-align: right">Experimental</th><th style="text-align: right">Speedup</th><th>Outcome</th></tr></thead><tbody>
-<tr><td>Assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">1.009 Mbit/s</td><td style="text-align: right">232.207 Mbit/s</td><td style="text-align: right"><strong>230.05x</strong></td><td>Eligible and exact</td></tr>
-<tr><td>Assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">1.012 Mbit/s</td><td style="text-align: right">461.144 Mbit/s</td><td style="text-align: right"><strong>455.52x</strong></td><td>Eligible and exact</td></tr>
-<tr><td>Adversarial assertions, 256 patterns, 1 MiB</td><td style="text-align: right">5.676 Mbit/s</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>Correctly refused</td></tr>
-<tr><td>Ordinary literals, 1,000 patterns, 1 MiB</td><td style="text-align: right">4,643.490 Mbit/s</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>Correctly refused</td></tr>
+<tr><td>Assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">0.992 Mbit/s</td><td style="text-align: right">230.480 Mbit/s</td><td style="text-align: right"><strong>232.54x</strong></td><td>Scan and total work pass</td></tr>
+<tr><td>Assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">0.994 Mbit/s</td><td style="text-align: right">456.151 Mbit/s</td><td style="text-align: right"><strong>456.05x</strong></td><td>Scan passes; preparation investigate</td></tr>
+<tr><td>Nine historical default guards</td><td style="text-align: right">unchanged public matcher</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>All metrics below 2%</td></tr>
+<tr><td>Four static/dynamic refusal probes</td><td style="text-align: right">exact refusal</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>All passed</td></tr>
 </tbody></table>
-<p>Each cell used five independent processes, two warmups, and five retained scans
-per process on the exclusive Agogo host. All 85 receipts passed semantic
-validation; the clean guarded window had no contamination and restored all
-services. See the <a href="docs/benchmarking/default-vs-experimental-results.html">cell-level results and methodology</a>
-and the <a href="https://github.com/la3lma/rmatch-performance-measurements/tree/c2a3e25bfcfe91371902557524a81374dd87a824/docs/benchmarking/readme-default-experimental-v1">hash-bound evidence archive</a>.</p>
+<p>The formal assay used 15 adjacent AB/BA crossover cycles, two warmups, and five
+retained scans per process. All 1,158 timed receipts, four functional probes,
+and 4,658 accepted evidence files passed semantic and provenance validation;
+no timing contamination occurred. The sole blocker was a 2.688833% preparation
+regression on the 2 MiB target, with 13 of 15 cycles adverse and no 3% veto.
+See the <a href="docs/experiments/h43-x1-5-formal-admission-result.html">formal result</a>,
+the earlier <a href="docs/benchmarking/default-vs-experimental-results.html">two-product methodology</a>,
+and the <a href="docs/evidence/h43/x1.5/a5b86c2/README.html">curated evidence</a>.</p>
 <h2>TL;DR</h2>
 <h3>What we are building</h3>
 <ul>

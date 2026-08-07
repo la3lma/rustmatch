@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-08-07",
+  "last_reviewed": "2026-08-08",
   "policy_version": "G9-v3",
   "policy_effective_date": "2026-08-04",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes certification. A demonstrated regression above 2% through 3% requires investigation and normally blocks merge. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. An explicit owner-authorized production exception may override the merge hold, but it never relabels the formal evidence as admission-eligible and must retain the adverse result and residual risk.",
@@ -567,6 +567,20 @@
       "decision": "Valid causal discriminator. Authorize H43-A2 and ADR-0009/X1.1. Keep H43-A1 rejected, unmerged, and excluded from the progress graph.",
       "evidence": "experiments/h43-a1-p1-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-X1.5",
+      "name": "Formal explicit assertion matcher admission",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "summary": "Run the separate feature-gated assertion-prefix matcher through calibrated G9-v3 default-safety, exactness, explicit-utility, boundary, fallback, allocation, RSS, and total-work lanes without adding automatic routing.",
+      "result": "The complete 1,158-receipt assay passed both calibrations, all nine default guards, all four refusal probes, exact fallbacks, and every target scan and total-work gate. Assertion targets improved 99.569974% and 99.780726%, about 232.54x and 456.05x, with 15/15 positive cycles. The 2 MiB target preparation metric regressed 2.688833% with 13/15 adverse cycles.",
+      "tradeoffs": "No default metric crossed 2%; the largest was a 1.616900% dense scan regression. Allocation probes were identical and no veto fired. The sole blocker is phase-suspicious because the same pattern database prepared 1.441057% faster in the 1 MiB cell and earlier construction-only evidence was neutral, but its directional burden prevents treating it as noise.",
+      "decision": "Investigate. Do not merge or publish the exact artifact and do not add it to the progress graph. Authorize H43-X1.6 as a construction-only same-pattern discriminator; preserve this immutable formal result regardless of that successor.",
+      "evidence": "experiments/h43-x1-5-formal-admission-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -703,13 +717,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-X2",
-      "name": "Explicit isolated assertion-prefix matcher prototype",
-      "status": "ADR accepted; isolated source prototype available",
-      "why": "H43-A1 retained exact 204x-408x target throughput, while H43-A1-P1 proved the generic and specialized build entry points phase-locally neutral with exact allocation and structure equivalence. ADR-0009 now provides a separate-type boundary that can protect normal Matcher users even when Cargo features are unified.",
-      "next_test": "Extract the benchmark-only mechanism behind unstable-assertion-prefix-v1 and a separate experimental matcher type. Pass local semantic, callback/failure/reuse, resource, feature-off, and feature-on/runtime-unused isolation gates before authorizing any new Agogo utility timing.",
-      "expected_value": "Exceptional demonstrated narrow-workload upside, high mechanism confidence, now-high preparation confidence, and high but bounded API and packaging risk",
-      "evidence": "adr/0009-explicit-experimental-matcher.md"
+      "id": "H43-X1.6",
+      "name": "Separate-type construction-only discriminator",
+      "status": "authorized after X1.5 investigate",
+      "why": "X1.5 proved exact 232.54x and 456.05x target scan speedups, complete default safety, and passing total-work economics, but the 2 MiB target preparation metric regressed 2.688833% with 13 of 15 adverse cycles. The same 1,000-pattern database prepared 1.441057% faster at 1 MiB and earlier phase-local evidence was neutral, so the sign-changing construction signal is both merge-blocking and plausibly separable.",
+      "next_test": "Freeze a same-pattern construction-only crossover discriminator for the exact X2 separate types. Exclude corpus I/O and scanning, retain allocation and structure receipts, and require directional confidence. Repair a confirmed cost before repeating the complete assay; a neutral result may support owner review but cannot relabel X1.5.",
+      "expected_value": "Exceptional retained utility, narrow diagnostic effort, high causal value, and medium admission risk because the immutable formal blocker remains real until independently resolved",
+      "evidence": "experiments/h43-x1-5-formal-admission-result.md"
     },
     {
       "priority": 2,

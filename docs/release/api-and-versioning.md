@@ -21,6 +21,11 @@ the reviewed 0.1.0 surface and is not authorized for publication. Before any
 publication, its versioned API must either receive an explicit `0.1.x`
 compatibility promise, move to a companion crate, or be removed.
 
+The complete H43-X1.5 assay remains `investigate`, not admitted: ordinary
+default safety passed, but one explicit-target preparation metric regressed
+2.688833%. The feature and separate matcher type therefore remain excluded
+from the `0.1.0` release baseline pending H43-X1.6 and a fresh owner decision.
+
 The review confirms these deliberate contracts:
 
 - Rejected registration does not modify or reserve an ID in the builder.
