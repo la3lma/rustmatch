@@ -23,8 +23,11 @@ compatibility promise, move to a companion crate, or be removed.
 
 The complete H43-X1.5 assay remains `investigate`, not admitted: ordinary
 default safety passed, but one explicit-target preparation metric regressed
-2.688833%. The feature and separate matcher type therefore remain excluded
-from the `0.1.0` release baseline pending H43-X1.6 and a fresh owner decision.
+2.688833%. H43-X1.6 did not reproduce that blocker in isolated same-pattern
+construction: complete preparation was 0.808000% slower, below the unchanged
+2% boundary. The feature and separate matcher type remain excluded from the
+`0.1.0` release baseline pending an explicit owner decision; X1.6 does not
+retroactively certify X1.5.
 
 The review confirms these deliberate contracts:
 

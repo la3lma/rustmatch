@@ -581,6 +581,20 @@
       "decision": "Investigate. Do not merge or publish the exact artifact and do not add it to the progress graph. Authorize H43-X1.6 as a construction-only same-pattern discriminator; preserve this immutable formal result regardless of that successor.",
       "evidence": "experiments/h43-x1-5-formal-admission-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-X1.6",
+      "name": "Separate-type construction-only discriminator",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "c47461695cbe7628f0f45ed61dd56bc2687ddd8d",
+      "candidate_revision": "c47461695cbe7628f0f45ed61dd56bc2687ddd8d",
+      "summary": "Compare generic and assertion-prefix-v1 construction in one feature-on executable using the exact same 1,000-pattern fixture, excluding corpus I/O, scanning, events, and serialization from the timed interval.",
+      "result": "The clean formal window retained 60 primary, 120 same-type calibration, and six allocation invocations. Specialized complete preparation was 0.808000% slower with 14 of 15 adverse cycles; registration was 0.218342% slower and compilation was 1.103926% slower. Every effect remained below 2%, both calibrations passed, and allocation probes were exactly equal.",
+      "tradeoffs": "The directional burden indicates a small construction cost rather than exact neutrality, but it cannot explain X1.5's 2.688833% process-level blocker under the unchanged rule. The discriminator narrows one causal uncertainty and is not a complete utility admission assay.",
+      "decision": "Valid causal discriminator: the X1.5 construction blocker did not reproduce. Preserve X1.5 as investigate, do not merge automatically, and authorize explicit owner review without changing thresholds or the progress graph.",
+      "evidence": "experiments/h43-x1-6-construction-discriminator-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -717,13 +731,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-X1.6",
-      "name": "Separate-type construction-only discriminator",
-      "status": "authorized after X1.5 investigate",
-      "why": "X1.5 proved exact 232.54x and 456.05x target scan speedups, complete default safety, and passing total-work economics, but the 2 MiB target preparation metric regressed 2.688833% with 13 of 15 adverse cycles. The same 1,000-pattern database prepared 1.441057% faster at 1 MiB and earlier phase-local evidence was neutral, so the sign-changing construction signal is both merge-blocking and plausibly separable.",
-      "next_test": "Freeze a same-pattern construction-only crossover discriminator for the exact X2 separate types. Exclude corpus I/O and scanning, retain allocation and structure receipts, and require directional confidence. Repair a confirmed cost before repeating the complete assay; a neutral result may support owner review but cannot relabel X1.5.",
-      "expected_value": "Exceptional retained utility, narrow diagnostic effort, high causal value, and medium admission risk because the immutable formal blocker remains real until independently resolved",
-      "evidence": "experiments/h43-x1-5-formal-admission-result.md"
+      "id": "H43-X1.7",
+      "name": "Explicit assertion matcher owner review",
+      "status": "available after neutral X1.6 discriminator",
+      "why": "X1.5 retained exact 232.54x and 456.05x target scan speedups, complete default safety, and passing total-work economics, but formally remains investigate because one preparation metric regressed 2.688833%. X1.6 then isolated exact same-pattern construction and measured only a 0.808000% specialized cost, below 2%, so the suspected construction blocker did not reproduce.",
+      "next_test": "Review the immutable X1.5 and X1.6 evidence together. Choose prospectively between one separately named full confirmation and an explicit owner-authorized merge exception. Neither option may relabel X1.5, omit the adverse receipt, alter thresholds, or present the experimental backend as default.",
+      "expected_value": "Exceptional explicit-capability utility with high evidence quality; low remaining causal uncertainty but medium governance risk because the formal X1.5 disposition is still investigate",
+      "evidence": "experiments/h43-x1-6-construction-discriminator-result.md"
     },
     {
       "priority": 2,

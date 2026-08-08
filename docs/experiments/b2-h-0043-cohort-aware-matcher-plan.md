@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-X1.5 complete with `investigate`; H43-X1.6 available<br>
+**Status:** H43-X1.6 complete; explicit owner review available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -127,6 +127,7 @@ flowchart TB
         X2["H43-X2 Build isolated separate-type prototype"]
         X15["H43-X1.5 Run formal explicit admission"]
         X16["H43-X1.6 Isolate construction signal"]
+        X17["H43-X1.7 Owner review or prospective confirmation"]
     end
 
     subgraph ADMISSION[Admission and productization]
@@ -166,6 +167,7 @@ flowchart TB
     X1 --> X2
     X2 --> X15
     X15 --> X16
+    X16 --> X17
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -212,7 +214,8 @@ flowchart TB
     class A1 complete;
     class A1P1,X1,X2 complete;
     class X15 blocked;
-    class X16 available;
+    class X16 complete;
+    class X17 gate;
     class A2 available;
     class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -1879,6 +1882,74 @@ traded for target speed. Rejected windows remain separate and unadmitted.
 - **Decision:** `investigate`; no merge or publication. Authorize H43-X1.6 as
   a construction-only discriminator without changing this frozen result.
 
+## H43-X1.6: Isolate the separate-type construction signal
+
+**Scope:** same-pattern construction-only causal discriminator<br>
+**Level:** system<br>
+**Status:** complete; blocker not reproduced<br>
+**Primary actor:** exclusive-host campaign runner<br>
+**Supporting actors:** benchmark engineer, evidence auditor, release reviewer
+
+**Goal**
+
+Determine whether X1.5's 2.688833% process-level preparation regression is a
+stable cost of constructing the separate assertion matcher.
+
+**Preconditions**
+
+- X1.5 remains immutable `investigate` with its complete evidence retained.
+- The generic and specialized variants use one exact feature-on executable and
+  one exact 1,000-pattern fixture.
+- Corpus I/O, scanning, events, and result serialization are outside the timed
+  interval.
+- The G9-v3 2% investigation and 3% veto boundaries remain unchanged.
+
+**Minimal guarantee**
+
+The discriminator cannot relabel X1.5, discard an adverse receipt, or certify
+the production capability by itself.
+
+**Success guarantee / postconditions**
+
+- Fifteen adjacent AB/BA primary cycles and both same-type calibrations are
+  retained with exact registration, compile, and complete preparation times.
+- Structure, allocation, artifact, fixture, service, and host receipts are
+  independently auditable.
+- A reproduced cost is repaired before broader timing; a below-boundary result
+  advances only to explicit owner review.
+
+**Main success scenario**
+
+1. Add benchmark-only diagnostics without changing the matcher contract.
+2. Freeze and hash source, executable, fixture, plan, allocation shim, and
+   service snapshot.
+3. Pass focused and complete Rust and measurement-harness tests.
+4. Run same-type calibration, the primary generic/specialized crossover, and
+   allocation probes under the guarded Agogo window.
+5. Recompute every effect independently and preserve the complete archive.
+6. Record the causal result without changing X1.5's formal disposition.
+
+**Expected evidence**
+
+- Frozen plan and exact artifact/fixture identities.
+- 60 primary, 120 calibration, and six allocation invocations.
+- Per-invocation structure and timing receipts, clean host/window state,
+  service restoration, and independent audit.
+
+**Dependencies:** H43-X1.5; ADR-0009; G9-v3.
+
+**Implementation result**
+
+- **Result:** specialized preparation was 0.808000% slower with 14/15 adverse
+  cycles; registration was 0.218342% slower and compilation was 1.103926%
+  slower. Every effect remained below 2%, both calibrations passed, and all
+  allocation pairs were exactly equal.
+- **Evidence:** [reviewed X1.6 result](h43-x1-6-construction-discriminator-result.md)
+  and [curated evidence](../evidence/h43/x1.6/c474616/README.md).
+- **Decision:** valid causal discriminator. The X1.5 construction blocker did
+  not reproduce. Authorize explicit owner review, not automatic merge or a
+  post-hoc change to X1.5.
+
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
 **Scope:** durable project communication  
@@ -1973,9 +2044,11 @@ H43-A2 and the X1.1 contract. ADR-0009 freezes that contract; H43-A2 and the
 isolated H43-X2 prototype completed its local semantic and default-isolation
 gates. H43-A2 remains available. X1.5 completed the full explicit-capability
 utility assay with complete default safety and exceptional target gains, but
-one 2.688833% preparation regression yields `investigate`. H43-X1.6 is
-authorized to isolate that phase. No production merge, publication, or
-automatic selector is authorized.
+one 2.688833% preparation regression yields `investigate`. H43-X1.6 then
+isolated the same-pattern construction phase: its 0.808000% preparation cost
+stayed below 2%, so the blocker did not reproduce. Explicit owner review is
+available; no production merge, publication, or automatic selector is
+automatic.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

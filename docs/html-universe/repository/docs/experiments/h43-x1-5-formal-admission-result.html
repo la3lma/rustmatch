@@ -82,11 +82,12 @@ cost. The 1 MiB target uses the same 1,000-pattern database and moved in the
 opposite direction, input length should not affect pattern compilation, and
 H43-A1-P1 previously found the generic and specialized compiler entries
 phase-locally neutral.</p>
-<p>The principled next action is H43-X1.6: freeze a construction-only discriminator
-for these exact separate matcher types, excluding corpus I/O and scan work. A
-real build cost must be repaired before the complete assay is repeated. A
-neutral discriminator may support an explicit owner review, but it does not
-retroactively turn this immutable result into a pass.</p>
+<p>H43-X1.6 subsequently froze a construction-only discriminator for these exact
+separate matcher types, excluding corpus I/O and scan work. Its specialized
+preparation was 0.808000% slower, below the unchanged 2% boundary, so the
+X1.5 blocker did not reproduce phase-locally. That successor supports an
+explicit owner review, but it does not retroactively turn this immutable result
+into a pass.</p>
 <h2>Cleanup anomaly</h2>
 <p>The timed stage completed cleanly. During post-stage restoration, starting an
 overdue timer briefly activated its one-shot service and the wrapper's immediate
@@ -96,12 +97,14 @@ GPU idle. The harness was corrected to restore originally inactive dependent
 units after active timers; the full 364-test harness suite passes. No timing was
 rerun, removed, or admitted from a rejected window.</p>
 <h2>Decision</h2>
-<p>Do not merge or publish <code>a5b86c2</code>. Keep the source branch and all evidence.
-Authorize H43-X1.6 as a narrow causal discriminator. The certified default,
+<p>Do not merge or publish <code>a5b86c2</code> automatically. Keep the source branch and all
+evidence. H43-X1.6 completed as a valid neutral causal discriminator; move to
+an explicit owner review without relabeling this result. The certified default,
 cross-engine comparison, and merged-efficiency graph do not move.</p>
 <h2>Evidence</h2>
 <ul>
 <li><a href="../evidence/h43/x1.5/a5b86c2/README.html">Curated local evidence</a></li>
+<li><a href="h43-x1-6-construction-discriminator-result.html">H43-X1.6 construction discriminator</a></li>
 <li><a href="h43-x2-result.html">H43-X2 local result</a></li>
 <li><a href="../adr/0009-explicit-experimental-matcher.html">ADR-0009</a></li>
 <li><a href="h43-explicit-risk-tier-design.html">Explicit capability strategy</a></li>

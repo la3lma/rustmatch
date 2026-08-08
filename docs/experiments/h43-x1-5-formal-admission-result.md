@@ -92,11 +92,12 @@ opposite direction, input length should not affect pattern compilation, and
 H43-A1-P1 previously found the generic and specialized compiler entries
 phase-locally neutral.
 
-The principled next action is H43-X1.6: freeze a construction-only discriminator
-for these exact separate matcher types, excluding corpus I/O and scan work. A
-real build cost must be repaired before the complete assay is repeated. A
-neutral discriminator may support an explicit owner review, but it does not
-retroactively turn this immutable result into a pass.
+H43-X1.6 subsequently froze a construction-only discriminator for these exact
+separate matcher types, excluding corpus I/O and scan work. Its specialized
+preparation was 0.808000% slower, below the unchanged 2% boundary, so the
+X1.5 blocker did not reproduce phase-locally. That successor supports an
+explicit owner review, but it does not retroactively turn this immutable result
+into a pass.
 
 ## Cleanup anomaly
 
@@ -110,13 +111,15 @@ rerun, removed, or admitted from a rejected window.
 
 ## Decision
 
-Do not merge or publish `a5b86c2`. Keep the source branch and all evidence.
-Authorize H43-X1.6 as a narrow causal discriminator. The certified default,
+Do not merge or publish `a5b86c2` automatically. Keep the source branch and all
+evidence. H43-X1.6 completed as a valid neutral causal discriminator; move to
+an explicit owner review without relabeling this result. The certified default,
 cross-engine comparison, and merged-efficiency graph do not move.
 
 ## Evidence
 
 - [Curated local evidence](../evidence/h43/x1.5/a5b86c2/README.md)
+- [H43-X1.6 construction discriminator](h43-x1-6-construction-discriminator-result.md)
 - [H43-X2 local result](h43-x2-result.md)
 - [ADR-0009](../adr/0009-explicit-experimental-matcher.md)
 - [Explicit capability strategy](h43-explicit-risk-tier-design.md)

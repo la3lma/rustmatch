@@ -151,6 +151,7 @@ proven. Automatic selection remains blocked on full G9 evidence.
 - [Explicit capability strategy](../experiments/h43-explicit-risk-tier-design.md)
 - [H43-X2 local result](../experiments/h43-x2-result.md)
 - [H43-X1.5 formal result](../experiments/h43-x1-5-formal-admission-result.md)
+- [H43-X1.6 construction discriminator](../experiments/h43-x1-6-construction-discriminator-result.md)
 
 This ADR authorizes a benchmark-internal source prototype and local semantic
 tests. It does not authorize publication, merge into the release baseline, or
@@ -161,5 +162,7 @@ H43-X2 passed those local gates at implementation `ff1ac2f`. H43-X1.5 then
 completed the full explicit utility assay at `a5b86c2`: default safety,
 correctness, activation, allocation, scan, and total-work gates passed, but the
 2 MiB target's preparation metric regressed 2.688833%. The unchanged G9-v3
-disposition is `investigate`. Publication and merge remain unauthorized while
-H43-X1.6 isolates that construction signal.
+disposition is `investigate`. H43-X1.6 subsequently isolated construction and
+found a 0.808000% complete-preparation cost, below the unchanged 2% boundary;
+the X1.5 blocker did not reproduce. Publication and merge remain unauthorized
+pending explicit owner review because the successor does not relabel X1.5.

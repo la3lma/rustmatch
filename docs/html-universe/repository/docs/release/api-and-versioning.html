@@ -27,8 +27,11 @@ publication, its versioned API must either receive an explicit <code>0.1.x</code
 compatibility promise, move to a companion crate, or be removed.</p>
 <p>The complete H43-X1.5 assay remains <code>investigate</code>, not admitted: ordinary
 default safety passed, but one explicit-target preparation metric regressed
-2.688833%. The feature and separate matcher type therefore remain excluded
-from the <code>0.1.0</code> release baseline pending H43-X1.6 and a fresh owner decision.</p>
+2.688833%. H43-X1.6 did not reproduce that blocker in isolated same-pattern
+construction: complete preparation was 0.808000% slower, below the unchanged
+2% boundary. The feature and separate matcher type remain excluded from the
+<code>0.1.0</code> release baseline pending an explicit owner decision; X1.6 does not
+retroactively certify X1.5.</p>
 <p>The review confirms these deliberate contracts:</p>
 <ul>
 <li>Rejected registration does not modify or reserve an ID in the builder.</li>

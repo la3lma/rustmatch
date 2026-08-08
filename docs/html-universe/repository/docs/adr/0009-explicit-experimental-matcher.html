@@ -137,6 +137,7 @@ proven. Automatic selection remains blocked on full G9 evidence.</p>
 <li><a href="../experiments/h43-explicit-risk-tier-design.html">Explicit capability strategy</a></li>
 <li><a href="../experiments/h43-x2-result.html">H43-X2 local result</a></li>
 <li><a href="../experiments/h43-x1-5-formal-admission-result.html">H43-X1.5 formal result</a></li>
+<li><a href="../experiments/h43-x1-6-construction-discriminator-result.html">H43-X1.6 construction discriminator</a></li>
 </ul>
 <p>This ADR authorizes a benchmark-internal source prototype and local semantic
 tests. It does not authorize publication, merge into the release baseline, or
@@ -146,8 +147,10 @@ prototype passes local exactness and both default-isolation configurations.</p>
 completed the full explicit utility assay at <code>a5b86c2</code>: default safety,
 correctness, activation, allocation, scan, and total-work gates passed, but the
 2 MiB target's preparation metric regressed 2.688833%. The unchanged G9-v3
-disposition is <code>investigate</code>. Publication and merge remain unauthorized while
-H43-X1.6 isolates that construction signal.</p>
+disposition is <code>investigate</code>. H43-X1.6 subsequently isolated construction and
+found a 0.808000% complete-preparation cost, below the unchanged 2% boundary;
+the X1.5 blocker did not reproduce. Publication and merge remain unauthorized
+pending explicit owner review because the successor does not relabel X1.5.</p>
 </main><footer>Generated from <code>docs/adr/0009-explicit-experimental-matcher.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
 const seen=new Map();
 for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){

@@ -1,6 +1,6 @@
 # H43 explicit assertion-prefix capability strategy
 
-**Status:** X1.5 complete with `investigate`; X1.6 discriminator authorized<br>
+**Status:** X1.6 discriminator complete; owner review available<br>
 **Owner direction:** preserve the measured 205x-409x scan opportunity for
 deliberate use without changing ordinary matcher performance<br>
 **Policy relationship:** additive experimental product contract; the rejected
@@ -222,7 +222,8 @@ flowchart TD
     SEM["X1.3 Certify exactness, failures, and resources"]
     DEF["X1.4 Prove default feature-off and runtime-unused isolation"]
     PERF["X1.5 Measure explicit capability envelope and total work"]
-    REV["X1.6 Critical review and owner admission decision"]
+    DISC["X1.6 Construction-only causal discriminator"]
+    REV["X1.7 Critical review and owner admission decision"]
     MERGE["Merge non-default experimental capability"]
     STOP["Reject or rework; preserve lab note"]
     AUTO["Later Ring 2 selector campaign"]
@@ -232,7 +233,7 @@ flowchart TD
     ISO --> DEF
     SEM --> PERF
     DEF --> PERF
-    PERF --> REV
+    PERF --> DISC --> REV
     REV -->|"all three lanes pass"| MERGE
     REV -->|"any veto"| STOP
     MERGE -. "new full G9 program" .-> AUTO
@@ -243,6 +244,7 @@ flowchart TD
     classDef blocked fill:#f8d7da,stroke:#a33a43,color:#5a2025
     class P1 planned
     class ADR,ISO,SEM,DEF,PERF planned
+    class DISC complete
     class REV decision
     class MERGE complete
     class STOP,AUTO blocked
@@ -278,7 +280,16 @@ correctness defect. Then prove both default configurations unchanged. Only
 after those gates pass should the exclusive-host utility window measure the
 specialized envelope.
 
-### X1.6: make one narrow merge decision
+### X1.6: isolate the construction signal
+
+Measure the generic and separate assertion matcher in one feature-on
+executable with the same pattern set and no corpus or scan work inside the
+timed interval. Retain registration, compile, complete preparation, structure,
+and allocation receipts. A result below the existing investigation threshold
+can remove the construction hypothesis from the blocker list, but cannot
+rewrite X1.5.
+
+### X1.7: make one narrow merge decision
 
 If all lanes pass, the owner may authorize a merge containing only the
 non-default v1 capability, its tests, evidence, lab note, and cautionary docs.
@@ -331,7 +342,14 @@ fallback behavior, identical allocation probes, complete default safety, and
 passing `T_total(1)` and `T_total(10)`. One 2 MiB preparation metric regressed
 2.688833%, so the unchanged outcome is `investigate`, not publication or merge.
 
-The next action is X1.6: isolate exact separate-type construction from corpus
-I/O and scan work in a frozen same-pattern discriminator. A confirmed cost must
-be repaired before the full assay is repeated. A neutral result may inform an
-owner review but cannot rewrite the immutable X1.5 disposition.
+X1.6 then isolated exact separate-type construction from corpus I/O and scan
+work in a frozen same-pattern discriminator. Its
+[reviewed result](h43-x1-6-construction-discriminator-result.md) found the
+specialized path 0.808000% slower in complete preparation, below the unchanged
+2% boundary, with equal allocation probes and passing calibrations. The X1.5
+construction blocker did not reproduce.
+
+The next action is X1.7 owner review. It may authorize a separately named,
+prospectively justified complete confirmation or an explicit owner exception.
+It may not rewrite X1.5, omit its adverse receipt, or silently move the default
+comparison baseline.
