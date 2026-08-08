@@ -1,0 +1,208 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Retained cross-engine and Rustmatch-generation comparison · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../benchmarking/retained-cross-engine-comparison.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/benchmarking/retained-cross-engine-comparison.md</div></header><main><h1>Retained cross-engine and Rustmatch-generation comparison</h1>
+<p><strong>Status:</strong> reviewed synthesis of previously collected evidence<br>
+<strong>Review date:</strong> 2026-08-08<br>
+<strong>New benchmark runs:</strong> none<br>
+<strong>Primary current product:</strong> public one-worker default at <code>7dd80c0</code><br>
+<strong>Current tuned production snapshot:</strong> H42 at <code>c6f221b</code><br>
+<strong>Historical Rustmatch snapshots:</strong> H11 at <code>bacd5c4</code> and B2 at <code>da755b0</code></p>
+<h2>Scope and reading rules</h2>
+<p>This report makes every comparison supported by the retained data visible. It
+does not fill missing cells, rerun a competitor, or silently combine unlike
+benchmark products.</p>
+<ul>
+<li>Java rmatch and Rustmatch emit the same complete <code>(pattern_id, start, end)</code>
+event contract on these shared fixtures.</li>
+<li>RegexSet reports native set membership, not Rustmatch's complete overlapping
+event stream. Its ratios are diagnostic speed references.</li>
+<li>Hyperscan is also a native-reference diagnostic with a different contract.</li>
+<li>The public-default series uses one worker and no overrides. H42 and H11 use
+the best retained throughput among their measured worker counts. Their
+difference is therefore useful capacity evidence, but H42/public-default is
+not a code-only evolution series.</li>
+<li>H42 is current production by an explicit owner-authorized merge. Its frozen
+formal G9-v3 disposition remains <code>investigate</code>; this report does not relabel
+that result as a certified admission pass.</li>
+<li>H42, H11, and the public default reuse unchanged retained competitor values
+from B2. Only Rustmatch changed.</li>
+<li>H43-X1.5 is an unmerged explicit experimental matcher. Its two assertion
+cells have no exact retained Java, RegexSet, or Hyperscan counterparts.</li>
+</ul>
+<p>The normalized nine-scenario source matrix is available as
+<a href="../../../../benchmarking/retained-cross-engine-comparison.csv"><code>retained-cross-engine-comparison.csv</code></a>.</p>
+<h2>Executive comparison</h2>
+<p>Ratios are Rustmatch throughput divided by the named engine. All four rows in
+this table use the same exact nine-scenario overlap: nine Java cells, eight
+RegexSet cells, and eight Hyperscan cells. Values above <code>1.0x</code> favor Rustmatch.</p>
+<table><thead><tr><th>Rustmatch series</th><th>Worker/configuration policy</th><th style="text-align: right">/ Java GM</th><th style="text-align: right">/ RegexSet GM</th><th style="text-align: right">/ Hyperscan GM</th></tr></thead><tbody>
+<tr><td>Public default <code>7dd80c0</code></td><td>one worker, no override</td><td style="text-align: right"><strong>5.539x</strong></td><td style="text-align: right">0.256x</td><td style="text-align: right">0.0424x</td></tr>
+<tr><td>H42 tuned <code>c6f221b</code></td><td>best retained measured worker count</td><td style="text-align: right"><strong>44.543x</strong></td><td style="text-align: right"><strong>2.288x</strong></td><td style="text-align: right">0.308x</td></tr>
+<tr><td>H11 old <code>bacd5c4</code></td><td>best retained measured worker count</td><td style="text-align: right"><strong>27.893x</strong></td><td style="text-align: right"><strong>1.351x</strong></td><td style="text-align: right">0.210x</td></tr>
+<tr><td>B2 old <code>da755b0</code></td><td>retained B2 selected worker profile</td><td style="text-align: right"><strong>14.273x</strong></td><td style="text-align: right">0.637x</td><td style="text-align: right">0.114x</td></tr>
+</tbody></table>
+<p>On this exact overlap, H42 is 1.597x faster geometrically than H11 and 3.121x
+faster than B2 Rustmatch. Those aggregate gains are not uniform: mixed regex
+and large diverse-literal scenarios account for much of the movement, while
+the 8 MiB dense, 8 MiB diverse, and zero-output cells are nearly flat.</p>
+<h3>Same-contract Java comparison</h3>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/abd77a38c0c9b2aa7d08ef31863ee5c99e1ac0e1c757a85ce9a41a05354b2085.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/abd77a38c0c9b2aa7d08ef31863ee5c99e1ac0e1c757a85ce9a41a05354b2085.svg" alt="Same-contract Java comparison diagram"></a><figcaption>Same-contract Java comparison · <a href="../../../assets/mermaid/abd77a38c0c9b2aa7d08ef31863ee5c99e1ac0e1c757a85ce9a41a05354b2085.svg">Open full-size SVG</a></figcaption></figure>
+<h3>Diagnostic RegexSet comparison</h3>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/2568153e75378ce6fe12e94c4ddb06f63f3b1c48dd8510defa7742f648ab2398.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/2568153e75378ce6fe12e94c4ddb06f63f3b1c48dd8510defa7742f648ab2398.svg" alt="Diagnostic RegexSet comparison diagram"></a><figcaption>Diagnostic RegexSet comparison · <a href="../../../assets/mermaid/2568153e75378ce6fe12e94c4ddb06f63f3b1c48dd8510defa7742f648ab2398.svg">Open full-size SVG</a></figcaption></figure>
+<h3>Diagnostic Hyperscan comparison</h3>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/ea3da21589ffc7ddad6edab1b8d608fdb378f75afa958d218083abc601a1f225.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/ea3da21589ffc7ddad6edab1b8d608fdb378f75afa958d218083abc601a1f225.svg" alt="Diagnostic Hyperscan comparison diagram"></a><figcaption>Diagnostic Hyperscan comparison · <a href="../../../assets/mermaid/ea3da21589ffc7ddad6edab1b8d608fdb378f75afa958d218083abc601a1f225.svg">Open full-size SVG</a></figcaption></figure>
+<p>The public-default bars are deliberately lower because they describe the
+one-worker product, not an automatically tuned worker policy. They are still
+the correct headline for what an unconfigured user receives.</p>
+<h2>Exact scenario overlap</h2>
+<p>All throughput values are Mbit/s. <code>N/A</code> means that no retained measurement
+shares the exact scenario; it is not an estimate of zero.</p>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">Public default</th><th style="text-align: right">H42 tuned</th><th style="text-align: right">H11 old</th><th style="text-align: right">B2 old</th><th style="text-align: right">Java</th><th style="text-align: right">RegexSet</th><th style="text-align: right">Hyperscan</th></tr></thead><tbody>
+<tr><td>Diverse literals, 10k, 50 MiB</td><td style="text-align: right">3,319.959</td><td style="text-align: right">59,216.494</td><td style="text-align: right">21,140.011</td><td style="text-align: right">4,637.786</td><td style="text-align: right">518.621</td><td style="text-align: right">3,927.589</td><td style="text-align: right">179,401.330</td></tr>
+<tr><td>Diverse literals, 10k, 8 MiB</td><td style="text-align: right">1,156.190</td><td style="text-align: right">3,992.679</td><td style="text-align: right">4,002.389</td><td style="text-align: right">3,928.776</td><td style="text-align: right">213.026</td><td style="text-align: right">N/A</td><td style="text-align: right">39,696.035</td></tr>
+<tr><td>Diverse literals, 7.5k, 50 MiB</td><td style="text-align: right">3,900.903</td><td style="text-align: right">70,760.722</td><td style="text-align: right">22,702.110</td><td style="text-align: right">7,285.015</td><td style="text-align: right">559.081</td><td style="text-align: right">4,205.039</td><td style="text-align: right">N/A</td></tr>
+<tr><td>Dense literals, 10k, 50 MiB</td><td style="text-align: right">678.467</td><td style="text-align: right">10,705.533</td><td style="text-align: right">7,918.385</td><td style="text-align: right">3,262.662</td><td style="text-align: right">132.195</td><td style="text-align: right">14,606.483</td><td style="text-align: right">21,413.355</td></tr>
+<tr><td>Dense literals, 10k, 8 MiB</td><td style="text-align: right">555.641</td><td style="text-align: right">3,397.337</td><td style="text-align: right">3,388.217</td><td style="text-align: right">3,382.045</td><td style="text-align: right">105.485</td><td style="text-align: right">2,402.802</td><td style="text-align: right">18,719.555</td></tr>
+<tr><td>Dense literals, 5k, 50 MiB</td><td style="text-align: right">945.317</td><td style="text-align: right">13,501.841</td><td style="text-align: right">9,307.434</td><td style="text-align: right">3,638.606</td><td style="text-align: right">145.779</td><td style="text-align: right">69,753.058</td><td style="text-align: right">28,539.015</td></tr>
+<tr><td>Zero output, 10k, 50 MiB</td><td style="text-align: right">5,501.476</td><td style="text-align: right">5,460.938</td><td style="text-align: right">5,458.975</td><td style="text-align: right">5,412.628</td><td style="text-align: right">1,994.547</td><td style="text-align: right">7,202.698</td><td style="text-align: right">486,317.545</td></tr>
+<tr><td>Mixed regex, 10k, 50 MiB</td><td style="text-align: right">4,258.154</td><td style="text-align: right">79,893.126</td><td style="text-align: right">23,428.283</td><td style="text-align: right">4,815.533</td><td style="text-align: right">662.754</td><td style="text-align: right">2,942.209</td><td style="text-align: right">21,967.340</td></tr>
+<tr><td>Wuthering, 10k, 8 MiB</td><td style="text-align: right">360.050</td><td style="text-align: right">1,766.789</td><td style="text-align: right">1,528.531</td><td style="text-align: right">1,623.410</td><td style="text-align: right">55.279</td><td style="text-align: right">2,464.900</td><td style="text-align: right">1,267.470</td></tr>
+</tbody></table>
+<h3>H42 tuned ratios and Rustmatch evolution</h3>
+<table><thead><tr><th>Scenario</th><th style="text-align: right">H42/H11</th><th style="text-align: right">H42/B2</th><th style="text-align: right">H42/Java</th><th style="text-align: right">H42/RegexSet</th><th style="text-align: right">H42/Hyperscan</th></tr></thead><tbody>
+<tr><td>Diverse literals, 10k, 50 MiB</td><td style="text-align: right">2.801x</td><td style="text-align: right">12.768x</td><td style="text-align: right">114.181x</td><td style="text-align: right">15.077x</td><td style="text-align: right">0.330x</td></tr>
+<tr><td>Diverse literals, 10k, 8 MiB</td><td style="text-align: right">0.998x</td><td style="text-align: right">1.016x</td><td style="text-align: right">18.743x</td><td style="text-align: right">N/A</td><td style="text-align: right">0.101x</td></tr>
+<tr><td>Diverse literals, 7.5k, 50 MiB</td><td style="text-align: right">3.117x</td><td style="text-align: right">9.713x</td><td style="text-align: right">126.566x</td><td style="text-align: right">16.828x</td><td style="text-align: right">N/A</td></tr>
+<tr><td>Dense literals, 10k, 50 MiB</td><td style="text-align: right">1.352x</td><td style="text-align: right">3.281x</td><td style="text-align: right">80.983x</td><td style="text-align: right">0.733x</td><td style="text-align: right">0.500x</td></tr>
+<tr><td>Dense literals, 10k, 8 MiB</td><td style="text-align: right">1.003x</td><td style="text-align: right">1.005x</td><td style="text-align: right">32.207x</td><td style="text-align: right">1.414x</td><td style="text-align: right">0.181x</td></tr>
+<tr><td>Dense literals, 5k, 50 MiB</td><td style="text-align: right">1.451x</td><td style="text-align: right">3.711x</td><td style="text-align: right">92.619x</td><td style="text-align: right">0.194x</td><td style="text-align: right">0.473x</td></tr>
+<tr><td>Zero output, 10k, 50 MiB</td><td style="text-align: right">1.000x</td><td style="text-align: right">1.009x</td><td style="text-align: right">2.738x</td><td style="text-align: right">0.758x</td><td style="text-align: right">0.011x</td></tr>
+<tr><td>Mixed regex, 10k, 50 MiB</td><td style="text-align: right">3.410x</td><td style="text-align: right">16.591x</td><td style="text-align: right">120.547x</td><td style="text-align: right">27.154x</td><td style="text-align: right">3.637x</td></tr>
+<tr><td>Wuthering, 10k, 8 MiB</td><td style="text-align: right">1.156x</td><td style="text-align: right">1.088x</td><td style="text-align: right">31.961x</td><td style="text-align: right">0.717x</td><td style="text-align: right">1.394x</td></tr>
+</tbody></table>
+<p>The chart abbreviations are <code>D</code> diverse, <code>N</code> dense, <code>Z</code> zero-output, <code>M</code>
+mixed regex, and <code>W</code> Wuthering; the two numbers are pattern count and input
+size in MiB.</p>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/9ed621206db434e82af8ee68e1206c9916a8baf959073878af7b47f4cd92969b.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/9ed621206db434e82af8ee68e1206c9916a8baf959073878af7b47f4cd92969b.svg" alt="H42 tuned ratios and Rustmatch evolution diagram"></a><figcaption>H42 tuned ratios and Rustmatch evolution · <a href="../../../assets/mermaid/9ed621206db434e82af8ee68e1206c9916a8baf959073878af7b47f4cd92969b.svg">Open full-size SVG</a></figcaption></figure>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/6405d98c80410948afc4e80f4d5d7563cb76955ae1ab56d86743859ead70479e.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/6405d98c80410948afc4e80f4d5d7563cb76955ae1ab56d86743859ead70479e.svg" alt="H42 tuned ratios and Rustmatch evolution diagram"></a><figcaption>H42 tuned ratios and Rustmatch evolution · <a href="../../../assets/mermaid/6405d98c80410948afc4e80f4d5d7563cb76955ae1ab56d86743859ead70479e.svg">Open full-size SVG</a></figcaption></figure>
+<h2>What the scenario deltas say</h2>
+<ul>
+<li><strong>Mixed regex is the strongest current result.</strong> H42 is 3.410x over H11,
+16.591x over B2, 27.154x over RegexSet, and 3.637x over Hyperscan.</li>
+<li><strong>Large diverse literals improved substantially.</strong> The two 50 MiB scenarios
+are 2.801x and 3.117x over H11, but Hyperscan still leads the 10,000-pattern
+cell by about 3.03x.</li>
+<li><strong>Dense literals remain mixed.</strong> H42 beats RegexSet at 10,000 patterns on
+8 MiB, but reaches only 19.4% of RegexSet at 5,000 patterns on 50 MiB.</li>
+<li><strong>Zero-output scanning is the clearest Hyperscan deficit.</strong> H42 is 75.8% of
+RegexSet but only 1.12% of Hyperscan, and it is essentially unchanged from
+both older Rustmatch generations.</li>
+<li><strong>Wuthering demonstrates policy sensitivity.</strong> H42 tuned beats Hyperscan by
+1.394x, while the one-worker public default reaches only 28.4% of Hyperscan.</li>
+<li><strong>Java is consistently behind Rustmatch.</strong> Every retained current-default,
+H42, H11, and B2 overlap cell favors Rustmatch under the same event contract.</li>
+</ul>
+<h2>Experimental assertion capability</h2>
+<p>H43-X1.5 used the same source revision for control and explicit specialized
+configuration. It is not merged or published, and its formal disposition is
+<code>investigate</code> because preparation on the 2 MiB target regressed 2.688833%.</p>
+<table><thead><tr><th>Exact assertion scenario</th><th style="text-align: right">Public/default control</th><th style="text-align: right">Explicit matcher</th><th style="text-align: right">Control-to-explicit speedup</th><th style="text-align: right">Java</th><th style="text-align: right">RegexSet</th><th style="text-align: right">Hyperscan</th></tr></thead><tbody>
+<tr><td>1,000 patterns, 1 MiB</td><td style="text-align: right">0.992 Mbit/s</td><td style="text-align: right">230.480 Mbit/s</td><td style="text-align: right"><strong>232.54x</strong></td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td></tr>
+<tr><td>1,000 patterns, 2 MiB</td><td style="text-align: right">0.994 Mbit/s</td><td style="text-align: right">456.151 Mbit/s</td><td style="text-align: right"><strong>456.05x</strong></td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td></tr>
+</tbody></table>
+<p>These rows prove a narrow Rust-on-Rust opportunity. They do not support a
+claim that the explicit matcher beats any named competitor on those exact
+workloads. The absence is visible rather than replaced with a nearby B2 cell.</p>
+<h2>Coverage inventory</h2>
+<table><thead><tr><th>Evidence layer</th><th style="text-align: right">Rustmatch coverage</th><th style="text-align: right">Java</th><th style="text-align: right">RegexSet</th><th style="text-align: right">Hyperscan</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>Current public default</td><td style="text-align: right">9</td><td style="text-align: right">9</td><td style="text-align: right">8</td><td style="text-align: right">8</td><td>latest unconfigured product on exact overlap</td></tr>
+<tr><td>H42 tuned production</td><td style="text-align: right">9</td><td style="text-align: right">9</td><td style="text-align: right">8</td><td style="text-align: right">8</td><td>latest production engine with measured worker selection</td></tr>
+<tr><td>H11 historical</td><td style="text-align: right">9</td><td style="text-align: right">9</td><td style="text-align: right">8</td><td style="text-align: right">8</td><td>directly comparable old Rustmatch overlap</td></tr>
+<tr><td>B2 historical full dataset</td><td style="text-align: right">43 unique scenarios</td><td style="text-align: right">38</td><td style="text-align: right">35</td><td style="text-align: right">39</td><td>broadest retained competitor coverage</td></tr>
+<tr><td>H43-X1.5 assertion experimental</td><td style="text-align: right">2 targets</td><td style="text-align: right">0</td><td style="text-align: right">0</td><td style="text-align: right">0</td><td>exact control/candidate only; cross-engine data sparse</td></tr>
+</tbody></table>
+<h2>Full historical B2 cell appendix</h2>
+<p>This appendix exposes the broadest old-Rustmatch dataset. It is not relabeled
+as current Rustmatch. Ratios are old B2 Rustmatch divided by the competitor;
+<code>N/A</code> marks an unmeasured pairing.</p>
+<table><thead><tr><th>Historical B2 scenario</th><th style="text-align: right">Old Rustmatch Mbit/s</th><th style="text-align: right">/ Java</th><th style="text-align: right">/ RegexSet</th><th style="text-align: right">/ Hyperscan</th></tr></thead><tbody>
+<tr><td>diverse-literals-1000-50m</td><td style="text-align: right">18,883.470</td><td style="text-align: right">19.657x</td><td style="text-align: right">0.158x</td><td style="text-align: right">0.0501x</td></tr>
+<tr><td>diverse-literals-1000-8m</td><td style="text-align: right">16,092.765</td><td style="text-align: right">20.920x</td><td style="text-align: right">0.174x</td><td style="text-align: right">0.0626x</td></tr>
+<tr><td>diverse-literals-10000-50m</td><td style="text-align: right">4,637.786</td><td style="text-align: right">8.943x</td><td style="text-align: right">1.181x</td><td style="text-align: right">0.0259x</td></tr>
+<tr><td>diverse-literals-10000-8m</td><td style="text-align: right">3,928.776</td><td style="text-align: right">18.443x</td><td style="text-align: right">N/A</td><td style="text-align: right">0.0990x</td></tr>
+<tr><td>diverse-literals-2500-50m</td><td style="text-align: right">16,966.019</td><td style="text-align: right">19.778x</td><td style="text-align: right">0.498x</td><td style="text-align: right">0.0562x</td></tr>
+<tr><td>diverse-literals-2500-8m</td><td style="text-align: right">11,372.966</td><td style="text-align: right">23.831x</td><td style="text-align: right">N/A</td><td style="text-align: right">0.0619x</td></tr>
+<tr><td>diverse-literals-5000-50m</td><td style="text-align: right">8,587.511</td><td style="text-align: right">13.006x</td><td style="text-align: right">1.065x</td><td style="text-align: right">0.0275x</td></tr>
+<tr><td>diverse-literals-5000-8m</td><td style="text-align: right">4,773.465</td><td style="text-align: right">N/A</td><td style="text-align: right">0.627x</td><td style="text-align: right">0.0495x</td></tr>
+<tr><td>diverse-literals-7500-50m</td><td style="text-align: right">7,285.015</td><td style="text-align: right">13.030x</td><td style="text-align: right">1.732x</td><td style="text-align: right">N/A</td></tr>
+<tr><td>diverse-literals-7500-8m</td><td style="text-align: right">4,183.996</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td style="text-align: right">0.0753x</td></tr>
+<tr><td>diverse-literals-dense-1000-50m</td><td style="text-align: right">5,698.070</td><td style="text-align: right">N/A</td><td style="text-align: right">0.0058x</td><td style="text-align: right">0.191x</td></tr>
+<tr><td>diverse-literals-dense-1000-8m</td><td style="text-align: right">4,652.492</td><td style="text-align: right">22.135x</td><td style="text-align: right">0.0300x</td><td style="text-align: right">0.181x</td></tr>
+<tr><td>diverse-literals-dense-10000-50m</td><td style="text-align: right">3,262.662</td><td style="text-align: right">24.681x</td><td style="text-align: right">0.223x</td><td style="text-align: right">0.152x</td></tr>
+<tr><td>diverse-literals-dense-10000-8m</td><td style="text-align: right">3,382.045</td><td style="text-align: right">32.062x</td><td style="text-align: right">1.408x</td><td style="text-align: right">0.181x</td></tr>
+<tr><td>diverse-literals-dense-5000-50m</td><td style="text-align: right">3,638.606</td><td style="text-align: right">24.960x</td><td style="text-align: right">0.0522x</td><td style="text-align: right">0.127x</td></tr>
+<tr><td>diverse-literals-dense-5000-8m</td><td style="text-align: right">3,536.753</td><td style="text-align: right">28.611x</td><td style="text-align: right">0.218x</td><td style="text-align: right">0.145x</td></tr>
+<tr><td>diverse-literals-zero-1000-50m</td><td style="text-align: right">20,121.592</td><td style="text-align: right">8.758x</td><td style="text-align: right">0.207x</td><td style="text-align: right">0.0411x</td></tr>
+<tr><td>diverse-literals-zero-1000-8m</td><td style="text-align: right">20,139.359</td><td style="text-align: right">8.894x</td><td style="text-align: right">0.223x</td><td style="text-align: right">0.0369x</td></tr>
+<tr><td>diverse-literals-zero-10000-50m</td><td style="text-align: right">5,412.628</td><td style="text-align: right">2.714x</td><td style="text-align: right">0.751x</td><td style="text-align: right">0.0111x</td></tr>
+<tr><td>diverse-literals-zero-10000-8m</td><td style="text-align: right">5,413.800</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td style="text-align: right">0.0098x</td></tr>
+<tr><td>diverse-literals-zero-5000-50m</td><td style="text-align: right">9,464.472</td><td style="text-align: right">4.650x</td><td style="text-align: right">1.310x</td><td style="text-align: right">0.0181x</td></tr>
+<tr><td>diverse-literals-zero-5000-8m</td><td style="text-align: right">9,445.639</td><td style="text-align: right">N/A</td><td style="text-align: right">1.321x</td><td style="text-align: right">0.0168x</td></tr>
+<tr><td>mixed-regex-1000-50m</td><td style="text-align: right">19,291.086</td><td style="text-align: right">19.329x</td><td style="text-align: right">2.593x</td><td style="text-align: right">0.0577x</td></tr>
+<tr><td>mixed-regex-1000-8m</td><td style="text-align: right">17,319.571</td><td style="text-align: right">21.266x</td><td style="text-align: right">2.368x</td><td style="text-align: right">0.127x</td></tr>
+<tr><td>mixed-regex-10000-50m</td><td style="text-align: right">4,815.533</td><td style="text-align: right">7.266x</td><td style="text-align: right">1.637x</td><td style="text-align: right">0.219x</td></tr>
+<tr><td>mixed-regex-2500-50m</td><td style="text-align: right">18,603.952</td><td style="text-align: right">19.906x</td><td style="text-align: right">2.673x</td><td style="text-align: right">N/A</td></tr>
+<tr><td>mixed-regex-5000-50m</td><td style="text-align: right">9,433.291</td><td style="text-align: right">11.223x</td><td style="text-align: right">1.871x</td><td style="text-align: right">0.131x</td></tr>
+<tr><td>mixed-regex-5000-8m</td><td style="text-align: right">7,125.130</td><td style="text-align: right">14.313x</td><td style="text-align: right">N/A</td><td style="text-align: right">0.488x</td></tr>
+<tr><td>mixed-regex-7500-50m</td><td style="text-align: right">8,404.519</td><td style="text-align: right">11.575x</td><td style="text-align: right">1.925x</td><td style="text-align: right">0.234x</td></tr>
+<tr><td>mixed-regex-7500-8m</td><td style="text-align: right">5,702.751</td><td style="text-align: right">13.849x</td><td style="text-align: right">1.380x</td><td style="text-align: right">0.819x</td></tr>
+<tr><td>mixed-regex-dense-1000-50m</td><td style="text-align: right">6,816.872</td><td style="text-align: right">24.699x</td><td style="text-align: right">0.0164x</td><td style="text-align: right">1.222x</td></tr>
+<tr><td>mixed-regex-dense-1000-8m</td><td style="text-align: right">5,567.868</td><td style="text-align: right">22.730x</td><td style="text-align: right">0.0875x</td><td style="text-align: right">N/A</td></tr>
+<tr><td>mixed-regex-dense-10000-50m</td><td style="text-align: right">3,514.989</td><td style="text-align: right">20.122x</td><td style="text-align: right">N/A</td><td style="text-align: right">3.845x</td></tr>
+<tr><td>mixed-regex-dense-10000-8m</td><td style="text-align: right">3,522.563</td><td style="text-align: right">24.183x</td><td style="text-align: right">N/A</td><td style="text-align: right">4.798x</td></tr>
+<tr><td>mixed-regex-dense-5000-50m</td><td style="text-align: right">3,750.637</td><td style="text-align: right">19.916x</td><td style="text-align: right">0.0802x</td><td style="text-align: right">2.225x</td></tr>
+<tr><td>mixed-regex-dense-5000-8m</td><td style="text-align: right">3,751.152</td><td style="text-align: right">22.932x</td><td style="text-align: right">0.353x</td><td style="text-align: right">2.767x</td></tr>
+<tr><td>mixed-regex-zero-10000-50m</td><td style="text-align: right">5,336.843</td><td style="text-align: right">2.301x</td><td style="text-align: right">0.739x</td><td style="text-align: right">0.0078x</td></tr>
+<tr><td>mixed-regex-zero-10000-8m</td><td style="text-align: right">5,299.684</td><td style="text-align: right">2.313x</td><td style="text-align: right">0.758x</td><td style="text-align: right">0.0063x</td></tr>
+<tr><td>mixed-regex-zero-5000-50m</td><td style="text-align: right">9,274.262</td><td style="text-align: right">4.045x</td><td style="text-align: right">1.288x</td><td style="text-align: right">0.0131x</td></tr>
+<tr><td>mixed-regex-zero-5000-8m</td><td style="text-align: right">9,557.260</td><td style="text-align: right">4.196x</td><td style="text-align: right">1.360x</td><td style="text-align: right">N/A</td></tr>
+<tr><td>wuthering-literals-1000-8m</td><td style="text-align: right">8,700.443</td><td style="text-align: right">19.534x</td><td style="text-align: right">N/A</td><td style="text-align: right">1.682x</td></tr>
+<tr><td>wuthering-literals-10000-8m</td><td style="text-align: right">1,623.410</td><td style="text-align: right">29.367x</td><td style="text-align: right">0.659x</td><td style="text-align: right">1.281x</td></tr>
+<tr><td>wuthering-literals-5000-8m</td><td style="text-align: right">3,289.201</td><td style="text-align: right">28.787x</td><td style="text-align: right">0.829x</td><td style="text-align: right">1.681x</td></tr>
+</tbody></table>
+<p>The original full-dataset aggregate geometric means were 13.769x versus Java
+across 38 cells, 0.463x versus RegexSet across 35 cells, and 0.128x versus
+Hyperscan across 39 cells. Those aggregates use different coverage from the
+nine-scenario charts and must not be substituted for them.</p>
+<h2>Provenance</h2>
+<ul>
+<li><a href="default-vs-experimental-results.html">Current public-default and experimental snapshot</a></li>
+<li><a href="../experiments/h42-cross-engine-snapshot.html">H42 current-production overlap</a></li>
+<li><a href="../experiments/h11-cross-engine-snapshot.html">H11 historical overlap</a></li>
+<li><a href="../experiments/h43-x1-5-formal-admission-result.html">H43-X1.5 formal result</a></li>
+<li>B2 retained Java table: <code>rust-vs-java-rmatch.csv</code>, SHA-256
+<code>40787d5cb83b00bb11a7c92d461f0426b23ce3e9cebb8a0b4f2bda2ff4956be1</code></li>
+<li>B2 retained RegexSet table: <code>rust-vs-regexset-diagnostic.csv</code>, SHA-256
+<code>3384831f82e827e1f578a4f9aaa7f89782d926cc2caddd09373580e4fcab9284</code></li>
+<li>B2 retained Hyperscan table: <code>rust-vs-native-reference-diagnostic.csv</code>,
+SHA-256
+<code>62e685b53c0c7af83825a785e76c2300d3bb088875320828fe522bfaac7790f3</code></li>
+</ul>
+<p>No new timing was executed to produce this report. Every number is copied or
+derived from the retained, reviewed evidence named above.</p>
+</main><footer>Generated from <code>docs/benchmarking/retained-cross-engine-comparison.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

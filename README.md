@@ -63,6 +63,12 @@ panel is intentionally less flattering than the older
 defines a new public-default series rather than relabeling or moving the
 goalposts of that historical experiment.
 
+The [retained cross-engine and Rustmatch-generation report](docs/benchmarking/retained-cross-engine-comparison.md)
+shows every available exact-overlap scenario, old B2 and H11 Rustmatch,
+current H42 tuned production, the public default, full historical B2 coverage,
+explicitly missing cells, and rendered comparison graphs. It uses only
+previously collected evidence; no additional benchmark run was made.
+
 ### Experimental oracle-selected capability
 
 This secondary panel is deliberately workload-tuned. It explicitly enables the
