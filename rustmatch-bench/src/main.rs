@@ -89,6 +89,10 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
         Some("experimental-run") => {
             experimental_run_command(&mut arguments).map(CommandOutput::BenchmarkProduct)
         }
+        #[cfg(feature = "experimental-showcase")]
+        Some("construction-run") => {
+            construction_run_command(&mut arguments).map(CommandOutput::Construction)
+        }
         Some("cohort-report") => {
             cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
         }
@@ -246,6 +250,22 @@ fn experimental_run_command(
     )
 }
 
+#[cfg(feature = "experimental-showcase")]
+fn construction_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<ConstructionReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = ConstructionBackend::parse(&backend)?;
+    let pattern_bytes = fs::read(&patterns).map_err(|error| {
+        format!("could not read construction-only patterns {patterns}: {error}")
+    })?;
+    construction_run(&pattern_bytes, backend)
+}
+
 fn benchmark_product_arguments(
     arguments: &mut impl Iterator<Item = String>,
 ) -> Result<(String, String, usize, usize), String> {
@@ -282,7 +302,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|construction-run PATTERNS.tsv BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; construction BACKEND is generic or assertion-prefix-v1; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -382,6 +402,140 @@ enum BenchmarkProductBackend {
     Default,
     #[cfg(feature = "experimental-showcase")]
     AssertionPrefixV1,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ConstructionBackend {
+    Generic,
+    AssertionPrefixV1,
+}
+
+#[cfg(feature = "experimental-showcase")]
+impl ConstructionBackend {
+    fn parse(source: &str) -> Result<Self, String> {
+        match source {
+            "generic" => Ok(Self::Generic),
+            "assertion-prefix-v1" => Ok(Self::AssertionPrefixV1),
+            _ => Err(format!(
+                "unknown construction-only backend {source:?}; expected generic or assertion-prefix-v1"
+            )),
+        }
+    }
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Generic => "generic",
+            Self::AssertionPrefixV1 => "assertion-prefix-v1",
+        }
+    }
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn construction_run(
+    pattern_bytes: &[u8],
+    backend: ConstructionBackend,
+) -> Result<ConstructionReceipt, String> {
+    let pattern_load_started = Instant::now();
+    let patterns = parse_pattern_rows(pattern_bytes, "construction-only", true)?;
+    let pattern_load_ns = nanos(pattern_load_started.elapsed());
+
+    let construct_started = Instant::now();
+    let registration_started = Instant::now();
+    let (registration_ns, compile_ns, structure) = match backend {
+        ConstructionBackend::Generic => {
+            let mut builder = MatcherBuilder::new();
+            for pattern in &patterns {
+                builder
+                    .add(pattern.id, &pattern.expression)
+                    .map_err(|error| {
+                        format!(
+                            "generic construction pattern {} was rejected: {error}",
+                            pattern.id
+                        )
+                    })?;
+            }
+            let registration_ns = nanos(registration_started.elapsed());
+            let compile_started = Instant::now();
+            let matcher = builder
+                .build()
+                .map_err(|error| format!("generic construction failed: {error}"))?;
+            let compile_ns = nanos(compile_started.elapsed());
+            let diagnostics = matcher.cohort_execution_diagnostics();
+            black_box(&matcher);
+            (
+                registration_ns,
+                compile_ns,
+                ConstructionStructureReceipt::Generic {
+                    matcher_object_bytes: std::mem::size_of_val(&matcher),
+                    total_partition_count: diagnostics.total_partition_count(),
+                    total_cache_budget: diagnostics.total_cache_budget(),
+                },
+            )
+        }
+        ConstructionBackend::AssertionPrefixV1 => {
+            let mut builder = AssertionPrefixMatcherBuilder::new();
+            for pattern in &patterns {
+                builder
+                    .add(pattern.id, &pattern.expression)
+                    .map_err(|error| {
+                        format!(
+                            "assertion-prefix construction pattern {} was rejected: {error}",
+                            pattern.id
+                        )
+                    })?;
+            }
+            let registration_ns = nanos(registration_started.elapsed());
+            let compile_started = Instant::now();
+            let matcher = builder
+                .build()
+                .map_err(|error| format!("assertion-prefix construction failed: {error}"))?;
+            let compile_ns = nanos(compile_started.elapsed());
+            let eligibility = matcher.static_eligibility();
+            let diagnostics = matcher.structure_diagnostics();
+            black_box(&matcher);
+            (
+                registration_ns,
+                compile_ns,
+                ConstructionStructureReceipt::AssertionPrefixV1 {
+                    matcher_object_bytes: std::mem::size_of_val(&matcher),
+                    assertion_pattern_count: eligibility.assertion_pattern_count(),
+                    shared_ascii_prefix: String::from_utf8_lossy(
+                        &eligibility.shared_ascii_prefix(),
+                    )
+                    .into_owned(),
+                    state_count: diagnostics.state_count(),
+                    edge_count: diagnostics.edge_count(),
+                    predicate_count: diagnostics.predicate_count(),
+                    terminal_count: diagnostics.terminal_count(),
+                    pattern_count: diagnostics.pattern_count(),
+                    database_retained_bytes: diagnostics.database_retained_bytes(),
+                    prefilter_retained_bytes: diagnostics.prefilter_retained_bytes(),
+                    assertion_prefix_available: diagnostics.assertion_prefix_available(),
+                    assertion_specialization_enabled: diagnostics
+                        .assertion_specialization_enabled(),
+                },
+            )
+        }
+    };
+    let prepare_ns = nanos(construct_started.elapsed());
+    Ok(ConstructionReceipt {
+        schema_version: 1,
+        runner_version: "h43-x1.6-construction-only-v1",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        backend: backend.label(),
+        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        pattern_source_digest: byte_digest(pattern_bytes),
+        expression_count: patterns.len(),
+        pattern_load_ns,
+        registration_ns,
+        compile_ns,
+        prepare_ns,
+        structure,
+        correctness: "construction-pass",
+    })
 }
 
 #[cfg(feature = "experimental-showcase")]
@@ -3046,6 +3200,7 @@ enum CommandOutput {
     Tripwire(TripwireReceipt),
     HarnessRun(HarnessRunReceipt),
     BenchmarkProduct(BenchmarkProductReceipt),
+    Construction(ConstructionReceipt),
     CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
@@ -3056,6 +3211,50 @@ enum CommandOutput {
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+struct ConstructionReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    revision: String,
+    rust_version: String,
+    backend: &'static str,
+    feature_profile: &'static str,
+    pattern_source_digest: String,
+    expression_count: usize,
+    pattern_load_ns: u128,
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
+    correctness: &'static str,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+#[serde(tag = "matcher_type", rename_all = "kebab-case")]
+enum ConstructionStructureReceipt {
+    Generic {
+        matcher_object_bytes: usize,
+        total_partition_count: usize,
+        total_cache_budget: usize,
+    },
+    AssertionPrefixV1 {
+        matcher_object_bytes: usize,
+        assertion_pattern_count: usize,
+        shared_ascii_prefix: String,
+        state_count: usize,
+        edge_count: usize,
+        predicate_count: usize,
+        terminal_count: usize,
+        pattern_count: usize,
+        database_retained_bytes: usize,
+        prefilter_retained_bytes: usize,
+        assertion_prefix_available: bool,
+        assertion_specialization_enabled: bool,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -3749,7 +3948,10 @@ mod tests {
         render_scale_report, select_literal_patterns,
     };
     #[cfg(feature = "experimental-showcase")]
-    use super::{ExperimentalProductPolicy, benchmark_assertion_prefix_product};
+    use super::{
+        ConstructionBackend, ConstructionStructureReceipt, ExperimentalProductPolicy,
+        benchmark_assertion_prefix_product, construction_run,
+    };
     use regex::{Regex, RegexSet};
     #[cfg(feature = "experimental-showcase")]
     use std::fmt::Write as _;
@@ -3943,6 +4145,51 @@ mod tests {
         );
         assert_eq!(activation.candidate_count, 0);
         assert_eq!(activation.candidate_bytes, 0);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn construction_only_receipts_distinguish_exact_matcher_types() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+
+        // Test
+        let generic = construction_run(patterns.as_bytes(), ConstructionBackend::Generic)?;
+        let specialized =
+            construction_run(patterns.as_bytes(), ConstructionBackend::AssertionPrefixV1)?;
+
+        // Assert
+        assert_eq!(
+            generic.pattern_source_digest,
+            specialized.pattern_source_digest
+        );
+        assert_eq!(generic.expression_count, 256);
+        assert_eq!(generic.backend, "generic");
+        assert_eq!(specialized.backend, "assertion-prefix-v1");
+        assert_eq!(generic.correctness, "construction-pass");
+        assert_eq!(specialized.correctness, "construction-pass");
+        assert!(generic.prepare_ns >= generic.registration_ns + generic.compile_ns);
+        assert!(specialized.prepare_ns >= specialized.registration_ns + specialized.compile_ns);
+        assert!(matches!(
+            generic.structure,
+            ConstructionStructureReceipt::Generic {
+                total_partition_count: 1,
+                total_cache_budget: 8_192,
+                ..
+            }
+        ));
+        assert!(matches!(
+            specialized.structure,
+            ConstructionStructureReceipt::AssertionPrefixV1 {
+                assertion_pattern_count: 256,
+                ref shared_ascii_prefix,
+                pattern_count: 256,
+                assertion_prefix_available: true,
+                assertion_specialization_enabled: true,
+                ..
+            } if shared_ascii_prefix == "word0"
+        ));
         Ok(())
     }
 

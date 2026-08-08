@@ -333,6 +333,14 @@ pub struct AssertionPrefixMatcher {
 }
 
 impl AssertionPrefixMatcher {
+    /// Returns immutable compiled-structure facts for repository evidence tooling.
+    #[cfg(feature = "benchmark-internals")]
+    #[doc(hidden)]
+    #[must_use]
+    pub fn structure_diagnostics(&self) -> crate::SharedCohortDiagnostics {
+        self.inner.structure_diagnostics()
+    }
+
     /// Returns the construction-time semantic proof.
     #[must_use]
     pub const fn static_eligibility(&self) -> StaticEligibility {
