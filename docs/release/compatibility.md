@@ -61,6 +61,10 @@ same event multiset for supported syntax, not source or implementation parity.
   semantic engine remains authoritative.
 - The `benchmark-internals` feature is for repository tooling and is outside
   the supported application API.
+- The non-default `unstable-assertion-prefix-v1` feature is exact but outside
+  the stable default API. It supports only its documented eligible assertion
+  cohort, separate matcher type, typed refusal/fallback contract, and explicit
+  scan policies. Incompatible API changes wait for at least `0.2.0`.
 
 Performance comparisons and their semantic qualifications are maintained in
-the [current cross-engine snapshot](../experiments/h42-cross-engine-snapshot.md).
+the [current cross-engine snapshot](../experiments/h43-cross-engine-snapshot.md).

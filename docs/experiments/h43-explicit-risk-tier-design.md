@@ -1,11 +1,12 @@
 # H43 explicit assertion-prefix capability strategy
 
-**Status:** X1.8 causal investigation complete; owner exception review available<br>
+**Status:** X1.9 merged by owner exception; formal R3 remains rejected<br>
 **Owner direction:** preserve the measured 205x-409x scan opportunity for
 deliberate use without changing ordinary matcher performance<br>
 **Policy relationship:** additive experimental product contract; the rejected
 H43-A1 ruling remains unchanged<br>
-**Production default:** current certified `Matcher` and `MatcherBuilder`
+**Production default:** unchanged `Matcher` and `MatcherBuilder`<br>
+**Production exception:** feature-gated separate matcher, merge `4996bcc`
 
 ## Decision thesis
 
@@ -236,7 +237,7 @@ flowchart TD
     SEM --> PERF
     DEF --> PERF
     PERF --> DISC --> CONF --> COND --> REV
-    REV -->|"all three lanes pass"| MERGE
+    REV -->|"owner exception"| MERGE
     REV -->|"any veto"| STOP
     MERGE -. "new full G9 program" .-> AUTO
 
@@ -244,10 +245,7 @@ flowchart TD
     classDef planned fill:#dceeff,stroke:#276a9b,color:#173d59
     classDef decision fill:#fff1cc,stroke:#a66b00,color:#4a3100
     classDef blocked fill:#f8d7da,stroke:#a33a43,color:#5a2025
-    class P1 planned
-    class ADR,ISO,SEM,DEF,PERF planned
-    class DISC complete
-    class REV decision
+    class P1,ADR,ISO,SEM,DEF,PERF,DISC,CONF,COND,REV complete
     class MERGE complete
     class STOP,AUTO blocked
 ```
@@ -372,6 +370,14 @@ triggered the unchanged veto. The R3 result remains permanently rejected.
 X1.8 retained exact corpus preconditioning and reproduced construction twice,
 including once over the exact R3 library source. Complete preparation was only
 0.717444% and 0.976161% slower, below 2%, so the veto-sized magnitude did not
-reproduce. The next action is X1.9 owner review: leave the capability unmerged
-or authorize a documented production exception. No more unchanged timing or
-source tuning is justified.
+reproduce. This made X1.9 owner review available without authorizing more
+unchanged timing or source tuning.
+
+X1.9 is complete. The owner authorized production merge
+`4996bcc16a9cc936789372d8184f4ef4893fd336` after reviewing the immutable R3
+rejection and both X1.8 discriminators. The capability remains non-default,
+separate-type, feature-gated, and explicitly policy-selected. R3 remains
+rejected, its adverse cell remains visible, and `optimization_admitted`
+remains false. H43-X1.10 retains the only follow-up path: remove the accepted
+approximately 1% construction premium through a materially new mechanism
+under unchanged gates.

@@ -1,10 +1,11 @@
 # Retained cross-engine and Rustmatch-generation comparison
 
 **Status:** reviewed synthesis of previously collected evidence<br>
-**Review date:** 2026-08-08<br>
+**Review date:** 2026-08-09<br>
 **New benchmark runs:** none<br>
 **Primary current product:** public one-worker default at `7dd80c0`<br>
-**Current tuned production snapshot:** H42 at `c6f221b`<br>
+**Current tuned production snapshot:** H43 at `a5b86c2`; ordinary overlap
+retains H42 values<br>
 **Historical Rustmatch snapshots:** H11 at `bacd5c4` and B2 at `da755b0`
 
 ## Scope and reading rules
@@ -22,13 +23,14 @@ benchmark products.
   the best retained throughput among their measured worker counts. Their
   difference is therefore useful capacity evidence, but H42/public-default is
   not a code-only evolution series.
-- H42 is current production by an explicit owner-authorized merge. Its frozen
-  formal G9-v3 disposition remains `investigate`; this report does not relabel
-  that result as a certified admission pass.
+- H43 is current production by an explicit owner-authorized merge. Its
+  ordinary matcher retains H42's tuned path and overlap values. Formal H43 R3
+  remains rejected; this report does not relabel it as a certified pass.
 - H42, H11, and the public default reuse unchanged retained competitor values
   from B2. Only Rustmatch changed.
-- H43-X1.5 is an unmerged explicit experimental matcher. Its two assertion
-  cells have no exact retained Java, RegexSet, or Hyperscan counterparts.
+- H43's explicit matcher is merged but remains non-default, feature-gated, and
+  owner-exception labeled. Its two assertion cells have no exact retained Java,
+  RegexSet, or Hyperscan counterparts and remain outside the aggregate table.
 
 The normalized nine-scenario source matrix is available as
 [`retained-cross-engine-comparison.csv`](retained-cross-engine-comparison.csv).

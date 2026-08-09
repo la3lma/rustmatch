@@ -2,7 +2,9 @@
 
 **Machine classification:** R3 preparation blocker not reproduced<br>
 **Human decision:** causal investigation complete; owner exception review available<br>
-**Production status:** not merged, not published, excluded from progress<br>
+**Production status at result time:** not merged, not published, excluded from progress<br>
+**Subsequent action:** H43-X1.9 merged production by owner exception; this
+causal result remains `investigate`<br>
 **Policy:** unchanged G9-v3<br>
 **Exact production parent:** `a5b86c2b3943aad3121e1f06944e39331f17a474`
 
@@ -113,6 +115,7 @@ and corpus SHA-256
 
 ## Evidence
 
+- [Subsequent owner exception](h43-x1-9-owner-exception.md)
 - [Curated local evidence](../evidence/h43/x1.8/8c27d23/README.md)
 - [Immutable R3 result](h43-x1-7-r3-confirmation-result.md)
 - [Earlier construction discriminator](h43-x1-6-construction-discriminator-result.md)

@@ -29,7 +29,10 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 | I7 | Wuthering, 10k patterns, 8 MiB | 1.18x | 1620.13x |
 | I8 | Wuthering, 10k patterns, 8 MiB, 1 to 8 workers | 2.51x | 4061.92x |
 | B2-H-0011 | Sparse literals, 10k patterns, 50 MiB, 24 workers | 7.96x | 32325.08x |
-| B2-H-0042 | Diverse literals, 10k patterns, 50 MiB, 16 workers | 2.76x | 89123.18x |
+| B2-H-0042* | Diverse literals, 10k patterns, 50 MiB, 16 workers | 2.76x | 89123.18x |
+| H43-X1.9* | Explicit assertion matcher, 1,000 patterns, 2 MiB | 462.03x | 41177697.21x |
+
+`*` marks an owner-authorized production exception; it does not relabel the formal result.
 
 ## Attempt ledger
 
@@ -537,11 +540,34 @@ The chart is an **admission evidence speedup index**, not a direct end-to-end hi
 - **Decision:** Valid causal discriminator: the repeatable cost is approximately 0.8%-1.0%, below the unchanged 2% boundary. Stop source tuning and unchanged full reruns. The remaining choice is to leave the feature unmerged or admit it through an explicit owner exception that preserves the R3 rejection and discloses the small construction premium.
 - **Evidence:** [experiments/h43-x1-8-conditioned-preparation-result.md](experiments/h43-x1-8-conditioned-preparation-result.md)
 
+### H43-X1.9 - Explicit assertion matcher owner exception
+
+- **Date:** 2026-08-09
+- **Outcome:** `merged`
+- **Baseline:** `a5b86c2b3943aad3121e1f06944e39331f17a474`
+- **Candidate:** `a5b86c2b3943aad3121e1f06944e39331f17a474`
+- **Mechanism:** Admit the exact feature-gated assertion-prefix-v1 matcher through the documented owner-exception mechanism after reviewing the immutable rejected R3 assay and both exact-fixture H43-X1.8 construction discriminators.
+- **Measured result:** The explicit 1 MiB and 2 MiB targets retain about 231.62x and 460.49x scan speedups, exact semantics, passing fallback and resource lanes, complete default isolation, and about 449.65x better one-scan total work at 2 MiB. Focused exact-source discriminators reproduce only a 0.717%-0.976% complete-construction premium.
+- **Tradeoffs and caveats:** The formal R3 result remains machine-rejected because its 2 MiB preparation estimator regressed 5.792673% with 11 of 15 adverse cycles. The production feature is non-default, requires both a Cargo feature and separate matcher type, and requires an explicit scan policy. No automatic routing or default-path claim is admitted.
+- **Decision:** Merged by explicit owner authorization as production exception 4996bcc16a9cc936789372d8184f4ef4893fd336. Formal R3 remains rejected and optimization_admitted remains false; retain every adverse receipt, disclose the approximately 1% reproducible construction premium, and pursue any future removal under unchanged G9-v3 gates.
+- **Evidence:** [experiments/h43-x1-9-owner-exception.md](experiments/h43-x1-9-owner-exception.md)
+
 ## Cross-engine evolution
 
+### 2026-08-09 - H43 current-production default overlap plus explicit owner-exception capability
+
+**Current production snapshot**. Rust revision `a5b86c2b3943aad3121e1f06944e39331f17a474`; reviewed measurement revision `e2f27232f4648e57e74be60dc6f60db3b00f2547`.
+
+H43 changes production by adding a deliberately selected, non-default assertion matcher while preserving the ordinary matcher. The generic/default comparison therefore retains exact H42 overlap medians and unchanged B2 competitor values; R3 independently passed all nine default-safety cells. The experimental assertion lane is reported separately and is not folded into competitor geometric means because no exact retained competitor overlap exists for those two targets. H43 entered production by owner exception while R3 remains rejected.
+
+| Engine | Contract | Cells won | Geometric-mean Rust/engine | Median | Range |
+|---|---|---:|---:|---:|---:|
+| [Java rmatch](experiments/h43-cross-engine-snapshot.md#java-rmatch) | same complete event contract; unchanged H42 default overlap | 9/9 | 44.543x | 80.983x | 2.738x-126.566x |
+| [RegexSet](experiments/h43-cross-engine-snapshot.md#regexset) | different output contract; unchanged H42 default overlap | 4/8 | 2.288x | 1.086x | 0.194x-27.154x |
+| [Hyperscan](experiments/h43-cross-engine-snapshot.md#hyperscan) | native-reference diagnostic; unchanged H42 default overlap | 2/8 | 0.308x | 0.402x | 0.011x-3.637x |
 ### 2026-08-04 - H42 current-production exact formal overlap; owner-authorized merge
 
-**Current production snapshot**. Rust revision `c6f221bda8241123281aea8659dd56eeb8a13be0`; reviewed measurement revision `046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4`.
+**Historical snapshot**. Rust revision `c6f221bda8241123281aea8659dd56eeb8a13be0`; reviewed measurement revision `046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4`.
 
 This current-production view uses exact H42 formal candidate medians for the same nine scenario groups covered by the H11 overlap snapshot and retained competitor values from the unchanged B2 review. Where H42 measured two worker counts for one scenario, the higher H42 throughput is used. It is not a full-dataset rerun. H42 entered production by owner-authorized exception while its formal G9-v3 disposition remains investigate. Java rmatch shares Rustmatch's complete event contract; RegexSet and Hyperscan retain different diagnostic contracts.
 
@@ -577,7 +603,7 @@ Geometric means summarize the frozen B2 cell-level Rust/competitor throughput ra
 
 | Priority | Hypothesis | Status | Why it remains plausible | Next discriminating test | Expected value |
 |---:|---|---|---|---|---|
-| 1 | [**H43-X1.9 - Explicit assertion matcher governance decision**](experiments/h43-x1-8-conditioned-preparation-result.md) | owner exception review available; no more timing justified | The immutable R3 full confirmation retained about 231.62x and 460.49x target scan speedups, complete default safety, and passing total-work economics, but one 2 MiB preparation metric regressed 5.792673% and triggered the unchanged veto. Two subsequent corpus-conditioned discriminators, including one over the exact rejected library source, found only a repeatable 0.717%-0.976% construction premium below 2%. | Do not rerun or retune. Decide whether the deliberately selected, non-default feature remains unmerged or enters production through the documented owner-exception mechanism. An exception must preserve R3 as rejected, disclose the approximately 1% construction premium, keep the matcher opt-in, and leave default comparison numbers unchanged. | Exceptional explicit-capability utility with high evidence quality and low remaining causal uncertainty; medium governance risk because formal certification failed |
+| 1 | [**H43-X1.10 - Explicit assertion matcher construction-premium removal**](experiments/h43-x1-9-owner-exception.md) | follow-up retained; no unchanged rerun authorized | H43-X1.9 entered production by owner exception while formal R3 remains rejected. Two focused exact-source discriminators place the stable construction premium near 0.8%-1.0%, far below R3's 5.792673% process-level estimator but directionally real. | Reopen only for a materially new builder or representation mechanism that predicts lower registration or compilation work without touching ordinary matcher layout. Freeze unchanged G9-v3 construction and default-safety gates before implementation; do not repeat R3 or tune placement against its fixtures. | Low absolute near-term gain, medium governance value, and low urgency; preserves a concrete path for retiring the accepted residual risk |
 | 2 | [**FUTURE-LITERAL-EXACT - Exact literal-only backend**](experiments/post-h11-future-optimization-portfolio.md) | next active diagnostic | H40 proved that reducing literal candidate work can improve complete scans 22.9%-63.4%, while its separate SIMD crate still perturbed inactive artifacts. A strict exact-literal backend can emit overlapping occurrences and pattern IDs directly, eliminating both candidate generation and NFA/cache verification through a materially different whole-path boundary. | Freeze a diagnostic raw-u16 multi-pattern automaton on assay-disjoint and established literal families. Require exact overlapping event parity, then measure construction, retained bytes, sparse, dense, zero-output, Wuthering, and inactive mixed-regex behavior before authorizing production integration. | Very high literal-only upside, medium confidence, high implementation, memory, and maintenance risk |
 | 3 | [**B2-H-0006 - Exact input-parallel semantic scanning**](experiments/b2-h-0006-input-parallel-design.md) | semantic design reviewed; phase diagnostic pending | Disjoint start-position ownership over the complete immutable input is exact. H11 already removed most repeated literal traversal on eligible cells, so the remaining value must come from combined-database semantic work, worker tails, or non-H11 paths. | Run Stage P from the design review. Prototype a full database with candidate-balanced disjoint start ranges only if post-H11 removable semantic or tail headroom exceeds 5%. | Potentially broad high upside, medium-low confidence, high state-locality and resource risk |
 | 4 | [**FUTURE-LAYOUT - Transition-table and scratch-state locality**](experiments/post-h11-future-optimization-portfolio.md) | profiling required | A larger cache reduced fallback but increased hardware misses, so representation and locality remain more credible than capacity. Existing profiles still show transition construction and cache lookup as material costs. | Bind cache-line and working-set profiles to one concrete narrower-index, hot/cold split, structure-of-arrays, or generation-stamped scratch hypothesis before changing production layout. | Moderate broad opportunity, medium-low confidence, medium-high implementation and performance-regression risk |

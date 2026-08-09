@@ -2,7 +2,9 @@
 
 **Machine disposition:** rejected by automatic veto<br>
 **Learning disposition:** investigate<br>
-**Production status:** not merged, not published, excluded from progress<br>
+**Production status at result time:** not merged, not published, excluded from progress<br>
+**Subsequent action:** capability merged by H43-X1.9 owner exception; this R3
+result remains rejected<br>
 **Policy:** unchanged G9-v3<br>
 **Measured Rustmatch revision:** `a5b86c2b3943aad3121e1f06944e39331f17a474`
 
@@ -84,6 +86,7 @@ rejected.
 
 ## Evidence
 
+- [Subsequent owner exception](h43-x1-9-owner-exception.md)
 - [Curated local evidence](../evidence/h43/x1.7/a5b86c2/README.md)
 - [H43-X1.8 conditioned preparation result](h43-x1-8-conditioned-preparation-result.md)
 - [H43-X1.5 immutable admission result](h43-x1-5-formal-admission-result.md)

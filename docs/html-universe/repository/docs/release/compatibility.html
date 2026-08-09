@@ -61,9 +61,13 @@ may retain match events temporarily.</li>
 semantic engine remains authoritative.</li>
 <li>The <code>benchmark-internals</code> feature is for repository tooling and is outside
 the supported application API.</li>
+<li>The non-default <code>unstable-assertion-prefix-v1</code> feature is exact but outside
+the stable default API. It supports only its documented eligible assertion
+cohort, separate matcher type, typed refusal/fallback contract, and explicit
+scan policies. Incompatible API changes wait for at least <code>0.2.0</code>.</li>
 </ul>
 <p>Performance comparisons and their semantic qualifications are maintained in
-the <a href="../experiments/h42-cross-engine-snapshot.html">current cross-engine snapshot</a>.</p>
+the <a href="../experiments/h43-cross-engine-snapshot.html">current cross-engine snapshot</a>.</p>
 </main><footer>Generated from <code>docs/release/compatibility.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
 const seen=new Map();
 for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){

@@ -12,6 +12,10 @@ tagging, or creating a GitHub release.</p>
 <p><strong>Hard stop:</strong> no command in the preparation workflow may upload to crates.io,
 create a release tag, or create a GitHub release. Those actions remain unchecked
 until the owner explicitly starts the release ceremony.</p>
+<p><strong>Current qualification:</strong> H43 production merge <code>4996bcc</code> supersedes frozen
+candidate <code>7305a24</code>. The earlier candidate evidence remains valid only for its
+exact historical source. Do not release current <code>main</code> until the H43
+requalification below is complete.</p>
 <h2>Release definition</h2>
 <ul>
 <li><input disabled="" type="checkbox" checked=""/>
@@ -111,6 +115,25 @@ Record the candidate commit and package checksums in this checklist:
 <code>07825e3a04dbe888c6729c42be126865d9cda6aaf60d3df38e38325b588393ad</code>,
 and <code>rustmatch</code> SHA-256
 <code>cdff31c0a0ae63ff54734c03029a553b61ea373dadfdfee9feb06596fa707ceb</code>.</li>
+</ul>
+<h2>H43 production requalification</h2>
+<ul>
+<li><input disabled="" type="checkbox" checked=""/>
+Retain the exact H43 R3 rejection, owner exception, and causal follow-up.</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Preserve all nine passing default-safety cells and the adverse 5.792673%
+formal preparation cell without relabeling either result.</li>
+<li><input disabled="" type="checkbox"/>
+Freeze the post-exception package candidate commit and crate checksums.</li>
+<li><input disabled="" type="checkbox"/>
+Pass the exact package, all-features, rustdoc, release-soak, and clean
+consumer rehearsal for that candidate.</li>
+<li><input disabled="" type="checkbox"/>
+Pass current Linux, macOS, Windows, MSRV, AArch64, Miri, differential,
+ledger, and release-readiness CI for the merged head.</li>
+<li><input disabled="" type="checkbox"/>
+Bind the designated-host R3/X1.8 receipts and local package rehearsal to
+a reviewed H43 release-candidate evidence record.</li>
 </ul>
 <h2>Release ceremony: intentionally not executed</h2>
 <ul>

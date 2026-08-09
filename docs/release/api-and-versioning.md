@@ -15,19 +15,22 @@ Compiler, HIR, NFA, prefilter, partition, cache, and SIMD types remain private.
 The `benchmark-internals` feature exposes hidden diagnostics only for retained
 repository measurement tooling. Applications must not rely on that feature.
 
-ADR-0009 authorizes an isolated `unstable-assertion-prefix-v1` prototype behind
-a non-default feature and separate matcher type. That prototype is not part of
-the reviewed 0.1.0 surface and is not authorized for publication. Before any
-publication, its versioned API must either receive an explicit `0.1.x`
-compatibility promise, move to a companion crate, or be removed.
+ADR-0009 authorizes the isolated `unstable-assertion-prefix-v1` API behind a
+non-default feature and separate matcher type. H43-X1.9 admitted that exact
+capability through an explicit owner exception. It is packageable but is not
+part of the stable default API: its feature and module names deliberately
+carry `unstable`, and the API may change or disappear in a future `0.y.0`
+release. Published `0.1.x` patch releases nevertheless preserve its source
+surface; incompatible removal waits for at least `0.2.0`. The default API above
+remains the supported contract.
 
-The complete H43-X1.5 assay remains `investigate`, not admitted: ordinary
-default safety passed, but one explicit-target preparation metric regressed
-2.688833%. H43-X1.6 did not reproduce that blocker in isolated same-pattern
-construction: complete preparation was 0.808000% slower, below the unchanged
-2% boundary. The feature and separate matcher type remain excluded from the
-`0.1.0` release baseline pending an explicit owner decision; X1.6 does not
-retroactively certify X1.5.
+The complete H43 R3 assay remains rejected, not certified: ordinary default
+safety passed, but one explicit-target preparation metric regressed 5.792673%
+and crossed the unchanged veto. Two exact-fixture construction discriminators
+subsequently measured only a repeatable 0.717%-0.976% premium. Owner exception
+`4996bcc16a9cc936789372d8184f4ef4893fd336` accepted that residual risk for the
+explicit product lane without relabeling R3, adding automatic routing, or
+changing the default release surface.
 
 The review confirms these deliberate contracts:
 
@@ -55,6 +58,9 @@ Rustmatch follows Cargo's leftmost-nonzero pre-1.0 convention:
   ordinary correctness and performance admission gates pass.
 - `benchmark-internals` is explicitly unstable and is not covered by the
   application API promise.
+- `unstable-assertion-prefix-v1` and everything under its experimental module
+  are explicitly unstable and carry no compatibility promise beyond the
+  current `0.1.x` line.
 
 After `1.0.0`, breaking supported-API changes require a major version.
 

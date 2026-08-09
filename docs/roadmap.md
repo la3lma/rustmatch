@@ -1,17 +1,18 @@
 # rustmatch implementation roadmap
 
-**Last reviewed:** 2026-08-05
+**Last reviewed:** 2026-08-09
 
 **Implementation increments started:** **12/12**
 
 **Implementation increments complete:** **12/12**
 
-**Active:** no implementation increment; H42 remains the exact
-owner-authorized production source and `0.1.0` candidate `7305a24` has passed
-the complete prerelease gate
+**Active:** no implementation increment; H43 is the exact owner-authorized
+production source in merge `4996bcc`. Its explicit assertion matcher is
+non-default, and formal R3 remains rejected
 
-**Next owner decision:** review and merge draft PR #38, then separately
-authorize the irreversible release ceremony when desired. The
+**Next owner decision:** none until current production completes a fresh
+`0.1.0` prerelease qualification. Candidate `7305a24` remains historical and
+must not be released as the current head. The
 [prerelease checklist](pre-release-todo.md) is the authoritative ledger; every
 publication, tag, and GitHub-release action remains intentionally unchecked
 
@@ -28,7 +29,10 @@ that keep the system executable.
 > optimization milestone. The acceptance baseline is the frozen, existing
 > Rustmatch production path, not the competitor. Every performance-motivated
 > change must preserve results and show a positive Rustmatch improvement beyond
-> a predeclared noise threshold. Only a fully passing candidate may merge.
+> a predeclared noise threshold. A candidate normally merges only after passing
+> every formal gate. A separately documented owner exception may advance
+> production without changing the failed formal classification, thresholds, or
+> retained adverse evidence.
 > Investigated, neutral, inconclusive, rejected, or slower results leave the
 > production baseline unchanged. The
 > [versioned decision policy](optimization-decision-policy.md) requires causal
@@ -381,7 +385,7 @@ and use-case evidence bundle pass from a clean checkout.
 | B2 | Full-dataset analysis and reviewed hypotheses | Complete | The complete dataset has quantitative and qualitative dispositions, a reviewed registry, and completed experiments through B2-H-0011. H9 and H10 remain rejected; H11 resolved their opposed signal without changing thresholds and merged exact measured source |
 | G9 | Existing-Rustmatch candidate gate | Complete for B2-H-0011 | H11 preserved exact semantics, improved all primary targets 116.181%-695.703%, repaired all three H10 vetoes into +0.641%-1.956% gains, passed the full frozen matrix, and merged as exact candidate `bacd5c46`. Any next optimization requires a fresh B2 authorization |
 | I10 | Hardening | Complete | Generated semantic properties, four compiled fuzz targets, focused Miri, release soak, bounded parser nesting, public API/rustdoc review, and dependency/license/unsafe/panic/MSRV audits pass |
-| I11 | Release preparation | Complete | Frozen candidate `7305a24` passes exact package, consumer, documentation, compatibility, changelog, runbook, Linux/macOS/Windows, MSRV, AArch64, Miri, Java differential, hosted tripwire, and designated-host performance gates; raw receipts and archive hashes are retained |
+| I11 | Release preparation | Requalification required | Historical candidate `7305a24` passed exact package, consumer, documentation, compatibility, changelog, runbook, Linux/macOS/Windows, MSRV, AArch64, Miri, Java differential, hosted tripwire, and designated-host performance gates. H43 production merge `4996bcc` supersedes that candidate and requires a new frozen package and affected gate evidence before release; the old receipts remain retained |
 | REL | First stable release | Planned | Published crate, signed tag, GitHub release, and archived release receipts |
 
 ## Status update protocol

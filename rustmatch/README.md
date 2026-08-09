@@ -44,6 +44,20 @@ convention, but a future `0.2.0` may contain breaking changes.
 - AVX2 acceleration is detected at runtime on x86-64. Other targets use the
   exact portable path.
 
+## Explicit experimental matcher
+
+The non-default `unstable-assertion-prefix-v1` feature exposes a separate
+matcher for narrowly eligible, assertion-bearing pattern sets with one proven
+five-unit ASCII prefix. It is not selected automatically and does not alter
+`MatcherBuilder` or `Matcher` merely because the feature is enabled.
+
+Applications must opt in through both Cargo and the versioned experimental
+module, then choose `RequireSpecialized` or `AllowExactFallback` for every
+scan. The API is exact but unstable: it may change or disappear in a future
+`0.x` release and should be selected only after workload-specific validation.
+See the module documentation and the repository's retained H43 owner-exception
+evidence before adopting it.
+
 See the [repository README](https://github.com/la3lma/rustmatch) for the full
 semantic contract, benchmark interpretation, and contribution policies.
 

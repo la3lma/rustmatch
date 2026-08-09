@@ -42,6 +42,11 @@ and released versions will follow [Semantic Versioning](https://semver.org/).
   prefilters, exact pattern-partition parallelism, and runtime-detected AVX2
   candidate discovery, each retained through correctness-gated performance
   admission evidence.
+- A non-default `unstable-assertion-prefix-v1` feature with a separate explicit
+  matcher type, typed eligibility/refusal reporting, exact fallback, and
+  caller-selected scan policy. It entered production through a documented
+  owner exception; the rejected formal result and residual construction cost
+  remain retained.
 - A correctness-gated cross-engine benchmark campaign and reviewed comparison
   against Java rmatch, RegexSet, and Hyperscan.
 - Explicit 256-level group-nesting rejection, generated semantic properties,

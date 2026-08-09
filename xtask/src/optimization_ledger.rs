@@ -39,6 +39,8 @@ struct Attempt {
     tradeoffs: String,
     decision: String,
     evidence: String,
+    #[serde(default)]
+    owner_exception: bool,
     progress: Option<Progress>,
 }
 
@@ -87,7 +89,7 @@ struct FutureCandidate {
 
 #[derive(Debug)]
 struct ProgressPoint<'a> {
-    label: &'a str,
+    label: String,
     workload: &'a str,
     incremental_speedup: f64,
     cumulative_speedup: f64,
@@ -187,6 +189,11 @@ fn validate(ledger: &Ledger) -> Result<(), String> {
                     attempt.id
                 ));
             }
+        } else if attempt.owner_exception {
+            return Err(format!(
+                "non-merged attempt {} cannot be an owner exception",
+                attempt.id
+            ));
         } else if attempt.progress.is_some() {
             return Err(format!(
                 "non-merged attempt {} may not enter the progress series",
@@ -277,7 +284,11 @@ fn progress_points(ledger: &Ledger) -> Vec<ProgressPoint<'_>> {
             let incremental = progress.baseline_millis / progress.candidate_millis;
             cumulative *= incremental;
             Some(ProgressPoint {
-                label: &attempt.id,
+                label: if attempt.owner_exception {
+                    format!("{}*", attempt.id)
+                } else {
+                    attempt.id.clone()
+                },
                 workload: &progress.workload,
                 incremental_speedup: incremental,
                 cumulative_speedup: cumulative,
@@ -335,6 +346,11 @@ fn render_markdown(ledger: &Ledger, progress: &[ProgressPoint<'_>]) -> String {
         )
         .expect("write to string");
     }
+    writeln!(
+        output,
+        "\n`*` marks an owner-authorized production exception; it does not relabel the formal result."
+    )
+    .expect("write to string");
 
     writeln!(output, "\n## Attempt ledger\n").expect("write to string");
     for attempt in &ledger.attempts {
@@ -484,7 +500,7 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
         write!(
             progress_rows,
             "<tr><th>{}</th><td>{}</td><td>{:.2}×</td><td>{:.2}×</td></tr>",
-            html_escape(point.label),
+            html_escape(&point.label),
             html_escape(point.workload),
             point.incremental_speedup,
             point.cumulative_speedup
@@ -588,7 +604,9 @@ fn render_html(ledger: &Ledger, progress: &[ProgressPoint<'_>], svg: &str) -> St
          <h2>Efficiency progress</h2><div class=\"chart\">{svg}</div>\
          <p class=\"chart-note\">Admission evidence speedup index on a logarithmic scale. \
          Each point multiplies the prior index by that merged optimization's own \
-         frozen baseline/candidate scan-time ratio. It is not a direct historical rerun.</p>\
+         frozen baseline/candidate scan-time ratio. It is not a direct historical rerun. \
+         An asterisk marks an owner-authorized production exception and does not relabel \
+         the formal result.</p>\
          <div class=\"table-wrap\"><table><thead><tr><th>Optimization</th><th>Frozen gate</th>\
          <th>Incremental</th><th>Cumulative</th></tr></thead><tbody>{progress_rows}</tbody>\
          </table></div></section><section><div class=\"section-kicker\">Complete record</div>\
@@ -668,7 +686,10 @@ fn render_svg(progress: &[ProgressPoint<'_>]) -> Result<String, String> {
             ("Pre-I6", "1.00×".to_owned())
         } else {
             let point = &progress[index - 1];
-            (point.label, format!("{:.2}×", point.cumulative_speedup))
+            (
+                point.label.as_str(),
+                format!("{:.2}×", point.cumulative_speedup),
+            )
         };
         write!(
             points,
@@ -781,8 +802,11 @@ mod tests {
         let ledger = ledger();
         let points = progress_points(&ledger);
         assert_eq!(
-            points.iter().map(|point| point.label).collect::<Vec<_>>(),
-            ["I6", "I7", "I8", "B2-H-0011", "B2-H-0042"]
+            points
+                .iter()
+                .map(|point| point.label.as_str())
+                .collect::<Vec<_>>(),
+            ["I6", "I7", "I8", "B2-H-0011", "B2-H-0042*", "H43-X1.9*"]
         );
         let svg = render_svg(&points).expect("chart should render");
         assert!(!svg.contains("B2-H-0001"));

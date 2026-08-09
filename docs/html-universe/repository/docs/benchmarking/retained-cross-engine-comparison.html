@@ -8,10 +8,11 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 @media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
 </style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../benchmarking/retained-cross-engine-comparison.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/benchmarking/retained-cross-engine-comparison.md</div></header><main><h1>Retained cross-engine and Rustmatch-generation comparison</h1>
 <p><strong>Status:</strong> reviewed synthesis of previously collected evidence<br>
-<strong>Review date:</strong> 2026-08-08<br>
+<strong>Review date:</strong> 2026-08-09<br>
 <strong>New benchmark runs:</strong> none<br>
 <strong>Primary current product:</strong> public one-worker default at <code>7dd80c0</code><br>
-<strong>Current tuned production snapshot:</strong> H42 at <code>c6f221b</code><br>
+<strong>Current tuned production snapshot:</strong> H43 at <code>a5b86c2</code>; ordinary overlap
+retains H42 values<br>
 <strong>Historical Rustmatch snapshots:</strong> H11 at <code>bacd5c4</code> and B2 at <code>da755b0</code></p>
 <h2>Scope and reading rules</h2>
 <p>This report makes every comparison supported by the retained data visible. It
@@ -27,13 +28,14 @@ event stream. Its ratios are diagnostic speed references.</li>
 the best retained throughput among their measured worker counts. Their
 difference is therefore useful capacity evidence, but H42/public-default is
 not a code-only evolution series.</li>
-<li>H42 is current production by an explicit owner-authorized merge. Its frozen
-formal G9-v3 disposition remains <code>investigate</code>; this report does not relabel
-that result as a certified admission pass.</li>
+<li>H43 is current production by an explicit owner-authorized merge. Its
+ordinary matcher retains H42's tuned path and overlap values. Formal H43 R3
+remains rejected; this report does not relabel it as a certified pass.</li>
 <li>H42, H11, and the public default reuse unchanged retained competitor values
 from B2. Only Rustmatch changed.</li>
-<li>H43-X1.5 is an unmerged explicit experimental matcher. Its two assertion
-cells have no exact retained Java, RegexSet, or Hyperscan counterparts.</li>
+<li>H43's explicit matcher is merged but remains non-default, feature-gated, and
+owner-exception labeled. Its two assertion cells have no exact retained Java,
+RegexSet, or Hyperscan counterparts and remain outside the aggregate table.</li>
 </ul>
 <p>The normalized nine-scenario source matrix is available as
 <a href="../../../../benchmarking/retained-cross-engine-comparison.csv"><code>retained-cross-engine-comparison.csv</code></a>.</p>

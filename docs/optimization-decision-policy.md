@@ -75,6 +75,13 @@ production-risk decision, not an admission result. Such an exception must:
 2.111% with 13 of 15 negative crossover cycles. Exact H42 entered production
 only through explicit owner authorization.
 
+`H43-X1.9` is the second exception. Its explicit assertion matcher entered
+production in merge `4996bcc16a9cc936789372d8184f4ef4893fd336` after exact
+causal follow-up, while the complete R3 result remains rejected with
+`optimization_admitted: false` because one preparation cell regressed
+5.792673%. The exception applies only to the feature-gated separate matcher;
+the default API and routing remain unchanged.
+
 ## High-discrepancy signal
 
 Large opposing effects are evidence about mechanism boundaries. When a

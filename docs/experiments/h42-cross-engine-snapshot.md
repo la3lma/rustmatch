@@ -1,7 +1,7 @@
-# H42 current-production cross-engine snapshot
+# H42 historical production cross-engine snapshot
 
-**Status:** current by owner-authorized merge; formal G9-v3 outcome remains
-`investigate`
+**Status:** historical; superseded by H43 owner-authorized production merge;
+formal G9-v3 outcome remains `investigate`
 
 **Rust revision:** `c6f221bda8241123281aea8659dd56eeb8a13be0`
 
@@ -9,11 +9,11 @@
 
 ## Purpose
 
-The optimization ledger's leading Java rmatch, RegexSet, and Hyperscan summary
-must follow the newest merged Rustmatch source. H42 entered production by
-explicit owner authorization despite its retained G9-v3 `investigate` result,
-so this document updates the current-production view without relabeling H42 as
-a certified admission pass.
+This document preserves the H42 production view that preceded H43. H42 entered
+production by explicit owner authorization despite its retained G9-v3
+`investigate` result. H43 later added a non-default explicit matcher without
+changing these ordinary-path values; the current snapshot is now
+[H43](h43-cross-engine-snapshot.md).
 
 H42 did not rerun the complete 35-to-39-cell cross-engine dataset. Its formal
 matrix measured the same nine scenario groups used by the H11 overlap

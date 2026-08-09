@@ -13,9 +13,11 @@ p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5p
 now covers the documented rmatch 2.x consuming language, including UTF-16,
 flags, anchors, and boundaries, with pinned Java evidence. Optimization and
 scale work has completed the B1/B2 cross-engine campaign, and current
-production includes the owner-authorized H42 exact SIMD scan path. The
-<code>0.1.0</code> release candidate has passed prerelease verification; no crate has
-been published.</p>
+production includes the owner-authorized H42 exact SIMD scan path and H43
+explicit assertion matcher. H43 is non-default and entered production by
+owner exception, not formal certification. The earlier <code>0.1.0</code> candidate is
+historical; current production must be requalified before release. No crate
+has been published.</p>
 </blockquote>
 <blockquote>
 <p><strong>Roadmap:</strong> <a href="docs/roadmap.html">See the implementation dependency graph and current
@@ -45,7 +47,11 @@ lifetimes, enums, dense integer-indexed storage, contiguous memory, fearless
 parallelism, and a small public API. This is not a Java-to-Rust transliteration
 project.</p>
 <h2>Current performance snapshot</h2>
-<p>Fresh results for revision <code>7dd80c0</code> use the
+<p>Current production is measured H43 source <code>a5b86c2</code>, merged through owner
+exception <code>4996bcc</code>. Its <a href="docs/experiments/h43-cross-engine-snapshot.html">current-production comparison</a>
+retains H42's tuned ordinary-path overlap and reports the explicit capability
+separately. The product-specific tables below use fresh results for revision
+<code>7dd80c0</code> under the
 <a href="docs/benchmarking/default-vs-experimental.html">two-product benchmark contract</a>.
 Ratios are Rustmatch throughput divided by the retained reference throughput,
 so values above <code>1.0x</code> favor Rustmatch.</p>
@@ -74,9 +80,10 @@ previously collected evidence; no additional benchmark run was made.</p>
 <p>This secondary panel is deliberately workload-tuned. It explicitly enables the
 <code>assertion-prefix-v1</code> backend after seeing the exact expressions and corpus,
 forbids fallback, and makes <strong>no</strong> claim about default behavior, automatic
-selection, or unseen workloads. The exact candidate is <strong>machine-rejected, not
-merged or published</strong>: the single complete R3 confirmation retained its scan
-benefit but one independent preparation metric crossed the unchanged 3% veto.</p>
+selection, or unseen workloads. The exact candidate is <strong>machine-rejected but
+merged by owner exception</strong>: the single complete R3 confirmation retained its
+scan benefit but one independent preparation metric crossed the unchanged 3%
+veto. Production merge <code>4996bcc</code> does not relabel that result.</p>
 <table><thead><tr><th>Workload</th><th style="text-align: right">Public default</th><th style="text-align: right">Experimental</th><th style="text-align: right">Speedup</th><th>Outcome</th></tr></thead><tbody>
 <tr><td>Assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">0.946 Mbit/s</td><td style="text-align: right">219.172 Mbit/s</td><td style="text-align: right"><strong>231.62x</strong></td><td>Scan and total work pass</td></tr>
 <tr><td>Assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">0.943 Mbit/s</td><td style="text-align: right">435.786 Mbit/s</td><td style="text-align: right"><strong>460.49x</strong></td><td>Scan passes; preparation veto</td></tr>
@@ -89,10 +96,12 @@ receipts, 18 allocation receipts, and four functional probes passed semantic,
 provenance, and host validation. The sole blocker was a 5.792673% preparation
 regression on the 2 MiB target, with 11 of 15 cycles adverse. Two subsequent
 corpus-conditioned construction discriminators found only a repeatable
-0.717%-0.976% cost, below 2%; this supports owner-exception review but does not
-relabel R3 as a pass. See the <a href="docs/experiments/h43-x1-7-r3-confirmation-result.html">R3 result</a>,
+0.717%-0.976% cost, below 2%. The owner accepted that residual cost for this
+explicit product lane while preserving the R3 rejection. See the <a href="docs/experiments/h43-x1-9-owner-exception.html">owner decision</a>,
+the <a href="docs/experiments/h43-x1-7-r3-confirmation-result.html">R3 result</a>,
 the <a href="docs/experiments/h43-x1-8-conditioned-preparation-result.html">causal follow-up</a>,
 the earlier <a href="docs/benchmarking/default-vs-experimental-results.html">two-product methodology</a>,
+the <a href="docs/experiments/h43-cross-engine-snapshot.html">current-production comparison</a>,
 and the <a href="docs/evidence/h43/x1.8/8c27d23/README.html">curated evidence</a>.</p>
 <h2>TL;DR</h2>
 <h3>What we are building</h3>

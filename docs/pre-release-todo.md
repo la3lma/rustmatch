@@ -7,6 +7,11 @@ tagging, or creating a GitHub release.
 create a release tag, or create a GitHub release. Those actions remain unchecked
 until the owner explicitly starts the release ceremony.
 
+**Current qualification:** H43 production merge `4996bcc` supersedes frozen
+candidate `7305a24`. The earlier candidate evidence remains valid only for its
+exact historical source. Do not release current `main` until the H43
+requalification below is complete.
+
 ## Release definition
 
 - [x] Use `0.1.0` for the first public, pre-1.0 API.
@@ -73,6 +78,19 @@ until the owner explicitly starts the release ceremony.
   `07825e3a04dbe888c6729c42be126865d9cda6aaf60d3df38e38325b588393ad`,
   and `rustmatch` SHA-256
   `cdff31c0a0ae63ff54734c03029a553b61ea373dadfdfee9feb06596fa707ceb`.
+
+## H43 production requalification
+
+- [x] Retain the exact H43 R3 rejection, owner exception, and causal follow-up.
+- [x] Preserve all nine passing default-safety cells and the adverse 5.792673%
+  formal preparation cell without relabeling either result.
+- [ ] Freeze the post-exception package candidate commit and crate checksums.
+- [ ] Pass the exact package, all-features, rustdoc, release-soak, and clean
+  consumer rehearsal for that candidate.
+- [ ] Pass current Linux, macOS, Windows, MSRV, AArch64, Miri, differential,
+  ledger, and release-readiness CI for the merged head.
+- [ ] Bind the designated-host R3/X1.8 receipts and local package rehearsal to
+  a reviewed H43 release-candidate evidence record.
 
 ## Release ceremony: intentionally not executed
 

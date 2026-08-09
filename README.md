@@ -6,9 +6,11 @@
 > now covers the documented rmatch 2.x consuming language, including UTF-16,
 > flags, anchors, and boundaries, with pinned Java evidence. Optimization and
 > scale work has completed the B1/B2 cross-engine campaign, and current
-> production includes the owner-authorized H42 exact SIMD scan path. The
-> `0.1.0` release candidate has passed prerelease verification; no crate has
-> been published.
+> production includes the owner-authorized H42 exact SIMD scan path and H43
+> explicit assertion matcher. H43 is non-default and entered production by
+> owner exception, not formal certification. The earlier `0.1.0` candidate is
+> historical; current production must be requalified before release. No crate
+> has been published.
 
 > **Roadmap:** [See the implementation dependency graph and current
 > status](docs/roadmap.md). Planning is complete; implementation is at `12/12`
@@ -38,7 +40,11 @@ project.
 
 ## Current performance snapshot
 
-Fresh results for revision `7dd80c0` use the
+Current production is measured H43 source `a5b86c2`, merged through owner
+exception `4996bcc`. Its [current-production comparison](docs/experiments/h43-cross-engine-snapshot.md)
+retains H42's tuned ordinary-path overlap and reports the explicit capability
+separately. The product-specific tables below use fresh results for revision
+`7dd80c0` under the
 [two-product benchmark contract](docs/benchmarking/default-vs-experimental.md).
 Ratios are Rustmatch throughput divided by the retained reference throughput,
 so values above `1.0x` favor Rustmatch.
@@ -74,9 +80,10 @@ previously collected evidence; no additional benchmark run was made.
 This secondary panel is deliberately workload-tuned. It explicitly enables the
 `assertion-prefix-v1` backend after seeing the exact expressions and corpus,
 forbids fallback, and makes **no** claim about default behavior, automatic
-selection, or unseen workloads. The exact candidate is **machine-rejected, not
-merged or published**: the single complete R3 confirmation retained its scan
-benefit but one independent preparation metric crossed the unchanged 3% veto.
+selection, or unseen workloads. The exact candidate is **machine-rejected but
+merged by owner exception**: the single complete R3 confirmation retained its
+scan benefit but one independent preparation metric crossed the unchanged 3%
+veto. Production merge `4996bcc` does not relabel that result.
 
 | Workload | Public default | Experimental | Speedup | Outcome |
 |---|---:|---:|---:|---|
@@ -91,10 +98,12 @@ receipts, 18 allocation receipts, and four functional probes passed semantic,
 provenance, and host validation. The sole blocker was a 5.792673% preparation
 regression on the 2 MiB target, with 11 of 15 cycles adverse. Two subsequent
 corpus-conditioned construction discriminators found only a repeatable
-0.717%-0.976% cost, below 2%; this supports owner-exception review but does not
-relabel R3 as a pass. See the [R3 result](docs/experiments/h43-x1-7-r3-confirmation-result.md),
+0.717%-0.976% cost, below 2%. The owner accepted that residual cost for this
+explicit product lane while preserving the R3 rejection. See the [owner decision](docs/experiments/h43-x1-9-owner-exception.md),
+the [R3 result](docs/experiments/h43-x1-7-r3-confirmation-result.md),
 the [causal follow-up](docs/experiments/h43-x1-8-conditioned-preparation-result.md),
 the earlier [two-product methodology](docs/benchmarking/default-vs-experimental-results.md),
+the [current-production comparison](docs/experiments/h43-cross-engine-snapshot.md),
 and the [curated evidence](docs/evidence/h43/x1.8/8c27d23/README.md).
 
 ## TL;DR

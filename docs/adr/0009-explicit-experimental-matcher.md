@@ -1,6 +1,6 @@
 # ADR-0009: Isolate explicit experimental matchers from the certified default
 
-- **Status:** Accepted for prototype; not accepted for publication
+- **Status:** Accepted for production by owner exception; formal R3 rejected
 - **Date:** 2026-08-07
 - **Decision owners:** rustmatch maintainers
 
@@ -24,7 +24,7 @@ prove deliberate application intent.
 
 ## Decision
 
-The first source prototype will use two independent opt-in keys:
+The production capability uses two independent opt-in keys:
 
 1. a narrow, non-default, versioned Cargo feature named
    `unstable-assertion-prefix-v1`; and
@@ -36,7 +36,7 @@ variant, method, or scan dispatch for this capability. Enabling the feature
 without constructing the separate type must leave ordinary behavior and hot
 code unchanged.
 
-The provisional prototype surface is:
+The v1 surface is:
 
 ```rust,ignore
 use rustmatch::experimental::assertion_prefix_v1::{
@@ -54,8 +54,8 @@ let report = matcher.scan_with_policy(
 assert!(report.specialized_backend_activated());
 ```
 
-Exact names may change before publication, but the separate-type and explicit
-policy boundaries may not.
+The separate-type and explicit-policy boundaries may not be weakened. An
+incompatible public-name change waits for the next `0.y.0` line.
 
 ## Eligibility and fallback contract
 
@@ -91,17 +91,12 @@ gates.
 
 ## Stability policy
 
-The feature and module are not part of the default 0.1.0 surface. Before any
-crates.io publication, the project must choose one of these outcomes:
-
-- stabilize the versioned v1 surface for the complete `0.1.x` line;
-- move it to a separately versioned companion crate; or
-- keep it unpublished and remove the prototype.
-
-The word `unstable` is a warning, not a hidden SemVer waiver. If the feature is
-published in `0.1.x`, removing or incompatibly changing its public API requires
-at least `0.2.0` and a migration note. Performance magnitude is not a SemVer
-guarantee; exact behavior and observability are.
+The feature and module are not part of the default 0.1.0 surface. The owner
+exception chooses publication as an explicitly unstable, non-default API in
+the same crate. The word `unstable` is a warning, not a hidden SemVer waiver:
+removing or incompatibly changing its public API requires at least `0.2.0` and
+a migration note. Performance magnitude is not a SemVer guarantee; exact
+behavior and observability are.
 
 ## Admission lanes
 
@@ -154,11 +149,12 @@ proven. Automatic selection remains blocked on full G9 evidence.
 - [H43-X1.6 construction discriminator](../experiments/h43-x1-6-construction-discriminator-result.md)
 - [H43-X1.7 R3 confirmation](../experiments/h43-x1-7-r3-confirmation-result.md)
 - [H43-X1.8 conditioned preparation](../experiments/h43-x1-8-conditioned-preparation-result.md)
+- [H43-X1.9 owner exception](../experiments/h43-x1-9-owner-exception.md)
 
-This ADR authorizes a benchmark-internal source prototype and local semantic
-tests. It does not authorize publication, merge into the release baseline, or
-formal performance claims. Exclusive-host timing begins only after the source
-prototype passes local exactness and both default-isolation configurations.
+This ADR originally authorized a benchmark-internal source prototype and local
+semantic tests. H43-X1.9 now authorizes the exact non-default capability for
+production through a separately retained owner exception. That action does not
+authorize automatic selection or relabel any formal result.
 
 H43-X2 passed those local gates at implementation `ff1ac2f`. H43-X1.5 then
 completed the full explicit utility assay at `a5b86c2`: default safety,
@@ -175,5 +171,8 @@ safety and approximately 231.62x/460.49x target scan speedups, but a 5.792673%
 then retained the exact 2 MiB corpus preconditioning and measured construction
 twice, including over the exact rejected R3 library source. The repeatable cost
 was 0.717444%-0.976161%, below 2%. This resolves the causal question without
-certifying R3. Publication and merge remain unauthorized pending an explicit
-owner-exception decision; another unchanged full timing run is not authorized.
+certifying R3. The owner explicitly authorized production merge
+`4996bcc16a9cc936789372d8184f4ef4893fd336`, accepting that small construction
+premium for the feature-gated separate product lane. R3 remains rejected,
+`optimization_admitted` remains false, and another unchanged full timing run
+is not authorized.

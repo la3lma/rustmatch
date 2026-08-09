@@ -20,18 +20,21 @@ and scan failures.</li>
 <p>Compiler, HIR, NFA, prefilter, partition, cache, and SIMD types remain private.
 The <code>benchmark-internals</code> feature exposes hidden diagnostics only for retained
 repository measurement tooling. Applications must not rely on that feature.</p>
-<p>ADR-0009 authorizes an isolated <code>unstable-assertion-prefix-v1</code> prototype behind
-a non-default feature and separate matcher type. That prototype is not part of
-the reviewed 0.1.0 surface and is not authorized for publication. Before any
-publication, its versioned API must either receive an explicit <code>0.1.x</code>
-compatibility promise, move to a companion crate, or be removed.</p>
-<p>The complete H43-X1.5 assay remains <code>investigate</code>, not admitted: ordinary
-default safety passed, but one explicit-target preparation metric regressed
-2.688833%. H43-X1.6 did not reproduce that blocker in isolated same-pattern
-construction: complete preparation was 0.808000% slower, below the unchanged
-2% boundary. The feature and separate matcher type remain excluded from the
-<code>0.1.0</code> release baseline pending an explicit owner decision; X1.6 does not
-retroactively certify X1.5.</p>
+<p>ADR-0009 authorizes the isolated <code>unstable-assertion-prefix-v1</code> API behind a
+non-default feature and separate matcher type. H43-X1.9 admitted that exact
+capability through an explicit owner exception. It is packageable but is not
+part of the stable default API: its feature and module names deliberately
+carry <code>unstable</code>, and the API may change or disappear in a future <code>0.y.0</code>
+release. Published <code>0.1.x</code> patch releases nevertheless preserve its source
+surface; incompatible removal waits for at least <code>0.2.0</code>. The default API above
+remains the supported contract.</p>
+<p>The complete H43 R3 assay remains rejected, not certified: ordinary default
+safety passed, but one explicit-target preparation metric regressed 5.792673%
+and crossed the unchanged veto. Two exact-fixture construction discriminators
+subsequently measured only a repeatable 0.717%-0.976% premium. Owner exception
+<code>4996bcc16a9cc936789372d8184f4ef4893fd336</code> accepted that residual risk for the
+explicit product lane without relabeling R3, adding automatic routing, or
+changing the default release surface.</p>
 <p>The review confirms these deliberate contracts:</p>
 <ul>
 <li>Rejected registration does not modify or reserve an ID in the builder.</li>
@@ -57,6 +60,9 @@ otherwise it waits for the next minor line.</li>
 ordinary correctness and performance admission gates pass.</li>
 <li><code>benchmark-internals</code> is explicitly unstable and is not covered by the
 application API promise.</li>
+<li><code>unstable-assertion-prefix-v1</code> and everything under its experimental module
+are explicitly unstable and carry no compatibility promise beyond the
+current <code>0.1.x</code> line.</li>
 </ul>
 <p>After <code>1.0.0</code>, breaking supported-API changes require a major version.</p>
 <h2>Deprecation policy</h2>

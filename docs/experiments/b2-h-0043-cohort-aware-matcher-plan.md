@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-X1.8 complete; explicit owner exception review available<br>
+**Status:** H43-X1.9 merged by owner exception; formal R3 remains rejected<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -172,6 +172,7 @@ flowchart TB
     X16 --> X17
     X17 --> X18
     X18 --> X19
+    X19 --> DOC
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -221,7 +222,7 @@ flowchart TB
     class X16 complete;
     class X17 blocked;
     class X18 complete;
-    class X19 gate;
+    class X19 complete;
     class A2 available;
     class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -2006,6 +2007,44 @@ exclusion, threshold change, or repeated full assay is permitted.
 - **Decision:** preserve R3 as rejected. Stop timing and tuning. Advance only
   to X1.9 owner review of a documented non-default production exception.
 
+## H43-X1.9: Admit the explicit matcher by owner exception
+
+**Scope:** production governance and retained disclosure<br>
+**Level:** system<br>
+**Status:** complete; production merge `4996bcc`<br>
+**Primary actor:** repository owner<br>
+**Supporting actors:** maintainer, evidence auditor, release reviewer
+
+**Goal**
+
+Admit the exact non-default assertion matcher without weakening G9-v3,
+relabeling R3, or changing ordinary matcher selection.
+
+**Preconditions**
+
+- The owner has reviewed the immutable R3 rejection and both exact-fixture
+  X1.8 discriminators.
+- The exact measured source and production merge are named.
+- Default isolation, exactness, fallback, allocation, RSS, and total-work
+  evidence remain retained.
+
+**Postconditions and evidence**
+
+- Production merge `4996bcc16a9cc936789372d8184f4ef4893fd336`
+  contains the exact measured capability.
+- R3 remains rejected and `optimization_admitted` remains false.
+- The ledger records the owner exception, adverse 5.792673% formal cell,
+  reproducible 0.717%-0.976% construction premium, and progress credit labeled
+  as an exception.
+- The public API remains feature-gated, separate-type, and explicitly
+  policy-selected; no automatic routing is admitted.
+- H43-X1.10 retains a path for removing the accepted construction premium
+  under unchanged gates.
+
+**Evidence:** [owner decision](h43-x1-9-owner-exception.md),
+[R3 result](h43-x1-7-r3-confirmation-result.md), and
+[X1.8 result](h43-x1-8-conditioned-preparation-result.md).
+
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 
 **Scope:** durable project communication  
@@ -2103,8 +2142,9 @@ utility assay with complete default safety and exceptional target gains, but
 one 2.688833% preparation regression yields `investigate`. H43-X1.6 then
 isolated the same-pattern construction phase: its 0.808000% preparation cost
 stayed below 2%, so the blocker did not reproduce. Explicit owner review is
-available; no production merge, publication, or automatic selector is
-automatic.
+complete: H43-X1.9 entered production in merge `4996bcc` as a non-default
+owner exception. R3 remains rejected, no automatic selector is admitted, and
+the current release candidate must be requalified before publication.
 
 The plan favors quick, cheap falsification at higher abstraction levels, but
 every survivor still goes through exact differential tests and the full formal

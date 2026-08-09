@@ -3272,7 +3272,9 @@ enum CommandOutput {
     Tripwire(TripwireReceipt),
     HarnessRun(HarnessRunReceipt),
     BenchmarkProduct(BenchmarkProductReceipt),
+    #[cfg(feature = "experimental-showcase")]
     Construction(ConstructionReceipt),
+    #[cfg(feature = "experimental-showcase")]
     ConditionedConstruction(ConditionedConstructionReceipt),
     CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),

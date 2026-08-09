@@ -68,6 +68,12 @@ formal gates.</li>
 <code>investigate</code> with <code>optimization_admitted: false</code> because Wuthering regressed
 2.111% with 13 of 15 negative crossover cycles. Exact H42 entered production
 only through explicit owner authorization.</p>
+<p><code>H43-X1.9</code> is the second exception. Its explicit assertion matcher entered
+production in merge <code>4996bcc16a9cc936789372d8184f4ef4893fd336</code> after exact
+causal follow-up, while the complete R3 result remains rejected with
+<code>optimization_admitted: false</code> because one preparation cell regressed
+5.792673%. The exception applies only to the feature-gated separate matcher;
+the default API and routing remain unchanged.</p>
 <h2>High-discrepancy signal</h2>
 <p>Large opposing effects are evidence about mechanism boundaries. When a
 candidate produces unusually large improvements in some cells and regressions

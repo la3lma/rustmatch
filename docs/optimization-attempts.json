@@ -506,6 +506,7 @@
       "tradeoffs": "Correctness, source and artifact provenance, workspace tests, host isolation, Docker/GPU cleanliness, and every secondary metric passed. Wuthering was 0.111 percentage points beyond the unchanged investigation boundary and below the 3% veto; its 13-of-15 negative directional burden remains a known production regression rather than being waived or relabeled.",
       "decision": "Merged by explicit owner authorization as production exception deb227171dca1d584c11ade2573ed8c9478804fa. Formal G9-v3 remains investigate and optimization_admitted remains false; retain and pursue the Wuthering regression separately.",
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4/docs/lab-notebook/2026-08-04-b2-h-0042-formal-g9-v3.md",
+      "owner_exception": true,
       "progress": {
         "workload": "Diverse literals, 10k patterns, 50 MiB, 16 workers",
         "baseline_millis": 19.528476,
@@ -623,11 +624,73 @@
       "decision": "Valid causal discriminator: the repeatable cost is approximately 0.8%-1.0%, below the unchanged 2% boundary. Stop source tuning and unchanged full reruns. The remaining choice is to leave the feature unmerged or admit it through an explicit owner exception that preserves the R3 rejection and discloses the small construction premium.",
       "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-X1.9",
+      "name": "Explicit assertion matcher owner exception",
+      "date": "2026-08-09",
+      "status": "merged",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "summary": "Admit the exact feature-gated assertion-prefix-v1 matcher through the documented owner-exception mechanism after reviewing the immutable rejected R3 assay and both exact-fixture H43-X1.8 construction discriminators.",
+      "result": "The explicit 1 MiB and 2 MiB targets retain about 231.62x and 460.49x scan speedups, exact semantics, passing fallback and resource lanes, complete default isolation, and about 449.65x better one-scan total work at 2 MiB. Focused exact-source discriminators reproduce only a 0.717%-0.976% complete-construction premium.",
+      "tradeoffs": "The formal R3 result remains machine-rejected because its 2 MiB preparation estimator regressed 5.792673% with 11 of 15 adverse cycles. The production feature is non-default, requires both a Cargo feature and separate matcher type, and requires an explicit scan policy. No automatic routing or default-path claim is admitted.",
+      "decision": "Merged by explicit owner authorization as production exception 4996bcc16a9cc936789372d8184f4ef4893fd336. Formal R3 remains rejected and optimization_admitted remains false; retain every adverse receipt, disclose the approximately 1% reproducible construction premium, and pursue any future removal under unchanged G9-v3 gates.",
+      "evidence": "experiments/h43-x1-9-owner-exception.md",
+      "owner_exception": true,
+      "progress": {
+        "workload": "Explicit assertion matcher, 1,000 patterns, 2 MiB",
+        "baseline_millis": 16963.5828635,
+        "candidate_millis": 36.7152275
+      }
     }
   ],
   "comparison_snapshots": [
     {
       "current": true,
+      "date": "2026-08-09",
+      "scope": "H43 current-production default overlap plus explicit owner-exception capability",
+      "rust_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "review_revision": "e2f27232f4648e57e74be60dc6f60db3b00f2547",
+      "method": "H43 changes production by adding a deliberately selected, non-default assertion matcher while preserving the ordinary matcher. The generic/default comparison therefore retains exact H42 overlap medians and unchanged B2 competitor values; R3 independently passed all nine default-safety cells. The experimental assertion lane is reported separately and is not folded into competitor geometric means because no exact retained competitor overlap exists for those two targets. H43 entered production by owner exception while R3 remains rejected.",
+      "engines": [
+        {
+          "engine": "Java rmatch",
+          "semantics": "same complete event contract; unchanged H42 default overlap",
+          "cells": 9,
+          "rust_wins": 9,
+          "geometric_mean_ratio": 44.542665,
+          "median_ratio": 80.982886,
+          "minimum_ratio": 2.737934,
+          "maximum_ratio": 126.566136,
+          "evidence": "experiments/h43-cross-engine-snapshot.md#java-rmatch"
+        },
+        {
+          "engine": "RegexSet",
+          "semantics": "different output contract; unchanged H42 default overlap",
+          "cells": 8,
+          "rust_wins": 4,
+          "geometric_mean_ratio": 2.287998,
+          "median_ratio": 1.086043,
+          "minimum_ratio": 0.193566,
+          "maximum_ratio": 27.15413,
+          "evidence": "experiments/h43-cross-engine-snapshot.md#regexset"
+        },
+        {
+          "engine": "Hyperscan",
+          "semantics": "native-reference diagnostic; unchanged H42 default overlap",
+          "cells": 8,
+          "rust_wins": 2,
+          "geometric_mean_ratio": 0.308069,
+          "median_ratio": 0.40159,
+          "minimum_ratio": 0.011229,
+          "maximum_ratio": 3.636905,
+          "evidence": "experiments/h43-cross-engine-snapshot.md#hyperscan"
+        }
+      ]
+    },
+    {
+      "current": false,
       "date": "2026-08-04",
       "scope": "H42 current-production exact formal overlap; owner-authorized merge",
       "rust_revision": "c6f221bda8241123281aea8659dd56eeb8a13be0",
@@ -759,13 +822,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-X1.9",
-      "name": "Explicit assertion matcher governance decision",
-      "status": "owner exception review available; no more timing justified",
-      "why": "The immutable R3 full confirmation retained about 231.62x and 460.49x target scan speedups, complete default safety, and passing total-work economics, but one 2 MiB preparation metric regressed 5.792673% and triggered the unchanged veto. Two subsequent corpus-conditioned discriminators, including one over the exact rejected library source, found only a repeatable 0.717%-0.976% construction premium below 2%.",
-      "next_test": "Do not rerun or retune. Decide whether the deliberately selected, non-default feature remains unmerged or enters production through the documented owner-exception mechanism. An exception must preserve R3 as rejected, disclose the approximately 1% construction premium, keep the matcher opt-in, and leave default comparison numbers unchanged.",
-      "expected_value": "Exceptional explicit-capability utility with high evidence quality and low remaining causal uncertainty; medium governance risk because formal certification failed",
-      "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md"
+      "id": "H43-X1.10",
+      "name": "Explicit assertion matcher construction-premium removal",
+      "status": "follow-up retained; no unchanged rerun authorized",
+      "why": "H43-X1.9 entered production by owner exception while formal R3 remains rejected. Two focused exact-source discriminators place the stable construction premium near 0.8%-1.0%, far below R3's 5.792673% process-level estimator but directionally real.",
+      "next_test": "Reopen only for a materially new builder or representation mechanism that predicts lower registration or compilation work without touching ordinary matcher layout. Freeze unchanged G9-v3 construction and default-safety gates before implementation; do not repeat R3 or tune placement against its fixtures.",
+      "expected_value": "Low absolute near-term gain, medium governance value, and low urgency; preserves a concrete path for retiring the accepted residual risk",
+      "evidence": "experiments/h43-x1-9-owner-exception.md"
     },
     {
       "priority": 2,
