@@ -23,7 +23,7 @@ throughput. Architectures outside the tested matrix are best effort for 0.1.x.
 
 | Target | Evidence level | Release effect |
 |---|---|---|
-| Windows ARM64 (`aarch64-pc-windows-msvc`) | Native public-preview runner | Best effort; non-blocking and not part of the 0.1.0 support contract |
+| Windows ARM64 (`aarch64-pc-windows-msvc`) | Native public-preview run passed ([31333621251](https://github.com/la3lma/rustmatch/actions/runs/31333621251)) | Best effort; non-blocking and not part of the 0.1.0 support contract |
 
 ## Semantic reference
 

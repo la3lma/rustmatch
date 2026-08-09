@@ -122,11 +122,13 @@ public-crate tests and rustdoc in
 The macOS 15.7.7 artifacts record <code>aarch64-apple-darwin</code> with
 <code>avx2_available: false</code> and <code>x86_64-apple-darwin</code> with
 <code>avx2_available: true</code>.</li>
-<li><input disabled="" type="checkbox"/>
+<li><input disabled="" type="checkbox" checked=""/>
 Retain one non-blocking native <code>aarch64-pc-windows-msvc</code> preview run of
-the all-feature public crates and rustdoc. Classify allocation/setup failures
-separately from failures after host identity succeeds, and do not promote
-Windows ARM64 to the supported matrix while its runner remains preview.</li>
+the all-feature public crates and rustdoc. The 55-second lane passed in
+<a href="https://github.com/la3lma/rustmatch/actions/runs/31333621251">release-readiness run 31333621251</a>
+on Windows image <code>20260727.122.1</code>; its identity records native host
+<code>aarch64-pc-windows-msvc</code> and <code>avx2_available: false</code>. Windows ARM64 remains
+outside the supported matrix while its runner is preview.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>

@@ -86,10 +86,12 @@ requalification below is complete.
   The macOS 15.7.7 artifacts record `aarch64-apple-darwin` with
   `avx2_available: false` and `x86_64-apple-darwin` with
   `avx2_available: true`.
-- [ ] Retain one non-blocking native `aarch64-pc-windows-msvc` preview run of
-  the all-feature public crates and rustdoc. Classify allocation/setup failures
-  separately from failures after host identity succeeds, and do not promote
-  Windows ARM64 to the supported matrix while its runner remains preview.
+- [x] Retain one non-blocking native `aarch64-pc-windows-msvc` preview run of
+  the all-feature public crates and rustdoc. The 55-second lane passed in
+  [release-readiness run 31333621251](https://github.com/la3lma/rustmatch/actions/runs/31333621251)
+  on Windows image `20260727.122.1`; its identity records native host
+  `aarch64-pc-windows-msvc` and `avx2_available: false`. Windows ARM64 remains
+  outside the supported matrix while its runner is preview.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated
