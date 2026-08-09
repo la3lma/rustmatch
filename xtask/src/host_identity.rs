@@ -403,16 +403,35 @@ mod tests {
         }
         assert_eq!(
             workflow.matches("RUSTMATCH_HOST_IDENTITY_PATH:").count(),
-            5,
+            6,
             "each workflow job definition needs an identity destination"
         );
         assert_eq!(
             workflow
                 .matches("uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",)
                 .count(),
-            5,
+            6,
             "each workflow job definition needs the reviewed identity upload action"
         );
         assert!(rehearsal.contains("cargo xtask host-identity"));
+    }
+
+    #[test]
+    fn big_endian_smoke_is_non_blocking_executable_and_pinned() {
+        let workflow = include_str!("../../.github/workflows/release-readiness.yml");
+        let cross_config = include_str!("../../Cross.toml");
+        let smoke = include_str!("../../scripts/big-endian-smoke.sh");
+        let image_digest =
+            "sha256:0d8edc92c39158abe211fddfc9617bf5b7865c2ae0f58873f9cf0c58bb315271";
+
+        assert!(workflow.contains("name: Big-endian s390x emulation preview"));
+        assert!(workflow.contains("continue-on-error: true"));
+        assert!(workflow.contains("cargo +1.97.0 install cross --version 0.2.5 --locked"));
+        assert!(workflow.contains("scripts/big-endian-smoke.sh"));
+        assert!(cross_config.contains("s390x-unknown-linux-gnu"));
+        assert!(cross_config.contains(image_digest));
+        assert!(smoke.contains("--test big_endian_smoke"));
+        assert!(smoke.contains("tests::unavailable_kernel_returns_none_without_writing"));
+        assert!(smoke.contains(image_digest));
     }
 }

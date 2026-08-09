@@ -92,6 +92,10 @@ requalification below is complete.
   on Windows image `20260727.122.1`; its identity records native host
   `aarch64-pc-windows-msvc` and `avx2_available: false`. Windows ARM64 remains
   outside the supported matrix while its runner is preview.
+- [ ] Retain one successful non-blocking `s390x-unknown-linux-gnu` semantic
+  smoke under pinned QEMU/`cross` emulation, including target-endianness output,
+  raw UTF-16, case-fold, event-digest, lifecycle, panic-recovery, SIMD-refusal,
+  and deliberate byte-order-corruption evidence.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated

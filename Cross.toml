@@ -1,0 +1,2 @@
+[target.s390x-unknown-linux-gnu]
+image = "ghcr.io/cross-rs/s390x-unknown-linux-gnu:0.2.5@sha256:0d8edc92c39158abe211fddfc9617bf5b7865c2ae0f58873f9cf0c58bb315271"

@@ -129,6 +129,11 @@ the all-feature public crates and rustdoc. The 55-second lane passed in
 on Windows image <code>20260727.122.1</code>; its identity records native host
 <code>aarch64-pc-windows-msvc</code> and <code>avx2_available: false</code>. Windows ARM64 remains
 outside the supported matrix while its runner is preview.</li>
+<li><input disabled="" type="checkbox"/>
+Retain one successful non-blocking <code>s390x-unknown-linux-gnu</code> semantic
+smoke under pinned QEMU/<code>cross</code> emulation, including target-endianness output,
+raw UTF-16, case-fold, event-digest, lifecycle, panic-recovery, SIMD-refusal,
+and deliberate byte-order-corruption evidence.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>
