@@ -84,13 +84,16 @@ requalification below is complete.
 - [x] Retain the exact H43 R3 rejection, owner exception, and causal follow-up.
 - [x] Preserve all nine passing default-safety cells and the adverse 5.792673%
   formal preparation cell without relabeling either result.
-- [ ] Freeze the post-exception package candidate commit and crate checksums.
-- [ ] Pass the exact package, all-features, rustdoc, release-soak, and clean
+- [x] Freeze post-exception package candidate `dbb80cb` with `rustmatch-simd`
+  SHA-256 `5cdc9fbc4027cb993fc742507aa748b59cf9bc0a969972fa5fdf1e6419ffc3cc`
+  and `rustmatch` SHA-256
+  `ea9fe938233883c62f02c12dcd37b5be4af95c9657f7c7e1615cbf8397698572`.
+- [x] Pass the exact package, all-features, rustdoc, release-soak, and clean
   consumer rehearsal for that candidate.
 - [ ] Pass current Linux, macOS, Windows, MSRV, AArch64, Miri, differential,
   ledger, and release-readiness CI for the merged head.
-- [ ] Bind the designated-host R3/X1.8 receipts and local package rehearsal to
-  a reviewed H43 release-candidate evidence record.
+- [x] Bind the designated-host R3/X1.8 receipts and local package rehearsal to
+  the [H43 release-candidate evidence record](evidence/release/0.1.0/dbb80cb/README.md).
 
 ## Release ceremony: intentionally not executed
 
