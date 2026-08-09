@@ -81,14 +81,22 @@ jobs:
           - name: Linux x86-64
             lane: public-linux-x86_64
             os: ubuntu-24.04
+            release_soak: false
             target: x86_64-unknown-linux-gnu
+          - name: Linux ARM64
+            lane: public-linux-aarch64
+            os: ubuntu-24.04-arm
+            release_soak: true
+            target: aarch64-unknown-linux-gnu
           - name: macOS ARM64
             lane: public-macos-aarch64
             os: macos-15
+            release_soak: false
             target: aarch64-apple-darwin
           - name: Windows x86-64
             lane: public-windows-x86_64
             os: windows-2025
+            release_soak: false
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -113,6 +121,12 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo +1.97.0 doc --package rustmatch --all-features --no-deps
+      - name: Run bounded release soak
+        if: matrix.release_soak
+        run: >-
+          cargo +1.97.0 test --release --package rustmatch --all-features
+          --test release_soak -- --ignored --exact
+          repeated_scans_preserve_results_and_cache_bounds
       - name: Upload portable host identity
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

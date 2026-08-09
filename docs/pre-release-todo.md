@@ -73,6 +73,12 @@ requalification below is complete.
   with native Rust hosts `x86_64-unknown-linux-gnu`,
   `aarch64-apple-darwin`, and `x86_64-pc-windows-msvc`; cross-compilation and
   Miri remain explicitly distinguished from native evidence.
+- [x] Retain one successful native `aarch64-unknown-linux-gnu` run of the
+  all-feature public crates, rustdoc, and bounded release soak. The 27-second
+  native job passed in
+  [release-readiness run 31332231677](https://github.com/la3lma/rustmatch/actions/runs/31332231677)
+  on Ubuntu 24.04.4 LTS ARM64 image `20260719.67.1`; its identity artifact
+  records host `aarch64-unknown-linux-gnu` and `avx2_available: false`.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated
