@@ -67,6 +67,12 @@ requalification below is complete.
 - [x] Add and pass non-publishing release-readiness CI for Linux, macOS,
   Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
   smoke testing.
+- [x] Pin every release-readiness lane to a reviewed runner image and retain
+  its exact host/toolchain identity artifact. The pinned matrix passed in
+  [release-readiness run 31330109699](https://github.com/la3lma/rustmatch/actions/runs/31330109699)
+  with native Rust hosts `x86_64-unknown-linux-gnu`,
+  `aarch64-apple-darwin`, and `x86_64-pc-windows-msvc`; cross-compilation and
+  Miri remain explicitly distinguished from native evidence.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated

@@ -13,6 +13,7 @@ on:
       - "rustmatch/**"
       - "rustmatch-simd/**"
       - "scripts/release-readiness.sh"
+      - "xtask/**"
       - "docs/pre-release-todo.md"
       - "docs/release/**"
       - "docs/releasing.md"
@@ -29,6 +30,7 @@ on:
       - "rustmatch/**"
       - "rustmatch-simd/**"
       - "scripts/release-readiness.sh"
+      - "xtask/**"
       - "docs/pre-release-todo.md"
       - "docs/release/**"
       - "docs/releasing.md"
@@ -43,7 +45,7 @@ concurrency:
 jobs:
   package-rehearsal:
     name: Exact package rehearsal
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out repository
@@ -51,19 +53,43 @@ jobs:
       - name: Install release toolchain
         run: rustup toolchain install 1.97.0 --profile minimal --component clippy,rustfmt
       - name: Test packages without publishing
+        env:
+          RUSTMATCH_CI_EXECUTION: native
+          RUSTMATCH_CI_FEATURES: package rehearsal; packaged workspace all features; default consumer
+          RUSTMATCH_CI_LANE: package-rehearsal-linux-x86_64
+          RUSTMATCH_CI_RUNNER_LABEL: ubuntu-24.04
+          RUSTMATCH_CI_TARGET: x86_64-unknown-linux-gnu
+          RUSTMATCH_CI_TOOLCHAIN: 1.97.0
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/package-rehearsal-linux-x86_64.json
         run: scripts/release-readiness.sh
       - name: Run release-profile benchmark smoke
         run: cargo xtask bench-smoke
+      - name: Upload package-rehearsal host identity
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-host-identity-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/release-evidence/package-rehearsal-linux-x86_64.json
+          if-no-files-found: error
 
   portable:
-    name: ${{ matrix.os }} public crate
+    name: ${{ matrix.name }} public crate
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+        include:
+          - name: Linux x86-64
+            lane: public-linux-x86_64
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - name: macOS ARM64
+            lane: public-macos-aarch64
+            os: macos-15
+            target: aarch64-apple-darwin
+          - name: Windows x86-64
+            lane: public-windows-x86_64
+            os: windows-2025
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -71,28 +97,62 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Install release toolchain
         run: rustup toolchain install 1.97.0 --profile minimal
+      - name: Retain host identity
+        env:
+          RUSTMATCH_CI_EXECUTION: native
+          RUSTMATCH_CI_FEATURES: rustmatch and rustmatch-simd all features; rustmatch rustdoc
+          RUSTMATCH_CI_LANE: ${{ matrix.lane }}
+          RUSTMATCH_CI_RUNNER_LABEL: ${{ matrix.os }}
+          RUSTMATCH_CI_TARGET: ${{ matrix.target }}
+          RUSTMATCH_CI_TOOLCHAIN: 1.97.0
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/${{ matrix.lane }}.json
+        run: cargo +1.97.0 xtask host-identity
       - name: Test public and SIMD crates
         run: cargo +1.97.0 test --package rustmatch --package rustmatch-simd --all-features
       - name: Build public documentation
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo +1.97.0 doc --package rustmatch --all-features --no-deps
+      - name: Upload portable host identity
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-host-identity-${{ matrix.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/release-evidence/${{ matrix.lane }}.json
+          if-no-files-found: error
 
   msrv:
     name: Rust 1.85.0 MSRV
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Install MSRV
         run: rustup toolchain install 1.85.0 --profile minimal
+      - name: Retain host identity
+        env:
+          RUSTMATCH_CI_EXECUTION: native
+          RUSTMATCH_CI_FEATURES: rustmatch and rustmatch-simd all features
+          RUSTMATCH_CI_LANE: msrv-linux-x86_64
+          RUSTMATCH_CI_RUNNER_LABEL: ubuntu-24.04
+          RUSTMATCH_CI_TARGET: x86_64-unknown-linux-gnu
+          RUSTMATCH_CI_TOOLCHAIN: 1.85.0
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/msrv-linux-x86_64.json
+        run: cargo +1.85.0 xtask host-identity
       - name: Test supported packages on MSRV
         run: cargo +1.85.0 test --package rustmatch --package rustmatch-simd --all-features
+      - name: Upload MSRV host identity
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-host-identity-msrv-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/release-evidence/msrv-linux-x86_64.json
+          if-no-files-found: error
 
   aarch64:
     name: AArch64 portable compilation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -101,19 +161,53 @@ jobs:
         run: |
           rustup toolchain install 1.97.0 --profile minimal
           rustup target add --toolchain 1.97.0 aarch64-unknown-linux-gnu
+      - name: Retain host identity
+        env:
+          RUSTMATCH_CI_EXECUTION: cross-compile
+          RUSTMATCH_CI_FEATURES: rustmatch all features; compile only
+          RUSTMATCH_CI_LANE: cross-compile-linux-aarch64
+          RUSTMATCH_CI_RUNNER_LABEL: ubuntu-24.04
+          RUSTMATCH_CI_TARGET: aarch64-unknown-linux-gnu
+          RUSTMATCH_CI_TOOLCHAIN: 1.97.0
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/cross-compile-linux-aarch64.json
+        run: cargo +1.97.0 xtask host-identity
       - name: Compile portable path
         env:
           RUSTFLAGS: -D warnings
         run: cargo +1.97.0 check --package rustmatch --all-features --target aarch64-unknown-linux-gnu
+      - name: Upload cross-compile host identity
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-host-identity-cross-aarch64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/release-evidence/cross-compile-linux-aarch64.json
+          if-no-files-found: error
 
   miri:
     name: Miri safe semantic core
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Install nightly Miri
         run: rustup toolchain install nightly --profile minimal --component miri
+      - name: Retain host identity
+        env:
+          RUSTMATCH_CI_EXECUTION: interpreter
+          RUSTMATCH_CI_FEATURES: miri_release safe semantic core
+          RUSTMATCH_CI_LANE: miri-linux-x86_64
+          RUSTMATCH_CI_RUNNER_LABEL: ubuntu-24.04
+          RUSTMATCH_CI_TARGET: x86_64-unknown-linux-gnu
+          RUSTMATCH_CI_TOOLCHAIN: nightly
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/miri-linux-x86_64.json
+        run: cargo +nightly xtask host-identity
       - name: Run Miri on the safe semantic core
         run: cargo +nightly miri test --package rustmatch --test miri_release
+      - name: Upload Miri host identity
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-host-identity-miri-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/release-evidence/miri-linux-x86_64.json
+          if-no-files-found: error

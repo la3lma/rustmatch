@@ -18,6 +18,9 @@ fi
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/rustmatch-release-readiness.XXXXXX")
 trap 'rm -rf "$temporary_root"' EXIT
 
+echo "==> release host identity"
+cargo xtask host-identity
+
 echo "==> package license texts"
 cmp LICENSE rustmatch/LICENSE
 cmp LICENSE rustmatch-simd/LICENSE
