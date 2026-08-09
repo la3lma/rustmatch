@@ -55,7 +55,19 @@ certified pass.
 
 ## Remote qualification
 
-The cross-platform GitHub matrices are intentionally not claimed by this local
-record. They must pass for the merged head before a release ceremony begins.
+The GitHub workflows passed for merged H43 evidence head
+`e1230e9560a40e0acb5857d281084c5619d58b7b`:
+
+- [CI run 31309147209](https://github.com/la3lma/rustmatch/actions/runs/31309147209)
+  passed the repository quality gate, including differential oracles and
+  generated-ledger freshness.
+- [Release-readiness run 31309147230](https://github.com/la3lma/rustmatch/actions/runs/31309147230)
+  passed the exact package rehearsal, Linux, macOS, Windows, Rust 1.85.0 MSRV,
+  AArch64 portable compilation, and Miri jobs.
+
+The CI workflow's hosted performance tripwires were skipped by their workflow
+conditions on this direct `main` push. H43 performance admission therefore
+continues to rely on the retained designated-host R3 and X1.8 evidence rather
+than claiming a new hosted timing result.
 
 No crate, tag, or GitHub release was created during this verification.

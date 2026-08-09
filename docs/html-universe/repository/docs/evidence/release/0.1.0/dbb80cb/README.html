@@ -53,8 +53,20 @@ the designated-host evidence already reviewed:</p>
 receipt remain retained; the owner exception does not convert them into a
 certified pass.</p>
 <h2>Remote qualification</h2>
-<p>The cross-platform GitHub matrices are intentionally not claimed by this local
-record. They must pass for the merged head before a release ceremony begins.</p>
+<p>The GitHub workflows passed for merged H43 evidence head
+<code>e1230e9560a40e0acb5857d281084c5619d58b7b</code>:</p>
+<ul>
+<li><a href="https://github.com/la3lma/rustmatch/actions/runs/31309147209">CI run 31309147209</a>
+passed the repository quality gate, including differential oracles and
+generated-ledger freshness.</li>
+<li><a href="https://github.com/la3lma/rustmatch/actions/runs/31309147230">Release-readiness run 31309147230</a>
+passed the exact package rehearsal, Linux, macOS, Windows, Rust 1.85.0 MSRV,
+AArch64 portable compilation, and Miri jobs.</li>
+</ul>
+<p>The CI workflow's hosted performance tripwires were skipped by their workflow
+conditions on this direct <code>main</code> push. H43 performance admission therefore
+continues to rely on the retained designated-host R3 and X1.8 evidence rather
+than claiming a new hosted timing result.</p>
 <p>No crate, tag, or GitHub release was created during this verification.</p>
 </main><footer>Generated from <code>docs/evidence/release/0.1.0/dbb80cb/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
 const seen=new Map();

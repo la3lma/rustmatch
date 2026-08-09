@@ -90,8 +90,10 @@ requalification below is complete.
   `ea9fe938233883c62f02c12dcd37b5be4af95c9657f7c7e1615cbf8397698572`.
 - [x] Pass the exact package, all-features, rustdoc, release-soak, and clean
   consumer rehearsal for that candidate.
-- [ ] Pass current Linux, macOS, Windows, MSRV, AArch64, Miri, differential,
-  ledger, and release-readiness CI for the merged head.
+- [x] Pass Linux, macOS, Windows, MSRV, AArch64, Miri, differential,
+  ledger, and release-readiness CI for merged H43 evidence head `e1230e9`:
+  [CI run 31309147209](https://github.com/la3lma/rustmatch/actions/runs/31309147209)
+  and [release-readiness run 31309147230](https://github.com/la3lma/rustmatch/actions/runs/31309147230).
 - [x] Bind the designated-host R3/X1.8 receipts and local package rehearsal to
   the [H43 release-candidate evidence record](evidence/release/0.1.0/dbb80cb/README.md).
 
