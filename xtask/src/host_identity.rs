@@ -31,6 +31,7 @@ struct RunnerIdentity {
     std_arch: &'static str,
     system_arch: String,
     os_description: String,
+    avx2_available: bool,
     runner_os: Option<String>,
     runner_arch: Option<String>,
     runner_name: Option<String>,
@@ -154,6 +155,7 @@ fn runner_identity() -> RunnerIdentity {
         std_arch: env::consts::ARCH,
         system_arch: system_arch(),
         os_description: os_description(),
+        avx2_available: avx2_available(),
         runner_os: optional_environment("RUNNER_OS"),
         runner_arch: optional_environment("RUNNER_ARCH"),
         runner_name: optional_environment("RUNNER_NAME"),
@@ -193,6 +195,16 @@ fn environment_or(name: &str, fallback: &str) -> String {
 
 fn optional_environment(name: &str) -> Option<String> {
     env::var(name).ok().filter(|value| !value.is_empty())
+}
+
+#[cfg(target_arch = "x86_64")]
+fn avx2_available() -> bool {
+    std::arch::is_x86_feature_detected!("avx2")
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+const fn avx2_available() -> bool {
+    false
 }
 
 #[cfg(unix)]
@@ -271,7 +283,7 @@ fn append_github_summary(identity: &HostIdentity, output: &Path) -> Result<(), S
         summary,
         "### Host identity: {}\n\n| Field | Value |\n|---|---|\n| Runner label | \
          `{}` |\n| Execution | `{}` |\n| Rust host | `{}` |\n| Target | `{}` |\n| Features | \
-         `{}` |\n| OS | {} |\n| Architecture | `{}` |\n| Commit | `{}` |\n| Artifact path | \
+         `{}` |\n| OS | {} |\n| Architecture | `{}` |\n| AVX2 available | `{}` |\n| Commit | `{}` |\n| Artifact path | \
          `{}` |\n",
         identity.lane,
         identity.declared_runner_label,
@@ -281,6 +293,7 @@ fn append_github_summary(identity: &HostIdentity, output: &Path) -> Result<(), S
         identity.declared_features,
         identity.runner.os_description,
         identity.runner.system_arch,
+        identity.runner.avx2_available,
         identity.repository_revision,
         output.display()
     )
@@ -351,6 +364,7 @@ mod tests {
                 std_arch: "x86_64",
                 system_arch: "x86_64".to_owned(),
                 os_description: "Ubuntu 24.04".to_owned(),
+                avx2_available: true,
                 runner_os: Some("Linux".to_owned()),
                 runner_arch: Some("X64".to_owned()),
                 runner_name: None,
@@ -377,7 +391,12 @@ mod tests {
             !workflow.contains("-latest"),
             "release evidence must not use rolling runner labels"
         );
-        for label in ["ubuntu-24.04", "macos-15", "windows-2025"] {
+        for label in [
+            "ubuntu-24.04",
+            "ubuntu-24.04-arm",
+            "macos-15",
+            "windows-2025",
+        ] {
             assert!(workflow.contains(label), "missing pinned runner {label}");
         }
         assert_eq!(

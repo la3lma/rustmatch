@@ -64,6 +64,17 @@ Never compare timing from unlike hardware, operating-system images, execution
 modes, targets, or toolchains. Performance admission remains bound to its
 designated-host receipts.
 
+### Preview runner policy
+
+The native Linux ARM64 lane uses GitHub's explicit `ubuntu-24.04-arm` hosted
+runner, which is currently a public preview. A failure before host identity is
+recorded is runner infrastructure evidence, not a Rustmatch regression. Check
+GitHub's runner status and retry that failed job once without changing source.
+If a second attempt cannot allocate or initialize the preview runner, retain
+the failed run and continue to describe AArch64 Linux as compile-tested only.
+Never substitute emulation or cross-compilation for native execution evidence,
+and never use hosted-runner timings as release performance evidence.
+
 ## Release ceremony: owner action
 
 The following commands are deliberately not run during preparation:

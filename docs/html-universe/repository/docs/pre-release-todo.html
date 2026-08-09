@@ -107,6 +107,10 @@ its exact host/toolchain identity artifact. The pinned matrix passed in
 with native Rust hosts <code>x86_64-unknown-linux-gnu</code>,
 <code>aarch64-apple-darwin</code>, and <code>x86_64-pc-windows-msvc</code>; cross-compilation and
 Miri remain explicitly distinguished from native evidence.</li>
+<li><input disabled="" type="checkbox"/>
+Retain one successful native <code>aarch64-unknown-linux-gnu</code> run of the
+all-feature public crates, rustdoc, and bounded release soak before promoting
+Linux ARM64 from compile-tested to native-tested.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>

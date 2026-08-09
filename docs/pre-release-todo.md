@@ -73,6 +73,9 @@ requalification below is complete.
   with native Rust hosts `x86_64-unknown-linux-gnu`,
   `aarch64-apple-darwin`, and `x86_64-pc-windows-msvc`; cross-compilation and
   Miri remain explicitly distinguished from native evidence.
+- [ ] Retain one successful native `aarch64-unknown-linux-gnu` run of the
+  all-feature public crates, rustdoc, and bounded release soak before promoting
+  Linux ARM64 from compile-tested to native-tested.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated
