@@ -66,7 +66,7 @@ jobs:
         run: cargo xtask bench-smoke
       - name: Upload package-rehearsal host identity
         if: always()
-        uses: actions/upload-artifact@043fb4602c8c1a58aaffda19e3239b5cfd14d6ae # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-host-identity-package-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/package-rehearsal-linux-x86_64.json
@@ -115,7 +115,7 @@ jobs:
         run: cargo +1.97.0 doc --package rustmatch --all-features --no-deps
       - name: Upload portable host identity
         if: always()
-        uses: actions/upload-artifact@043fb4602c8c1a58aaffda19e3239b5cfd14d6ae # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-host-identity-${{ matrix.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/${{ matrix.lane }}.json
@@ -144,7 +144,7 @@ jobs:
         run: cargo +1.85.0 test --package rustmatch --package rustmatch-simd --all-features
       - name: Upload MSRV host identity
         if: always()
-        uses: actions/upload-artifact@043fb4602c8c1a58aaffda19e3239b5cfd14d6ae # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-host-identity-msrv-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/msrv-linux-x86_64.json
@@ -177,7 +177,7 @@ jobs:
         run: cargo +1.97.0 check --package rustmatch --all-features --target aarch64-unknown-linux-gnu
       - name: Upload cross-compile host identity
         if: always()
-        uses: actions/upload-artifact@043fb4602c8c1a58aaffda19e3239b5cfd14d6ae # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-host-identity-cross-aarch64-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/cross-compile-linux-aarch64.json
@@ -206,7 +206,7 @@ jobs:
         run: cargo +nightly miri test --package rustmatch --test miri_release
       - name: Upload Miri host identity
         if: always()
-        uses: actions/upload-artifact@043fb4602c8c1a58aaffda19e3239b5cfd14d6ae # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-host-identity-miri-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/miri-linux-x86_64.json

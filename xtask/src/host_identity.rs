@@ -386,9 +386,11 @@ mod tests {
             "each workflow job definition needs an identity destination"
         );
         assert_eq!(
-            workflow.matches("uses: actions/upload-artifact@").count(),
+            workflow
+                .matches("uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",)
+                .count(),
             5,
-            "each workflow job definition needs an identity upload"
+            "each workflow job definition needs the reviewed identity upload action"
         );
         assert!(rehearsal.contains("cargo xtask host-identity"));
     }
