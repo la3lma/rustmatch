@@ -115,6 +115,14 @@ native job passed in
 on Ubuntu 24.04.4 LTS ARM64 image <code>20260719.67.1</code>; its identity artifact
 records host <code>aarch64-unknown-linux-gnu</code> and <code>avx2_available: false</code>.</li>
 <li><input disabled="" type="checkbox" checked=""/>
+Retain one successful <code>x86_64-apple-darwin</code> run beside the existing
+<code>aarch64-apple-darwin</code> lane. Both native lanes passed identical all-feature
+public-crate tests and rustdoc in
+<a href="https://github.com/la3lma/rustmatch/actions/runs/31333000148">release-readiness run 31333000148</a>.
+The macOS 15.7.7 artifacts record <code>aarch64-apple-darwin</code> with
+<code>avx2_available: false</code> and <code>x86_64-apple-darwin</code> with
+<code>avx2_available: true</code>.</li>
+<li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass release-profile semantic and benchmark smoke tests.</li>

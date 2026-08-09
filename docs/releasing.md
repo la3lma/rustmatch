@@ -64,6 +64,12 @@ Never compare timing from unlike hardware, operating-system images, execution
 modes, targets, or toolchains. Performance admission remains bound to its
 designated-host receipts.
 
+The macOS release matrix deliberately retains separate Apple Silicon and Intel
+lanes. Both execute the same public-crate tests and rustdoc command, while the
+identity artifact records the native target and whether AVX2 is available.
+Passing on both architectures establishes semantic portability; their hosted
+runner timings are not comparable performance evidence.
+
 ### Preview runner policy
 
 The native Linux ARM64 lane uses GitHub's explicit `ubuntu-24.04-arm` hosted

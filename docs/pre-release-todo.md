@@ -79,6 +79,13 @@ requalification below is complete.
   [release-readiness run 31332231677](https://github.com/la3lma/rustmatch/actions/runs/31332231677)
   on Ubuntu 24.04.4 LTS ARM64 image `20260719.67.1`; its identity artifact
   records host `aarch64-unknown-linux-gnu` and `avx2_available: false`.
+- [x] Retain one successful `x86_64-apple-darwin` run beside the existing
+  `aarch64-apple-darwin` lane. Both native lanes passed identical all-feature
+  public-crate tests and rustdoc in
+  [release-readiness run 31333000148](https://github.com/la3lma/rustmatch/actions/runs/31333000148).
+  The macOS 15.7.7 artifacts record `aarch64-apple-darwin` with
+  `avx2_available: false` and `x86_64-apple-darwin` with
+  `avx2_available: true`.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated
