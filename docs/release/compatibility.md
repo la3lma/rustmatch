@@ -19,6 +19,12 @@ candidate commit.
 The non-x86 path is semantically supported, not promised to match AVX2
 throughput. Architectures outside the tested matrix are best effort for 0.1.x.
 
+### Preview portability evidence
+
+| Target | Evidence level | Release effect |
+|---|---|---|
+| Windows ARM64 (`aarch64-pc-windows-msvc`) | Native public-preview runner | Best effort; non-blocking and not part of the 0.1.0 support contract |
+
 ## Semantic reference
 
 | Surface | 0.1.0 contract |

@@ -81,6 +81,20 @@ the failed run and continue to describe AArch64 Linux as compile-tested only.
 Never substitute emulation or cross-compilation for native execution evidence,
 and never use hosted-runner timings as release performance evidence.
 
+The Windows ARM64 lane uses GitHub's `windows-11-arm` public-preview runner and
+is deliberately non-blocking. Failure before a host-identity artifact is
+written is runner or toolchain infrastructure evidence. Once identity succeeds,
+a build, test, or rustdoc failure is a product portability signal and must be
+retained as such even though the job does not block unrelated release work.
+Retry an infrastructure failure once without source changes; do not retry a
+product failure merely to seek a green result.
+
+Windows ARM64 can move into the supported matrix only after GitHub makes the
+runner generally available, the lane passes on three distinct main or release
+candidate commits, and the owner deliberately approves the support expansion.
+Until then, it is best-effort preview evidence and its timings are diagnostic
+only.
+
 ## Release ceremony: owner action
 
 The following commands are deliberately not run during preparation:
