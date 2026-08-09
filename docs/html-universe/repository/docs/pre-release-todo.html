@@ -100,10 +100,13 @@ Write the release runbook with immutable-artifact recovery instructions.</li>
 Add and pass non-publishing release-readiness CI for Linux, macOS,
 Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
 smoke testing.</li>
-<li><input disabled="" type="checkbox"/>
+<li><input disabled="" type="checkbox" checked=""/>
 Pin every release-readiness lane to a reviewed runner image and retain
-its exact host/toolchain identity artifact. Mark complete only after the
-hosted workflow passes on the pinned matrix.</li>
+its exact host/toolchain identity artifact. The pinned matrix passed in
+<a href="https://github.com/la3lma/rustmatch/actions/runs/31330109699">release-readiness run 31330109699</a>
+with native Rust hosts <code>x86_64-unknown-linux-gnu</code>,
+<code>aarch64-apple-darwin</code>, and <code>x86_64-pc-windows-msvc</code>; cross-compilation and
+Miri remain explicitly distinguished from native evidence.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>
