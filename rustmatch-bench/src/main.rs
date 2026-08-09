@@ -93,6 +93,11 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
         Some("construction-run") => {
             construction_run_command(&mut arguments).map(CommandOutput::Construction)
         }
+        #[cfg(feature = "experimental-showcase")]
+        Some("conditioned-construction-run") => conditioned_construction_run_command(
+            &mut arguments,
+        )
+        .map(CommandOutput::ConditionedConstruction),
         Some("cohort-report") => {
             cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
         }
@@ -266,6 +271,26 @@ fn construction_run_command(
     construction_run(&pattern_bytes, backend)
 }
 
+#[cfg(feature = "experimental-showcase")]
+fn conditioned_construction_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<ConditionedConstructionReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = ConstructionBackend::parse(&backend)?;
+    let pattern_bytes = fs::read(&patterns).map_err(|error| {
+        format!("could not read conditioned-construction patterns {patterns}: {error}")
+    })?;
+    let corpus_bytes = fs::read(&corpus).map_err(|error| {
+        format!("could not read conditioned-construction corpus {corpus}: {error}")
+    })?;
+    conditioned_construction_run(&pattern_bytes, &corpus_bytes, backend)
+}
+
 fn benchmark_product_arguments(
     arguments: &mut impl Iterator<Item = String>,
 ) -> Result<(String, String, usize, usize), String> {
@@ -302,7 +327,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|construction-run PATTERNS.tsv BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; construction BACKEND is generic or assertion-prefix-v1; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|construction-run PATTERNS.tsv BACKEND|conditioned-construction-run PATTERNS.tsv CORPUS BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; construction BACKEND is generic or assertion-prefix-v1; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -440,12 +465,70 @@ fn construction_run(
     let patterns = parse_pattern_rows(pattern_bytes, "construction-only", true)?;
     let pattern_load_ns = nanos(pattern_load_started.elapsed());
 
+    let measurement = measure_construction(&patterns, backend)?;
+    Ok(ConstructionReceipt {
+        schema_version: 1,
+        runner_version: "h43-x1.6-construction-only-v1",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        backend: backend.label(),
+        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        pattern_source_digest: byte_digest(pattern_bytes),
+        expression_count: patterns.len(),
+        pattern_load_ns,
+        registration_ns: measurement.registration_ns,
+        compile_ns: measurement.compile_ns,
+        prepare_ns: measurement.prepare_ns,
+        structure: measurement.structure,
+        correctness: "construction-pass",
+    })
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn conditioned_construction_run(
+    pattern_bytes: &[u8],
+    corpus_bytes: &[u8],
+    backend: ConstructionBackend,
+) -> Result<ConditionedConstructionReceipt, String> {
+    let input_started = Instant::now();
+    let fixture = HarnessFixture::from_bytes(pattern_bytes, corpus_bytes)?;
+    let input_prepare_ns = nanos(input_started.elapsed());
+    black_box(&fixture.input);
+    let measurement = measure_construction(&fixture.patterns, backend)?;
+    black_box(&fixture.input);
+    Ok(ConditionedConstructionReceipt {
+        schema_version: 1,
+        runner_version: "h43-x1.8-conditioned-construction-v1",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        backend: backend.label(),
+        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        pattern_source_digest: byte_digest(pattern_bytes),
+        corpus_source_digest: byte_digest(corpus_bytes),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_prepare_ns,
+        registration_ns: measurement.registration_ns,
+        compile_ns: measurement.compile_ns,
+        prepare_ns: measurement.prepare_ns,
+        structure: measurement.structure,
+        correctness: "conditioned-construction-pass",
+    })
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn measure_construction(
+    patterns: &[HarnessPattern],
+    backend: ConstructionBackend,
+) -> Result<ConstructionMeasurement, String> {
     let construct_started = Instant::now();
     let registration_started = Instant::now();
     let (registration_ns, compile_ns, structure) = match backend {
         ConstructionBackend::Generic => {
             let mut builder = MatcherBuilder::new();
-            for pattern in &patterns {
+            for pattern in patterns {
                 builder
                     .add(pattern.id, &pattern.expression)
                     .map_err(|error| {
@@ -475,7 +558,7 @@ fn construction_run(
         }
         ConstructionBackend::AssertionPrefixV1 => {
             let mut builder = AssertionPrefixMatcherBuilder::new();
-            for pattern in &patterns {
+            for pattern in patterns {
                 builder
                     .add(pattern.id, &pattern.expression)
                     .map_err(|error| {
@@ -519,22 +602,11 @@ fn construction_run(
         }
     };
     let prepare_ns = nanos(construct_started.elapsed());
-    Ok(ConstructionReceipt {
-        schema_version: 1,
-        runner_version: "h43-x1.6-construction-only-v1",
-        revision: benchmark_revision(),
-        rust_version: env::var("RUSTMATCH_RUST_VERSION")
-            .unwrap_or_else(|_| "local-unidentified".to_owned()),
-        backend: backend.label(),
-        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
-        pattern_source_digest: byte_digest(pattern_bytes),
-        expression_count: patterns.len(),
-        pattern_load_ns,
+    Ok(ConstructionMeasurement {
         registration_ns,
         compile_ns,
         prepare_ns,
         structure,
-        correctness: "construction-pass",
     })
 }
 
@@ -3201,6 +3273,7 @@ enum CommandOutput {
     HarnessRun(HarnessRunReceipt),
     BenchmarkProduct(BenchmarkProductReceipt),
     Construction(ConstructionReceipt),
+    ConditionedConstruction(ConditionedConstructionReceipt),
     CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
@@ -3230,6 +3303,35 @@ struct ConstructionReceipt {
     prepare_ns: u128,
     structure: ConstructionStructureReceipt,
     correctness: &'static str,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+struct ConditionedConstructionReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    revision: String,
+    rust_version: String,
+    backend: &'static str,
+    feature_profile: &'static str,
+    pattern_source_digest: String,
+    corpus_source_digest: String,
+    expression_count: usize,
+    corpus_bytes: usize,
+    input_prepare_ns: u128,
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
+    correctness: &'static str,
+}
+
+#[cfg(feature = "experimental-showcase")]
+struct ConstructionMeasurement {
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
 }
 
 #[cfg(feature = "experimental-showcase")]
@@ -3950,7 +4052,7 @@ mod tests {
     #[cfg(feature = "experimental-showcase")]
     use super::{
         ConstructionBackend, ConstructionStructureReceipt, ExperimentalProductPolicy,
-        benchmark_assertion_prefix_product, construction_run,
+        benchmark_assertion_prefix_product, conditioned_construction_run, construction_run,
     };
     use regex::{Regex, RegexSet};
     #[cfg(feature = "experimental-showcase")]
@@ -4190,6 +4292,38 @@ mod tests {
                 ..
             } if shared_ascii_prefix == "word0"
         ));
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn conditioned_construction_retains_corpus_preconditioning_without_scanning()
+    -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let corpus = vec![b'x'; 2 * 1024 * 1024];
+
+        // Test
+        let generic = conditioned_construction_run(
+            patterns.as_bytes(),
+            &corpus,
+            ConstructionBackend::Generic,
+        )?;
+        let specialized = conditioned_construction_run(
+            patterns.as_bytes(),
+            &corpus,
+            ConstructionBackend::AssertionPrefixV1,
+        )?;
+
+        // Assert
+        assert_eq!(generic.pattern_source_digest, specialized.pattern_source_digest);
+        assert_eq!(generic.corpus_source_digest, specialized.corpus_source_digest);
+        assert_eq!(generic.corpus_bytes, corpus.len());
+        assert_eq!(specialized.corpus_bytes, corpus.len());
+        assert_eq!(generic.correctness, "conditioned-construction-pass");
+        assert_eq!(specialized.correctness, "conditioned-construction-pass");
+        assert!(generic.prepare_ns >= generic.registration_ns + generic.compile_ns);
+        assert!(specialized.prepare_ns >= specialized.registration_ns + specialized.compile_ns);
         Ok(())
     }
 
