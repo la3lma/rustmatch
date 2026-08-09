@@ -1,6 +1,6 @@
 # H43 explicit assertion-prefix capability strategy
 
-**Status:** X1.6 discriminator complete; owner review available<br>
+**Status:** X1.8 causal investigation complete; owner exception review available<br>
 **Owner direction:** preserve the measured 205x-409x scan opportunity for
 deliberate use without changing ordinary matcher performance<br>
 **Policy relationship:** additive experimental product contract; the rejected
@@ -223,7 +223,9 @@ flowchart TD
     DEF["X1.4 Prove default feature-off and runtime-unused isolation"]
     PERF["X1.5 Measure explicit capability envelope and total work"]
     DISC["X1.6 Construction-only causal discriminator"]
-    REV["X1.7 Critical review and owner admission decision"]
+    CONF["X1.7 One complete confirmation"]
+    COND["X1.8 Exact corpus-conditioned discriminator"]
+    REV["X1.9 Owner exception decision"]
     MERGE["Merge non-default experimental capability"]
     STOP["Reject or rework; preserve lab note"]
     AUTO["Later Ring 2 selector campaign"]
@@ -233,7 +235,7 @@ flowchart TD
     ISO --> DEF
     SEM --> PERF
     DEF --> PERF
-    PERF --> DISC --> REV
+    PERF --> DISC --> CONF --> COND --> REV
     REV -->|"all three lanes pass"| MERGE
     REV -->|"any veto"| STOP
     MERGE -. "new full G9 program" .-> AUTO
@@ -289,7 +291,20 @@ and allocation receipts. A result below the existing investigation threshold
 can remove the construction hypothesis from the blocker list, but cannot
 rewrite X1.5.
 
-### X1.7: make one narrow merge decision
+### X1.7: run one complete confirmation
+
+Run the single prospectively named complete confirmation without changing the
+source, matrix, thresholds, or analyzer. Preserve an automatic veto even when
+the explicit target economics remain exceptional.
+
+### X1.8: isolate any confirmation-only preparation blocker
+
+If the confirmation produces a narrow preparation-only veto, retain the exact
+corpus and allocator preconditioning while removing scanning from the measured
+process. Repeat once over the byte-exact rejected library source. This
+discriminator may explain the veto but cannot relabel the confirmation.
+
+### X1.9: make one narrow merge decision
 
 If all lanes pass, the owner may authorize a merge containing only the
 non-default v1 capability, its tests, evidence, lab note, and cautionary docs.
@@ -349,7 +364,14 @@ specialized path 0.808000% slower in complete preparation, below the unchanged
 2% boundary, with equal allocation probes and passing calibrations. The X1.5
 construction blocker did not reproduce.
 
-The next action is X1.7 owner review. It may authorize a separately named,
-prospectively justified complete confirmation or an explicit owner exception.
-It may not rewrite X1.5, omit its adverse receipt, or silently move the default
-comparison baseline.
+X1.7 R3 then completed the one prospectively authorized full confirmation. It
+retained approximately 231.62x and 460.49x target scan speedups and complete
+default safety, but the 2 MiB preparation metric regressed 5.792673% and
+triggered the unchanged veto. The R3 result remains permanently rejected.
+
+X1.8 retained exact corpus preconditioning and reproduced construction twice,
+including once over the exact R3 library source. Complete preparation was only
+0.717444% and 0.976161% slower, below 2%, so the veto-sized magnitude did not
+reproduce. The next action is X1.9 owner review: leave the capability unmerged
+or authorize a documented production exception. No more unchanged timing or
+source tuning is justified.

@@ -152,6 +152,8 @@ proven. Automatic selection remains blocked on full G9 evidence.
 - [H43-X2 local result](../experiments/h43-x2-result.md)
 - [H43-X1.5 formal result](../experiments/h43-x1-5-formal-admission-result.md)
 - [H43-X1.6 construction discriminator](../experiments/h43-x1-6-construction-discriminator-result.md)
+- [H43-X1.7 R3 confirmation](../experiments/h43-x1-7-r3-confirmation-result.md)
+- [H43-X1.8 conditioned preparation](../experiments/h43-x1-8-conditioned-preparation-result.md)
 
 This ADR authorizes a benchmark-internal source prototype and local semantic
 tests. It does not authorize publication, merge into the release baseline, or
@@ -166,3 +168,12 @@ disposition is `investigate`. H43-X1.6 subsequently isolated construction and
 found a 0.808000% complete-preparation cost, below the unchanged 2% boundary;
 the X1.5 blocker did not reproduce. Publication and merge remain unauthorized
 pending explicit owner review because the successor does not relabel X1.5.
+
+The single H43-X1.7 R3 confirmation subsequently retained complete default
+safety and approximately 231.62x/460.49x target scan speedups, but a 5.792673%
+2 MiB preparation result triggered the unchanged automatic veto. H43-X1.8
+then retained the exact 2 MiB corpus preconditioning and measured construction
+twice, including over the exact rejected R3 library source. The repeatable cost
+was 0.717444%-0.976161%, below 2%. This resolves the causal question without
+certifying R3. Publication and merge remain unauthorized pending an explicit
+owner-exception decision; another unchanged full timing run is not authorized.

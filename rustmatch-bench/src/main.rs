@@ -94,10 +94,10 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             construction_run_command(&mut arguments).map(CommandOutput::Construction)
         }
         #[cfg(feature = "experimental-showcase")]
-        Some("conditioned-construction-run") => conditioned_construction_run_command(
-            &mut arguments,
-        )
-        .map(CommandOutput::ConditionedConstruction),
+        Some("conditioned-construction-run") => {
+            conditioned_construction_run_command(&mut arguments)
+                .map(CommandOutput::ConditionedConstruction)
+        }
         Some("cohort-report") => {
             cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
         }
@@ -4316,8 +4316,14 @@ mod tests {
         )?;
 
         // Assert
-        assert_eq!(generic.pattern_source_digest, specialized.pattern_source_digest);
-        assert_eq!(generic.corpus_source_digest, specialized.corpus_source_digest);
+        assert_eq!(
+            generic.pattern_source_digest,
+            specialized.pattern_source_digest
+        );
+        assert_eq!(
+            generic.corpus_source_digest,
+            specialized.corpus_source_digest
+        );
         assert_eq!(generic.corpus_bytes, corpus.len());
         assert_eq!(specialized.corpus_bytes, corpus.len());
         assert_eq!(generic.correctness, "conditioned-construction-pass");

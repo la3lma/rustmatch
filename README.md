@@ -74,25 +74,28 @@ previously collected evidence; no additional benchmark run was made.
 This secondary panel is deliberately workload-tuned. It explicitly enables the
 `assertion-prefix-v1` backend after seeing the exact expressions and corpus,
 forbids fallback, and makes **no** claim about default behavior, automatic
-selection, or unseen workloads. The exact candidate is **investigate, not
-merged or published**, because one independent preparation metric crossed the
-unchanged 2% investigation boundary.
+selection, or unseen workloads. The exact candidate is **machine-rejected, not
+merged or published**: the single complete R3 confirmation retained its scan
+benefit but one independent preparation metric crossed the unchanged 3% veto.
 
 | Workload | Public default | Experimental | Speedup | Outcome |
 |---|---:|---:|---:|---|
-| Assertion boundary, 1,000 patterns, 1 MiB | 0.992 Mbit/s | 230.480 Mbit/s | **232.54x** | Scan and total work pass |
-| Assertion boundary, 1,000 patterns, 2 MiB | 0.994 Mbit/s | 456.151 Mbit/s | **456.05x** | Scan passes; preparation investigate |
+| Assertion boundary, 1,000 patterns, 1 MiB | 0.946 Mbit/s | 219.172 Mbit/s | **231.62x** | Scan and total work pass |
+| Assertion boundary, 1,000 patterns, 2 MiB | 0.943 Mbit/s | 435.786 Mbit/s | **460.49x** | Scan passes; preparation veto |
 | Nine historical default guards | unchanged public matcher | N/A | N/A | All metrics below 2% |
 | Four static/dynamic refusal probes | exact refusal | N/A | N/A | All passed |
 
-The formal assay used 15 adjacent AB/BA crossover cycles, two warmups, and five
-retained scans per process. All 1,158 timed receipts, four functional probes,
-and 4,658 accepted evidence files passed semantic and provenance validation;
-no timing contamination occurred. The sole blocker was a 2.688833% preparation
-regression on the 2 MiB target, with 13 of 15 cycles adverse and no 3% veto.
-See the [formal result](docs/experiments/h43-x1-5-formal-admission-result.md),
+The R3 confirmation used 15 adjacent AB/BA crossover cycles, two warmups, and
+five retained scans per process. All 1,020 paired receipts, 120 calibration
+receipts, 18 allocation receipts, and four functional probes passed semantic,
+provenance, and host validation. The sole blocker was a 5.792673% preparation
+regression on the 2 MiB target, with 11 of 15 cycles adverse. Two subsequent
+corpus-conditioned construction discriminators found only a repeatable
+0.717%-0.976% cost, below 2%; this supports owner-exception review but does not
+relabel R3 as a pass. See the [R3 result](docs/experiments/h43-x1-7-r3-confirmation-result.md),
+the [causal follow-up](docs/experiments/h43-x1-8-conditioned-preparation-result.md),
 the earlier [two-product methodology](docs/benchmarking/default-vs-experimental-results.md),
-and the [curated evidence](docs/evidence/h43/x1.5/a5b86c2/README.md).
+and the [curated evidence](docs/evidence/h43/x1.8/8c27d23/README.md).
 
 ## TL;DR
 

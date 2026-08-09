@@ -595,6 +595,34 @@
       "decision": "Valid causal discriminator: the X1.5 construction blocker did not reproduce. Preserve X1.5 as investigate, do not merge automatically, and authorize explicit owner review without changing thresholds or the progress graph.",
       "evidence": "experiments/h43-x1-6-construction-discriminator-result.md",
       "progress": null
+    },
+    {
+      "id": "H43-X1.7-R3",
+      "name": "Full explicit assertion matcher confirmation",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "summary": "Run the single prospectively authorized complete confirmation using the exact X1.5 source, artifacts, fixtures, matrix, thresholds, and analyzer after hardening only host service restoration.",
+      "result": "The clean five-hour confirmation retained 1,020 paired, 120 calibration, and 18 allocation receipts plus four functional probes. All nine default guards and every exactness, fallback, allocation, RSS, scan, and total-work gate passed. The 1 MiB and 2 MiB targets retained about 231.62x and 460.49x scan speedups, but the 2 MiB preparation metric regressed 5.792673% with 11 of 15 adverse cycles.",
+      "tradeoffs": "The same-pattern 1 MiB preparation metric remained below the investigation boundary, and one-scan total work improved about 449.65x at 2 MiB. The vetoed sub-millisecond metric had roughly 6%-7% run-to-run variation and cycle effects ranging from an 8.165% gain to a 13.737% loss, but the predeclared estimator and directional burden remain binding.",
+      "decision": "Machine-rejected by the unchanged greater-than-3% veto and not merged. Retain the complete R3 evidence permanently. Classify the mechanism investigate and authorize only the smaller H43-X1.8 corpus-conditioned causal discriminator; do not run another unchanged full assay.",
+      "evidence": "experiments/h43-x1-7-r3-confirmation-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-X1.8",
+      "name": "Corpus-conditioned exact-source preparation discriminator",
+      "date": "2026-08-09",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "8c27d2350125e3b0de6a8abdd65eff1947535b09",
+      "summary": "Materialize and retain the exact 2 MiB R3 fixture, then compare only registration, compilation, and complete construction over 15 balanced AB/BA cycles plus same-type calibrations. Repeat with a standalone diagnostic over the byte-exact rejected R3 rustmatch library tree.",
+      "result": "The benchmark-layout run measured 0.717444% slower complete preparation; the exact-R3 library run measured 0.976161% slower preparation. Registration and compilation remained below 1% in the exact-source run. Both calibrations passed, all 360 receipts validated, and both guarded windows restored cleanly.",
+      "tradeoffs": "The 13-of-15 and 14-of-15 adverse direction counts prove a small real construction premium rather than zero cost. Neither independent run reproduced the R3 5.792673% magnitude, and run-to-run variation fell below 1.6%. This evidence does not relabel or certify R3.",
+      "decision": "Valid causal discriminator: the repeatable cost is approximately 0.8%-1.0%, below the unchanged 2% boundary. Stop source tuning and unchanged full reruns. The remaining choice is to leave the feature unmerged or admit it through an explicit owner exception that preserves the R3 rejection and discloses the small construction premium.",
+      "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -731,13 +759,13 @@
   "future_candidates": [
     {
       "priority": 1,
-      "id": "H43-X1.7",
-      "name": "Explicit assertion matcher owner review",
-      "status": "available after neutral X1.6 discriminator",
-      "why": "X1.5 retained exact 232.54x and 456.05x target scan speedups, complete default safety, and passing total-work economics, but formally remains investigate because one preparation metric regressed 2.688833%. X1.6 then isolated exact same-pattern construction and measured only a 0.808000% specialized cost, below 2%, so the suspected construction blocker did not reproduce.",
-      "next_test": "Review the immutable X1.5 and X1.6 evidence together. Choose prospectively between one separately named full confirmation and an explicit owner-authorized merge exception. Neither option may relabel X1.5, omit the adverse receipt, alter thresholds, or present the experimental backend as default.",
-      "expected_value": "Exceptional explicit-capability utility with high evidence quality; low remaining causal uncertainty but medium governance risk because the formal X1.5 disposition is still investigate",
-      "evidence": "experiments/h43-x1-6-construction-discriminator-result.md"
+      "id": "H43-X1.9",
+      "name": "Explicit assertion matcher governance decision",
+      "status": "owner exception review available; no more timing justified",
+      "why": "The immutable R3 full confirmation retained about 231.62x and 460.49x target scan speedups, complete default safety, and passing total-work economics, but one 2 MiB preparation metric regressed 5.792673% and triggered the unchanged veto. Two subsequent corpus-conditioned discriminators, including one over the exact rejected library source, found only a repeatable 0.717%-0.976% construction premium below 2%.",
+      "next_test": "Do not rerun or retune. Decide whether the deliberately selected, non-default feature remains unmerged or enters production through the documented owner-exception mechanism. An exception must preserve R3 as rejected, disclose the approximately 1% construction premium, keep the matcher opt-in, and leave default comparison numbers unchanged.",
+      "expected_value": "Exceptional explicit-capability utility with high evidence quality and low remaining causal uncertainty; medium governance risk because formal certification failed",
+      "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md"
     },
     {
       "priority": 2,

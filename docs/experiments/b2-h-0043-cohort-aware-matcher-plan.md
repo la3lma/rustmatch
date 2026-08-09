@@ -1,6 +1,6 @@
 # B2-H-0043 cohort-aware matcher engineering plan
 
-**Status:** H43-X1.6 complete; explicit owner review available<br>
+**Status:** H43-X1.8 complete; explicit owner exception review available<br>
 **Plan owner:** rustmatch maintainers  
 **Created:** 2026-08-06  
 **Current source baseline:** `3d48cb754d89da1359582627f743af87a86b342a`  
@@ -127,7 +127,9 @@ flowchart TB
         X2["H43-X2 Build isolated separate-type prototype"]
         X15["H43-X1.5 Run formal explicit admission"]
         X16["H43-X1.6 Isolate construction signal"]
-        X17["H43-X1.7 Owner review or prospective confirmation"]
+        X17["H43-X1.7 Run one full confirmation"]
+        X18["H43-X1.8 Reproduce preparation exactly"]
+        X19["H43-X1.9 Owner exception decision"]
     end
 
     subgraph ADMISSION[Admission and productization]
@@ -168,6 +170,8 @@ flowchart TB
     X2 --> X15
     X15 --> X16
     X16 --> X17
+    X17 --> X18
+    X18 --> X19
     A2 --> S1
     S1 --> E2
     E2 --> G1
@@ -215,7 +219,9 @@ flowchart TB
     class A1P1,X1,X2 complete;
     class X15 blocked;
     class X16 complete;
-    class X17 gate;
+    class X17 blocked;
+    class X18 complete;
+    class X19 gate;
     class A2 available;
     class S1,API,DOC,LIT,SIMD,DENSE,INPUT planned;
     class E2 evidence;
@@ -1949,6 +1955,56 @@ the production capability by itself.
 - **Decision:** valid causal discriminator. The X1.5 construction blocker did
   not reproduce. Authorize explicit owner review, not automatic merge or a
   post-hoc change to X1.5.
+
+## H43-X1.7 and X1.8: Confirm and isolate the remaining preparation signal
+
+**Scope:** one complete confirmation followed by one bounded phase discriminator<br>
+**Level:** system<br>
+**Status:** complete; R3 rejected, veto magnitude not reproduced<br>
+**Primary actor:** exclusive-host campaign runner<br>
+**Supporting actors:** benchmark engineer, evidence auditor, owner reviewer
+
+**Goal**
+
+Run the one prospectively authorized full confirmation, then distinguish a
+repeatable construction cost from full-process measurement coupling without
+repeating the complete assay until it passes.
+
+**Preconditions**
+
+- X1.5 and X1.6 remain immutable.
+- The full confirmation uses the exact X1.5 source, artifacts, fixtures,
+  matrix, thresholds, and analyzer.
+- Any causal successor preserves the exact 2 MiB fixture and preconditioning,
+  uses the unchanged 2%/3% boundaries, and cannot certify or relabel R3.
+
+**Minimal guarantee**
+
+Every adverse receipt and machine ruling remains visible. No post-hoc
+exclusion, threshold change, or repeated full assay is permitted.
+
+**Success guarantee / postconditions**
+
+- R3 retains complete default, explicit-utility, exactness, allocation,
+  total-work, host, and restoration evidence.
+- A veto-sized preparation result is reproduced or falsified by two short,
+  calibrated AB/BA discriminators, one over the exact rejected library source.
+- The next action is an explicit governance decision rather than another
+  speculative source tweak.
+
+**Implementation result**
+
+- **R3:** all nine default cells and all explicit scan/total-work gates passed;
+  target scans improved approximately 231.62x and 460.49x. The 2 MiB
+  preparation metric regressed 5.792673% and triggered the automatic veto.
+- **X1.8:** corpus-conditioned preparation regressed only 0.717444%; the
+  exact-R3 library repeat regressed 0.976161%. Both calibrations passed and all
+  360 receipts validated.
+- **Evidence:** [R3 result](h43-x1-7-r3-confirmation-result.md),
+  [X1.8 result](h43-x1-8-conditioned-preparation-result.md), and
+  [curated X1.8 evidence](../evidence/h43/x1.8/8c27d23/README.md).
+- **Decision:** preserve R3 as rejected. Stop timing and tuning. Advance only
+  to X1.9 owner review of a documented non-default production exception.
 
 ## H43-DOC: Update ledger, comparison snapshot, and HTML universe
 

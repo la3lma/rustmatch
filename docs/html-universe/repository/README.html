@@ -74,23 +74,26 @@ previously collected evidence; no additional benchmark run was made.</p>
 <p>This secondary panel is deliberately workload-tuned. It explicitly enables the
 <code>assertion-prefix-v1</code> backend after seeing the exact expressions and corpus,
 forbids fallback, and makes <strong>no</strong> claim about default behavior, automatic
-selection, or unseen workloads. The exact candidate is <strong>investigate, not
-merged or published</strong>, because one independent preparation metric crossed the
-unchanged 2% investigation boundary.</p>
+selection, or unseen workloads. The exact candidate is <strong>machine-rejected, not
+merged or published</strong>: the single complete R3 confirmation retained its scan
+benefit but one independent preparation metric crossed the unchanged 3% veto.</p>
 <table><thead><tr><th>Workload</th><th style="text-align: right">Public default</th><th style="text-align: right">Experimental</th><th style="text-align: right">Speedup</th><th>Outcome</th></tr></thead><tbody>
-<tr><td>Assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">0.992 Mbit/s</td><td style="text-align: right">230.480 Mbit/s</td><td style="text-align: right"><strong>232.54x</strong></td><td>Scan and total work pass</td></tr>
-<tr><td>Assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">0.994 Mbit/s</td><td style="text-align: right">456.151 Mbit/s</td><td style="text-align: right"><strong>456.05x</strong></td><td>Scan passes; preparation investigate</td></tr>
+<tr><td>Assertion boundary, 1,000 patterns, 1 MiB</td><td style="text-align: right">0.946 Mbit/s</td><td style="text-align: right">219.172 Mbit/s</td><td style="text-align: right"><strong>231.62x</strong></td><td>Scan and total work pass</td></tr>
+<tr><td>Assertion boundary, 1,000 patterns, 2 MiB</td><td style="text-align: right">0.943 Mbit/s</td><td style="text-align: right">435.786 Mbit/s</td><td style="text-align: right"><strong>460.49x</strong></td><td>Scan passes; preparation veto</td></tr>
 <tr><td>Nine historical default guards</td><td style="text-align: right">unchanged public matcher</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>All metrics below 2%</td></tr>
 <tr><td>Four static/dynamic refusal probes</td><td style="text-align: right">exact refusal</td><td style="text-align: right">N/A</td><td style="text-align: right">N/A</td><td>All passed</td></tr>
 </tbody></table>
-<p>The formal assay used 15 adjacent AB/BA crossover cycles, two warmups, and five
-retained scans per process. All 1,158 timed receipts, four functional probes,
-and 4,658 accepted evidence files passed semantic and provenance validation;
-no timing contamination occurred. The sole blocker was a 2.688833% preparation
-regression on the 2 MiB target, with 13 of 15 cycles adverse and no 3% veto.
-See the <a href="docs/experiments/h43-x1-5-formal-admission-result.html">formal result</a>,
+<p>The R3 confirmation used 15 adjacent AB/BA crossover cycles, two warmups, and
+five retained scans per process. All 1,020 paired receipts, 120 calibration
+receipts, 18 allocation receipts, and four functional probes passed semantic,
+provenance, and host validation. The sole blocker was a 5.792673% preparation
+regression on the 2 MiB target, with 11 of 15 cycles adverse. Two subsequent
+corpus-conditioned construction discriminators found only a repeatable
+0.717%-0.976% cost, below 2%; this supports owner-exception review but does not
+relabel R3 as a pass. See the <a href="docs/experiments/h43-x1-7-r3-confirmation-result.html">R3 result</a>,
+the <a href="docs/experiments/h43-x1-8-conditioned-preparation-result.html">causal follow-up</a>,
 the earlier <a href="docs/benchmarking/default-vs-experimental-results.html">two-product methodology</a>,
-and the <a href="docs/evidence/h43/x1.5/a5b86c2/README.html">curated evidence</a>.</p>
+and the <a href="docs/evidence/h43/x1.8/8c27d23/README.html">curated evidence</a>.</p>
 <h2>TL;DR</h2>
 <h3>What we are building</h3>
 <ul>
