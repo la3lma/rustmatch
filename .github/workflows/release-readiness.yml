@@ -79,30 +79,42 @@ jobs:
       matrix:
         include:
           - name: Linux x86-64
+            experimental: false
             lane: public-linux-x86_64
             os: ubuntu-24.04
             release_soak: false
             target: x86_64-unknown-linux-gnu
           - name: Linux ARM64
+            experimental: false
             lane: public-linux-aarch64
             os: ubuntu-24.04-arm
             release_soak: true
             target: aarch64-unknown-linux-gnu
           - name: macOS ARM64
+            experimental: false
             lane: public-macos-aarch64
             os: macos-15
             release_soak: false
             target: aarch64-apple-darwin
           - name: macOS Intel
+            experimental: false
             lane: public-macos-x86_64
             os: macos-15-intel
             release_soak: false
             target: x86_64-apple-darwin
           - name: Windows x86-64
+            experimental: false
             lane: public-windows-x86_64
             os: windows-2025
             release_soak: false
             target: x86_64-pc-windows-msvc
+          - name: Windows ARM64 preview
+            experimental: true
+            lane: public-windows-aarch64-preview
+            os: windows-11-arm
+            release_soak: false
+            target: aarch64-pc-windows-msvc
+    continue-on-error: ${{ matrix.experimental }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:

@@ -2,7 +2,8 @@ config-variables: null
 
 paths:
   .github/workflows/release-readiness.yml:
-    # actionlint 1.7.7 predates this GitHub-hosted runner label. Keep the
+    # actionlint 1.7.7 predates these GitHub-hosted runner labels. Keep each
     # exception exact so other unknown runner labels still fail lint.
     ignore:
       - 'label "macos-15-intel" is unknown'
+      - 'label "windows-11-arm" is unknown'

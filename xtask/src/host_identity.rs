@@ -397,6 +397,7 @@ mod tests {
             "macos-15",
             "macos-15-intel",
             "windows-2025",
+            "windows-11-arm",
         ] {
             assert!(workflow.contains(label), "missing pinned runner {label}");
         }
