@@ -67,6 +67,9 @@ requalification below is complete.
 - [x] Add and pass non-publishing release-readiness CI for Linux, macOS,
   Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
   smoke testing.
+- [ ] Pin every release-readiness lane to a reviewed runner image and retain
+  its exact host/toolchain identity artifact. Mark complete only after the
+  hosted workflow passes on the pinned matrix.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated

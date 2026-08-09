@@ -1,5 +1,6 @@
 //! Repository maintenance commands for rustmatch.
 
+mod host_identity;
 mod html_universe;
 mod optimization_ledger;
 
@@ -165,6 +166,7 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
         Some("bench-smoke") => run_benchmark_smoke(),
         Some("ci") => run_quality_gate(),
         Some("evidence") => run_evidence_summary(),
+        Some("host-identity") => host_identity::record(),
         Some("optimization-ledger") => optimization_ledger::render(),
         Some("oracle") => run_java_oracle(),
         Some("roadmap") => render_roadmap(),
@@ -175,7 +177,7 @@ fn run(mut args: impl Iterator<Item = OsString>) -> Result<(), String> {
 
 fn print_usage() {
     println!(
-        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask optimization-ledger\n    cargo xtask oracle\n    cargo xtask roadmap\n    cargo xtask verify-optimization-ledger"
+        "rustmatch repository tasks\n\nUSAGE:\n    cargo xtask bench-smoke\n    cargo xtask ci\n    cargo xtask evidence\n    cargo xtask host-identity\n    cargo xtask optimization-ledger\n    cargo xtask oracle\n    cargo xtask roadmap\n    cargo xtask verify-optimization-ledger"
     );
 }
 

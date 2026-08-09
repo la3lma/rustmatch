@@ -50,6 +50,30 @@ during the release ceremony.</p>
 the packaged <code>rustmatch</code> source to the packaged <code>rustmatch-simd</code> source through
 a temporary crates.io patch, runs tests/docs/soak, and compiles a clean external
 consumer. It uploads nothing.</p>
+<h2>Host identity evidence</h2>
+<p>Release-readiness evidence is meaningful only when its execution environment is
+known. The hosted workflow therefore uses reviewed, explicit runner labels
+instead of rolling <code>*-latest</code> aliases and retains one
+<code>release-host-identity-v1</code> JSON artifact for every lane. The same identity is
+shown in the GitHub Actions job summary.</p>
+<p>The record includes the declared runner label, execution mode, target, feature
+scope, toolchain, repository revision, operating-system description, system
+architecture, GitHub runner image metadata, Cargo version, and complete
+<code>rustc -vV</code> identity. Native lanes fail identity collection when the declared
+target differs from the observed Rust host. Cross-compilation and Miri are
+marked <code>cross-compile</code> and <code>interpreter</code> respectively, so they cannot be
+mistaken for native execution.</p>
+<p>The local package rehearsal writes the same schema to
+<code>target/release-evidence/host-identity.json</code> unless
+<code>RUSTMATCH_HOST_IDENTITY_PATH</code> overrides the destination. Before approving a
+candidate, retain the workflow URL and all host-identity artifacts with the
+candidate commit and package checksums. Review the runner labels whenever the
+provider deprecates an image; do not silently move a release lane to a rolling
+label.</p>
+<p>These artifacts establish portability provenance, not benchmark equivalence.
+Never compare timing from unlike hardware, operating-system images, execution
+modes, targets, or toolchains. Performance admission remains bound to its
+designated-host receipts.</p>
 <h2>Release ceremony: owner action</h2>
 <p>The following commands are deliberately not run during preparation:</p>
 <ol>

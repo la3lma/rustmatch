@@ -100,6 +100,10 @@ Write the release runbook with immutable-artifact recovery instructions.</li>
 Add and pass non-publishing release-readiness CI for Linux, macOS,
 Windows, MSRV, AArch64 compilation, Miri, package rehearsal, and consumer
 smoke testing.</li>
+<li><input disabled="" type="checkbox"/>
+Pin every release-readiness lane to a reviewed runner image and retain
+its exact host/toolchain identity artifact. Mark complete only after the
+hosted workflow passes on the pinned matrix.</li>
 <li><input disabled="" type="checkbox" checked=""/>
 Pass the full repository quality and differential-evidence gate.</li>
 <li><input disabled="" type="checkbox" checked=""/>
