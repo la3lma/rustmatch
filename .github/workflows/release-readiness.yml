@@ -7,12 +7,14 @@ on:
       - ".github/workflows/release-readiness.yml"
       - "Cargo.lock"
       - "Cargo.toml"
+      - "Cross.toml"
       - "CHANGELOG.md"
       - "README.md"
       - "rust-toolchain.toml"
       - "rustmatch/**"
       - "rustmatch-simd/**"
       - "scripts/release-readiness.sh"
+      - "scripts/big-endian-smoke.sh"
       - "xtask/**"
       - "docs/pre-release-todo.md"
       - "docs/release/**"
@@ -24,12 +26,14 @@ on:
       - ".github/workflows/release-readiness.yml"
       - "Cargo.lock"
       - "Cargo.toml"
+      - "Cross.toml"
       - "CHANGELOG.md"
       - "README.md"
       - "rust-toolchain.toml"
       - "rustmatch/**"
       - "rustmatch-simd/**"
       - "scripts/release-readiness.sh"
+      - "scripts/big-endian-smoke.sh"
       - "xtask/**"
       - "docs/pre-release-todo.md"
       - "docs/release/**"
@@ -212,6 +216,43 @@ jobs:
         with:
           name: release-host-identity-cross-aarch64-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/release-evidence/cross-compile-linux-aarch64.json
+          if-no-files-found: error
+
+  big-endian:
+    name: Big-endian s390x emulation preview
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install release toolchain
+        run: rustup toolchain install 1.97.0 --profile minimal
+      - name: Retain emulation-host identity
+        env:
+          RUSTMATCH_CI_EXECUTION: emulated
+          RUSTMATCH_CI_FEATURES: bounded big-endian semantics; portable SIMD refusal
+          RUSTMATCH_CI_LANE: emulated-linux-s390x-preview
+          RUSTMATCH_CI_RUNNER_LABEL: ubuntu-24.04
+          RUSTMATCH_CI_TARGET: s390x-unknown-linux-gnu
+          RUSTMATCH_CI_TOOLCHAIN: 1.97.0
+          RUSTMATCH_HOST_IDENTITY_PATH: target/release-evidence/emulated-linux-s390x-preview.json
+        run: cargo +1.97.0 xtask host-identity
+      - name: Install pinned cross release
+        run: cargo +1.97.0 install cross --version 0.2.5 --locked
+      - name: Execute bounded big-endian smoke
+        shell: bash
+        run: >-
+          scripts/big-endian-smoke.sh 2>&1 |
+          tee target/release-evidence/big-endian-s390x.log
+      - name: Upload big-endian evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-big-endian-s390x-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            target/release-evidence/emulated-linux-s390x-preview.json
+            target/release-evidence/big-endian-s390x.log
           if-no-files-found: error
 
   miri:
