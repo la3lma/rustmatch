@@ -10,8 +10,8 @@ candidate commit.
 |---|---|
 | Rust edition | 2024 |
 | Minimum Rust version | 1.85.0 |
-| Continuously tested hosts | Linux x86-64, macOS, Windows x86-64 |
-| Additional compile target | AArch64 Linux |
+| Continuously tested hosts | Linux x86-64 and ARM64, macOS ARM64, Windows x86-64 |
+| Independent cross-compile target | AArch64 Linux |
 | SIMD acceleration | Runtime-detected AVX2 on x86-64 |
 | Portable behavior | Exact non-SIMD path when AVX2 is absent |
 | Runtime environment | Rust standard library; no `no_std` support |
