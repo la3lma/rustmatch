@@ -19,6 +19,22 @@ host-identity artifact deliberately records execution mode `emulated`, the
 little-endian x86-64 runner host, and the declared s390x target so emulation can
 never be mistaken for native execution.
 
+## Retained evidence
+
+Release-readiness run
+[`31334450537`](https://github.com/la3lma/rustmatch/actions/runs/31334450537)
+passed the lane in 1m18s on Ubuntu 24.04.4. Artifact
+`release-big-endian-s390x-31334450537-1` has SHA-256
+`1dfdca69494ddfbc7b74c1b8c21fcd510d4f3162ee0e8de29a9304982d5c7680` and
+contains:
+
+- an identity receipt that distinguishes the x86-64 host from the declared
+  `s390x-unknown-linux-gnu` emulated target;
+- a log with SHA-256
+  `5c551fe06f0244ef1823bf80c9a368b90451038a5c16375a354a745cb501c3ed`;
+- the resolved container digest, the `target_arch=s390x target_endian=big`
+  probe, two passing semantic tests, and one passing portable-SIMD refusal test.
+
 ## Semantic inventory
 
 The bounded integration test covers raw UTF-16 including an isolated surrogate,

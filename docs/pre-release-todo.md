@@ -92,10 +92,14 @@ requalification below is complete.
   on Windows image `20260727.122.1`; its identity records native host
   `aarch64-pc-windows-msvc` and `avx2_available: false`. Windows ARM64 remains
   outside the supported matrix while its runner is preview.
-- [ ] Retain one successful non-blocking `s390x-unknown-linux-gnu` semantic
+- [x] Retain one successful non-blocking `s390x-unknown-linux-gnu` semantic
   smoke under pinned QEMU/`cross` emulation, including target-endianness output,
   raw UTF-16, case-fold, event-digest, lifecycle, panic-recovery, SIMD-refusal,
-  and deliberate byte-order-corruption evidence.
+  and deliberate byte-order-corruption evidence. Run
+  [`31334450537`](https://github.com/la3lma/rustmatch/actions/runs/31334450537)
+  passed in 1m18s on Ubuntu 24.04.4; the retained artifact records an x86-64
+  emulation host and the executed test reports `target_arch=s390x
+  target_endian=big`.
 - [x] Pass the full repository quality and differential-evidence gate.
 - [x] Pass release-profile semantic and benchmark smoke tests.
 - [x] Retain an exact release-candidate performance receipt from the designated

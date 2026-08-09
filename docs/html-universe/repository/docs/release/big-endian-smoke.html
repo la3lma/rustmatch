@@ -24,6 +24,21 @@ portability evidence, not native support or performance evidence.</p>
 host-identity artifact deliberately records execution mode <code>emulated</code>, the
 little-endian x86-64 runner host, and the declared s390x target so emulation can
 never be mistaken for native execution.</p>
+<h2>Retained evidence</h2>
+<p>Release-readiness run
+<a href="https://github.com/la3lma/rustmatch/actions/runs/31334450537"><code>31334450537</code></a>
+passed the lane in 1m18s on Ubuntu 24.04.4. Artifact
+<code>release-big-endian-s390x-31334450537-1</code> has SHA-256
+<code>1dfdca69494ddfbc7b74c1b8c21fcd510d4f3162ee0e8de29a9304982d5c7680</code> and
+contains:</p>
+<ul>
+<li>an identity receipt that distinguishes the x86-64 host from the declared
+<code>s390x-unknown-linux-gnu</code> emulated target;</li>
+<li>a log with SHA-256
+<code>5c551fe06f0244ef1823bf80c9a368b90451038a5c16375a354a745cb501c3ed</code>;</li>
+<li>the resolved container digest, the <code>target_arch=s390x target_endian=big</code>
+probe, two passing semantic tests, and one passing portable-SIMD refusal test.</li>
+</ul>
 <h2>Semantic inventory</h2>
 <p>The bounded integration test covers raw UTF-16 including an isolated surrogate,
 non-ASCII predicates, Java-compatible single-unit case folding, exact half-open
