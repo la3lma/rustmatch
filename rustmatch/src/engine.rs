@@ -7,6 +7,16 @@ use crate::nfa::{EdgeKind, PatternDatabase, StateId};
 use crate::prefilter::{Prefilter, PrefilterBypass, PrefilterPath, ScanPlan};
 use crate::{Error, Match, Utf16Span, Utf16Text};
 
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+#[derive(Clone, Copy)]
+pub(crate) struct AssertionPrefixView {
+    pub(crate) root: StateId,
+    pub(crate) prefix: [u8; 5],
+}
+
 pub(crate) const DEFAULT_STATE_CACHE_BUDGET: usize = 8_192;
 
 #[path = "shared_engine.rs"]
@@ -102,6 +112,92 @@ pub(crate) fn scan_with_stats(
     }
     metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
     Ok(metrics)
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+pub(crate) fn scan_assertion_view_with_stats(
+    database: &PatternDatabase,
+    root: StateId,
+    prefilter: &Prefilter,
+    input: &Utf16Text,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
+    mut sink: impl FnMut(Match),
+) -> Result<ScanStats, Error> {
+    let units = input.units();
+    let plan = prefilter.plan(units, prefilter_enabled, literal_prefilter_enabled);
+    let mut metrics = ScanStats {
+        prefilter_path: plan.path(),
+        prefilter_bypass: plan.bypass(),
+        prefilter_retained_bytes: plan.retained_bytes(),
+        prefilter_candidate_bytes: plan.candidate_bytes(),
+        prefilter_admissions: plan.admissions(),
+        prefilter_candidate_starts: plan.candidate_count(),
+        ..ScanStats::default()
+    };
+    scan_assertion_view(database, root, input, &mut sink)?;
+    metrics.assertion_bypasses = 1;
+    metrics.prefilter_starts_scanned = units.len();
+    Ok(metrics)
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+pub(crate) struct AssertionPrefixScan {
+    pub(crate) stats: ScanStats,
+    pub(crate) decision: crate::prefilter::AssertionPrefixDecision,
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+pub(crate) fn scan_assertion_prefix_view_with_stats(
+    database: &PatternDatabase,
+    view: AssertionPrefixView,
+    prefilter: &Prefilter,
+    input: &Utf16Text,
+    prefilter_enabled: bool,
+    literal_prefilter_enabled: bool,
+    mut sink: impl FnMut(Match),
+) -> Result<AssertionPrefixScan, Error> {
+    let units = input.units();
+    let (plan, decision) = prefilter.plan_assertion_prefix(
+        view.prefix,
+        units,
+        prefilter_enabled,
+        literal_prefilter_enabled,
+    );
+    let mut metrics = ScanStats {
+        prefilter_path: plan.path(),
+        prefilter_bypass: plan.bypass(),
+        prefilter_retained_bytes: plan.retained_bytes(),
+        prefilter_candidate_bytes: plan.candidate_bytes(),
+        prefilter_admissions: plan.admissions(),
+        prefilter_candidate_starts: plan.candidate_count(),
+        assertion_bypasses: 1,
+        ..ScanStats::default()
+    };
+    match &plan {
+        ScanPlan::Candidates { candidates, .. } => {
+            metrics.prefilter_starts_scanned = candidates.count();
+            scan_assertion_view_starts(database, view.root, input, candidates.iter(), &mut sink)?;
+        }
+        ScanPlan::All { .. } | ScanPlan::StartTable { .. } => {
+            metrics.prefilter_starts_scanned = units.len();
+            scan_assertion_view(database, view.root, input, &mut sink)?;
+        }
+    }
+    metrics.prefilter_starts_skipped = units.len().saturating_sub(metrics.prefilter_starts_scanned);
+    Ok(AssertionPrefixScan {
+        stats: metrics,
+        decision,
+    })
 }
 
 fn scan_without_assertions_dispatch(
@@ -523,6 +619,8 @@ pub(crate) struct ScanStats {
     pub(crate) fallback_transitions: u64,
     pub(crate) cache_table_bytes: usize,
     pub(crate) assertion_bypasses: u64,
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) assertion_prefix_activations: u64,
     pub(crate) prefilter_path: PrefilterPath,
     pub(crate) prefilter_bypass: PrefilterBypass,
     pub(crate) prefilter_retained_bytes: usize,
@@ -534,7 +632,10 @@ pub(crate) struct ScanStats {
 }
 
 impl ScanStats {
-    #[cfg(feature = "benchmark-internals")]
+    #[cfg(any(
+        feature = "benchmark-internals",
+        feature = "unstable-assertion-prefix-v1"
+    ))]
     pub(crate) fn merge_partition(&mut self, other: Self) {
         self.cache_states = self.cache_states.saturating_add(other.cache_states);
         self.cache_hits = self.cache_hits.saturating_add(other.cache_hits);
@@ -548,6 +649,12 @@ impl ScanStats {
         self.assertion_bypasses = self
             .assertion_bypasses
             .saturating_add(other.assertion_bypasses);
+        #[cfg(feature = "benchmark-internals")]
+        {
+            self.assertion_prefix_activations = self
+                .assertion_prefix_activations
+                .saturating_add(other.assertion_prefix_activations);
+        }
         if self.prefilter_path != other.prefilter_path {
             self.prefilter_path = PrefilterPath::MixedParallel;
         }
@@ -588,6 +695,92 @@ fn scan_with_assertions(
         extend_assertion_closure(
             database,
             database.root(),
+            AssertionPosition::before(units, start),
+            &mut scratch.active,
+            &mut scratch.active_seen,
+            &mut scratch.stack,
+        );
+
+        for (position, &symbol) in units.iter().enumerate().skip(start) {
+            scratch.reset_next();
+            let next_position = position.checked_add(1).ok_or(Error::InputTooLarge)?;
+            for &state in &scratch.active {
+                for edge in database.edges_from(state) {
+                    if database.edge_matches(edge.kind, symbol) {
+                        extend_assertion_closure(
+                            database,
+                            edge.target,
+                            AssertionPosition::after(units, next_position),
+                            &mut scratch.next,
+                            &mut scratch.next_seen,
+                            &mut scratch.stack,
+                        );
+                    }
+                }
+            }
+            let end = position_utf16(next_position)?;
+            for &state in &scratch.next {
+                for &ordinal in database.terminals_at(state) {
+                    record_terminal(
+                        &mut scratch.best_end,
+                        &mut scratch.touched_ordinals,
+                        ordinal,
+                        end,
+                    );
+                }
+            }
+            std::mem::swap(&mut scratch.active, &mut scratch.next);
+            std::mem::swap(&mut scratch.active_seen, &mut scratch.next_seen);
+            if scratch.active.is_empty() {
+                break;
+            }
+        }
+
+        let start_utf16 = position_utf16(start)?;
+        scratch.touched_ordinals.sort_unstable();
+        for &ordinal in &scratch.touched_ordinals {
+            let end_utf16 = scratch.best_end[ordinal].expect("a touched terminal has an end");
+            sink(Match::new(
+                database.pattern_id(ordinal),
+                Utf16Span::from_bounds(start_utf16, end_utf16),
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+fn scan_assertion_view(
+    database: &PatternDatabase,
+    root: StateId,
+    input: &Utf16Text,
+    sink: impl FnMut(Match),
+) -> Result<(), Error> {
+    scan_assertion_view_starts(database, root, input, 0..input.units().len(), sink)
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+fn scan_assertion_view_starts(
+    database: &PatternDatabase,
+    root: StateId,
+    input: &Utf16Text,
+    starts: impl Iterator<Item = usize>,
+    mut sink: impl FnMut(Match),
+) -> Result<(), Error> {
+    let units = input.units();
+    let mut scratch = Scratch::new(database);
+
+    for start in starts {
+        scratch.reset_start();
+        extend_assertion_closure(
+            database,
+            root,
             AssertionPosition::before(units, start),
             &mut scratch.active,
             &mut scratch.active_seen,

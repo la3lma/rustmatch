@@ -15,6 +15,20 @@ Compiler, HIR, NFA, prefilter, partition, cache, and SIMD types remain private.
 The `benchmark-internals` feature exposes hidden diagnostics only for retained
 repository measurement tooling. Applications must not rely on that feature.
 
+ADR-0009 authorizes an isolated `unstable-assertion-prefix-v1` prototype behind
+a non-default feature and separate matcher type. That prototype is not part of
+the reviewed 0.1.0 surface and is not authorized for publication. Before any
+publication, its versioned API must either receive an explicit `0.1.x`
+compatibility promise, move to a companion crate, or be removed.
+
+The complete H43-X1.5 assay remains `investigate`, not admitted: ordinary
+default safety passed, but one explicit-target preparation metric regressed
+2.688833%. H43-X1.6 did not reproduce that blocker in isolated same-pattern
+construction: complete preparation was 0.808000% slower, below the unchanged
+2% boundary. The feature and separate matcher type remain excluded from the
+`0.1.0` release baseline pending an explicit owner decision; X1.6 does not
+retroactively certify X1.5.
+
 The review confirms these deliberate contracts:
 
 - Rejected registration does not modify or reserve an ID in the builder.

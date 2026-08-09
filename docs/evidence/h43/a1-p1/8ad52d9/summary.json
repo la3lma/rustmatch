@@ -1,0 +1,118 @@
+{
+  "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+  "claim": "phase-local-shared-cohort-build-entry-point-equivalence",
+  "conservative_disposition": "authorize-h43-a2",
+  "evidence_id": "H43-A1-P1-PREPARATION-DISCRIMINATOR-summary",
+  "experimental_disposition": "authorize-x1-adr",
+  "fixtures": [
+    {
+      "allocation_delta_range": [
+        0,
+        0
+      ],
+      "allocation_equivalent_every_pair": true,
+      "fixture": "target-assertion-boundary-1000",
+      "generic_median_ns": 404932.0,
+      "integrity_errors": [],
+      "order_delta_percent": {
+        "ab": 0.05265164252048482,
+        "ba": 0.08355247996980619
+      },
+      "paired_bootstrap_95_percent_delta_interval": [
+        -0.10658716928955148,
+        0.27648134938214053
+      ],
+      "pairs_per_order": 31,
+      "pooled_paired_geometric_delta_percent": 0.06810086848023644,
+      "records": 124,
+      "requested_byte_delta_range": [
+        0,
+        0
+      ],
+      "requested_bytes_equivalent_every_pair": true,
+      "retained_structure_equivalent": true,
+      "role": "assertion-prefix target construction",
+      "specialized_median_ns": 404972.0,
+      "specialized_slower_pairs_by_order": {
+        "ab": 20,
+        "ba": 16
+      },
+      "stable_greater_than_three_percent_regression": false
+    },
+    {
+      "allocation_delta_range": [
+        0,
+        0
+      ],
+      "allocation_equivalent_every_pair": true,
+      "fixture": "neighbor-assertion-adversarial-256",
+      "generic_median_ns": 107594.0,
+      "integrity_errors": [],
+      "order_delta_percent": {
+        "ab": 0.09662733746451657,
+        "ba": -0.15120094289210462
+      },
+      "paired_bootstrap_95_percent_delta_interval": [
+        -0.5929889633457974,
+        0.5128604534893721
+      ],
+      "pairs_per_order": 31,
+      "pooled_paired_geometric_delta_percent": -0.02736359726873694,
+      "records": 124,
+      "requested_byte_delta_range": [
+        0,
+        0
+      ],
+      "requested_bytes_equivalent_every_pair": true,
+      "retained_structure_equivalent": true,
+      "role": "ineligible assertion guard construction",
+      "specialized_median_ns": 107649.0,
+      "specialized_slower_pairs_by_order": {
+        "ab": 18,
+        "ba": 12
+      },
+      "stable_greater_than_three_percent_regression": false
+    },
+    {
+      "allocation_delta_range": [
+        0,
+        0
+      ],
+      "allocation_equivalent_every_pair": true,
+      "fixture": "guard-ordinary-literals-1000",
+      "generic_median_ns": 372370.5,
+      "integrity_errors": [],
+      "order_delta_percent": {
+        "ab": -0.011824514826463961,
+        "ba": 0.023287037644670328
+      },
+      "paired_bootstrap_95_percent_delta_interval": [
+        -0.1514632563762497,
+        0.16509248822880185
+      ],
+      "pairs_per_order": 31,
+      "pooled_paired_geometric_delta_percent": 0.005729720471014943,
+      "records": 124,
+      "requested_byte_delta_range": [
+        0,
+        0
+      ],
+      "requested_bytes_equivalent_every_pair": true,
+      "retained_structure_equivalent": true,
+      "role": "ordinary assertion-free construction",
+      "specialized_median_ns": 372340.0,
+      "specialized_slower_pairs_by_order": {
+        "ab": 14,
+        "ba": 15
+      },
+      "stable_greater_than_three_percent_regression": false
+    }
+  ],
+  "historical_h43_a1_disposition": "unchanged-machine-reject",
+  "integrity_errors": [],
+  "plan_sha256": "02903ae31638d4e3da220530224f6aef1d7a11d6c3b8eb4eefd2206e9e692753",
+  "resource_investigations": [],
+  "schema_version": 1,
+  "stable_regressions": [],
+  "window_disposition": "valid"
+}

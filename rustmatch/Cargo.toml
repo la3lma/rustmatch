@@ -15,6 +15,7 @@ publish = ["crates-io"]
 
 [features]
 benchmark-internals = []
+unstable-assertion-prefix-v1 = []
 
 [dependencies]
 rustmatch-simd = { path = "../rustmatch-simd", version = "0.1.0" }

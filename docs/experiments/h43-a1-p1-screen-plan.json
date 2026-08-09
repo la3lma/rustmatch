@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-A1-P1-PREPARATION-DISCRIMINATOR",
+  "policy": "G9-v3-causal-investigation",
+  "claim": "phase-local-shared-cohort-build-entry-point-equivalence",
+  "historical_h43_a1_disposition": "unchanged-machine-reject",
+  "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+  "candidate_tree": "fdbd8aec276a1519e28f53f1337c689bc73cdbf8",
+  "runner": "agogo.local",
+  "cpu_set": "0",
+  "warmup_pairs_per_order": 3,
+  "retained_pairs_per_order": 31,
+  "chronological_order": "three warmup AB+BA rounds, then 31 retained AB+BA rounds",
+  "timed_region": "consume a fully registered MatcherBuilder through exactly one shared-cohort build entry point",
+  "excluded_from_timing": [
+    "process startup",
+    "filesystem input",
+    "TSV parsing",
+    "regular-expression parsing and builder registration",
+    "diagnostic extraction",
+    "matcher destruction",
+    "JSON serialization"
+  ],
+  "thresholds": {
+    "investigate_regression_percent_exclusive": 2.0,
+    "close_regression_percent": 3.0,
+    "directional_burden_per_order": 27,
+    "directional_pairs_per_order": 31,
+    "maximum_allocation_call_difference_per_pair": 0,
+    "maximum_requested_byte_difference_per_pair": 0,
+    "maximum_retained_structure_difference_bytes": 0
+  },
+  "decision_rule": {
+    "close_h43_a2": "pooled and both order-specific paired-geometric regressions exceed three percent and at least 27 of 31 pairs are slower in each order",
+    "authorize_h43_a2": "no fixture satisfies the complete close rule and all structural integrity checks pass",
+    "authorize_x1_adr": "all structural integrity checks pass and every paired build has identical allocation calls and requested bytes; any measured time cost remains visible in total-work economics",
+    "invalid": "record count, order, variant, specialization bit, fixture hash, candidate hash, retained structure, Docker, GPU, service, or host-integrity mismatch"
+  },
+  "fixtures": [
+    {
+      "id": "target-assertion-boundary-1000",
+      "role": "assertion-prefix target construction",
+      "pattern_file": "assertion-boundary-1000.tsv",
+      "pattern_count": 1000,
+      "pattern_sha256": "80ded42e964dcbc601cbec3dfb3eb72eb045a69ef4f3dcf82d1c6dbcdace8d9c",
+      "seed_offset": 1
+    },
+    {
+      "id": "neighbor-assertion-adversarial-256",
+      "role": "ineligible assertion guard construction",
+      "pattern_file": "assertion-adversarial-256.tsv",
+      "pattern_count": 256,
+      "pattern_sha256": "4591a5001aeaf038cc8ad635284eda629e92af5acf3ad078791e2ff7263f5666",
+      "seed_offset": 2
+    },
+    {
+      "id": "guard-ordinary-literals-1000",
+      "role": "ordinary assertion-free construction",
+      "pattern_file": "ordinary-literals-1000.tsv",
+      "pattern_count": 1000,
+      "pattern_sha256": "94271d55599e9d868aab750d38f8cbcb0fb8cf4bf00958fcabf23c4b62f91e60",
+      "seed_offset": 3
+    }
+  ],
+  "runner_sources": [
+    {
+      "path": "scripts/h43-a1-p1-screen.sh",
+      "sha256": "b9da66ff870ab32b3003819829132e6e70c6b027a51e652dd3060728e40b1dde"
+    },
+    {
+      "path": "tools/h43_a1_p1_prepare_probe.rs",
+      "sha256": "75a91466a6a27f1cd7c895995009d867766c345c7f677dfd4418112fa370eede"
+    },
+    {
+      "path": "tools/h43_a1_p1_analyze.py",
+      "sha256": "9ed3c42aaece723abaeee8ecd6df7f67fb1b66a293c88c8831fcdaaa6947a55e"
+    }
+  ],
+  "required_evidence": [
+    "frozen plan and source hashes",
+    "124 retained builds per fixture with 31 AB and 31 BA adjacent pairs",
+    "per-build elapsed time, allocation calls, requested bytes, and retained structure",
+    "deterministic paired bootstrap interval and order-specific geometric effects",
+    "candidate workspace tests",
+    "Docker, GPU, managed-service, and host checkpoints",
+    "written conservative and experimental-path decisions"
+  ]
+}

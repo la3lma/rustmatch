@@ -9,10 +9,9 @@ description = "Unpublished semantic-fixture adapter for rustmatch"
 publish = false
 
 [dependencies]
-rustmatch = { path = "../rustmatch" }
+rustmatch = { path = "../rustmatch", features = ["benchmark-internals"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 
 [lints]
 workspace = true
-

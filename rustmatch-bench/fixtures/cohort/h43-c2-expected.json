@@ -1,0 +1,435 @@
+{
+  "schema_version": 1,
+  "classifier_version": "h43-c1-v1",
+  "proof_model_version": "normalized-hir-conservative-v1",
+  "pattern_source_digest": "fnv1a64:5c87accb471b5c1b",
+  "pattern_count": 18,
+  "cohort_count": 2,
+  "proof_provenance": {
+    "cohort_membership": "exhaustive-normalized-hir-assertion-walk-v1",
+    "assertions": "exhaustive-normalized-hir-assertion-walk-v1",
+    "nullability": "normalized-hir-nullability-v1",
+    "consumed_width": "conservative-normalized-hir-width-v1",
+    "ascii_domain": "exhaustive-normalized-hir-consumed-domain-v1",
+    "necessary_prefix": "conservative-normalized-hir-required-prefix-v1",
+    "hir_complexity": "saturating-normalized-hir-node-count-v1"
+  },
+  "cohorts": [
+    {
+      "name": "assertion-free",
+      "proof": "normalized-hir-contains-no-assertion-v1",
+      "pattern_ids": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ]
+    },
+    {
+      "name": "assertion-bearing",
+      "proof": "normalized-hir-contains-assertion-v1",
+      "pattern_ids": [
+        2,
+        3
+      ]
+    }
+  ],
+  "patterns": [
+    {
+      "pattern_id": 1,
+      "registration_ordinal": 0,
+      "expression_digest": "fnv1a64:e71fa2190541574b",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": 3,
+        "necessary_prefix_units": 3,
+        "filterable_prefix": true,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 2,
+      "registration_ordinal": 1,
+      "expression_digest": "fnv1a64:ac6e0337e2f3b7e1",
+      "cohort_candidate": "assertion-bearing",
+      "cohort_proof": "normalized-hir-contains-assertion-v1",
+      "assertion_kinds": [
+        "line-start",
+        "line-end"
+      ],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 3,
+        "filterable_prefix": true,
+        "hir_nodes": 6
+      }
+    },
+    {
+      "pattern_id": 3,
+      "registration_ordinal": 2,
+      "expression_digest": "fnv1a64:0c4caf823c9cdfd3",
+      "cohort_candidate": "assertion-bearing",
+      "cohort_proof": "normalized-hir-contains-assertion-v1",
+      "assertion_kinds": [
+        "word-boundary",
+        "non-word-boundary"
+      ],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 3,
+        "filterable_prefix": true,
+        "hir_nodes": 6
+      }
+    },
+    {
+      "pattern_id": 4,
+      "registration_ordinal": 3,
+      "expression_digest": "fnv1a64:0079c02eba69918a",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 1,
+        "maximum_consumed": {
+          "status": "unbounded",
+          "units": null
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 2
+      }
+    },
+    {
+      "pattern_id": 5,
+      "registration_ordinal": 4,
+      "expression_digest": "fnv1a64:0ac21707b7181e01",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 1,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 1
+        },
+        "ascii_only": false,
+        "proven_exact_literal_units": 1,
+        "necessary_prefix_units": 1,
+        "filterable_prefix": false,
+        "hir_nodes": 1
+      }
+    },
+    {
+      "pattern_id": 6,
+      "registration_ordinal": 5,
+      "expression_digest": "fnv1a64:c1b678bdfbec1e48",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 4,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 8
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 4,
+        "filterable_prefix": true,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 7,
+      "registration_ordinal": 6,
+      "expression_digest": "fnv1a64:9bd6e0052e682716",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 1,
+        "filterable_prefix": false,
+        "hir_nodes": 9
+      }
+    },
+    {
+      "pattern_id": 8,
+      "registration_ordinal": 7,
+      "expression_digest": "fnv1a64:089bfc07b5451e12",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": true,
+        "minimum_consumed_units": 0,
+        "maximum_consumed": {
+          "status": "unbounded",
+          "units": null
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 2
+      }
+    },
+    {
+      "pattern_id": 9,
+      "registration_ordinal": 8,
+      "expression_digest": "fnv1a64:e71fa2190541574b",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": 3,
+        "necessary_prefix_units": 3,
+        "filterable_prefix": true,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 10,
+      "registration_ordinal": 9,
+      "expression_digest": "fnv1a64:9fa55ea5892d4da5",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 32,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 32
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": 32,
+        "necessary_prefix_units": 32,
+        "filterable_prefix": true,
+        "hir_nodes": 33
+      }
+    },
+    {
+      "pattern_id": 11,
+      "registration_ordinal": 10,
+      "expression_digest": "fnv1a64:734db04817fb4e87",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 33,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 33
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 32,
+        "filterable_prefix": true,
+        "hir_nodes": 34
+      }
+    },
+    {
+      "pattern_id": 12,
+      "registration_ordinal": 11,
+      "expression_digest": "fnv1a64:e71fdd190541bb8c",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": false,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 2,
+        "filterable_prefix": false,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 13,
+      "registration_ordinal": 12,
+      "expression_digest": "fnv1a64:d58e86feb713bc8f",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 1,
+        "maximum_consumed": {
+          "status": "unbounded",
+          "units": null
+        },
+        "ascii_only": false,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 2
+      }
+    },
+    {
+      "pattern_id": 14,
+      "registration_ordinal": 13,
+      "expression_digest": "fnv1a64:008d0196a25e617a",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 3
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 15,
+      "registration_ordinal": 14,
+      "expression_digest": "fnv1a64:795c6ae59343af5f",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 3,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 6
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 1,
+        "filterable_prefix": false,
+        "hir_nodes": 10
+      }
+    },
+    {
+      "pattern_id": 16,
+      "registration_ordinal": 15,
+      "expression_digest": "fnv1a64:089c4407b545986a",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 2,
+        "maximum_consumed": {
+          "status": "finite",
+          "units": 2
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": 2,
+        "necessary_prefix_units": 2,
+        "filterable_prefix": false,
+        "hir_nodes": 3
+      }
+    },
+    {
+      "pattern_id": 17,
+      "registration_ordinal": 16,
+      "expression_digest": "fnv1a64:b665b99c2c6e2dbd",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": 2,
+        "maximum_consumed": {
+          "status": "unbounded",
+          "units": null
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 2,
+        "filterable_prefix": false,
+        "hir_nodes": 4
+      }
+    },
+    {
+      "pattern_id": 18,
+      "registration_ordinal": 17,
+      "expression_digest": "fnv1a64:07e11f07b4a6665a",
+      "cohort_candidate": "assertion-free",
+      "cohort_proof": "normalized-hir-contains-no-assertion-v1",
+      "assertion_kinds": [],
+      "facts": {
+        "nullable": false,
+        "minimum_consumed_units": null,
+        "maximum_consumed": {
+          "status": "impossible",
+          "units": null
+        },
+        "ascii_only": true,
+        "proven_exact_literal_units": null,
+        "necessary_prefix_units": 0,
+        "filterable_prefix": false,
+        "hir_nodes": 1
+      }
+    }
+  ]
+}

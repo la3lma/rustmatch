@@ -717,6 +717,7 @@ mod tests {
         mermaid_diagrams, mermaid_hash, mirror_path, normalize_path, relative_url,
         render_mermaid_blocks, split_local_url, verify_svg_source_binding,
     };
+    use std::collections::BTreeSet;
     use std::path::Path;
 
     #[test]
@@ -791,11 +792,27 @@ mod tests {
     fn repository_mermaid_inventory_is_complete() {
         let sources = markdown_sources().expect("collect Markdown");
         let diagrams = mermaid_diagrams(&sources).expect("collect Mermaid diagrams");
-        assert_eq!(diagrams.len(), 4);
-
         let repository_root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .expect("repository root");
+        let source_hashes = sources
+            .iter()
+            .flat_map(|source| {
+                let markdown = std::fs::read_to_string(repository_root.join(source))
+                    .expect("read Mermaid source");
+                mermaid_blocks(&markdown)
+                    .expect("parse Mermaid source")
+                    .into_iter()
+                    .map(|block| mermaid_hash(&block.source))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<BTreeSet<_>>();
+        let diagram_hashes = diagrams
+            .iter()
+            .map(|diagram| diagram.hash.clone())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(diagram_hashes, source_hashes);
+
         let roadmap =
             std::fs::read_to_string(repository_root.join("docs/roadmap.md")).expect("read roadmap");
         assert_eq!(mermaid_blocks(&roadmap).expect("parse roadmap").len(), 1);
@@ -818,6 +835,26 @@ mod tests {
                 .expect("parse post-H11 portfolio")
                 .len(),
             1
+        );
+        let cohort_plan = std::fs::read_to_string(
+            repository_root.join("docs/experiments/b2-h-0043-cohort-aware-matcher-plan.md"),
+        )
+        .expect("read cohort-aware matcher plan");
+        assert_eq!(
+            mermaid_blocks(&cohort_plan)
+                .expect("parse cohort-aware matcher plan")
+                .len(),
+            3
+        );
+        let explicit_capability = std::fs::read_to_string(
+            repository_root.join("docs/experiments/h43-explicit-risk-tier-design.md"),
+        )
+        .expect("read H43 explicit capability strategy");
+        assert_eq!(
+            mermaid_blocks(&explicit_capability)
+                .expect("parse H43 explicit capability strategy")
+                .len(),
+            2
         );
     }
 }

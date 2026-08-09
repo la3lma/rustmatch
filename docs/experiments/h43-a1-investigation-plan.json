@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-A1-INVESTIGATION",
+  "policy": "G9-v3",
+  "claim": "benchmark-only-assertion-specialization-investigation-not-admission",
+  "source_baseline_revision": "4e83f540edda2cbcd2d29c25549f05e692d8fec5",
+  "shared_carrier_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+  "historical_mechanism_revision": "a83b9c61ee24fa043891e8d6a2a25cfa2624722a",
+  "historical_h24_revision": "6cc6da3887555345f78b557cd47efdf92568bd21",
+  "implementation_boundary": "benchmark-internals shared assertion-bearing view only",
+  "selector_scope": "forced diagnostic mode; no automatic or public selector",
+  "eligibility": {
+    "minimum_assertion_bearing_patterns": 256,
+    "required_prefix_units": 5,
+    "required_prefix_kind": "one identical nonzero ASCII consumed prefix after at least one leading assertion in every assertion-bearing pattern",
+    "minimum_input_units": 1048576,
+    "dense_sample_units": 65536,
+    "dense_sample_bypass_ratio": 0.5,
+    "fallback": "unchanged all-start assertion verifier"
+  },
+  "fail_fast_thresholds": {
+    "minimum_target_scan_gain_percent": 5.0,
+    "investigate_guard_regression_percent_exclusive": 2.0,
+    "maximum_guard_regression_percent": 3.0,
+    "directional_burden_cycles": 13,
+    "formal_cycles": 15,
+    "peak_rss_absolute_materiality_bytes": 1048576,
+    "maximum_extra_build_allocation_calls": 64,
+    "maximum_extra_build_requested_bytes": 65536
+  },
+  "immediate_rejection": [
+    "any exact event, error, callback atomicity, pattern-id, raw-UTF-16, or reuse mismatch",
+    "any repeatable declared guard regression greater than three percent",
+    "all assertion targets below five percent after mechanism identity is verified",
+    "fixture identity, path, hash, warm-up, padding, or post-hoc threshold participates in routing",
+    "generic-only code links or dispatches through the specialized hot path and one bounded isolation recovery cannot remove it"
+  ],
+  "investigate_not_reject": [
+    "a demonstrated guard regression greater than two percent through three percent",
+    "a high-discrepancy result with large target gains and a plausibly separable preparation, memory, buffering, layout, or selector cost",
+    "directionally unstable evidence that does not satisfy the predeclared cycle rule"
+  ],
+  "focused_cells": [
+    "target-assertion-boundary-1000-1m-w1",
+    "target-assertion-boundary-1000-2m-w1",
+    "neighbor-assertion-adversarial-256-1m-w1",
+    "guard-ordinary-literals-1000-1m-w1",
+    "h43-mixed-balanced-w1",
+    "h43-mixed-output-w1",
+    "assertion-prefix-mismatch-fallback",
+    "assertion-prefix-dense-fallback",
+    "assertion-prefix-short-input-fallback"
+  ],
+  "required_lanes": [
+    "source correspondence to H22/H24",
+    "forced generic versus forced specialized differential",
+    "H43-E1 exact semantic and fault campaign",
+    "ordinary generic scan codegen and symbol isolation",
+    "preparation-only allocation and requested-byte accounting",
+    "peak RSS and buffered-output accounting",
+    "exclusive-host alternating focused screen with Docker and GPU guards"
+  ],
+  "risk_tier_follow_up": {
+    "status": "deferred until conservative disposition",
+    "constraint": "a deliberate opt-in may expose higher performance risk but may never weaken correctness, memory safety, event semantics, evidence retention, or truthful documentation"
+  }
+}

@@ -38,33 +38,64 @@ project.
 
 ## Current performance snapshot
 
-The latest exact overlap snapshot measures the current H42 production source
-(`c6f221b`) against retained, unchanged Java rmatch, Rust `regex::RegexSet`,
-and Hyperscan results from the same benchmark scenarios. Ratios are Rustmatch
-throughput divided by the reference throughput, so values above `1.0x` favor
-Rustmatch.
+Fresh results for revision `7dd80c0` use the
+[two-product benchmark contract](docs/benchmarking/default-vs-experimental.md).
+Ratios are Rustmatch throughput divided by the retained reference throughput,
+so values above `1.0x` favor Rustmatch.
+
+### Generic/default
+
+This primary panel measures exactly `MatcherBuilder::new()` with no worker,
+cache, prefilter, cohort, or experimental override. It is a feature-off release
+build and uses the public default of one worker.
 
 | Reference | Contract | Exact overlap | Rust wins | Geometric mean | Median | Range |
 |---|---|---:|---:|---:|---:|---:|
-| Java rmatch | Same complete event contract | 9 groups | 9/9 | **44.543x** | 80.983x | 2.738x-126.566x |
-| Rust `regex::RegexSet` | Different output contract | 8 groups | 4/8 | **2.288x** | 1.086x | 0.194x-27.154x |
-| Hyperscan | Native-reference diagnostic | 8 groups | 2/8 | **0.308x (30.8%)** | 0.402x | 0.011x-3.637x |
+| Java rmatch | Same complete event contract | 9 groups | 9/9 | **5.539x** | 6.402x | 2.758x-6.977x |
+| Rust `regex::RegexSet` | Different output contract | 8 groups | 1/8 | **0.256x (25.6%)** | 0.498x | 0.0136x-1.447x |
+| Hyperscan | Native-reference diagnostic | 8 groups | 0/8 | **0.0424x (4.24%)** | 0.0307x | 0.0113x-0.284x |
 
-The result is competitive rather than universal: Rustmatch wins every
-same-contract Java comparison, leads RegexSet on geometric mean while splitting
-the individual scenarios, and reaches 30.8% of Hyperscan overall while winning
-two scenarios. On the same overlap, H11 measured 27.893x Java rmatch, 1.351x
-RegexSet, and 0.210x Hyperscan, so the current source improves those
-geometric-mean ratios by 1.60x, 1.69x, and 1.47x, respectively. Java rmatch is
-the directly comparable complete-event reference. RegexSet and Hyperscan use
-different native semantics, so those measurements are useful performance
-references rather than fairness claims.
+Rustmatch wins every same-contract Java comparison. The RegexSet and Hyperscan
+numbers are useful speed references, but their native output contracts differ
+from Rustmatch's complete `(pattern_id, start, end)` event stream. This default
+panel is intentionally less flattering than the older
+[tuned-worker H42 snapshot](docs/experiments/h42-cross-engine-snapshot.md): it
+defines a new public-default series rather than relabeling or moving the
+goalposts of that historical experiment.
 
-This is an exact nine-group admission-overlap update, not a new full-dataset
-rerun. H42's formal outcome remains `investigate` because its Wuthering guard
-was 2.111% below H11; it entered production through an explicit owner-authorized
-exception. See the [cell-level comparison, method, and retained
-receipts](docs/experiments/h42-cross-engine-snapshot.md).
+The [retained cross-engine and Rustmatch-generation report](docs/benchmarking/retained-cross-engine-comparison.md)
+shows every available exact-overlap scenario, old B2 and H11 Rustmatch,
+current H42 tuned production, the public default, full historical B2 coverage,
+explicitly missing cells, and rendered comparison graphs. It uses only
+previously collected evidence; no additional benchmark run was made.
+
+### Experimental oracle-selected capability
+
+This secondary panel is deliberately workload-tuned. It explicitly enables the
+`assertion-prefix-v1` backend after seeing the exact expressions and corpus,
+forbids fallback, and makes **no** claim about default behavior, automatic
+selection, or unseen workloads. The exact candidate is **machine-rejected, not
+merged or published**: the single complete R3 confirmation retained its scan
+benefit but one independent preparation metric crossed the unchanged 3% veto.
+
+| Workload | Public default | Experimental | Speedup | Outcome |
+|---|---:|---:|---:|---|
+| Assertion boundary, 1,000 patterns, 1 MiB | 0.946 Mbit/s | 219.172 Mbit/s | **231.62x** | Scan and total work pass |
+| Assertion boundary, 1,000 patterns, 2 MiB | 0.943 Mbit/s | 435.786 Mbit/s | **460.49x** | Scan passes; preparation veto |
+| Nine historical default guards | unchanged public matcher | N/A | N/A | All metrics below 2% |
+| Four static/dynamic refusal probes | exact refusal | N/A | N/A | All passed |
+
+The R3 confirmation used 15 adjacent AB/BA crossover cycles, two warmups, and
+five retained scans per process. All 1,020 paired receipts, 120 calibration
+receipts, 18 allocation receipts, and four functional probes passed semantic,
+provenance, and host validation. The sole blocker was a 5.792673% preparation
+regression on the 2 MiB target, with 11 of 15 cycles adverse. Two subsequent
+corpus-conditioned construction discriminators found only a repeatable
+0.717%-0.976% cost, below 2%; this supports owner-exception review but does not
+relabel R3 as a pass. See the [R3 result](docs/experiments/h43-x1-7-r3-confirmation-result.md),
+the [causal follow-up](docs/experiments/h43-x1-8-conditioned-preparation-result.md),
+the earlier [two-product methodology](docs/benchmarking/default-vs-experimental-results.md),
+and the [curated evidence](docs/evidence/h43/x1.8/8c27d23/README.md).
 
 ## TL;DR
 

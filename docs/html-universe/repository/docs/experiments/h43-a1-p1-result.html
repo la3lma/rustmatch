@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H43-A1-P1 phase-local preparation discriminator result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h43-a1-p1-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h43-a1-p1-result.md</div></header><main><h1>H43-A1-P1 phase-local preparation discriminator result</h1>
+<p><strong>Date:</strong> 2026-08-07<br>
+<strong>Candidate:</strong> <code>8ad52d9600cb7de3c98ee345fd82fb06f9e7d429</code><br>
+<strong>Runner:</strong> <code>f5cabeef7129fff6367671ff2d8c6baf1f1cced9</code><br>
+<strong>Plan SHA-256:</strong> <code>02903ae31638d4e3da220530224f6aef1d7a11d6c3b8eb4eefd2206e9e692753</code><br>
+<strong>Window:</strong> <code>2026-08-07T09:35:59Z</code> through <code>09:36:09Z</code><br>
+<strong>Disposition:</strong> valid; authorize H43-A2 and the X1.1 ADR<br>
+<strong>Historical H43-A1 disposition:</strong> unchanged machine rejection</p>
+<h2>Decision</h2>
+<p>H43-A1-P1 finds no systematic construction cost from enabling the isolated
+assertion-prefix policy bit. It authorizes conservative H43-A2 eligibility work
+and the separately governed X1.1 explicit-capability ADR. It does not admit
+H43-A1, remove its rejected preparation cell, or alter any historical numeric
+threshold.</p>
+<p>The original 20.366% preparation aggregate was dominated by one fresh process
+whose matcher preparation and unrelated input preparation both rose about
+fourteenfold. After process startup, filesystem input, TSV parsing,
+regular-expression registration, diagnostics, destruction, and serialization
+were removed from the timed interval, every phase-local effect was near zero.
+The two entry points also retained identical allocations, requested bytes, and
+compiled structure in every adjacent pair.</p>
+<p>The causal interpretation is therefore strong: the rejecting H43-A1 cycle was
+not a repeatable compiler or representation cost caused by the specialization
+bit. The immutable rejection remains a valid statement about that exact
+fresh-process window, while this discriminator resolves the narrower causal
+question it authorized.</p>
+<h2>Frozen method</h2>
+<p>Each pattern fixture was read and parsed once by one process. Before every
+timed build, a fully registered <code>MatcherBuilder</code> was prepared outside the
+measurement interval. The interval consumed that builder through exactly one
+of these entry points:</p>
+<ul>
+<li><code>build_shared_cohort_diagnostic</code>; or</li>
+<li><code>build_shared_cohort_assertion_diagnostic</code>.</li>
+</ul>
+<p>For each fixture, three AB+BA rounds warmed the process. Thirty-one retained AB
+pairs and thirty-one retained BA pairs then produced 124 builds. Across three
+fixtures, the clean window retained 372 builds. The predeclared close rule
+required all of the following on one fixture:</p>
+<ul>
+<li>pooled paired-geometric construction regression above 3%;</li>
+<li>both order-specific regressions above 3%; and</li>
+<li>at least 27 of 31 specialized builds slower in each order.</li>
+</ul>
+<p>No fixture approached that complete rule.</p>
+<h2>Results</h2>
+<table><thead><tr><th>Fixture</th><th style="text-align: right">Generic median</th><th style="text-align: right">Specialized median</th><th style="text-align: right">Pooled paired delta</th><th style="text-align: right">AB / BA delta</th><th style="text-align: right">Slower pairs AB / BA</th><th style="text-align: right">Paired bootstrap 95% interval</th></tr></thead><tbody>
+<tr><td>assertion-prefix target, 1,000 patterns</td><td style="text-align: right">404.932 us</td><td style="text-align: right">404.972 us</td><td style="text-align: right">+0.0681%</td><td style="text-align: right">+0.0527% / +0.0836%</td><td style="text-align: right">20 / 16</td><td style="text-align: right">-0.1066% to +0.2765%</td></tr>
+<tr><td>adversarial assertions, 256 patterns</td><td style="text-align: right">107.594 us</td><td style="text-align: right">107.649 us</td><td style="text-align: right">-0.0274%</td><td style="text-align: right">+0.0966% / -0.1512%</td><td style="text-align: right">18 / 12</td><td style="text-align: right">-0.5930% to +0.5129%</td></tr>
+<tr><td>ordinary literals, 1,000 patterns</td><td style="text-align: right">372.371 us</td><td style="text-align: right">372.340 us</td><td style="text-align: right">+0.0057%</td><td style="text-align: right">-0.0118% / +0.0233%</td><td style="text-align: right">14 / 15</td><td style="text-align: right">-0.1515% to +0.1651%</td></tr>
+</tbody></table>
+<p>Positive deltas mean the specialized entry point was slower. All intervals
+span zero, both orders remain close to zero, and every directional count is
+well below the frozen 27-of-31 burden.</p>
+<p>Every one of the 186 adjacent generic/specialized comparisons had:</p>
+<ul>
+<li>zero difference in allocation calls;</li>
+<li>zero difference in requested bytes;</li>
+<li>equal state, edge, predicate, terminal, pattern, cohort, database-byte, and
+prefilter-byte facts; and</li>
+<li>only the expected final specialization boolean difference.</li>
+</ul>
+<h2>Window integrity</h2>
+<ul>
+<li>Candidate revision and tree matched the frozen plan.</li>
+<li>All three source hashes and all fixture hashes matched.</li>
+<li>The candidate workspace all-feature test suite passed before measurement.</li>
+<li>The local independent analyzer recomputation was byte-identical to the
+retained summary.</li>
+<li>Docker event and contamination logs were both empty.</li>
+<li>The GPU remained idle.</li>
+<li><code>llms5090-ollama</code>, <code>llms5090-openwebui</code>, and
+<code>hive-build-telemetryd-agogo</code> remained <code>exited</code> with restart policy <code>no</code>.</li>
+<li>The post-window SHA-256 manifest verifies.</li>
+</ul>
+<p>An earlier <code>09:35:05Z</code> launch stopped before creating a run directory because
+non-interactive SSH did not expose Cargo in <code>PATH</code>. Its console and PID sidecar
+are retained in the compact bundle. It contains no timing and is not part of
+the accepted window.</p>
+<h2>Decisions enabled</h2>
+<ol>
+<li><strong>H43-A2 is authorized.</strong> Causal eligibility and fallback boundaries may be
+explored under fresh predeclared guards. Any automatic result still owes a
+complete unchanged G9 campaign.</li>
+<li><strong>X1.1 is authorized.</strong> ADR-0009 may freeze the versioned feature, separate
+matcher type, explicit scan policies, diagnostics, SemVer boundary, and
+three admission lanes.</li>
+<li><strong>H43-A1 remains rejected.</strong> This result explains its outlier; it does not
+rerun, exclude, or admit the original artifact.</li>
+</ol>
+<h2>Evidence</h2>
+<ul>
+<li><a href="../evidence/h43/a1-p1/8ad52d9/README.html">Reviewed evidence index</a></li>
+<li><a href="../../../../experiments/h43-a1-p1-screen-plan.json">Frozen discriminator plan</a></li>
+<li><a href="../adr/0009-explicit-experimental-matcher.html">ADR-0009 explicit matcher isolation</a></li>
+<li>Full retained evidence:
+<code>/home/rmz/git/h43-a1-p1-screen-20260807T093559Z</code></li>
+<li>Compact bundle:
+<code>/Users/rmz/.codex/handoffs/rustmatch/h43-a1-p1/h43-a1-p1-screen-20260807T093559Z-compact.tar.gz</code></li>
+<li>Compact bundle SHA-256:
+<code>cd014709818bc76c422f7656494ad7f201ff03af91b15f39aa54ec5f21ea9ab0</code></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/h43-a1-p1-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

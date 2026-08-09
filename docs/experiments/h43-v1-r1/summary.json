@@ -1,0 +1,120 @@
+{
+  "automatic_disposition": "authorize-runtime-spine",
+  "blockers": [],
+  "candidate_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+  "claim": "prefilter-neutral-shared-storage-carrier-recovery-feasibility-only-not-admission",
+  "evidence_id": "H43-V1-R1-SCREEN-summary",
+  "plan_sha256": "d2ea60d03c3d2986c0abd66707e9610b7058fb6f7515ee437ed7388f3cedeb52",
+  "preproved_local_evidence": {
+    "ordinary_scan_codegen_canonical_sha256": "c8fa56000a3a4ff069c2b8e83cd59d8edc9c5cae1bb4401b1b46cf2ed780d094",
+    "semantic_comparisons": 3628,
+    "strict_all_feature_clippy": "pass",
+    "structural_invariant": "shared compilation adds exactly one state and no edges, predicates, terminals, or pattern IDs",
+    "targeted_recovery_tests": "pass"
+  },
+  "resources": [
+    {
+      "extra_allocation_calls": 2,
+      "extra_requested_bytes": -178,
+      "fixture": "mixed-balanced",
+      "ordinary_allocation_calls": 1272,
+      "ordinary_peak_live_usable_bytes": 159136,
+      "ordinary_requested_bytes": 281801,
+      "shared_allocation_calls": 1274,
+      "shared_peak_live_usable_bytes": 158960,
+      "shared_requested_bytes": 281623
+    },
+    {
+      "extra_allocation_calls": 0,
+      "extra_requested_bytes": -178,
+      "fixture": "mixed-output",
+      "ordinary_allocation_calls": 220,
+      "ordinary_peak_live_usable_bytes": 19248,
+      "ordinary_requested_bytes": 33879,
+      "shared_allocation_calls": 220,
+      "shared_peak_live_usable_bytes": 19040,
+      "shared_requested_bytes": 33701
+    }
+  ],
+  "schema_version": 1,
+  "timing": [
+    {
+      "cycles": 3,
+      "event_digest": "multiset64:e5b6d2bbf254fe3b:b33057b2ff99558f:ea129f2f5068f503",
+      "fixture": "mixed-balanced",
+      "matches_per_iteration": 64,
+      "ordinary_database_retained_bytes": 31864,
+      "ordinary_prefilter_retained_bytes": 0,
+      "ordinary_prepare_median_ns": 73720,
+      "ordinary_prepare_ns": [
+        75453,
+        73720,
+        70734
+      ],
+      "ordinary_scan_median_ns": 140288194,
+      "ordinary_scan_ns": [
+        140288194,
+        135674899,
+        144652437
+      ],
+      "parity_errors": [],
+      "prepare_median_delta_percent": 2.594953879544226,
+      "prepare_paired_geometric_delta_percent": 4.297001725911831,
+      "scan_median_gain_percent": 54.948958855368836,
+      "scan_paired_geometric_gain_percent": 54.50212064386915,
+      "shared_database_retained_bytes": 31896,
+      "shared_prefilter_retained_bytes": 0,
+      "shared_prepare_median_ns": 75633,
+      "shared_prepare_ns": [
+        74341,
+        75633,
+        79390
+      ],
+      "shared_scan_median_ns": 63201292,
+      "shared_scan_ns": [
+        63201292,
+        66094320,
+        62076862
+      ]
+    },
+    {
+      "cycles": 3,
+      "event_digest": "multiset64:0f3d361680ca05d0:88df2a1d540f0841:4f8bccc0017fd750",
+      "fixture": "mixed-output",
+      "matches_per_iteration": 75040,
+      "ordinary_database_retained_bytes": 4024,
+      "ordinary_prefilter_retained_bytes": 0,
+      "ordinary_prepare_median_ns": 20379,
+      "ordinary_prepare_ns": [
+        20379,
+        21079,
+        18375
+      ],
+      "ordinary_scan_median_ns": 39170604,
+      "ordinary_scan_ns": [
+        39170604,
+        39368748,
+        39060725
+      ],
+      "parity_errors": [],
+      "prepare_median_delta_percent": -1.0353795573875058,
+      "prepare_paired_geometric_delta_percent": 1.4971435572092018,
+      "scan_median_gain_percent": 90.42526635535157,
+      "scan_paired_geometric_gain_percent": 90.48580640115622,
+      "shared_database_retained_bytes": 4056,
+      "shared_prefilter_retained_bytes": 0,
+      "shared_prepare_median_ns": 20168,
+      "shared_prepare_ns": [
+        19818,
+        20649,
+        20168
+      ],
+      "shared_scan_median_ns": 3750481,
+      "shared_scan_ns": [
+        3621687,
+        3819181,
+        3750481
+      ]
+    }
+  ]
+}

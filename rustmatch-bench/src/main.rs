@@ -10,7 +10,15 @@ use std::process::ExitCode;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use regex::{Regex, RegexSet};
-use rustmatch::{Matcher, MatcherBuilder, PatternId, ScanDiagnostics, Utf16Text};
+#[cfg(feature = "experimental-showcase")]
+use rustmatch::experimental::assertion_prefix_v1::{
+    AssertionPrefixMatcher, AssertionPrefixMatcherBuilder, BuildError as ExperimentalBuildError,
+    ScanBackend as ExperimentalScanBackend, ScanError as ExperimentalScanError, ScanPolicy,
+};
+use rustmatch::{
+    Matcher, MatcherBuilder, PatternDiagnostics, PatternId, ScanDiagnostics, SharedCohortMatcher,
+    Utf16Text,
+};
 use serde::{Deserialize, Serialize};
 
 const SMOKE_PATTERN_COUNT: usize = 32;
@@ -74,6 +82,25 @@ fn run(mut arguments: impl Iterator<Item = String>) -> Result<CommandOutput, Str
             literal_tripwire().map(CommandOutput::Tripwire)
         }
         Some("harness-run") => harness_run_command(&mut arguments).map(CommandOutput::HarnessRun),
+        Some("generic-run") => {
+            generic_run_command(&mut arguments).map(CommandOutput::BenchmarkProduct)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        Some("experimental-run") => {
+            experimental_run_command(&mut arguments).map(CommandOutput::BenchmarkProduct)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        Some("construction-run") => {
+            construction_run_command(&mut arguments).map(CommandOutput::Construction)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        Some("conditioned-construction-run") => {
+            conditioned_construction_run_command(&mut arguments)
+                .map(CommandOutput::ConditionedConstruction)
+        }
+        Some("cohort-report") => {
+            cohort_report_command(&mut arguments).map(CommandOutput::CohortReport)
+        }
         Some("compare-tripwire") => {
             comparison_paths(&mut arguments, compare_tripwire_files).map(CommandOutput::Comparison)
         }
@@ -174,6 +201,119 @@ fn harness_run_command(
     )
 }
 
+fn generic_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<BenchmarkProductReceipt, String> {
+    let (patterns, corpus, repeats, warmups) = benchmark_product_arguments(arguments)?;
+    benchmark_product_run(
+        Path::new(&patterns),
+        Path::new(&corpus),
+        repeats,
+        warmups,
+        BenchmarkProductBackend::Default,
+        #[cfg(feature = "experimental-showcase")]
+        None,
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn experimental_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<BenchmarkProductReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let repeats = parse_positive_usize("repeat count", arguments.next())?;
+    let warmups = parse_positive_usize("warm-up count", arguments.next())?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    let policy = match arguments.next().as_deref() {
+        None | Some("require-specialized") => ExperimentalProductPolicy::RequireSpecialized,
+        Some("allow-exact-fallback") => ExperimentalProductPolicy::AllowExactFallback,
+        Some(policy) => {
+            return Err(format!(
+                "unknown experimental scan policy {policy:?}; expected require-specialized or allow-exact-fallback"
+            ));
+        }
+    };
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = match backend.as_str() {
+        "assertion-prefix-v1" => BenchmarkProductBackend::AssertionPrefixV1,
+        _ => {
+            return Err(format!(
+                "unknown experimental backend {backend:?}; expected assertion-prefix-v1"
+            ));
+        }
+    };
+    benchmark_product_run(
+        Path::new(&patterns),
+        Path::new(&corpus),
+        repeats,
+        warmups,
+        backend,
+        Some(policy),
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn construction_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<ConstructionReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = ConstructionBackend::parse(&backend)?;
+    let pattern_bytes = fs::read(&patterns).map_err(|error| {
+        format!("could not read construction-only patterns {patterns}: {error}")
+    })?;
+    construction_run(&pattern_bytes, backend)
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn conditioned_construction_run_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<ConditionedConstructionReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let backend = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    let backend = ConstructionBackend::parse(&backend)?;
+    let pattern_bytes = fs::read(&patterns).map_err(|error| {
+        format!("could not read conditioned-construction patterns {patterns}: {error}")
+    })?;
+    let corpus_bytes = fs::read(&corpus).map_err(|error| {
+        format!("could not read conditioned-construction corpus {corpus}: {error}")
+    })?;
+    conditioned_construction_run(&pattern_bytes, &corpus_bytes, backend)
+}
+
+fn benchmark_product_arguments(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<(String, String, usize, usize), String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    let corpus = arguments.next().ok_or_else(usage)?;
+    let repeats = parse_positive_usize("repeat count", arguments.next())?;
+    let warmups = parse_positive_usize("warm-up count", arguments.next())?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    Ok((patterns, corpus, repeats, warmups))
+}
+
+fn cohort_report_command(
+    arguments: &mut impl Iterator<Item = String>,
+) -> Result<CohortReportReceipt, String> {
+    let patterns = arguments.next().ok_or_else(usage)?;
+    if arguments.next().is_some() {
+        return Err(usage());
+    }
+    cohort_report(Path::new(&patterns))
+}
+
 fn comparison_paths<T>(
     arguments: &mut impl Iterator<Item = String>,
     compare: impl FnOnce(&Path, &Path) -> Result<T, String>,
@@ -187,7 +327,7 @@ fn comparison_paths<T>(
 }
 
 fn usage() -> String {
-    "usage: rustmatch-bench <literal-smoke|literal-tripwire|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>".to_owned()
+    "usage: rustmatch-bench <literal-smoke|literal-tripwire|generic-run PATTERNS.tsv CORPUS REPEATS WARMUPS|experimental-run PATTERNS.tsv CORPUS REPEATS WARMUPS BACKEND [require-specialized|allow-exact-fallback]|construction-run PATTERNS.tsv BACKEND|conditioned-construction-run PATTERNS.tsv CORPUS BACKEND|harness-run PATTERNS.tsv CORPUS REPEATS WARMUPS MODE|cohort-report PATTERNS.tsv|compare-tripwire BASE.json CANDIDATE.json|i6-scan SCENARIO PATTERN_COUNT CORPUS_BYTES|compare-i6 BASE.json CANDIDATE.json|i7-scan SCENARIO PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-i7 BASE.json CANDIDATE.json|wuthering-scan PATTERNS.txt CORPUS.txt PATTERN_COUNT CORPUS_BYTES CACHE_SCRUB_BYTES|compare-wuthering-tripwire BASE.json CANDIDATE.json|compare-i7-wuthering BASE.json CANDIDATE.json|render-table OUTPUT.html RECEIPT.json...>; construction BACKEND is generic or assertion-prefix-v1; experimental BACKEND is assertion-prefix-v1; harness MODE is nfa, single, WORKERS, cohort-WORKERS, cohort-view-1, or cohort-assert-1".to_owned()
 }
 
 fn parse_positive_usize(description: &str, value: Option<String>) -> Result<usize, String> {
@@ -234,7 +374,7 @@ fn harness_run(
         repeats,
         || {
             let (summary, diagnostics) =
-                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
             Ok(((summary, diagnostics), summary.count))
         },
         || harness_event_count(&matcher, &fixture.input),
@@ -280,6 +420,610 @@ fn harness_run(
         diagnostics: diagnostics.into(),
         correctness: "pass",
     })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BenchmarkProductBackend {
+    Default,
+    #[cfg(feature = "experimental-showcase")]
+    AssertionPrefixV1,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ConstructionBackend {
+    Generic,
+    AssertionPrefixV1,
+}
+
+#[cfg(feature = "experimental-showcase")]
+impl ConstructionBackend {
+    fn parse(source: &str) -> Result<Self, String> {
+        match source {
+            "generic" => Ok(Self::Generic),
+            "assertion-prefix-v1" => Ok(Self::AssertionPrefixV1),
+            _ => Err(format!(
+                "unknown construction-only backend {source:?}; expected generic or assertion-prefix-v1"
+            )),
+        }
+    }
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Generic => "generic",
+            Self::AssertionPrefixV1 => "assertion-prefix-v1",
+        }
+    }
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn construction_run(
+    pattern_bytes: &[u8],
+    backend: ConstructionBackend,
+) -> Result<ConstructionReceipt, String> {
+    let pattern_load_started = Instant::now();
+    let patterns = parse_pattern_rows(pattern_bytes, "construction-only", true)?;
+    let pattern_load_ns = nanos(pattern_load_started.elapsed());
+
+    let measurement = measure_construction(&patterns, backend)?;
+    Ok(ConstructionReceipt {
+        schema_version: 1,
+        runner_version: "h43-x1.6-construction-only-v1",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        backend: backend.label(),
+        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        pattern_source_digest: byte_digest(pattern_bytes),
+        expression_count: patterns.len(),
+        pattern_load_ns,
+        registration_ns: measurement.registration_ns,
+        compile_ns: measurement.compile_ns,
+        prepare_ns: measurement.prepare_ns,
+        structure: measurement.structure,
+        correctness: "construction-pass",
+    })
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn conditioned_construction_run(
+    pattern_bytes: &[u8],
+    corpus_bytes: &[u8],
+    backend: ConstructionBackend,
+) -> Result<ConditionedConstructionReceipt, String> {
+    let input_started = Instant::now();
+    let fixture = HarnessFixture::from_bytes(pattern_bytes, corpus_bytes)?;
+    let input_prepare_ns = nanos(input_started.elapsed());
+    black_box(&fixture.input);
+    let measurement = measure_construction(&fixture.patterns, backend)?;
+    black_box(&fixture.input);
+    Ok(ConditionedConstructionReceipt {
+        schema_version: 1,
+        runner_version: "h43-x1.8-conditioned-construction-v1",
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        backend: backend.label(),
+        feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        pattern_source_digest: byte_digest(pattern_bytes),
+        corpus_source_digest: byte_digest(corpus_bytes),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_prepare_ns,
+        registration_ns: measurement.registration_ns,
+        compile_ns: measurement.compile_ns,
+        prepare_ns: measurement.prepare_ns,
+        structure: measurement.structure,
+        correctness: "conditioned-construction-pass",
+    })
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn measure_construction(
+    patterns: &[HarnessPattern],
+    backend: ConstructionBackend,
+) -> Result<ConstructionMeasurement, String> {
+    let construct_started = Instant::now();
+    let registration_started = Instant::now();
+    let (registration_ns, compile_ns, structure) = match backend {
+        ConstructionBackend::Generic => {
+            let mut builder = MatcherBuilder::new();
+            for pattern in patterns {
+                builder
+                    .add(pattern.id, &pattern.expression)
+                    .map_err(|error| {
+                        format!(
+                            "generic construction pattern {} was rejected: {error}",
+                            pattern.id
+                        )
+                    })?;
+            }
+            let registration_ns = nanos(registration_started.elapsed());
+            let compile_started = Instant::now();
+            let matcher = builder
+                .build()
+                .map_err(|error| format!("generic construction failed: {error}"))?;
+            let compile_ns = nanos(compile_started.elapsed());
+            let diagnostics = matcher.cohort_execution_diagnostics();
+            black_box(&matcher);
+            (
+                registration_ns,
+                compile_ns,
+                ConstructionStructureReceipt::Generic {
+                    matcher_object_bytes: std::mem::size_of_val(&matcher),
+                    total_partition_count: diagnostics.total_partition_count(),
+                    total_cache_budget: diagnostics.total_cache_budget(),
+                },
+            )
+        }
+        ConstructionBackend::AssertionPrefixV1 => {
+            let mut builder = AssertionPrefixMatcherBuilder::new();
+            for pattern in patterns {
+                builder
+                    .add(pattern.id, &pattern.expression)
+                    .map_err(|error| {
+                        format!(
+                            "assertion-prefix construction pattern {} was rejected: {error}",
+                            pattern.id
+                        )
+                    })?;
+            }
+            let registration_ns = nanos(registration_started.elapsed());
+            let compile_started = Instant::now();
+            let matcher = builder
+                .build()
+                .map_err(|error| format!("assertion-prefix construction failed: {error}"))?;
+            let compile_ns = nanos(compile_started.elapsed());
+            let eligibility = matcher.static_eligibility();
+            let diagnostics = matcher.structure_diagnostics();
+            black_box(&matcher);
+            (
+                registration_ns,
+                compile_ns,
+                ConstructionStructureReceipt::AssertionPrefixV1 {
+                    matcher_object_bytes: std::mem::size_of_val(&matcher),
+                    assertion_pattern_count: eligibility.assertion_pattern_count(),
+                    shared_ascii_prefix: String::from_utf8_lossy(
+                        &eligibility.shared_ascii_prefix(),
+                    )
+                    .into_owned(),
+                    state_count: diagnostics.state_count(),
+                    edge_count: diagnostics.edge_count(),
+                    predicate_count: diagnostics.predicate_count(),
+                    terminal_count: diagnostics.terminal_count(),
+                    pattern_count: diagnostics.pattern_count(),
+                    database_retained_bytes: diagnostics.database_retained_bytes(),
+                    prefilter_retained_bytes: diagnostics.prefilter_retained_bytes(),
+                    assertion_prefix_available: diagnostics.assertion_prefix_available(),
+                    assertion_specialization_enabled: diagnostics
+                        .assertion_specialization_enabled(),
+                },
+            )
+        }
+    };
+    let prepare_ns = nanos(construct_started.elapsed());
+    Ok(ConstructionMeasurement {
+        registration_ns,
+        compile_ns,
+        prepare_ns,
+        structure,
+    })
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ExperimentalProductPolicy {
+    RequireSpecialized,
+    AllowExactFallback,
+}
+
+#[cfg(feature = "experimental-showcase")]
+impl ExperimentalProductPolicy {
+    const fn scan_policy(self) -> ScanPolicy {
+        match self {
+            Self::RequireSpecialized => ScanPolicy::RequireSpecialized,
+            Self::AllowExactFallback => ScanPolicy::AllowExactFallback,
+        }
+    }
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::RequireSpecialized => "require-specialized",
+            Self::AllowExactFallback => "allow-exact-fallback",
+        }
+    }
+}
+
+fn benchmark_product_run(
+    pattern_path: &Path,
+    corpus_path: &Path,
+    repeats: usize,
+    warmups: usize,
+    backend: BenchmarkProductBackend,
+    #[cfg(feature = "experimental-showcase")] experimental_policy: Option<
+        ExperimentalProductPolicy,
+    >,
+) -> Result<BenchmarkProductReceipt, String> {
+    let input_started = Instant::now();
+    let pattern_bytes = fs::read(pattern_path).map_err(|error| {
+        format!(
+            "could not read benchmark-product patterns {}: {error}",
+            pattern_path.display()
+        )
+    })?;
+    let corpus_bytes = fs::read(corpus_path).map_err(|error| {
+        format!(
+            "could not read benchmark-product corpus {}: {error}",
+            corpus_path.display()
+        )
+    })?;
+    let fixture = HarnessFixture::from_bytes(&pattern_bytes, &corpus_bytes)?;
+    let input_prepare_ns = nanos(input_started.elapsed());
+
+    match backend {
+        BenchmarkProductBackend::Default => {
+            benchmark_default_product(&fixture, input_prepare_ns, repeats, warmups)
+        }
+        #[cfg(feature = "experimental-showcase")]
+        BenchmarkProductBackend::AssertionPrefixV1 => benchmark_assertion_prefix_product(
+            &fixture,
+            input_prepare_ns,
+            repeats,
+            warmups,
+            experimental_policy.ok_or_else(|| {
+                "experimental benchmark product requires an explicit scan policy".to_owned()
+            })?,
+        ),
+    }
+}
+
+fn benchmark_default_product(
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    repeats: usize,
+    warmups: usize,
+) -> Result<BenchmarkProductReceipt, String> {
+    let prepare_started = Instant::now();
+    let matcher = build_harness_matcher(&fixture.patterns, HarnessMode::Single)?;
+    let prepare_ns = nanos(prepare_started.elapsed());
+    let measurements = measure_harness_scans(
+        warmups,
+        repeats,
+        || {
+            let (summary, diagnostics) =
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+            Ok(((summary, diagnostics), summary.count))
+        },
+        || harness_event_count(&matcher, &fixture.input),
+    )?;
+    let (summary, diagnostics) = measurements.evidence;
+    measured_product_receipt(
+        BenchmarkProductMetadata::generic_default(),
+        fixture,
+        MeasuredProductEvidence {
+            input_prepare_ns,
+            prepare_ns,
+            warmup_ns: measurements.warmup_ns,
+            scan_ns: measurements.scan_ns,
+            summary,
+            diagnostics: Some(diagnostics.into()),
+            backend_activation: None,
+        },
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn benchmark_assertion_prefix_product(
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    repeats: usize,
+    warmups: usize,
+    policy: ExperimentalProductPolicy,
+) -> Result<BenchmarkProductReceipt, String> {
+    let metadata = BenchmarkProductMetadata::assertion_prefix_v1();
+    let prepare_started = Instant::now();
+    let mut builder = AssertionPrefixMatcherBuilder::new();
+    for pattern in &fixture.patterns {
+        builder
+            .add(pattern.id, &pattern.expression)
+            .map_err(|error| {
+                format!(
+                    "experimental pattern {} was rejected during registration: {error}",
+                    pattern.id
+                )
+            })?;
+    }
+    let matcher = match builder.build() {
+        Ok(matcher) => matcher,
+        Err(ExperimentalBuildError::Ineligible(reason)) => {
+            return Ok(ineligible_product_receipt(
+                metadata,
+                fixture,
+                input_prepare_ns,
+                nanos(prepare_started.elapsed()),
+                "static",
+                reason.to_string(),
+            ));
+        }
+        Err(error) => {
+            return Err(format!(
+                "experimental assertion-prefix matcher build failed: {error}"
+            ));
+        }
+    };
+    let prepare_ns = nanos(prepare_started.elapsed());
+    let first_started = Instant::now();
+    let (summary, first_report) =
+        match assertion_prefix_event_summary(&matcher, &fixture.input, policy.scan_policy()) {
+            Ok(evidence) => evidence,
+            Err(ExperimentalScanError::SpecializationUnavailable { reason }) => {
+                return Ok(ineligible_product_receipt(
+                    metadata,
+                    fixture,
+                    input_prepare_ns,
+                    prepare_ns,
+                    "dynamic",
+                    format!("{reason:?}"),
+                ));
+            }
+            Err(error) => {
+                return Err(format!(
+                    "experimental assertion-prefix activation scan failed: {error}"
+                ));
+            }
+        };
+    let first_ns = nanos(first_started.elapsed());
+    let mut warmup_ns = Vec::with_capacity(warmups);
+    let mut scan_ns = Vec::with_capacity(repeats);
+    if warmups == 0 {
+        scan_ns.push(first_ns);
+    } else {
+        warmup_ns.push(first_ns);
+    }
+    while warmup_ns.len() < warmups {
+        let started = Instant::now();
+        let count = assertion_prefix_event_count(
+            &matcher,
+            &fixture.input,
+            policy.scan_policy(),
+            &first_report,
+        )?;
+        warmup_ns.push(nanos(started.elapsed()));
+        validate_harness_count("experimental warm-up", count, summary.count)?;
+    }
+    while scan_ns.len() < repeats {
+        let started = Instant::now();
+        let count = assertion_prefix_event_count(
+            &matcher,
+            &fixture.input,
+            policy.scan_policy(),
+            &first_report,
+        )?;
+        scan_ns.push(nanos(started.elapsed()));
+        validate_harness_count("experimental measurement", count, summary.count)?;
+    }
+    let backend_activation = assertion_prefix_activation_receipt(policy, &first_report);
+    measured_product_receipt(
+        metadata,
+        fixture,
+        MeasuredProductEvidence {
+            input_prepare_ns,
+            prepare_ns,
+            warmup_ns,
+            scan_ns,
+            summary,
+            diagnostics: None,
+            backend_activation: Some(backend_activation),
+        },
+    )
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_activation_receipt(
+    policy: ExperimentalProductPolicy,
+    report: &rustmatch::experimental::assertion_prefix_v1::ScanReport,
+) -> BackendActivationReceipt {
+    let eligibility = report.static_eligibility();
+    BackendActivationReceipt {
+        requested_scan_policy: policy.label(),
+        activated_backend: match report.activated_backend() {
+            ExperimentalScanBackend::AssertionPrefixV1 => "assertion-prefix-v1",
+            ExperimentalScanBackend::GenericExactFallback => "generic-exact-fallback",
+            _ => "unknown-nonexhaustive-backend",
+        },
+        assertion_pattern_count: eligibility.assertion_pattern_count(),
+        shared_ascii_prefix: String::from_utf8_lossy(&eligibility.shared_ascii_prefix())
+            .into_owned(),
+        candidate_count: report.candidate_count(),
+        candidate_bytes: report.candidate_bytes(),
+        fallback_reason: report.fallback_reason().map(|reason| format!("{reason:?}")),
+    }
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_event_summary(
+    matcher: &AssertionPrefixMatcher,
+    input: &Utf16Text,
+    policy: ScanPolicy,
+) -> Result<
+    (
+        EventSummary,
+        rustmatch::experimental::assertion_prefix_v1::ScanReport,
+    ),
+    ExperimentalScanError,
+> {
+    let mut summary = EventSummary::default();
+    let report = matcher.scan_with_policy(input, policy, |event| {
+        summary.add(&Event {
+            pattern_id: event.pattern_id().get(),
+            start: event.span().start(),
+            end: event.span().end(),
+        });
+    })?;
+    Ok((summary, report))
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn assertion_prefix_event_count(
+    matcher: &AssertionPrefixMatcher,
+    input: &Utf16Text,
+    policy: ScanPolicy,
+    expected: &rustmatch::experimental::assertion_prefix_v1::ScanReport,
+) -> Result<usize, String> {
+    let mut count = 0_usize;
+    let report = matcher
+        .scan_with_policy(input, policy, |_| count += 1)
+        .map_err(|error| format!("experimental assertion-prefix scan failed: {error}"))?;
+    if report.requested_policy() != expected.requested_policy()
+        || report.activated_backend() != expected.activated_backend()
+        || report.fallback_reason() != expected.fallback_reason()
+    {
+        return Err("experimental assertion-prefix activation changed between scans".to_owned());
+    }
+    Ok(count)
+}
+
+fn measured_product_receipt(
+    metadata: BenchmarkProductMetadata,
+    fixture: &HarnessFixture,
+    evidence: MeasuredProductEvidence,
+) -> Result<BenchmarkProductReceipt, String> {
+    let median_scan_ns = median(&mut evidence.scan_ns.clone());
+    if median_scan_ns == 0 {
+        return Err("benchmark-product median scan time must be positive".to_owned());
+    }
+    let throughput_bytes = u32::try_from(fixture.corpus_bytes).map_err(|_| {
+        "benchmark-product corpus exceeds the 4 GiB throughput-reporting limit".to_owned()
+    })?;
+    let throughput_nanos = u64::try_from(median_scan_ns)
+        .map_err(|_| "benchmark-product scan duration exceeds u64 nanoseconds".to_owned())?;
+    let throughput_mbit_per_second = f64::from(throughput_bytes) * 8.0
+        / Duration::from_nanos(throughput_nanos).as_secs_f64()
+        / 1_000_000.0;
+    Ok(BenchmarkProductReceipt {
+        schema_version: 1,
+        runner_version: "rustmatch-benchmark-product-v1",
+        engine: metadata.engine,
+        benchmark_product: metadata.benchmark_product,
+        selection_policy: metadata.selection_policy,
+        workload_tuned: metadata.workload_tuned,
+        robustness_claim: metadata.robustness_claim,
+        selected_backend: metadata.selected_backend,
+        feature_profile: metadata.feature_profile,
+        candidate_status: "measured",
+        ineligibility: None,
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_units: fixture.input.as_units().len(),
+        input_prepare_ns: evidence.input_prepare_ns,
+        prepare_ns: evidence.prepare_ns,
+        warmup_ns: evidence.warmup_ns,
+        scan_ns: evidence.scan_ns,
+        median_scan_ns: Some(median_scan_ns),
+        throughput_mbit_per_second: Some(throughput_mbit_per_second),
+        matches_per_iteration: Some(evidence.summary.count),
+        event_digest: Some(evidence.summary.digest()),
+        diagnostics: evidence.diagnostics,
+        backend_activation: evidence.backend_activation,
+        correctness: "pass",
+    })
+}
+
+#[derive(Debug)]
+struct MeasuredProductEvidence {
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+    summary: EventSummary,
+    diagnostics: Option<CacheDiagnosticsReceipt>,
+    backend_activation: Option<BackendActivationReceipt>,
+}
+
+#[cfg(feature = "experimental-showcase")]
+fn ineligible_product_receipt(
+    metadata: BenchmarkProductMetadata,
+    fixture: &HarnessFixture,
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    stage: &'static str,
+    reason: String,
+) -> BenchmarkProductReceipt {
+    BenchmarkProductReceipt {
+        schema_version: 1,
+        runner_version: "rustmatch-benchmark-product-v1",
+        engine: metadata.engine,
+        benchmark_product: metadata.benchmark_product,
+        selection_policy: metadata.selection_policy,
+        workload_tuned: metadata.workload_tuned,
+        robustness_claim: metadata.robustness_claim,
+        selected_backend: metadata.selected_backend,
+        feature_profile: metadata.feature_profile,
+        candidate_status: "ineligible",
+        ineligibility: Some(IneligibilityReceipt { stage, reason }),
+        revision: benchmark_revision(),
+        rust_version: env::var("RUSTMATCH_RUST_VERSION")
+            .unwrap_or_else(|_| "local-unidentified".to_owned()),
+        expression_count: fixture.patterns.len(),
+        corpus_bytes: fixture.corpus_bytes,
+        input_units: fixture.input.as_units().len(),
+        input_prepare_ns,
+        prepare_ns,
+        warmup_ns: Vec::new(),
+        scan_ns: Vec::new(),
+        median_scan_ns: None,
+        throughput_mbit_per_second: None,
+        matches_per_iteration: None,
+        event_digest: None,
+        diagnostics: None,
+        backend_activation: None,
+        correctness: "not-run-ineligible",
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct BenchmarkProductMetadata {
+    engine: &'static str,
+    benchmark_product: &'static str,
+    selection_policy: &'static str,
+    workload_tuned: bool,
+    robustness_claim: &'static str,
+    selected_backend: &'static str,
+    feature_profile: &'static str,
+}
+
+impl BenchmarkProductMetadata {
+    const fn generic_default() -> Self {
+        Self {
+            engine: "rustmatch-rust-default",
+            benchmark_product: "generic-default-v1",
+            selection_policy: "none-default-settings",
+            workload_tuned: false,
+            robustness_claim: "default-behavior-over-published-matrix",
+            selected_backend: "default",
+            feature_profile: if cfg!(feature = "experimental-showcase") {
+                "benchmark-internals;experimental-showcase-enabled-unused"
+            } else {
+                "benchmark-internals;no-experimental-features"
+            },
+        }
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    const fn assertion_prefix_v1() -> Self {
+        Self {
+            engine: "rustmatch-rust-experimental",
+            benchmark_product: "experimental-oracle-candidate-v1",
+            selection_policy: "externally-retrospective-best-exact-per-cell",
+            workload_tuned: true,
+            robustness_claim: "none-workload-specific-capability-only",
+            selected_backend: "assertion-prefix-v1",
+            feature_profile: "benchmark-internals;unstable-assertion-prefix-v1",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -349,7 +1093,7 @@ fn validate_harness_count(
 fn build_harness_matcher(
     patterns: &[HarnessPattern],
     mode: HarnessMode,
-) -> Result<Matcher, String> {
+) -> Result<HarnessMatcher, String> {
     let mut builder = MatcherBuilder::new();
     match mode {
         HarnessMode::Nfa => {
@@ -359,8 +1103,15 @@ fn build_harness_matcher(
                 .literal_prefilter_enabled(false);
         }
         HarnessMode::Single => {}
-        HarnessMode::Parallel(worker_count) => {
+        HarnessMode::Parallel(worker_count)
+        | HarnessMode::SharedCohort(worker_count)
+        | HarnessMode::SharedAssertion(worker_count) => {
             builder.worker_count(worker_count);
+        }
+        HarnessMode::Cohort(worker_count) => {
+            builder
+                .worker_count(worker_count)
+                .cohort_compilation_enabled(true);
         }
     }
     for pattern in patterns {
@@ -368,12 +1119,29 @@ fn build_harness_matcher(
             .add(pattern.id, &pattern.expression)
             .map_err(|error| format!("harness pattern {} was rejected: {error}", pattern.id))?;
     }
-    builder
-        .build()
-        .map_err(|error| format!("harness matcher build failed: {error}"))
+    if matches!(mode, HarnessMode::SharedCohort(_)) {
+        builder
+            .build_shared_cohort_diagnostic()
+            .map(Box::new)
+            .map(HarnessMatcher::SharedCohort)
+            .map_err(|error| format!("shared-cohort harness matcher build failed: {error}"))
+    } else if matches!(mode, HarnessMode::SharedAssertion(_)) {
+        builder
+            .build_shared_cohort_assertion_diagnostic()
+            .map(Box::new)
+            .map(HarnessMatcher::SharedCohort)
+            .map_err(|error| {
+                format!("shared assertion-cohort harness matcher build failed: {error}")
+            })
+    } else {
+        builder
+            .build()
+            .map(HarnessMatcher::Standard)
+            .map_err(|error| format!("harness matcher build failed: {error}"))
+    }
 }
 
-fn harness_event_count(matcher: &Matcher, input: &Utf16Text) -> Result<usize, String> {
+fn harness_event_count(matcher: &HarnessMatcher, input: &Utf16Text) -> Result<usize, String> {
     let mut count = 0_usize;
     matcher
         .scan(input, |_| count += 1)
@@ -381,11 +1149,42 @@ fn harness_event_count(matcher: &Matcher, input: &Utf16Text) -> Result<usize, St
     Ok(count)
 }
 
+#[derive(Debug)]
+enum HarnessMatcher {
+    Standard(Matcher),
+    SharedCohort(Box<SharedCohortMatcher>),
+}
+
+impl HarnessMatcher {
+    fn scan(&self, input: &Utf16Text, sink: impl FnMut(rustmatch::Match)) -> Result<(), String> {
+        match self {
+            Self::Standard(matcher) => matcher.scan(input, sink),
+            Self::SharedCohort(matcher) => matcher.scan(input, sink),
+        }
+        .map_err(|error| format!("harness scan failed: {error}"))
+    }
+
+    fn scan_with_diagnostics(
+        &self,
+        input: &Utf16Text,
+        sink: impl FnMut(rustmatch::Match),
+    ) -> Result<ScanDiagnostics, String> {
+        match self {
+            Self::Standard(matcher) => matcher.scan_with_diagnostics(input, sink),
+            Self::SharedCohort(matcher) => matcher.scan_with_diagnostics(input, sink),
+        }
+        .map_err(|error| format!("harness diagnostic scan failed: {error}"))
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum HarnessMode {
     Nfa,
     Single,
     Parallel(usize),
+    Cohort(usize),
+    SharedCohort(usize),
+    SharedAssertion(usize),
 }
 
 impl HarnessMode {
@@ -393,6 +1192,55 @@ impl HarnessMode {
         match source {
             "nfa" => Ok(Self::Nfa),
             "single" => Ok(Self::Single),
+            shared if shared.starts_with("cohort-view-") => {
+                let worker_count = shared
+                    .strip_prefix("cohort-view-")
+                    .expect("matched shared cohort prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!("invalid harness mode {source:?}; expected cohort-view-1: {error}")
+                    })?;
+                if worker_count == 1 {
+                    Ok(Self::SharedCohort(worker_count))
+                } else {
+                    Err("shared-cohort feasibility mode requires exactly one worker".to_owned())
+                }
+            }
+            shared if shared.starts_with("cohort-assert-") => {
+                let worker_count = shared
+                    .strip_prefix("cohort-assert-")
+                    .expect("matched shared assertion prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!(
+                            "invalid harness mode {source:?}; expected cohort-assert-1: {error}"
+                        )
+                    })?;
+                if worker_count == 1 {
+                    Ok(Self::SharedAssertion(worker_count))
+                } else {
+                    Err(
+                        "assertion specialization diagnostic requires exactly one worker"
+                            .to_owned(),
+                    )
+                }
+            }
+            cohort if cohort.starts_with("cohort-") => {
+                let worker_count = cohort
+                    .strip_prefix("cohort-")
+                    .expect("matched cohort prefix")
+                    .parse::<usize>()
+                    .map_err(|error| {
+                        format!(
+                            "invalid harness mode {source:?}; expected cohort-WORKERS with a positive worker count: {error}"
+                        )
+                    })?;
+                if worker_count == 0 {
+                    Err("harness cohort worker count must be greater than zero".to_owned())
+                } else {
+                    Ok(Self::Cohort(worker_count))
+                }
+            }
             _ => {
                 let worker_count = source.parse::<usize>().map_err(|error| {
                     format!(
@@ -413,6 +1261,9 @@ impl HarnessMode {
             Self::Nfa => "nfa".to_owned(),
             Self::Single => "single".to_owned(),
             Self::Parallel(worker_count) => worker_count.to_string(),
+            Self::Cohort(worker_count) => format!("cohort-{worker_count}"),
+            Self::SharedCohort(worker_count) => format!("cohort-view-{worker_count}"),
+            Self::SharedAssertion(worker_count) => format!("cohort-assert-{worker_count}"),
         }
     }
 }
@@ -432,53 +1283,10 @@ struct HarnessFixture {
 
 impl HarnessFixture {
     fn from_bytes(pattern_bytes: &[u8], corpus_bytes: &[u8]) -> Result<Self, String> {
-        if !pattern_bytes.is_ascii() {
-            return Err("harness pattern file must contain only ASCII bytes".to_owned());
-        }
         if !corpus_bytes.is_ascii() {
             return Err("harness corpus must contain only ASCII bytes".to_owned());
         }
-        let pattern_text = std::str::from_utf8(pattern_bytes)
-            .map_err(|error| format!("harness pattern file is not valid ASCII: {error}"))?;
-        let mut ids = BTreeSet::new();
-        let mut patterns = Vec::new();
-        for (line_index, source_line) in pattern_text.lines().enumerate() {
-            let line = source_line.strip_suffix('\r').unwrap_or(source_line);
-            let (id_source, expression) = line.split_once('\t').ok_or_else(|| {
-                format!(
-                    "harness pattern row {} has no tab separator",
-                    line_index + 1
-                )
-            })?;
-            if expression.is_empty() || expression.contains('\t') {
-                return Err(format!(
-                    "harness pattern row {} must contain one non-empty expression",
-                    line_index + 1
-                ));
-            }
-            let id_value = id_source.parse::<u32>().map_err(|error| {
-                format!(
-                    "invalid harness pattern ID {id_source:?} on row {}: {error}",
-                    line_index + 1
-                )
-            })?;
-            if id_value == 0 {
-                return Err(format!(
-                    "harness pattern ID on row {} must be positive",
-                    line_index + 1
-                ));
-            }
-            if !ids.insert(id_value) {
-                return Err(format!("duplicate harness pattern ID {id_value}"));
-            }
-            patterns.push(HarnessPattern {
-                id: PatternId::new(id_value),
-                expression: expression.to_owned(),
-            });
-        }
-        if patterns.is_empty() {
-            return Err("harness pattern file must contain at least one row".to_owned());
-        }
+        let patterns = parse_pattern_rows(pattern_bytes, "harness", true)?;
         let corpus_text = std::str::from_utf8(corpus_bytes)
             .map_err(|error| format!("harness corpus is not valid ASCII: {error}"))?;
         Ok(Self {
@@ -487,6 +1295,203 @@ impl HarnessFixture {
             corpus_bytes: corpus_bytes.len(),
         })
     }
+}
+
+fn parse_pattern_rows(
+    pattern_bytes: &[u8],
+    description: &str,
+    require_ascii: bool,
+) -> Result<Vec<HarnessPattern>, String> {
+    if require_ascii && !pattern_bytes.is_ascii() {
+        return Err(format!(
+            "{description} pattern file must contain only ASCII bytes"
+        ));
+    }
+    let pattern_text = std::str::from_utf8(pattern_bytes).map_err(|error| {
+        let encoding = if require_ascii { "ASCII" } else { "UTF-8" };
+        format!("{description} pattern file is not valid {encoding}: {error}")
+    })?;
+    let mut ids = BTreeSet::new();
+    let mut patterns = Vec::new();
+    for (line_index, source_line) in pattern_text.lines().enumerate() {
+        let line = source_line.strip_suffix('\r').unwrap_or(source_line);
+        let (id_source, expression) = line.split_once('\t').ok_or_else(|| {
+            format!(
+                "{description} pattern row {} has no tab separator",
+                line_index + 1
+            )
+        })?;
+        if expression.is_empty() || expression.contains('\t') {
+            return Err(format!(
+                "{description} pattern row {} must contain one non-empty expression",
+                line_index + 1
+            ));
+        }
+        let id_value = id_source.parse::<u32>().map_err(|error| {
+            format!(
+                "invalid {description} pattern ID {id_source:?} on row {}: {error}",
+                line_index + 1
+            )
+        })?;
+        if id_value == 0 {
+            return Err(format!(
+                "{description} pattern ID on row {} must be positive",
+                line_index + 1
+            ));
+        }
+        if !ids.insert(id_value) {
+            return Err(format!("duplicate {description} pattern ID {id_value}"));
+        }
+        patterns.push(HarnessPattern {
+            id: PatternId::new(id_value),
+            expression: expression.to_owned(),
+        });
+    }
+    if patterns.is_empty() {
+        return Err(format!(
+            "{description} pattern file must contain at least one row"
+        ));
+    }
+    Ok(patterns)
+}
+
+fn cohort_report(pattern_path: &Path) -> Result<CohortReportReceipt, String> {
+    let pattern_bytes = fs::read(pattern_path).map_err(|error| {
+        format!(
+            "could not read cohort-report patterns {}: {error}",
+            pattern_path.display()
+        )
+    })?;
+    cohort_report_from_bytes(&pattern_bytes)
+}
+
+fn cohort_report_from_bytes(pattern_bytes: &[u8]) -> Result<CohortReportReceipt, String> {
+    let patterns = parse_pattern_rows(pattern_bytes, "cohort-report", false)?;
+    let mut builder = MatcherBuilder::new();
+    for pattern in &patterns {
+        builder
+            .add(pattern.id, &pattern.expression)
+            .map_err(|error| {
+                format!("cohort-report pattern {} was rejected: {error}", pattern.id)
+            })?;
+    }
+    let diagnostics = builder.cohort_diagnostics();
+    if patterns.len() != diagnostics.patterns().len() {
+        return Err("cohort-report diagnostics lost a registered pattern".to_owned());
+    }
+
+    let pattern_receipts = patterns
+        .iter()
+        .zip(diagnostics.patterns())
+        .map(|(pattern, facts)| pattern_diagnostic_receipt(pattern, facts))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut cohorts = Vec::with_capacity(diagnostics.cohort_count());
+    if !diagnostics.assertion_free_pattern_ids().is_empty() {
+        cohorts.push(CohortSummaryReceipt {
+            name: "assertion-free".to_owned(),
+            proof: "normalized-hir-contains-no-assertion-v1".to_owned(),
+            pattern_ids: diagnostics
+                .assertion_free_pattern_ids()
+                .iter()
+                .map(|pattern_id| pattern_id.get())
+                .collect(),
+        });
+    }
+    if !diagnostics.assertion_bearing_pattern_ids().is_empty() {
+        cohorts.push(CohortSummaryReceipt {
+            name: "assertion-bearing".to_owned(),
+            proof: "normalized-hir-contains-assertion-v1".to_owned(),
+            pattern_ids: diagnostics
+                .assertion_bearing_pattern_ids()
+                .iter()
+                .map(|pattern_id| pattern_id.get())
+                .collect(),
+        });
+    }
+
+    Ok(CohortReportReceipt {
+        schema_version: 1,
+        classifier_version: "h43-c1-v1".to_owned(),
+        proof_model_version: "normalized-hir-conservative-v1".to_owned(),
+        pattern_source_digest: byte_digest(pattern_bytes),
+        pattern_count: pattern_receipts.len(),
+        cohort_count: cohorts.len(),
+        proof_provenance: ProofProvenanceReceipt::v1(),
+        cohorts,
+        patterns: pattern_receipts,
+    })
+}
+
+fn pattern_diagnostic_receipt(
+    pattern: &HarnessPattern,
+    facts: &PatternDiagnostics,
+) -> Result<PatternDiagnosticReceipt, String> {
+    if pattern.id != facts.pattern_id() {
+        return Err(format!(
+            "cohort-report registration {} was paired with diagnostic {}",
+            pattern.id,
+            facts.pattern_id()
+        ));
+    }
+    let maximum_consumed = match (facts.maximum_consumed(), facts.has_unbounded_maximum()) {
+        (Some(units), false) => ConsumedMaximumReceipt {
+            status: "finite".to_owned(),
+            units: Some(units),
+        },
+        (None, true) => ConsumedMaximumReceipt {
+            status: "unbounded".to_owned(),
+            units: None,
+        },
+        (None, false) => ConsumedMaximumReceipt {
+            status: "impossible".to_owned(),
+            units: None,
+        },
+        (Some(_), true) => {
+            return Err(format!(
+                "cohort-report pattern {} has contradictory maximum-width facts",
+                pattern.id
+            ));
+        }
+    };
+    Ok(PatternDiagnosticReceipt {
+        pattern_id: facts.pattern_id().get(),
+        registration_ordinal: facts.registration_ordinal(),
+        expression_digest: byte_digest(pattern.expression.as_bytes()),
+        cohort_candidate: facts.cohort().to_owned(),
+        cohort_proof: if facts.uses_assertions() {
+            "normalized-hir-contains-assertion-v1".to_owned()
+        } else {
+            "normalized-hir-contains-no-assertion-v1".to_owned()
+        },
+        assertion_kinds: assertion_kinds(facts),
+        facts: PatternFactsReceipt {
+            nullable: facts.nullable(),
+            minimum_consumed_units: facts.minimum_consumed(),
+            maximum_consumed,
+            ascii_only: facts.is_ascii_only(),
+            proven_exact_literal_units: facts.proven_exact_literal_units(),
+            necessary_prefix_units: facts.necessary_prefix_units(),
+            filterable_prefix: facts.has_filterable_prefix(),
+            hir_nodes: facts.hir_nodes(),
+        },
+    })
+}
+
+fn assertion_kinds(facts: &PatternDiagnostics) -> Vec<String> {
+    let mut kinds = Vec::with_capacity(4);
+    if facts.uses_line_start() {
+        kinds.push("line-start".to_owned());
+    }
+    if facts.uses_line_end() {
+        kinds.push("line-end".to_owned());
+    }
+    if facts.uses_word_boundary() {
+        kinds.push("word-boundary".to_owned());
+    }
+    if facts.uses_non_word_boundary() {
+        kinds.push("non-word-boundary".to_owned());
+    }
+    kinds
 }
 
 fn literal_smoke() -> Result<SmokeReceipt, String> {
@@ -1218,6 +2223,21 @@ fn rust_event_summary_with_diagnostics(
             });
         })
         .map_err(|error| format!("rustmatch diagnostic scale scan failed: {error}"))?;
+    Ok((summary, diagnostics))
+}
+
+fn harness_event_summary_with_diagnostics(
+    matcher: &HarnessMatcher,
+    input: &Utf16Text,
+) -> Result<(EventSummary, ScanDiagnostics), String> {
+    let mut summary = EventSummary::default();
+    let diagnostics = matcher.scan_with_diagnostics(input, |event| {
+        summary.add(&Event {
+            pattern_id: event.pattern_id().get(),
+            start: event.span().start(),
+            end: event.span().end(),
+        });
+    })?;
     Ok((summary, diagnostics))
 }
 
@@ -2251,6 +3271,10 @@ enum CommandOutput {
     Smoke(SmokeReceipt),
     Tripwire(TripwireReceipt),
     HarnessRun(HarnessRunReceipt),
+    BenchmarkProduct(BenchmarkProductReceipt),
+    Construction(ConstructionReceipt),
+    ConditionedConstruction(ConditionedConstructionReceipt),
+    CohortReport(CohortReportReceipt),
     Comparison(ComparisonReceipt),
     I6Scan(I6ScanReceipt),
     I6Comparison(I6ComparisonReceipt),
@@ -2260,6 +3284,215 @@ enum CommandOutput {
     ScaleScan(ScaleScanReceipt),
     ScaleComparison(ScaleComparisonReceipt),
     Report(ReportReceipt),
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+struct ConstructionReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    revision: String,
+    rust_version: String,
+    backend: &'static str,
+    feature_profile: &'static str,
+    pattern_source_digest: String,
+    expression_count: usize,
+    pattern_load_ns: u128,
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
+    correctness: &'static str,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+struct ConditionedConstructionReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    revision: String,
+    rust_version: String,
+    backend: &'static str,
+    feature_profile: &'static str,
+    pattern_source_digest: String,
+    corpus_source_digest: String,
+    expression_count: usize,
+    corpus_bytes: usize,
+    input_prepare_ns: u128,
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
+    correctness: &'static str,
+}
+
+#[cfg(feature = "experimental-showcase")]
+struct ConstructionMeasurement {
+    registration_ns: u128,
+    compile_ns: u128,
+    prepare_ns: u128,
+    structure: ConstructionStructureReceipt,
+}
+
+#[cfg(feature = "experimental-showcase")]
+#[derive(Debug, Serialize)]
+#[serde(tag = "matcher_type", rename_all = "kebab-case")]
+enum ConstructionStructureReceipt {
+    Generic {
+        matcher_object_bytes: usize,
+        total_partition_count: usize,
+        total_cache_budget: usize,
+    },
+    AssertionPrefixV1 {
+        matcher_object_bytes: usize,
+        assertion_pattern_count: usize,
+        shared_ascii_prefix: String,
+        state_count: usize,
+        edge_count: usize,
+        predicate_count: usize,
+        terminal_count: usize,
+        pattern_count: usize,
+        database_retained_bytes: usize,
+        prefilter_retained_bytes: usize,
+        assertion_prefix_available: bool,
+        assertion_specialization_enabled: bool,
+    },
+}
+
+#[derive(Debug, Serialize)]
+struct BenchmarkProductReceipt {
+    schema_version: u32,
+    runner_version: &'static str,
+    engine: &'static str,
+    benchmark_product: &'static str,
+    selection_policy: &'static str,
+    workload_tuned: bool,
+    robustness_claim: &'static str,
+    selected_backend: &'static str,
+    feature_profile: &'static str,
+    candidate_status: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ineligibility: Option<IneligibilityReceipt>,
+    revision: String,
+    rust_version: String,
+    expression_count: usize,
+    corpus_bytes: usize,
+    input_units: usize,
+    input_prepare_ns: u128,
+    prepare_ns: u128,
+    warmup_ns: Vec<u128>,
+    scan_ns: Vec<u128>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    median_scan_ns: Option<u128>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    throughput_mbit_per_second: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    matches_per_iteration: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    event_digest: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    diagnostics: Option<CacheDiagnosticsReceipt>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    backend_activation: Option<BackendActivationReceipt>,
+    correctness: &'static str,
+}
+
+#[derive(Debug, Serialize)]
+struct IneligibilityReceipt {
+    stage: &'static str,
+    reason: String,
+}
+
+#[derive(Debug, Serialize)]
+struct BackendActivationReceipt {
+    requested_scan_policy: &'static str,
+    activated_backend: &'static str,
+    assertion_pattern_count: usize,
+    shared_ascii_prefix: String,
+    candidate_count: usize,
+    candidate_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fallback_reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CohortReportReceipt {
+    schema_version: u32,
+    classifier_version: String,
+    proof_model_version: String,
+    pattern_source_digest: String,
+    pattern_count: usize,
+    cohort_count: usize,
+    proof_provenance: ProofProvenanceReceipt,
+    cohorts: Vec<CohortSummaryReceipt>,
+    patterns: Vec<PatternDiagnosticReceipt>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct ProofProvenanceReceipt {
+    cohort_membership: String,
+    assertions: String,
+    nullability: String,
+    consumed_width: String,
+    ascii_domain: String,
+    necessary_prefix: String,
+    hir_complexity: String,
+}
+
+impl ProofProvenanceReceipt {
+    fn v1() -> Self {
+        Self {
+            cohort_membership: "exhaustive-normalized-hir-assertion-walk-v1".to_owned(),
+            assertions: "exhaustive-normalized-hir-assertion-walk-v1".to_owned(),
+            nullability: "normalized-hir-nullability-v1".to_owned(),
+            consumed_width: "conservative-normalized-hir-width-v1".to_owned(),
+            ascii_domain: "exhaustive-normalized-hir-consumed-domain-v1".to_owned(),
+            necessary_prefix: "conservative-normalized-hir-required-prefix-v1".to_owned(),
+            hir_complexity: "saturating-normalized-hir-node-count-v1".to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CohortSummaryReceipt {
+    name: String,
+    proof: String,
+    pattern_ids: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PatternDiagnosticReceipt {
+    pattern_id: u32,
+    registration_ordinal: usize,
+    expression_digest: String,
+    cohort_candidate: String,
+    cohort_proof: String,
+    assertion_kinds: Vec<String>,
+    facts: PatternFactsReceipt,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PatternFactsReceipt {
+    nullable: bool,
+    minimum_consumed_units: Option<usize>,
+    maximum_consumed: ConsumedMaximumReceipt,
+    ascii_only: bool,
+    proven_exact_literal_units: Option<usize>,
+    necessary_prefix_units: usize,
+    filterable_prefix: bool,
+    hir_nodes: usize,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+struct ConsumedMaximumReceipt {
+    status: String,
+    units: Option<usize>,
 }
 
 #[derive(Debug, Serialize)]
@@ -2619,6 +3852,7 @@ struct CacheDiagnosticsReceipt {
     fallback_transitions: u64,
     cache_table_bytes: usize,
     assertion_bypasses: u64,
+    assertion_prefix_activations: u64,
     prefilter_path: String,
     prefilter_bypass: String,
     prefilter_retained_bytes: usize,
@@ -2645,6 +3879,7 @@ impl From<ScanDiagnostics> for CacheDiagnosticsReceipt {
             fallback_transitions: value.fallback_transitions(),
             cache_table_bytes: value.cache_table_bytes(),
             assertion_bypasses: value.assertion_bypasses(),
+            assertion_prefix_activations: value.assertion_prefix_activations(),
             prefilter_path: value.prefilter_path().to_owned(),
             prefilter_bypass: value.prefilter_bypass().to_owned(),
             prefilter_retained_bytes: value.prefilter_retained_bytes(),
@@ -2805,16 +4040,308 @@ struct ComparisonReceipt {
 #[cfg(test)]
 mod tests {
     use super::{
-        CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture, Event, HarnessFixture,
-        HarnessMode, I6ScanReceipt, I7ScanReceipt, LiteralFixture, SMOKE_CORPUS_TARGET_BYTES,
-        SMOKE_PATTERN_COUNT, ScaleScanReceipt, TripwireReceipt, build_harness_matcher, compare_i6,
-        compare_i7, compare_i7_wuthering, compare_tripwire, compare_wuthering_tripwire,
-        expand_corpus, format_unix_timestamp_utc, harness_event_count, measure_harness_scans,
-        regex_events, render_scale_report, rust_event_summary_with_diagnostics,
-        select_literal_patterns,
+        BenchmarkProductMetadata, CacheDiagnosticsReceipt, CacheScrubber, CampaignFixture,
+        CohortReportReceipt, Event, HarnessFixture, HarnessMode, I6ScanReceipt, I7ScanReceipt,
+        LiteralFixture, SMOKE_CORPUS_TARGET_BYTES, SMOKE_PATTERN_COUNT, ScaleScanReceipt,
+        TripwireReceipt, benchmark_default_product, build_harness_matcher, cohort_report_command,
+        cohort_report_from_bytes, compare_i6, compare_i7, compare_i7_wuthering, compare_tripwire,
+        compare_wuthering_tripwire, expand_corpus, format_unix_timestamp_utc, harness_event_count,
+        harness_event_summary_with_diagnostics, measure_harness_scans, regex_events,
+        render_scale_report, select_literal_patterns,
+    };
+    #[cfg(feature = "experimental-showcase")]
+    use super::{
+        ConstructionBackend, ConstructionStructureReceipt, ExperimentalProductPolicy,
+        benchmark_assertion_prefix_product, conditioned_construction_run, construction_run,
     };
     use regex::{Regex, RegexSet};
+    #[cfg(feature = "experimental-showcase")]
+    use std::fmt::Write as _;
     use std::{cell::Cell, fs, process};
+
+    const H43_C2_PATTERNS: &[u8] = include_bytes!("../fixtures/cohort/h43-c2-patterns.tsv");
+    const H43_C2_EXPECTED: &str = include_str!("../fixtures/cohort/h43-c2-expected.json");
+
+    #[test]
+    fn generic_product_is_explicitly_default_and_not_workload_tuned() -> Result<(), String> {
+        // Prepare
+        let fixture = HarnessFixture::from_bytes(b"1\tcat\n2\tdog\n", b"cat and dog")?;
+
+        // Test
+        let receipt = benchmark_default_product(&fixture, 1, 1, 1)?;
+
+        // Assert
+        assert_eq!(receipt.engine, "rustmatch-rust-default");
+        assert_eq!(receipt.benchmark_product, "generic-default-v1");
+        assert_eq!(receipt.selection_policy, "none-default-settings");
+        assert!(!receipt.workload_tuned);
+        assert_eq!(receipt.selected_backend, "default");
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.matches_per_iteration, Some(2));
+        assert_eq!(receipt.correctness, "pass");
+        assert!(receipt.diagnostics.is_some());
+        assert!(receipt.backend_activation.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn benchmark_product_metadata_never_conflates_generic_and_experimental() {
+        // Prepare and test
+        let generic = BenchmarkProductMetadata::generic_default();
+
+        // Assert
+        assert_eq!(generic.engine, "rustmatch-rust-default");
+        assert_eq!(
+            generic.robustness_claim,
+            "default-behavior-over-published-matrix"
+        );
+        #[cfg(feature = "experimental-showcase")]
+        {
+            let experimental = BenchmarkProductMetadata::assertion_prefix_v1();
+            assert_ne!(generic.engine, experimental.engine);
+            assert_ne!(generic.benchmark_product, experimental.benchmark_product);
+            assert!(experimental.workload_tuned);
+            assert_eq!(
+                experimental.robustness_claim,
+                "none-workload-specific-capability-only"
+            );
+        }
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_retains_static_ineligibility() -> Result<(), String> {
+        // Prepare
+        let fixture = HarnessFixture::from_bytes(b"1\tplain\n", b"plain")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
+
+        // Assert
+        assert_eq!(receipt.engine, "rustmatch-rust-experimental");
+        assert_eq!(receipt.candidate_status, "ineligible");
+        assert_eq!(receipt.correctness, "not-run-ineligible");
+        assert_eq!(
+            receipt.ineligibility.as_ref().map(|value| value.stage),
+            Some("static")
+        );
+        assert!(receipt.scan_ns.is_empty());
+        assert_eq!(receipt.matches_per_iteration, None);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_retains_dynamic_refusal() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), b"word0001")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
+
+        // Assert
+        assert_eq!(receipt.candidate_status, "ineligible");
+        assert_eq!(
+            receipt.ineligibility.as_ref().map(|value| value.stage),
+            Some("dynamic")
+        );
+        assert!(
+            receipt
+                .ineligibility
+                .as_ref()
+                .is_some_and(|value| value.reason.contains("InputTooShort"))
+        );
+        assert!(receipt.warmup_ns.is_empty());
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_activates_exact_backend_and_reports_evidence() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let mut corpus = vec![b' '; 1024 * 1024];
+        corpus[4_096..4_104].copy_from_slice(b"word0001");
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), &corpus)?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::RequireSpecialized,
+        )?;
+
+        // Assert
+        assert_eq!(
+            receipt.benchmark_product,
+            "experimental-oracle-candidate-v1"
+        );
+        assert_eq!(
+            receipt.selection_policy,
+            "externally-retrospective-best-exact-per-cell"
+        );
+        assert!(receipt.workload_tuned);
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.matches_per_iteration, Some(1));
+        assert_eq!(receipt.warmup_ns.len(), 1);
+        assert_eq!(receipt.scan_ns.len(), 1);
+        let activation = receipt
+            .backend_activation
+            .as_ref()
+            .ok_or_else(|| "experimental receipt lacks activation evidence".to_owned())?;
+        assert_eq!(activation.requested_scan_policy, "require-specialized");
+        assert_eq!(activation.activated_backend, "assertion-prefix-v1");
+        assert_eq!(activation.fallback_reason, None);
+        assert_eq!(activation.assertion_pattern_count, 256);
+        assert_eq!(activation.shared_ascii_prefix, "word0");
+        assert!(activation.candidate_count >= 1);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn experimental_product_reports_exact_short_input_fallback() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let fixture = HarnessFixture::from_bytes(patterns.as_bytes(), b"word0001")?;
+
+        // Test
+        let receipt = benchmark_assertion_prefix_product(
+            &fixture,
+            1,
+            1,
+            1,
+            ExperimentalProductPolicy::AllowExactFallback,
+        )?;
+
+        // Assert
+        assert_eq!(receipt.candidate_status, "measured");
+        assert_eq!(receipt.correctness, "pass");
+        assert_eq!(receipt.matches_per_iteration, Some(1));
+        let activation = receipt
+            .backend_activation
+            .as_ref()
+            .ok_or_else(|| "fallback receipt lacks activation evidence".to_owned())?;
+        assert_eq!(activation.requested_scan_policy, "allow-exact-fallback");
+        assert_eq!(activation.activated_backend, "generic-exact-fallback");
+        assert!(
+            activation
+                .fallback_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("InputTooShort"))
+        );
+        assert_eq!(activation.candidate_count, 0);
+        assert_eq!(activation.candidate_bytes, 0);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn construction_only_receipts_distinguish_exact_matcher_types() -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+
+        // Test
+        let generic = construction_run(patterns.as_bytes(), ConstructionBackend::Generic)?;
+        let specialized =
+            construction_run(patterns.as_bytes(), ConstructionBackend::AssertionPrefixV1)?;
+
+        // Assert
+        assert_eq!(
+            generic.pattern_source_digest,
+            specialized.pattern_source_digest
+        );
+        assert_eq!(generic.expression_count, 256);
+        assert_eq!(generic.backend, "generic");
+        assert_eq!(specialized.backend, "assertion-prefix-v1");
+        assert_eq!(generic.correctness, "construction-pass");
+        assert_eq!(specialized.correctness, "construction-pass");
+        assert!(generic.prepare_ns >= generic.registration_ns + generic.compile_ns);
+        assert!(specialized.prepare_ns >= specialized.registration_ns + specialized.compile_ns);
+        assert!(matches!(
+            generic.structure,
+            ConstructionStructureReceipt::Generic {
+                total_partition_count: 1,
+                total_cache_budget: 8_192,
+                ..
+            }
+        ));
+        assert!(matches!(
+            specialized.structure,
+            ConstructionStructureReceipt::AssertionPrefixV1 {
+                assertion_pattern_count: 256,
+                ref shared_ascii_prefix,
+                pattern_count: 256,
+                assertion_prefix_available: true,
+                assertion_specialization_enabled: true,
+                ..
+            } if shared_ascii_prefix == "word0"
+        ));
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    #[test]
+    fn conditioned_construction_retains_corpus_preconditioning_without_scanning()
+    -> Result<(), String> {
+        // Prepare
+        let patterns = assertion_prefix_patterns();
+        let corpus = vec![b'x'; 2 * 1024 * 1024];
+
+        // Test
+        let generic = conditioned_construction_run(
+            patterns.as_bytes(),
+            &corpus,
+            ConstructionBackend::Generic,
+        )?;
+        let specialized = conditioned_construction_run(
+            patterns.as_bytes(),
+            &corpus,
+            ConstructionBackend::AssertionPrefixV1,
+        )?;
+
+        // Assert
+        assert_eq!(
+            generic.pattern_source_digest,
+            specialized.pattern_source_digest
+        );
+        assert_eq!(
+            generic.corpus_source_digest,
+            specialized.corpus_source_digest
+        );
+        assert_eq!(generic.corpus_bytes, corpus.len());
+        assert_eq!(specialized.corpus_bytes, corpus.len());
+        assert_eq!(generic.correctness, "conditioned-construction-pass");
+        assert_eq!(specialized.correctness, "conditioned-construction-pass");
+        assert!(generic.prepare_ns >= generic.registration_ns + generic.compile_ns);
+        assert!(specialized.prepare_ns >= specialized.registration_ns + specialized.compile_ns);
+        Ok(())
+    }
+
+    #[cfg(feature = "experimental-showcase")]
+    fn assertion_prefix_patterns() -> String {
+        let mut patterns = String::new();
+        for ordinal in 0..256_u32 {
+            writeln!(patterns, "{}\t\\bword{ordinal:04}\\b", ordinal + 1)
+                .expect("writing to a String cannot fail");
+        }
+        patterns
+    }
 
     #[test]
     fn smoke_fixture_is_deterministic_and_contains_every_pattern() -> Result<(), String> {
@@ -2880,13 +4407,130 @@ mod tests {
     }
 
     #[test]
+    fn cohort_report_matches_versioned_golden_and_serializes_deterministically()
+    -> Result<(), String> {
+        // Prepare
+        let expected: CohortReportReceipt = serde_json::from_str(H43_C2_EXPECTED)
+            .map_err(|error| format!("invalid H43-C2 golden report: {error}"))?;
+
+        // Test
+        let first = cohort_report_from_bytes(H43_C2_PATTERNS)?;
+        let second = cohort_report_from_bytes(H43_C2_PATTERNS)?;
+
+        // Assert
+        assert_eq!(first, expected);
+        assert_eq!(second, expected);
+        assert_eq!(
+            serde_json::to_string(&first).map_err(|error| error.to_string())?,
+            serde_json::to_string(&second).map_err(|error| error.to_string())?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_boundary_mutations_change_only_proven_facts() -> Result<(), String> {
+        // Prepare
+        let patterns = concat!(
+            "1\tabc\n",
+            "2\t^abc\n",
+            "3\tab.\n",
+            "4\txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+            "5\txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+            "6\t(?:ab){2,4}\n",
+            "7\t(?:ab)+\n",
+            "8\tab\n",
+            "9\té\n",
+            "10\t[a-z]+\n",
+            "11\t()\n",
+        );
+
+        // Test
+        let report = cohort_report_from_bytes(patterns.as_bytes())?;
+        let facts = &report.patterns;
+
+        // Assert
+        assert_eq!(facts[0].cohort_candidate, "assertion-free");
+        assert_eq!(facts[0].facts.proven_exact_literal_units, Some(3));
+        assert!(facts[0].facts.filterable_prefix);
+        assert_eq!(facts[1].cohort_candidate, "assertion-bearing");
+        assert_eq!(facts[1].assertion_kinds, ["line-start"]);
+        assert_eq!(facts[1].facts.proven_exact_literal_units, None);
+        assert_eq!(facts[1].facts.necessary_prefix_units, 3);
+        assert_eq!(facts[2].facts.necessary_prefix_units, 2);
+        assert!(!facts[2].facts.filterable_prefix);
+        assert_eq!(facts[3].facts.proven_exact_literal_units, Some(32));
+        assert_eq!(facts[4].facts.proven_exact_literal_units, None);
+        assert_eq!(facts[4].facts.necessary_prefix_units, 32);
+        assert_eq!(facts[5].facts.maximum_consumed.status, "finite");
+        assert_eq!(facts[5].facts.maximum_consumed.units, Some(8));
+        assert_eq!(facts[6].facts.maximum_consumed.status, "unbounded");
+        assert_eq!(facts[6].facts.maximum_consumed.units, None);
+        assert!(!facts[7].facts.filterable_prefix);
+        assert!(!facts[8].facts.ascii_only);
+        assert!(facts[9].facts.ascii_only);
+        assert_eq!(facts[9].facts.necessary_prefix_units, 0);
+        assert_eq!(facts[10].facts.minimum_consumed_units, None);
+        assert_eq!(facts[10].facts.maximum_consumed.status, "impossible");
+        assert_eq!(facts[10].facts.maximum_consumed.units, None);
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_schema_rejects_unknown_fields() -> Result<(), String> {
+        // Prepare
+        let report = cohort_report_from_bytes(b"1\tabc\n")?;
+        let mut value = serde_json::to_value(report).map_err(|error| error.to_string())?;
+        let object = value
+            .as_object_mut()
+            .ok_or_else(|| "cohort report did not serialize as an object".to_owned())?;
+        object.insert(
+            "unversioned_selector".to_owned(),
+            serde_json::Value::Bool(true),
+        );
+
+        // Test
+        let result = serde_json::from_value::<CohortReportReceipt>(value);
+
+        // Assert
+        assert!(matches!(result, Err(error) if error.to_string().contains("unknown field")));
+        Ok(())
+    }
+
+    #[test]
+    fn cohort_report_command_requires_exactly_one_pattern_path() -> Result<(), String> {
+        // Prepare
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/cohort/h43-c2-patterns.tsv");
+        let fixture = fixture.to_string_lossy().into_owned();
+
+        // Test
+        let valid = cohort_report_command(&mut vec![fixture.clone()].into_iter())?;
+        let missing = cohort_report_command(&mut Vec::<String>::new().into_iter());
+        let extra = cohort_report_command(
+            &mut vec![fixture, "unexpected-extra-argument".to_owned()].into_iter(),
+        );
+
+        // Assert
+        assert_eq!(valid.schema_version, 1);
+        assert!(matches!(missing, Err(message) if message.starts_with("usage:")));
+        assert!(matches!(extra, Err(message) if message.starts_with("usage:")));
+        Ok(())
+    }
+
+    #[test]
     fn harness_modes_preserve_events_and_report_actual_partitions() -> Result<(), String> {
         // Prepare
-        let fixture = HarnessFixture::from_bytes(b"1\tcat\n2\tc.t\n", b"cat cut")?;
+        let fixture = HarnessFixture::from_bytes(
+            include_bytes!("../fixtures/cohort/h43-k1-patterns.tsv"),
+            include_bytes!("../fixtures/cohort/h43-k1-corpus.txt"),
+        )?;
         let modes = [
             (HarnessMode::Nfa, 1),
             (HarnessMode::Single, 1),
-            (HarnessMode::Parallel(2), 2),
+            (HarnessMode::Parallel(4), 4),
+            (HarnessMode::Cohort(4), 4),
+            (HarnessMode::SharedCohort(1), 2),
+            (HarnessMode::SharedAssertion(1), 2),
         ];
         let mut reference = None;
 
@@ -2895,11 +4539,12 @@ mod tests {
             let matcher = build_harness_matcher(&fixture.patterns, mode)?;
             let count = harness_event_count(&matcher, &fixture.input)?;
             let (summary, diagnostics) =
-                rust_event_summary_with_diagnostics(&matcher, &fixture.input)?;
+                harness_event_summary_with_diagnostics(&matcher, &fixture.input)?;
             let evidence = (summary.count, summary.digest());
 
             // Assert
-            assert_eq!(count, 3);
+            assert!(count > 0);
+            assert_eq!(count, summary.count);
             assert_eq!(diagnostics.partition_count(), expected_partitions);
             if let Some(expected) = &reference {
                 assert_eq!(&evidence, expected);
@@ -2972,14 +4617,22 @@ mod tests {
         let nfa = HarnessMode::parse("nfa")?;
         let single = HarnessMode::parse("single")?;
         let parallel = HarnessMode::parse(oversized_but_valid_count)?;
+        let cohort = HarnessMode::parse("cohort-8")?;
+        let shared = HarnessMode::parse("cohort-view-1")?;
+        let assertion = HarnessMode::parse("cohort-assert-1")?;
         let zero = HarnessMode::parse("0");
+        let zero_cohort = HarnessMode::parse("cohort-0");
         let unknown = HarnessMode::parse("automatic");
 
         // Assert
         assert_eq!(nfa, HarnessMode::Nfa);
         assert_eq!(single, HarnessMode::Single);
         assert_eq!(parallel, HarnessMode::Parallel(4096));
+        assert_eq!(cohort, HarnessMode::Cohort(8));
+        assert_eq!(shared, HarnessMode::SharedCohort(1));
+        assert_eq!(assertion, HarnessMode::SharedAssertion(1));
         assert!(matches!(zero, Err(message) if message.contains("greater than zero")));
+        assert!(matches!(zero_cohort, Err(message) if message.contains("greater than zero")));
         assert!(matches!(unknown, Err(message) if message.contains("expected nfa")));
         Ok(())
     }

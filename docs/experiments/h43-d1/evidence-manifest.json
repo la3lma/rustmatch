@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "evidence_id": "H43-D1-formal-review",
+  "review_date": "2026-08-06",
+  "decision": "rework",
+  "baseline_revision": "05992bf1f20e0f9384fc52fcb4a9863500e7a4da",
+  "candidate_revision": "1356197d1581ad28f6cba822d91e2d6bd5aff04d",
+  "controller_revision": "49e54079303f313378cd71eda7aec744e77fae07",
+  "plan_sha256": "2aeac836d20314a9f347b067a546bf8832f4f09c1d2d21f8cc1ea27b6dd37558",
+  "window_state_sha256": "1ed9cf9b7074e912bb56a75fa1824ae7961551f6447a68079ee1e811fb490444",
+  "summary_sha256": "bf7733c62a504e64f867873c3a0f75169632c7cc5aa09565ef3b512810c731f1",
+  "fixture_manifest_sha256": "6dc876ca75a1bfea582364357cfd4289076b9866c6a21341f8143aaa8401b625",
+  "service_snapshot_sha256": "eef0fdc5d42f27d60549167068ca4d4fe1a28f718c0b1cb83bdb50365a6c25ab",
+  "profiled_candidate_binary_sha256": "4a624b9bdeac50399701dac7d8eca46678d20f6abb5695fd975c33f2078bcdea",
+  "external_archive": "/Users/rmz/.codex/handoffs/rmatch-performance-measurements/h43-d1/h43-d1-formal-evidence.tar.gz",
+  "external_archive_sha256": "643aa43c0556582d13e39602b6ede4c07c87211da5c45e8881aed6fdb12d8082",
+  "remote_evidence_root": "/home/rmz/h43-d1-20260806T105759Z/formal-run",
+  "timing_receipts": 720,
+  "resource_receipts": 108,
+  "correctness_errors": 0,
+  "contamination_records": 0,
+  "docker_events": 0
+}

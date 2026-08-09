@@ -16,6 +16,13 @@ with a nightly toolchain and <code>cargo-fuzz</code> installed:</p>
 </code></pre>
 <p>Long campaigns and retained crash artifacts belong in external evidence, not in
 the pull-request CI job or this repository.</p>
+<h2>H43-E1 cohort parity</h2>
+<p>The <code>cohort-parity</code> target always builds a mixed assertion-free/assertion-bearing
+pattern set from supported templates, then compares ordinary and cohort modes
+across fuzz-selected worker counts, cache budgets, flags, and raw UTF-16 input.
+LibFuzzer minimizes any mismatch automatically:</p>
+<pre><code class="language-sh">cargo +nightly fuzz run cohort-parity
+</code></pre>
 </main><footer>Generated from <code>fuzz/README.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
 const seen=new Map();
 for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){

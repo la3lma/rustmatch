@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "status": "closed-cleanly",
+  "started_utc": "2026-08-06T21:49:55Z",
+  "ended_utc": "2026-08-06T21:50:05Z",
+  "candidate_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+  "plan_sha256": "d2ea60d03c3d2986c0abd66707e9610b7058fb6f7515ee437ed7388f3cedeb52",
+  "window_error": ""
+}

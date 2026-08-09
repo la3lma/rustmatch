@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "title": "Optimization attempt ledger",
-  "last_reviewed": "2026-08-04",
+  "last_reviewed": "2026-08-08",
   "policy_version": "G9-v3",
   "policy_effective_date": "2026-08-04",
   "policy": "Correctness and exact event semantics remain prerequisites. A demonstrated guard regression above 3% automatically vetoes certification. A demonstrated regression above 2% through 3% requires investigation and normally blocks merge. Performance-motivated complexity normally must produce at least a repeatable 5% target improvement. An explicit owner-authorized production exception may override the merge hold, but it never relabels the formal evidence as admission-eligible and must retain the adverse result and residual risk.",
@@ -511,6 +511,118 @@
         "baseline_millis": 19.528476,
         "candidate_millis": 7.083
       }
+    },
+    {
+      "id": "B2-H-0043",
+      "name": "Cohort-aware two-database matcher spine",
+      "date": "2026-08-06",
+      "status": "rejected",
+      "baseline_revision": "05992bf1f20e0f9384fc52fcb4a9863500e7a4da",
+      "candidate_revision": "9bb4ad8f1b50db701ec1ecea66d9fdb73f2fae07",
+      "summary": "Conservatively classify assertion-free and assertion-bearing patterns, compile independent exact databases, and schedule both cohorts while preserving the union of exact events.",
+      "result": "H43-E1 passed 3,628 semantic comparisons. The final recovery retained 57.17%-90.16% one-worker mixed scan gains, but an early unchanged-policy screen reproduced 13.16%-28.50% inactive assertion-free scan regressions and 16.73%-23.19% one-worker mixed preparation regressions, each with 3 of 3 adverse pairs.",
+      "tradeoffs": "Start-table scratch reuse removed only 8 of 1,603 extra mixed-balanced allocation calls; compiling a second complete database left 1,595 extra calls. Out-of-line cohort scheduling did not remove the cold inactive-path layout effect. The screen retained exact activation, zero correctness errors, clean Docker/GPU guards, and all raw receipts.",
+      "decision": "Rejected before the formal 15-cycle window under the predeclared fail-early rule. No merge and no H43-A1 authorization. Retain the specialization signal; reconsider only through a materially different shared-storage cohort representation.",
+      "evidence": "experiments/h43-d1-r2-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-V1",
+      "name": "Shared-storage cohort roots and database views",
+      "date": "2026-08-06",
+      "status": "investigate",
+      "baseline_revision": "3d48cb754d89da1359582627f743af87a86b342a",
+      "candidate_revision": "4f08cd9e0fc7253c4333a27b61d860b7255c7e81",
+      "summary": "Compile assertion-free and assertion-bearing roots over one immutable pattern body store, with benchmark-only views and a prefilter-neutral carrier.",
+      "result": "Exact structural and event proofs pass. The recovered carrier adds 0-2 construction allocations, keeps median preparation within 2.595%, and retains 54.95%-90.43% one-worker mixed scan gains.",
+      "tradeoffs": "The balanced preparation screen passes narrowly and its paired geometric delta is 4.297%. The carrier remains benchmark-only, sequential, and buffered; no specialized backend or production selector exists yet.",
+      "decision": "Investigate. Authorize H43-A1 over the shared-storage carrier, but do not merge V1 or change production behavior before focused and formal G9 admission.",
+      "evidence": "experiments/h43-v1-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-A1",
+      "name": "Isolated assertion-prefix backend over shared cohort storage",
+      "date": "2026-08-07",
+      "status": "investigate",
+      "baseline_revision": "4e83f540edda2cbcd2d29c25549f05e692d8fec5",
+      "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+      "summary": "Reconstruct the H24 assertion-prefix candidate scanner only inside H43-V1's benchmark-only shared assertion view, with one exact binary exposing forced generic and forced specialized modes and no production selector.",
+      "result": "Exact 1 MiB and 2 MiB assertion targets improved 99.510% and 99.755% paired-geometrically, about 204x and 408x throughput. Events and activation were exact, allocation calls were unchanged, requested bytes increased by four, and RSS remained immaterial. The frozen analyzer rejected the artifact because one of thirteen inactive adversarial preparation pairs spiked enough to make its paired geometric preparation delta 20.366%.",
+      "tradeoffs": "The rejecting cycle also raised unrelated input preparation from 0.772 ms to 10.709 ms while matcher preparation rose from 0.250 ms to 3.539 ms. The other twelve pairs clustered, specialized median preparation was 1.713% faster, both build entry points use the same compiler before storing one policy bit, and the ordinary no-feature scanner disassembly was unchanged. Post-hoc exclusion and rerunning until pass remain prohibited.",
+      "decision": "The exact artifact is machine-rejected, unmerged, and excluded from the progress graph. The mechanism is investigate under G9-v3's high-discrepancy rule. H43-A1-P1 subsequently resolved the causal preparation question without changing this ruling and authorized both H43-A2 and the separately governed X1.1 ADR.",
+      "evidence": "experiments/h43-a1-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-A1-P1",
+      "name": "Phase-local assertion-backend preparation discriminator",
+      "date": "2026-08-07",
+      "status": "investigate",
+      "baseline_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+      "candidate_revision": "8ad52d9600cb7de3c98ee345fd82fb06f9e7d429",
+      "summary": "Remove process startup, filesystem input, TSV parsing, regex registration, diagnostics, destruction, and serialization from the timed interval, then compare the generic and specialized shared-cohort build entry points in 31 AB and 31 BA pairs per fixture.",
+      "result": "The clean Agogo window retained 372 builds. Paired-geometric effects were +0.0681% on the 1,000-pattern assertion target, -0.0274% on the 256-pattern adversarial assertion guard, and +0.0057% on the 1,000-pattern ordinary literal guard. Every 95% interval spanned zero and no directional count approached 27 of 31 in both orders.",
+      "tradeoffs": "Every adjacent pair had identical allocation calls and requested bytes, and every compiled structural fact matched apart from the expected final specialization boolean. The result explains the original process-level spike but does not remove that cell or change H43-A1's machine rejection.",
+      "decision": "Valid causal discriminator. Authorize H43-A2 and ADR-0009/X1.1. Keep H43-A1 rejected, unmerged, and excluded from the progress graph.",
+      "evidence": "experiments/h43-a1-p1-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-X1.5",
+      "name": "Formal explicit assertion matcher admission",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "summary": "Run the separate feature-gated assertion-prefix matcher through calibrated G9-v3 default-safety, exactness, explicit-utility, boundary, fallback, allocation, RSS, and total-work lanes without adding automatic routing.",
+      "result": "The complete 1,158-receipt assay passed both calibrations, all nine default guards, all four refusal probes, exact fallbacks, and every target scan and total-work gate. Assertion targets improved 99.569974% and 99.780726%, about 232.54x and 456.05x, with 15/15 positive cycles. The 2 MiB target preparation metric regressed 2.688833% with 13/15 adverse cycles.",
+      "tradeoffs": "No default metric crossed 2%; the largest was a 1.616900% dense scan regression. Allocation probes were identical and no veto fired. The sole blocker is phase-suspicious because the same pattern database prepared 1.441057% faster in the 1 MiB cell and earlier construction-only evidence was neutral, but its directional burden prevents treating it as noise.",
+      "decision": "Investigate. Do not merge or publish the exact artifact and do not add it to the progress graph. Authorize H43-X1.6 as a construction-only same-pattern discriminator; preserve this immutable formal result regardless of that successor.",
+      "evidence": "experiments/h43-x1-5-formal-admission-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-X1.6",
+      "name": "Separate-type construction-only discriminator",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "c47461695cbe7628f0f45ed61dd56bc2687ddd8d",
+      "candidate_revision": "c47461695cbe7628f0f45ed61dd56bc2687ddd8d",
+      "summary": "Compare generic and assertion-prefix-v1 construction in one feature-on executable using the exact same 1,000-pattern fixture, excluding corpus I/O, scanning, events, and serialization from the timed interval.",
+      "result": "The clean formal window retained 60 primary, 120 same-type calibration, and six allocation invocations. Specialized complete preparation was 0.808000% slower with 14 of 15 adverse cycles; registration was 0.218342% slower and compilation was 1.103926% slower. Every effect remained below 2%, both calibrations passed, and allocation probes were exactly equal.",
+      "tradeoffs": "The directional burden indicates a small construction cost rather than exact neutrality, but it cannot explain X1.5's 2.688833% process-level blocker under the unchanged rule. The discriminator narrows one causal uncertainty and is not a complete utility admission assay.",
+      "decision": "Valid causal discriminator: the X1.5 construction blocker did not reproduce. Preserve X1.5 as investigate, do not merge automatically, and authorize explicit owner review without changing thresholds or the progress graph.",
+      "evidence": "experiments/h43-x1-6-construction-discriminator-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-X1.7-R3",
+      "name": "Full explicit assertion matcher confirmation",
+      "date": "2026-08-08",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "summary": "Run the single prospectively authorized complete confirmation using the exact X1.5 source, artifacts, fixtures, matrix, thresholds, and analyzer after hardening only host service restoration.",
+      "result": "The clean five-hour confirmation retained 1,020 paired, 120 calibration, and 18 allocation receipts plus four functional probes. All nine default guards and every exactness, fallback, allocation, RSS, scan, and total-work gate passed. The 1 MiB and 2 MiB targets retained about 231.62x and 460.49x scan speedups, but the 2 MiB preparation metric regressed 5.792673% with 11 of 15 adverse cycles.",
+      "tradeoffs": "The same-pattern 1 MiB preparation metric remained below the investigation boundary, and one-scan total work improved about 449.65x at 2 MiB. The vetoed sub-millisecond metric had roughly 6%-7% run-to-run variation and cycle effects ranging from an 8.165% gain to a 13.737% loss, but the predeclared estimator and directional burden remain binding.",
+      "decision": "Machine-rejected by the unchanged greater-than-3% veto and not merged. Retain the complete R3 evidence permanently. Classify the mechanism investigate and authorize only the smaller H43-X1.8 corpus-conditioned causal discriminator; do not run another unchanged full assay.",
+      "evidence": "experiments/h43-x1-7-r3-confirmation-result.md",
+      "progress": null
+    },
+    {
+      "id": "H43-X1.8",
+      "name": "Corpus-conditioned exact-source preparation discriminator",
+      "date": "2026-08-09",
+      "status": "investigate",
+      "baseline_revision": "a5b86c2b3943aad3121e1f06944e39331f17a474",
+      "candidate_revision": "8c27d2350125e3b0de6a8abdd65eff1947535b09",
+      "summary": "Materialize and retain the exact 2 MiB R3 fixture, then compare only registration, compilation, and complete construction over 15 balanced AB/BA cycles plus same-type calibrations. Repeat with a standalone diagnostic over the byte-exact rejected R3 rustmatch library tree.",
+      "result": "The benchmark-layout run measured 0.717444% slower complete preparation; the exact-R3 library run measured 0.976161% slower preparation. Registration and compilation remained below 1% in the exact-source run. Both calibrations passed, all 360 receipts validated, and both guarded windows restored cleanly.",
+      "tradeoffs": "The 13-of-15 and 14-of-15 adverse direction counts prove a small real construction premium rather than zero cost. Neither independent run reproduced the R3 5.792673% magnitude, and run-to-run variation fell below 1.6%. This evidence does not relabel or certify R3.",
+      "decision": "Valid causal discriminator: the repeatable cost is approximately 0.8%-1.0%, below the unchanged 2% boundary. Stop source tuning and unchanged full reruns. The remaining choice is to leave the feature unmerged or admit it through an explicit owner exception that preserves the R3 rejection and discloses the small construction premium.",
+      "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md",
+      "progress": null
     }
   ],
   "comparison_snapshots": [
@@ -647,6 +759,16 @@
   "future_candidates": [
     {
       "priority": 1,
+      "id": "H43-X1.9",
+      "name": "Explicit assertion matcher governance decision",
+      "status": "owner exception review available; no more timing justified",
+      "why": "The immutable R3 full confirmation retained about 231.62x and 460.49x target scan speedups, complete default safety, and passing total-work economics, but one 2 MiB preparation metric regressed 5.792673% and triggered the unchanged veto. Two subsequent corpus-conditioned discriminators, including one over the exact rejected library source, found only a repeatable 0.717%-0.976% construction premium below 2%.",
+      "next_test": "Do not rerun or retune. Decide whether the deliberately selected, non-default feature remains unmerged or enters production through the documented owner-exception mechanism. An exception must preserve R3 as rejected, disclose the approximately 1% construction premium, keep the matcher opt-in, and leave default comparison numbers unchanged.",
+      "expected_value": "Exceptional explicit-capability utility with high evidence quality and low remaining causal uncertainty; medium governance risk because formal certification failed",
+      "evidence": "experiments/h43-x1-8-conditioned-preparation-result.md"
+    },
+    {
+      "priority": 2,
       "id": "FUTURE-LITERAL-EXACT",
       "name": "Exact literal-only backend",
       "status": "next active diagnostic",
@@ -656,7 +778,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 2,
+      "priority": 3,
       "id": "B2-H-0006",
       "name": "Exact input-parallel semantic scanning",
       "status": "semantic design reviewed; phase diagnostic pending",
@@ -666,7 +788,7 @@
       "evidence": "experiments/b2-h-0006-input-parallel-design.md"
     },
     {
-      "priority": 3,
+      "priority": 4,
       "id": "FUTURE-LAYOUT",
       "name": "Transition-table and scratch-state locality",
       "status": "profiling required",
@@ -676,7 +798,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 4,
+      "priority": 5,
       "id": "FUTURE-BITPARALLEL",
       "name": "General bit-parallel regex execution",
       "status": "strategic research track",
@@ -686,7 +808,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 5,
+      "priority": 6,
       "id": "FUTURE-PHASE-FUSION",
       "name": "Fused persistent planning and semantic phases",
       "status": "dormant pending new phase evidence",
@@ -696,7 +818,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 6,
+      "priority": 7,
       "id": "FUTURE-SELECTOR",
       "name": "Adaptive workload-path selector",
       "status": "dependency-blocked",
@@ -706,7 +828,7 @@
       "evidence": "experiments/post-h11-future-optimization-portfolio.md"
     },
     {
-      "priority": 7,
+      "priority": 8,
       "id": "FUTURE-ROUTE",
       "name": "Partition-aware H11 candidate routing",
       "status": "evaluated as H39; rejected under frozen focused screen",
@@ -716,7 +838,7 @@
       "evidence": "experiments/b2-h-0039-partition-routing.md"
     },
     {
-      "priority": 8,
+      "priority": 9,
       "id": "FUTURE-SIMD",
       "name": "SIMD shared candidate discovery",
       "status": "H42 merged by owner exception; Wuthering recovery remains",
@@ -726,7 +848,7 @@
       "evidence": "https://github.com/la3lma/rmatch-performance-measurements/blob/046337d460d8cbb443ee0e6f5812ebcfc4eb9ff4/docs/lab-notebook/2026-08-04-b2-h-0042-formal-g9-v3.md"
     },
     {
-      "priority": 9,
+      "priority": 10,
       "id": "FUTURE-ASSERT",
       "name": "Pinned H24 assertion-prefix opportunity",
       "status": "pinned research hold after H38; no active implementation",

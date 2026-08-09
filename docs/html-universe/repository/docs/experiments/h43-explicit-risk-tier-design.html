@@ -1,0 +1,266 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H43 explicit assertion-prefix capability strategy · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h43-explicit-risk-tier-design.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h43-explicit-risk-tier-design.md</div></header><main><h1>H43 explicit assertion-prefix capability strategy</h1>
+<p><strong>Status:</strong> X1.8 causal investigation complete; owner exception review available<br>
+<strong>Owner direction:</strong> preserve the measured 205x-409x scan opportunity for
+deliberate use without changing ordinary matcher performance<br>
+<strong>Policy relationship:</strong> additive experimental product contract; the rejected
+H43-A1 ruling remains unchanged<br>
+<strong>Production default:</strong> current certified <code>Matcher</code> and <code>MatcherBuilder</code></p>
+<h2>Decision thesis</h2>
+<p>H43-A1 is not suitable for automatic admission under the existing G9-v3
+contract. That does not imply that its exact assertion-prefix mechanism has no
+product value. It means that the mechanism and the default matcher must have
+different admission boundaries.</p>
+<p>Rustmatch should therefore expose the mechanism, if it passes the gates below,
+as a separately named experimental matcher type behind a narrow non-default
+Cargo feature. Ordinary callers must not acquire a new field, branch, planner,
+or automatic selector. Expert callers must make an unmistakable source-code
+choice and must be able to observe whether specialization actually ran.</p>
+<p>This preserves both facts:</p>
+<ul>
+<li>H43-A1 remains machine-rejected and cannot be relabeled or used to move the
+existing benchmark goalposts.</li>
+<li>An exact mechanism that measured about 205x at 1 MiB and 409x at 2 MiB can
+still become an honest, explicitly requested capability.</li>
+</ul>
+<h2>Three-ring product boundary</h2>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/41a03ee6fa31e300e5432751080cc0ed23473589aa18f4218c1d992bfcdd3c46.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/41a03ee6fa31e300e5432751080cc0ed23473589aa18f4218c1d992bfcdd3c46.svg" alt="Three-ring product boundary diagram"></a><figcaption>Three-ring product boundary · <a href="../../../assets/mermaid/41a03ee6fa31e300e5432751080cc0ed23473589aa18f4218c1d992bfcdd3c46.svg">Open full-size SVG</a></figcaption></figure>
+<table><thead><tr><th>Ring</th><th>Caller action</th><th>Performance contract</th><th>Current status</th></tr></thead><tbody>
+<tr><td>0: certified default</td><td>Use <code>MatcherBuilder</code> and <code>Matcher</code> normally.</td><td>Existing G9-v3 rules, including the unchanged greater-than-three-percent veto.</td><td>Production.</td></tr>
+<tr><td>1: explicit capability</td><td>Enable one narrow feature and instantiate a distinct experimental type.</td><td>Exactness and resources are absolute; performance is a published capability envelope and total-work utility contract.</td><td>Proposed.</td></tr>
+<tr><td>2: automatic selection</td><td>No caller action.</td><td>Must pass the same complete formal G9 campaign as every default optimization.</td><td>Not authorized.</td></tr>
+</tbody></table>
+<p>Ring 1 is not a waiver for Ring 0. It is a different, explicit API whose costs
+cannot reach callers that do not construct it.</p>
+<h2>Why a separate type is mandatory</h2>
+<p>The earlier illustrative design placed an <code>ExperimentalBackend</code> choice on
+<code>MatcherBuilder</code>. That is too close to the default path for the first product
+version. A new builder field, matcher enum variant, object-layout change, or
+scan-time branch could perturb code generation even when the experimental
+policy is not selected.</p>
+<p>The first implementation should instead use a separately compiled module and
+type, for example:</p>
+<pre><code class="language-rust,ignore">#[cfg(feature = "unstable-assertion-prefix-v1")]
+use rustmatch::experimental::assertion_prefix_v1::{
+    AssertionPrefixMatcherBuilder, ScanPolicy,
+};
+
+let mut builder = AssertionPrefixMatcherBuilder::new();
+builder.add(PatternId::new(1), r"\bABCDE[0-9]+")?;
+let matcher = builder.build()?;
+
+let report = matcher.scan_with_policy(
+    &amp;input,
+    ScanPolicy::RequireSpecialized,
+    |matched| matches.push(matched),
+)?;
+assert!(report.specialized_backend_activated());
+</code></pre>
+<p>Names remain provisional until the API freeze. The important properties are:</p>
+<ul>
+<li>no method, field, enum, or dispatch branch is added to normal <code>Matcher</code>;</li>
+<li>the feature is narrow and versioned, rather than a broad
+<code>experimental-backends</code> switch;</li>
+<li>enabling the feature alone changes no normal construction or scan behavior;</li>
+<li>using the distinct type is the caller's deliberate second key; and</li>
+<li>the scan API returns activation and fallback facts instead of hiding them.</li>
+</ul>
+<p>Cargo features are unified across a dependency graph. A downstream crate can
+therefore cause a feature to be enabled without the application author making
+a deliberate performance choice. The feature flag alone is not evidence of
+intent. Constructing the separate type is.</p>
+<p>A companion <code>rustmatch-experimental</code> crate would provide still stronger
+packaging isolation, but it would initially require exposing or splitting
+private compiler and engine internals. That creates more default-code churn
+than the same-crate separate-type design. Reconsider a companion crate only
+after the v1 capability proves useful and needs an independent release cadence.</p>
+<h2>Eligibility and caller control</h2>
+<h3>Static analysis</h3>
+<p>Construction must publish a typed analysis of the pattern set. The first
+version may compile only when:</p>
+<ul>
+<li>an assertion-bearing cohort exists;</li>
+<li>every assertion-bearing pattern proves the same nonzero five-unit ASCII
+consumed prefix after its leading assertion;</li>
+<li>the assertion-bearing cohort has at least 256 patterns; and</li>
+<li>retained candidate storage is bounded with checked arithmetic.</li>
+</ul>
+<p>Static ineligibility returns a typed build error. It must not silently create a
+normal matcher, because the caller explicitly asked for this capability.</p>
+<h3>Dynamic policy</h3>
+<p>Input length and bounded sample density are scan facts. The API should make
+their consequence explicit through one of two policies:</p>
+<table><thead><tr><th>Policy</th><th>Behavior</th></tr></thead><tbody>
+<tr><td><code>RequireSpecialized</code></td><td>Run only if the frozen dynamic eligibility rule will activate the specialized path. Otherwise return a typed refusal before delivering callbacks.</td></tr>
+<tr><td><code>AllowExactFallback</code></td><td>Permit the generic exact path, but return a report containing the fallback reason.</td></tr>
+</tbody></table>
+<p>The initial dynamic rule should retain the evidence-tested minimum input of one
+MiB of UTF-16 units and the bounded 64 Ki-unit sample below the frozen density
+ceiling. It may be changed only by a new versioned policy with its own evidence.</p>
+<p>No workload name, fixture hash, expected output, timing history, machine
+identity, or post-hoc cutoff may influence construction or routing. A future
+expert <code>ForceSpecialized</code> policy may be considered only after v1 is certified;
+it may bypass performance heuristics but never semantic or resource
+preconditions.</p>
+<h2>Two different performance questions</h2>
+<p>The default and explicit APIs answer different questions and must not share a
+single ambiguous pass/fail summary.</p>
+<h3>Default isolation question</h3>
+<p>Does adding the capability impose any cost on ordinary <code>Matcher</code> users?</p>
+<p>The answer must be no under the existing strict guardrails. Both configurations
+must be tested:</p>
+<ol>
+<li>feature absent; and</li>
+<li>feature present through Cargo unification, while only normal <code>Matcher</code> is
+constructed.</li>
+</ol>
+<p>The normal matcher must retain its object layout, scanner call graph,
+normalized hot-symbol disassembly, semantics, and benchmark behavior. Any
+repeatable default regression above the existing threshold rejects the
+experimental packaging, regardless of the specialized gain.</p>
+<h3>Explicit capability question</h3>
+<p>Is the deliberately selected backend valuable within its declared envelope?</p>
+<p>Report setup and scan time separately, and also evaluate total user work:</p>
+<pre><code class="language-text">T_total(N) = T_build + N * T_scan
+</code></pre>
+<p>Freeze at least <code>N = 1</code> and <code>N = 10</code> before measurement. This makes a setup
+cost visible without allowing a millisecond-scale setup variance to erase a
+multi-second scan saving, or allowing a large scan multiplier to hide an
+unbounded setup cost. Publish the break-even scan count.</p>
+<p>The first capability claim is deliberately narrow:</p>
+<ul>
+<li>exact assertion-prefix cohort described above;</li>
+<li>sparse eligible inputs of at least one MiB;</li>
+<li>one-worker scan unless later worker evidence is frozen separately; and</li>
+<li>measured scan opportunity of about 205x at 1 MiB and 409x at 2 MiB from the
+rejected H43-A1 investigation, not yet a production promise.</li>
+</ul>
+<p>An activated target or near-boundary cell that is repeatably slower by more
+than three percent means the eligibility envelope is wrong and must be narrowed
+or the capability rejected. Inactive or fallback cells remain visible, but do
+not veto Ring 0 when Ring 0 is independently proven unchanged.</p>
+<h2>Three admission lanes</h2>
+<table><thead><tr><th>Lane</th><th>Required evidence</th><th>Veto</th></tr></thead><tbody>
+<tr><td>A: default safety</td><td>Feature-off and feature-on/runtime-unused builds; public API diff; size/layout checks; hot-symbol disassembly; normal correctness suite; B0 and frozen ordinary performance guards.</td><td>Any semantic change, new normal dispatch, artifact/layout drift without explanation, or current-threshold regression.</td></tr>
+<tr><td>B: explicit exactness</td><td>Differential event multisets; UTF-16 boundaries; assertions; callback panic/reuse; failure atomicity; fuzz/property checks; overflow; bounded allocations and RSS.</td><td>Any mismatch, panic/reuse defect, unchecked growth, silent fallback, or false activation report.</td></tr>
+<tr><td>C: explicit utility</td><td>Target, short, dense, prefix-mismatch, ordinary, adversarial, and near-boundary cells; AB/BA preparation; <code>T_total(1)</code>, <code>T_total(10)</code>, break-even, allocation and RSS receipts.</td><td>Non-repeatable gain, severe unexplained regression inside the declared activated envelope, or a misleading capability claim.</td></tr>
+</tbody></table>
+<p>Passing all three lanes can authorize merging a non-default experimental
+capability. It cannot authorize automatic selection.</p>
+<h2>Incremental execution program</h2>
+<figure class="mermaid-diagram"><a href="../../../assets/mermaid/de6ed95c05b20f23287d41e0b4eefb00008dd4f9a7b1a200f99992b54cd7226e.svg" title="Open full-size SVG"><img src="../../../assets/mermaid/de6ed95c05b20f23287d41e0b4eefb00008dd4f9a7b1a200f99992b54cd7226e.svg" alt="Incremental execution program diagram"></a><figcaption>Incremental execution program · <a href="../../../assets/mermaid/de6ed95c05b20f23287d41e0b4eefb00008dd4f9a7b1a200f99992b54cd7226e.svg">Open full-size SVG</a></figcaption></figure>
+<h3>X1.0: resolve the preparation uncertainty</h3>
+<p>Run the already planned phase-local AB/BA microscope with at least 31 builds
+per order. Preserve H43-A1's rejection either way. A neutral result removes an
+implementation uncertainty; a real setup cost becomes part of <code>T_build</code> and
+the published break-even calculation rather than a hidden default cost.</p>
+<h3>X1.1: freeze the contract before source changes</h3>
+<p>Record an ADR covering the feature name, separate type, instability/versioning
+policy, static build errors, scan policies, activation report, and three-lane
+gates. Update the API/versioning document: a supported default API remains
+stable, while the versioned experimental capability has an explicit change and
+removal policy.</p>
+<h3>X1.2: extract, do not integrate</h3>
+<p>Move the benchmark-only H43-A1 mechanism into a new feature-gated module. Reuse
+the existing private compiler and engine through narrow <code>pub(crate)</code> seams. Do
+not add a variant to <code>Matcher</code>, a field to <code>MatcherBuilder</code>, or a branch to the
+normal scan path. Keep <code>benchmark-internals</code> separate from the user-facing
+experimental feature.</p>
+<h3>X1.3-X1.5: certify independently</h3>
+<p>Run semantic/resource certification first so performance cannot excuse a
+correctness defect. Then prove both default configurations unchanged. Only
+after those gates pass should the exclusive-host utility window measure the
+specialized envelope.</p>
+<h3>X1.6: isolate the construction signal</h3>
+<p>Measure the generic and separate assertion matcher in one feature-on
+executable with the same pattern set and no corpus or scan work inside the
+timed interval. Retain registration, compile, complete preparation, structure,
+and allocation receipts. A result below the existing investigation threshold
+can remove the construction hypothesis from the blocker list, but cannot
+rewrite X1.5.</p>
+<h3>X1.7: run one complete confirmation</h3>
+<p>Run the single prospectively named complete confirmation without changing the
+source, matrix, thresholds, or analyzer. Preserve an automatic veto even when
+the explicit target economics remain exceptional.</p>
+<h3>X1.8: isolate any confirmation-only preparation blocker</h3>
+<p>If the confirmation produces a narrow preparation-only veto, retain the exact
+corpus and allocator preconditioning while removing scanning from the measured
+process. Repeat once over the byte-exact rejected library source. This
+discriminator may explain the veto but cannot relabel the confirmation.</p>
+<h3>X1.9: make one narrow merge decision</h3>
+<p>If all lanes pass, the owner may authorize a merge containing only the
+non-default v1 capability, its tests, evidence, lab note, and cautionary docs.
+The optimization ledger should show it as an explicit experimental capability,
+not as a default cumulative improvement. Cross-engine README numbers remain
+the certified default numbers unless a separate clearly labeled opt-in table
+is added.</p>
+<h2>Reject and rework criteria</h2>
+<p>Reject or rework the experimental packaging before publication if any of the
+following occurs:</p>
+<ul>
+<li>any event, UTF-16, assertion, callback, failure, or reuse mismatch;</li>
+<li>any feature-off or feature-on/runtime-unused normal-path regression;</li>
+<li>normal <code>Matcher</code> layout or hot dispatch changes merely because the feature
+exists;</li>
+<li>benchmark-specific routing, timing-derived selection, or silent fallback;</li>
+<li>candidate memory is not bounded by input length with checked arithmetic;</li>
+<li>the measured target gain is not reproducible under a fresh frozen window;</li>
+<li>total-work economics do not support the documented use case;</li>
+<li>a repeatable severe regression exists inside the claimed activated envelope
+and callers cannot avoid it honestly; or</li>
+<li>documentation implies that the experimental backend is universal, default,
+or already represented by the main comparison table.</li>
+</ul>
+<h2>Promotion rule</h2>
+<p>The explicit switch is not a shortcut to automatic selection. Promotion to
+Ring 2 requires a new frozen selector, causal near-boundary guards, and the same
+complete formal G9 campaign required of any default optimization. Every H43-A1
+rejection and every Ring 1 adverse cell remains part of that review.</p>
+<h2>Completed prototype and immediate next action</h2>
+<p>H43-A1-P1 completed with neutral phase-local construction effects and exact
+allocation and structure equivalence. Its <a href="h43-a1-p1-result.html">reviewed result</a>
+authorizes both H43-A2 and the X1.1 contract. <a href="../adr/0009-explicit-experimental-matcher.html">ADR-0009</a>
+freezes the separate-type boundary and authorizes an isolated source prototype.</p>
+<p>H43-X2 implementation <code>ff1ac2f</code> extracted the mechanism behind the versioned
+feature and separate matcher type. Its <a href="h43-x2-result.html">reviewed result</a>
+records passing local exactness plus feature-off and
+feature-on/runtime-unused default-isolation gates.</p>
+<p>X1.5 completed the full explicit-capability utility plan in a clean
+exclusive-host window. Its <a href="h43-x1-5-formal-admission-result.html">reviewed result</a>
+records 232.54x and 456.05x paired target scan speedups, exact boundary and
+fallback behavior, identical allocation probes, complete default safety, and
+passing <code>T_total(1)</code> and <code>T_total(10)</code>. One 2 MiB preparation metric regressed
+2.688833%, so the unchanged outcome is <code>investigate</code>, not publication or merge.</p>
+<p>X1.6 then isolated exact separate-type construction from corpus I/O and scan
+work in a frozen same-pattern discriminator. Its
+<a href="h43-x1-6-construction-discriminator-result.html">reviewed result</a> found the
+specialized path 0.808000% slower in complete preparation, below the unchanged
+2% boundary, with equal allocation probes and passing calibrations. The X1.5
+construction blocker did not reproduce.</p>
+<p>X1.7 R3 then completed the one prospectively authorized full confirmation. It
+retained approximately 231.62x and 460.49x target scan speedups and complete
+default safety, but the 2 MiB preparation metric regressed 5.792673% and
+triggered the unchanged veto. The R3 result remains permanently rejected.</p>
+<p>X1.8 retained exact corpus preconditioning and reproduced construction twice,
+including once over the exact R3 library source. Complete preparation was only
+0.717444% and 0.976161% slower, below 2%, so the veto-sized magnitude did not
+reproduce. The next action is X1.9 owner review: leave the capability unmerged
+or authorize a documented production exception. No more unchanged timing or
+source tuning is justified.</p>
+</main><footer>Generated from <code>docs/experiments/h43-explicit-risk-tier-design.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

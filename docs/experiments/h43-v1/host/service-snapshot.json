@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-08-06T21:43:47Z",
+  "hostname": "agogo",
+  "kernel": "Linux agogo 7.0.0-28-generic #28-Ubuntu SMP PREEMPT_DYNAMIC Sun Jun 21 01:01:36 UTC 2026 x86_64 GNU/Linux",
+  "plan_sha256": "91dfcef5d139bbbe292867f3cce94f84838460f39911743b8e061b6bf08240d9",
+  "fixture_generator_sha256": "56244072b03706e30e31e3f6c9d79c30133aced08b62796426959896d0142b5b",
+  "allocation_shim_sha256": "d4f60a3d16f8765e875f91c252bed4c05974a1a4b67491c7e6084376cfa7f568",
+  "candidate_revision": "3b81a3e722005201d803037c0817ccb79795e9af",
+  "candidate_tree": "80bb945b4277314724fe9136166b47eca0808d3f",
+  "candidate_archive_sha256": "973591b4004607dc5f1b5cc46e4f77223909d1fe67ddfaa19fb565efeb71b91e",
+  "candidate_manifest_sha256": "b45d2d860621c03c907d56a96f910e44d95b06538f2bd44c015293da42dfada6",
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6",
+  "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
+  "docker": [
+    {
+      "Command": "\"vllm serve /models/MiniMax-H3/FL2VA --omni --host 0.0.0.0 --port 8000 --trust-remote-code --num-gpus 1 --enable-cpu-offload --diffusion-attention-backend FLASH_ATTN\"",
+      "CreatedAt": "2026-08-05 14:26:08 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "a8e2088de52dcc88f817b0919cdd38b630b2a987be412828126d0eaa8c9bb917",
+      "Image": "vllm/vllm-omni:minimax-h3",
+      "Labels": "ai.vllm.build.commit=ffd46bfab2128bb84146050e98b51a617c6575ab,ai.vllm.build.pipeline=019d130e-464e-4ff7-b84b-492992c0c06b,ai.vllm.build.url=https://buildkite.com/vllm/release-v2/builds/4244,ai.vllm.image.tag=vllm/vllm-openai:v0.26.0,maintainer=NVIDIA CORPORATION <cudatools@nvidia.com>,org.opencontainers.image.ref.name=ubuntu,org.opencontainers.image.revision=ffd46bfab2128bb84146050e98b51a617c6575ab,org.opencontainers.image.source=https://github.com/vllm-project/vllm,org.opencontainers.image.url=https://buildkite.com/vllm/release-v2/builds/4244,org.opencontainers.image.version=vllm/vllm-openai:v0.26.0",
+      "LocalVolumes": "0",
+      "Mounts": "/home/rmz/llms_at_5090/models/MiniMax-H3",
+      "Names": "minimax-h3-fl2va",
+      "Networks": "bridge",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "33 hours ago",
+      "Size": "186MB (virtual 20.1GB)",
+      "State": "exited",
+      "Status": "Exited (1) 33 hours ago"
+    },
+    {
+      "Command": "\"/app/hive-build-telemetryd serve\"",
+      "CreatedAt": "2026-07-10 18:12:35 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "6e9f70f3312ba4aef93ac8c0b76e40e04374f83a9c370d1e1f1b8880fb4f240b",
+      "Image": "766351528002.dkr.ecr.eu-north-1.amazonaws.com/hive/build-telemetryd:3ed49d3954db",
+      "Labels": "org.opencontainers.image.description=Hive build telemetry receiver and lane status UI,org.opencontainers.image.revision=3ed49d3954db1d69235effde93a88dc1939fed58,org.opencontainers.image.title=hive-build-telemetryd-go",
+      "LocalVolumes": "0",
+      "Mounts": "/home/rmz/hive-build-telemetryd-agogo/data",
+      "Names": "hive-build-telemetryd-agogo",
+      "Networks": "bridge",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "3 weeks ago",
+      "Size": "4.1kB (virtual 21.3MB)",
+      "State": "exited",
+      "Status": "Exited (0) 11 days ago"
+    },
+    {
+      "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
+      "CreatedAt": "2026-07-02 11:08:03 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "ab687527169783f7ab752d13b95b7427865901999b5514cc7ea02ec7adf76ad9",
+      "Image": "nginx:1.27-alpine",
+      "Labels": "maintainer=NGINX Docker Maintainers <docker-maint@nginx.com>",
+      "LocalVolumes": "0",
+      "Mounts": "/tmp/hive-build-telemetry-wg-nginx-lab-v6/nginx-host-v6.conf",
+      "Names": "hive-build-telemetry-nginx-v6-agogo",
+      "Networks": "host",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "77.8kB (virtual 52.7MB)",
+      "State": "exited",
+      "Status": "Exited (127) 2 weeks ago"
+    },
+    {
+      "Command": "\"/usr/local/bin/hive-wg-entrypoint\"",
+      "CreatedAt": "2026-07-02 11:08:02 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "8e39cbcff203a7b0674335508691fe86812ffbb1fdc470b428c519b4975e85e8",
+      "Image": "hive-build-telemetry-wireguard:local",
+      "Labels": "",
+      "LocalVolumes": "0",
+      "Mounts": "/tmp/hive-build-telemetry-wg-nginx-lab-v6/wg0.conf",
+      "Names": "hive-build-telemetry-wg-client-v6-agogo",
+      "Networks": "host",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "16.4kB (virtual 14.3MB)",
+      "State": "exited",
+      "Status": "Exited (127) 2 weeks ago"
+    },
+    {
+      "Command": "\"/docker-entrypoint.sh nginx -g 'daemon off;'\"",
+      "CreatedAt": "2026-07-02 11:04:28 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "b1496a347bfc8f6b8b8d61059f4686429bd83fdb6aa9e48650c0420478cfbcc8",
+      "Image": "nginx:1.27-alpine",
+      "Labels": "com.docker.compose.config-hash=410d986644bcb0c9c7773f21840cc266f333811f762187566332e933d1e8d36b,com.docker.compose.container-number=1,com.docker.compose.depends_on=wg-client:service_started:false,com.docker.compose.image=sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/tmp/hive-build-telemetry-wg-nginx-lab/compose.yaml,com.docker.compose.project.working_dir=/tmp/hive-build-telemetry-wg-nginx-lab,com.docker.compose.project=hive-build-telemetry-wg-nginx-lab,com.docker.compose.replace=hive-build-telemetry-nginx-agogo,com.docker.compose.service=nginx,com.docker.compose.version=5.2.0,maintainer=NGINX Docker Maintainers <docker-maint@nginx.com>",
+      "LocalVolumes": "0",
+      "Mounts": "/tmp/hive-build-telemetry-wg-nginx-lab/nginx.conf",
+      "Names": "hive-build-telemetry-nginx-agogo",
+      "Networks": "",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "77.8kB (virtual 52.7MB)",
+      "State": "exited",
+      "Status": "Exited (128) 2 weeks ago"
+    },
+    {
+      "Command": "\"/usr/local/bin/hive-wg-entrypoint\"",
+      "CreatedAt": "2026-07-02 11:03:33 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "a8f6a0d82de0550f26111ebe22f8e77f005194a0f1a361a9a8b17ec34eb776ab",
+      "Image": "hive-build-telemetry-wg-nginx-lab-wg-client",
+      "Labels": "com.docker.compose.config-hash=e3e6c99a87c5a58bf91cef9bc1865d13047ab0f86b428f6298178798b758032c,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:99d223c33a47e43eb252832e1d895d266a0e3573b6e13519db0b40c06c1eb33d,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/tmp/hive-build-telemetry-wg-nginx-lab/compose.yaml,com.docker.compose.project.working_dir=/tmp/hive-build-telemetry-wg-nginx-lab,com.docker.compose.project=hive-build-telemetry-wg-nginx-lab,com.docker.compose.service=wg-client,com.docker.compose.version=5.2.0",
+      "LocalVolumes": "0",
+      "Mounts": "/tmp/hive-build-telemetry-wg-nginx-lab/wg0.conf",
+      "Names": "hive-build-telemetry-wg-client-agogo",
+      "Networks": "hive-build-telemetry-wg-nginx-lab_default",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "16.4kB (virtual 14.3MB)",
+      "State": "exited",
+      "Status": "Exited (127) 2 weeks ago"
+    },
+    {
+      "Command": "\"/entrypoint.sh run --address 0.0.0.0:8080 --models-path /models --backends-path /backends --localai-config-dir /configuration --data-path /data --threads 16 --context-size 32768 --f16 --allow-insecure-public-bind --disable-web-ui\"",
+      "CreatedAt": "2026-07-01 11:46:13 +0200 CEST",
+      "HealthStatus": "unhealthy",
+      "ID": "63e6b680d083b114e87caa3566257580b21d86a13d10ec11ca37f4873e41858a",
+      "Image": "localai/localai:latest-gpu-nvidia-cuda-13",
+      "Labels": "com.docker.compose.config-hash=b44b40d87342a9b6f1275c26a713089702c594a21c4b07e1132900993393892d,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:b0197ed4df0551efbc800184f4e172ba8aed613fde49ca584b19576b21ef3aa1,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/home/rmz/llms_at_5090/infra/docker-compose.yml,com.docker.compose.project.working_dir=/home/rmz/llms_at_5090/infra,com.docker.compose.project=llms-at-5090,com.docker.compose.replace=llms5090-localai,com.docker.compose.service=localai,com.docker.compose.version=5.2.0,org.opencontainers.image.created=2026-06-30T16:15:43.807Z,org.opencontainers.image.description=LocalAI is the open-source AI engine. Run any model - LLMs, vision, voice, image, video - on any hardware. No GPU required.,org.opencontainers.image.licenses=MIT,org.opencontainers.image.revision=02b007a31ee5c4ae849a1947f1ab63cd0fa75d90,org.opencontainers.image.source=https://github.com/mudler/LocalAI,org.opencontainers.image.title=LocalAI,org.opencontainers.image.url=https://github.com/mudler/LocalAI,org.opencontainers.image.version=v4.5.6-gpu-nvidia-cuda-13",
+      "LocalVolumes": "4",
+      "Mounts": "llms5090-localai-models,llms5090-localai-backends,llms5090-localai-config,llms5090-localai-data",
+      "Names": "llms5090-localai",
+      "Networks": "llms-at-5090_default",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "418kB (virtual 5.19GB)",
+      "State": "exited",
+      "Status": "Exited (0) 5 weeks ago"
+    },
+    {
+      "Command": "\"/bin/ollama serve\"",
+      "CreatedAt": "2026-06-26 18:18:24 +0200 CEST",
+      "HealthStatus": "unhealthy",
+      "ID": "1bd701666ab7904f8c1f5baf4743627f5eed60daf1cb2db5d0e35fcb7f33f324",
+      "Image": "ollama/ollama:latest",
+      "Labels": "com.docker.compose.config-hash=7d97d4b5bf77809bde69ba3897bf7d8a8b67a28903822fe7b55594b5da5e1d01,com.docker.compose.container-number=1,com.docker.compose.depends_on=,com.docker.compose.image=sha256:bfc9c6d53cc6989aa5131a6fde6b162b2802d4d337657f3253b5f69579bddeee,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/home/rmz/llms_at_5090/infra/docker-compose.yml,com.docker.compose.project.working_dir=/home/rmz/llms_at_5090/infra,com.docker.compose.project=llms-at-5090,com.docker.compose.replace=llms5090-ollama,com.docker.compose.service=ollama,com.docker.compose.version=5.2.0,org.opencontainers.image.version=24.04",
+      "LocalVolumes": "1",
+      "Mounts": "llms-at-5090_ollama",
+      "Names": "llms5090-ollama",
+      "Networks": "llms-at-5090_default",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "191MB (virtual 5.09GB)",
+      "State": "exited",
+      "Status": "Exited (0) 2 weeks ago"
+    },
+    {
+      "Command": "\"bash start.sh\"",
+      "CreatedAt": "2026-06-26 17:51:48 +0200 CEST",
+      "HealthStatus": "unhealthy",
+      "ID": "94c846508d7116d1fb13793ab7a4f343e6020607550232b04c57e04b852f34e0",
+      "Image": "ghcr.io/open-webui/open-webui:latest",
+      "Labels": "com.docker.compose.config-hash=7163e3a424bf8171b5526f3b2f2dfbd577491d57b19fbce33b3e76ec803b9230,com.docker.compose.container-number=1,com.docker.compose.depends_on=ollama:service_healthy:false,com.docker.compose.image=sha256:7f1b0a1a50cfbac23da3b16f96bc968fd757b26dc9e54e93813d61768ea9184e,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/home/rmz/llms_at_5090/infra/docker-compose.yml,com.docker.compose.project.working_dir=/home/rmz/llms_at_5090/infra,com.docker.compose.project=llms-at-5090,com.docker.compose.service=openwebui,com.docker.compose.version=5.2.0,org.opencontainers.image.created=2026-06-02T02:11:54.957Z,org.opencontainers.image.description=User-friendly AI Interface (Supports Ollama, OpenAI API, ...),org.opencontainers.image.licenses=NOASSERTION,org.opencontainers.image.revision=02dc3e689ceac915a870b373318b99c029ddf603,org.opencontainers.image.source=https://github.com/open-webui/open-webui,org.opencontainers.image.title=open-webui,org.opencontainers.image.url=https://github.com/open-webui/open-webui,org.opencontainers.image.version=main",
+      "LocalVolumes": "1",
+      "Mounts": "llms-at-5090_openwebui",
+      "Names": "llms5090-openwebui",
+      "Networks": "llms-at-5090_default",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "5 weeks ago",
+      "Size": "53.5MB (virtual 5.06GB)",
+      "State": "exited",
+      "Status": "Exited (0) 2 weeks ago"
+    },
+    {
+      "Command": "\"/app/hub --mode shared --hub-config /app/hub.toml\"",
+      "CreatedAt": "2026-06-25 13:52:10 +0200 CEST",
+      "HealthStatus": "none",
+      "ID": "346b73f190a0a67d9a2de56a98ed61e5e683aa9108172c89d0257a5c9a0f88b7",
+      "Image": "nvcr.io/nvidia/omniverse/hub_workstation_cache:2.0.0",
+      "Labels": "application=hub,description=NVIDIA Omniverse Hub,org.opencontainers.image.created=2026-02-19T22:52:35Z,org.opencontainers.image.documentation=https://gitlab-master.nvidia.com/omniverse/hub/omni-hub,org.opencontainers.image.licenses=NvidiaProprietary,org.opencontainers.image.revision=unknown,org.opencontainers.image.source=https://gitlab-master.nvidia.com/omniverse/hub/omni-hub,org.opencontainers.image.title=NVIDIA Omniverse Hub,org.opencontainers.image.url=https://gitlab-master.nvidia.com/omniverse/hub/omni-hub,org.opencontainers.image.vendor=NVIDIA CORPORATION,org.opencontainers.image.version=v4.0.2,version=unknown",
+      "LocalVolumes": "0",
+      "Mounts": "/home/rmz/.cache/ov/hub",
+      "Names": "hub-workstation-cache",
+      "Networks": "host",
+      "Platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      "Ports": "",
+      "RunningFor": "6 weeks ago",
+      "Size": "20.5kB (virtual 95.9MB)",
+      "State": "exited",
+      "Status": "Exited (137) 6 weeks ago"
+    }
+  ]
+}

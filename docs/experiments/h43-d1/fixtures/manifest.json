@@ -1,0 +1,47 @@
+{
+  "evidence_id": "H43-D1-fixtures",
+  "fixtures": [
+    {
+      "corpus_bytes": 1048576,
+      "corpus_path": "assertion-free.txt",
+      "corpus_sha256": "2af3cca70b2543c67b38b9530dc6f0962f6b99d1accc1de2fb067197c0dffb73",
+      "expected_cohorts": 1,
+      "id": "assertion-free",
+      "pattern_count": 64,
+      "pattern_path": "assertion-free.tsv",
+      "pattern_sha256": "99fb9ac86aec7ce465008d1fe16f7b24e5034f9672b3ba2dabd689fd023b4d85"
+    },
+    {
+      "corpus_bytes": 262144,
+      "corpus_path": "assertion-only.txt",
+      "corpus_sha256": "2775cc1d6684b77db15cdb8a80d3d50336305b466647394d92698aa07870962c",
+      "expected_cohorts": 1,
+      "id": "assertion-only",
+      "pattern_count": 64,
+      "pattern_path": "assertion-only.tsv",
+      "pattern_sha256": "25400fb8ce0a353d2826982b387256282dca32d7d0001f38a594b277c751da00"
+    },
+    {
+      "corpus_bytes": 524288,
+      "corpus_path": "mixed-balanced.txt",
+      "corpus_sha256": "cb8c5e473b7932a92bc7101ace66f0fc107535dacca8e3987e86bbfffd568f6f",
+      "expected_cohorts": 2,
+      "id": "mixed-balanced",
+      "pattern_count": 64,
+      "pattern_path": "mixed-balanced.tsv",
+      "pattern_sha256": "0de231dad25d162754f2893572027eb0c63e0f6a9dd731488e4dc5cdf9358a6b"
+    },
+    {
+      "corpus_bytes": 16384,
+      "corpus_path": "mixed-output.txt",
+      "corpus_sha256": "58963f9f5bf9c03f0cc64064880e1b605564ea56681dc7eac9c32741406c7fb8",
+      "expected_cohorts": 2,
+      "id": "mixed-output",
+      "pattern_count": 16,
+      "pattern_path": "mixed-output.tsv",
+      "pattern_sha256": "fffa4579593bb419cc5f230e1936923f15eaaa2a7c13ef0b31241e353a50a03e"
+    }
+  ],
+  "plan_sha256": "2aeac836d20314a9f347b067a546bf8832f4f09c1d2d21f8cc1ea27b6dd37558",
+  "schema_version": 1
+}

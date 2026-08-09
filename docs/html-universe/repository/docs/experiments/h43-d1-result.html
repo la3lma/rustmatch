@@ -1,0 +1,148 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>H43-D1 cohort-only cost and code-layout result · rustmatch evidence</title><style>
+:root{--ink:#142821;--muted:#60736b;--paper:#f7f1e4;--cream:#fffaf0;--green:#0b6b5d;--rust:#b84c31;--line:#ccd6ce}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 8% 0,#f1d5b8 0,transparent 28rem),linear-gradient(145deg,var(--paper),#e3eee8);font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;line-height:1.65}
+nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:15px max(24px,calc((100vw - 1040px)/2));background:rgba(247,241,228,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(20,40,33,.16);font:700 .78rem "Avenir Next","Gill Sans",sans-serif;text-transform:uppercase;letter-spacing:.08em}nav div{display:flex;gap:18px;flex-wrap:wrap}a{color:var(--green);font-weight:700}.brand{text-decoration:none;color:var(--rust)}
+header,main,footer{width:min(960px,calc(100% - 40px));margin:auto}header{padding:60px 0 28px}.kicker{font:800 .75rem "Avenir Next",sans-serif;text-transform:uppercase;letter-spacing:.13em;color:var(--rust)}.path{margin-top:8px;color:var(--muted);font:600 .82rem "SFMono-Regular",Consolas,monospace}
+main{background:rgba(255,250,240,.82);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,6vw,72px);box-shadow:0 24px 60px rgba(20,40,33,.09)}h1,h2,h3,h4{line-height:1.12;letter-spacing:-.025em;scroll-margin-top:90px}h1{font-size:clamp(2.7rem,7vw,5.4rem);margin-top:0}h2{font-size:clamp(1.9rem,4vw,3rem);border-top:1px solid var(--line);padding-top:1.2em;margin-top:1.8em}h3{font-size:1.55rem;margin-top:1.7em}h4{font-size:1.2rem}.anchor{font:700 .7em "Avenir Next",sans-serif;text-decoration:none;opacity:0;margin-left:.45em}.anchor:hover,h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p,li{font-size:1.05rem}blockquote{margin:1.5em 0;padding:1px 22px;border-left:5px solid var(--rust);background:#f5e8d7;color:#445a51}code{font:.86em "SFMono-Regular",Consolas,monospace;background:#e9eee8;border-radius:5px;padding:.12em .32em}pre{overflow:auto;padding:20px;border-radius:15px;background:#142821;color:#eef4ed;line-height:1.45}pre code{background:none;padding:0;color:inherit}table{display:block;overflow-x:auto;border-collapse:collapse;width:100%;margin:1.5em 0}th,td{padding:11px 14px;border:1px solid var(--line);text-align:left}th{background:#e5ede7;font:700 .8rem "Avenir Next",sans-serif}img,svg{display:block;max-width:100%;height:auto;margin:24px auto;border-radius:12px}.mermaid-diagram{margin:30px 0;padding:24px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.65)}.mermaid-diagram>a{display:block}.mermaid-diagram img{width:100%;margin:0 auto}.mermaid-diagram figcaption{margin-top:16px;color:var(--muted);font:700 .76rem "Avenir Next",sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}hr{border:0;border-top:1px solid var(--line);margin:2.5em 0}footer{padding:34px 0 70px;color:var(--muted)}
+@media(max-width:720px){nav{position:static;align-items:flex-start;flex-direction:column}nav div{gap:10px}header{padding-top:34px}main{padding:26px 20px;border-radius:18px}h1{font-size:2.5rem}}
+</style></head><body><nav><a class="brand" href="../../../index.html">rustmatch evidence</a><div><a href="../../../../optimization-attempt-ledger.html">Optimization ledger</a><a href="../../../index.html">HTML universe</a><a href="../../../../experiments/h43-d1-result.md">Source Markdown</a></div></nav><header><div class="kicker">Retained document</div><div class="path">docs/experiments/h43-d1-result.md</div></header><main><h1>H43-D1 cohort-only cost and code-layout result</h1>
+<p><strong>Decision:</strong> rework the semantically inert cohort spine; do not authorize
+specialization yet</p>
+<p><strong>Production baseline:</strong> pre-K1
+<code>05992bf1f20e0f9384fc52fcb4a9863500e7a4da</code></p>
+<p><strong>Cohort-only candidate:</strong> E1
+<code>1356197d1581ad28f6cba822d91e2d6bd5aff04d</code></p>
+<p><strong>Review date:</strong> 2026-08-06</p>
+<h2>Question</h2>
+<p>H43-D1 asked whether the exact, semantically inert assertion-free/assertion-
+bearing cohort spine is cheap and stable enough to carry a future specialized
+backend. It measured preparation and scan time separately, retained allocation
+and RSS proxies, compared compile and artifact sizes, and distinguished the
+unchanged ordinary path, one-cohort controls, and true two-cohort inputs.</p>
+<p>This was a diagnostic gate. It did not implement or authorize specialization.</p>
+<h2>Formal window</h2>
+<p>The hash-bound Agogo window completed 720 timing receipts and 108 resource
+receipts over four fixtures, workers <code>1/4/16</code>, fifteen alternating timing
+cycles, three resource cycles, and five compile cycles. Every receipt preserved
+the expected event count and digest. The fixture activation reports proved
+one cohort for assertion-free and assertion-only controls and two cohorts for
+both mixed fixtures.</p>
+<p>The window ran with an empty Docker runtime and idle GPU. Its contamination
+record and Docker-event log are both empty. The three managed containers were
+restored exited with restart policy <code>no</code>.</p>
+<h2>Results</h2>
+<h3>Ordinary and one-cohort guards</h3>
+<p>The candidate's ordinary mode did not produce a stable scan blocker against
+the pre-K1 source. One assertion-free 16-worker aggregate was 3.51% slower,
+but only 8 of 15 pairs were slower; it did not meet the frozen 13-of-15
+directional burden. All other ordinary scan aggregates remained below 3%.</p>
+<p>One-cohort scan execution stayed within one percent of ordinary execution:</p>
+<table><thead><tr><th>Control</th><th style="text-align: right">1 worker</th><th style="text-align: right">4 workers</th><th style="text-align: right">16 workers</th></tr></thead><tbody>
+<tr><td>Assertion-free</td><td style="text-align: right">-0.36%</td><td style="text-align: right">+0.73%</td><td style="text-align: right">-0.64%</td></tr>
+<tr><td>Assertion-only</td><td style="text-align: right">+0.22%</td><td style="text-align: right">-0.77%</td><td style="text-align: right">+0.96%</td></tr>
+</tbody></table>
+<p>Positive percentages in this report are gains; negative percentages are
+regressions. These controls show that the direct one-cohort scan path itself
+is sound and that adding the cohort source did not establish a stable inactive
+ordinary scan regression.</p>
+<h3>Mixed-cohort signal</h3>
+<table><thead><tr><th>Fixture</th><th style="text-align: right">1 worker</th><th style="text-align: right">4 workers</th><th style="text-align: right">16 workers</th></tr></thead><tbody>
+<tr><td>Mixed balanced</td><td style="text-align: right"><strong>+57.58%</strong></td><td style="text-align: right">-0.48%</td><td style="text-align: right">-2.26%</td></tr>
+<tr><td>Mixed duplicate output</td><td style="text-align: right"><strong>+90.46% (10.48x)</strong></td><td style="text-align: right"><strong>-53.85%</strong></td><td style="text-align: right"><strong>-37.46%</strong></td></tr>
+</tbody></table>
+<p>The one-worker gains are real and repeat in all 15 pairs. Splitting assertion-
+free expressions lets their existing necessary-literal prefilter activate
+instead of being disabled by the assertion-bearing registrations. The
+duplicate-output fixture reduced the profiled instruction count from 118.93
+billion to 12.59 billion over 100 scans, an 89.42% reduction.</p>
+<p>The multi-worker losses are equally real and repeat in all 15 pairs. The
+current implementation gives each cohort part of the requested partitions,
+then scans the two partition groups in separate sequential thread scopes. At
+four workers it therefore runs two workers at a time; at sixteen it runs eight
+at a time.</p>
+<p>Root <code>perf stat</code> confirmation over seven independent 100-scan processes showed:</p>
+<table><thead><tr><th>Cell</th><th style="text-align: right">Ordinary task / wall</th><th style="text-align: right">Cohort task / wall</th><th style="text-align: right">Average CPUs</th><th style="text-align: right">Instructions</th><th style="text-align: right">Context switches</th></tr></thead><tbody>
+<tr><td>4 workers, ordinary</td><td style="text-align: right">493 / 166 ms</td><td style="text-align: right">-</td><td style="text-align: right">2.97</td><td style="text-align: right">15.04B</td><td style="text-align: right">110</td></tr>
+<tr><td>4 workers, cohort</td><td style="text-align: right">-</td><td style="text-align: right">489 / 255 ms</td><td style="text-align: right">1.92</td><td style="text-align: right">15.34B</td><td style="text-align: right">249</td></tr>
+<tr><td>16 workers, ordinary</td><td style="text-align: right">1,230 / 132 ms</td><td style="text-align: right">-</td><td style="text-align: right">9.30</td><td style="text-align: right">32.55B</td><td style="text-align: right">184</td></tr>
+<tr><td>16 workers, cohort</td><td style="text-align: right">-</td><td style="text-align: right">1,244 / 182 ms</td><td style="text-align: right">6.83</td><td style="text-align: right">32.72B</td><td style="text-align: right">503</td></tr>
+</tbody></table>
+<p>Task time and instructions are nearly unchanged at 4 and 16 workers, while
+wall time rises as average CPU occupancy falls. The 2.3x-2.7x context-switch
+increase is consistent with constructing two thread scopes. This establishes
+lost parallel occupancy, not an inherently slower matching algorithm, as the
+multi-worker cause.</p>
+<h3>Preparation and resources</h3>
+<p>Cohort preparation crossed the unchanged 3% veto in every stable control:</p>
+<ul>
+<li>assertion-free controls regressed 10.61%-15.32%, or about 9-13 microseconds;</li>
+<li>assertion-only controls regressed 20.78%-27.34%, or about 19-22 microseconds;</li>
+<li>mixed-balanced controls regressed 10.25%-46.00%, or about 15-30 microseconds.</li>
+</ul>
+<p>The cause is the build path calling the complete diagnostic classifier. It
+walks each HIR repeatedly to derive prefix, range, ASCII, assertion, and node-
+count facts even though cohort execution needs only one assertion-bearing bit.
+The one-cohort resource cells recorded 646 extra allocations and 8,196 extra
+requested bytes for assertion-free inputs, and 838 allocations plus 10,500
+bytes for assertion-only inputs. Peak live growth stayed around 5.4 KiB.</p>
+<p>No RSS comparison crossed the frozen 1 MiB materiality floor. The largest
+positive median delta was 421,888 bytes. Compile time changed from 0.61 to
+0.62 seconds (+1.32%). The default rlib grew 2,938 bytes (+0.13%); the
+feature-enabled diagnostic rlib grew 105,292 bytes (+4.34%). The complete
+benchmark binary grew 14,344 bytes (+0.36%), while its text section grew
+10,372 bytes (+0.36%).</p>
+<h2>Decision</h2>
+<p>H43-D1 returns <strong>rework</strong>. H43-A1 remains blocked.</p>
+<p>The unchanged policy correctly prevents authorization: stable preparation
+regressions exceed 3%, and the true mixed-output guards regress 53.85% and
+37.46% at 4 and 16 workers. Those failures cannot be waived by the 10.48x
+one-worker gain.</p>
+<p>The result is not a rejection of cohorting. It exposes a high-value exact
+mechanism and two narrow plumbing defects with direct evidence. H43-D1-R1 may
+attempt only these causal recoveries:</p>
+<ol>
+<li>Replace the full diagnostic classifier in the execution build path with a
+minimal, allocation-bounded assertion split. Diagnostic reporting remains
+separate and complete.</li>
+<li>Keep sequential cohort execution when the caller requests one worker, but
+for <code>workers &gt;= 2</code> prepare per-cohort candidate plans and execute all cohort
+partitions in one thread scope so total active partitions can reach the
+requested worker count.</li>
+<li>Preserve global IDs, exact event multiplicity, complete buffering before
+callback delivery, worker-panic/error atomicity, cache-budget conservation,
+and deterministic cohort assignment.</li>
+<li>Rerun E1 and the unchanged D1 matrix. Only a clean D1-R1 result may
+authorize H43-A1.</li>
+</ol>
+<p>No backend specialization, eligibility tuning, threshold movement, fixture
+change, or guardrail exception is authorized by this result.</p>
+<h2>Retained evidence</h2>
+<ul>
+<li>Formal plan SHA-256:
+<code>2aeac836d20314a9f347b067a546bf8832f4f09c1d2d21f8cc1ea27b6dd37558</code></li>
+<li>Formal summary SHA-256:
+<code>bf7733c62a504e64f867873c3a0f75169632c7cc5aa09565ef3b512810c731f1</code></li>
+<li>Window-state SHA-256:
+<code>1ed9cf9b7074e912bb56a75fa1824ae7961551f6447a68079ee1e811fb490444</code></li>
+<li>Fixture manifest SHA-256:
+<code>6dc876ca75a1bfea582364357cfd4289076b9866c6a21341f8143aaa8401b625</code></li>
+<li>Service snapshot SHA-256:
+<code>eef0fdc5d42f27d60549167068ca4d4fe1a28f718c0b1cb83bdb50365a6c25ab</code></li>
+<li>Complete raw evidence archive SHA-256:
+<code>643aa43c0556582d13e39602b6ede4c07c87211da5c45e8881aed6fdb12d8082</code></li>
+<li>External archive:
+<code>/Users/rmz/.codex/handoffs/rmatch-performance-measurements/h43-d1/h43-d1-formal-evidence.tar.gz</code></li>
+<li>Compact retained summary and profiles:
+<code>docs/experiments/h43-d1/</code></li>
+</ul>
+</main><footer>Generated from <code>docs/experiments/h43-d1-result.md</code> by <code>cargo xtask optimization-ledger</code>.</footer><script>
+const seen=new Map();
+for(const heading of document.querySelectorAll("main h1,main h2,main h3,main h4")){
+  const base=heading.textContent.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"section";
+  const count=seen.get(base)||0; seen.set(base,count+1);
+  heading.id=count?`${base}-${count}`:base;
+  const anchor=document.createElement("a"); anchor.className="anchor"; anchor.href=`#${heading.id}`; anchor.textContent="#";
+  anchor.setAttribute("aria-label",`Link to ${heading.textContent}`); heading.append(anchor);
+}
+</script></body></html>

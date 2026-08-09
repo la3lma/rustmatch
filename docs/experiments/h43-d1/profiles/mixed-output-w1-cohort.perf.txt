@@ -1,0 +1,18 @@
+# started on Thu Aug  6 13:07:28 2026
+
+
+ Performance counter stats for 'taskset -c 0-15 env RUSTMATCH_BENCH_REVISION=1356197d1581ad28f6cba822d91e2d6bd5aff04d RUSTMATCH_BENCH_RUNNER=H43-D1 diagnostic perf /home/rmz/h43-d1-20260806T105759Z/formal-run/build/candidate-target/release/rustmatch-bench harness-run /home/rmz/h43-d1-20260806T105759Z/formal-run/fixtures/mixed-output.tsv /home/rmz/h43-d1-20260806T105759Z/formal-run/fixtures/mixed-output.txt 100 2 cohort-1' (7 runs):
+
+            377.37 msec task-clock                                                              ( +-  0.18% )
+        2114211658      cycles                                                                  ( +-  0.13% )  (83.22%)
+       12589566779      instructions                                                            ( +-  0.02% )  (83.21%)
+        2428226716      branches                                                                ( +-  0.02% )  (83.22%)
+           1966932      branch-misses                                                           ( +-  0.88% )  (83.48%)
+           7669946      cache-references                                                        ( +-  0.25% )  (83.48%)
+            269169      cache-misses                                                            ( +-  4.69% )  (83.38%)
+                 4      context-switches                                                        ( +- 26.00% )
+                 1      cpu-migrations                                                          ( +- 52.16% )
+              1586      page-faults                                                             ( +-  0.07% )
+
+       0.377778552 +- 0.000701289 seconds time elapsed  ( +-  0.19% )
+

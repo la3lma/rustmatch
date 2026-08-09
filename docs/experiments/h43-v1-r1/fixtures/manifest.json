@@ -1,0 +1,27 @@
+{
+  "evidence_id": "H43-V1-R1-SCREEN-fixtures",
+  "fixtures": [
+    {
+      "corpus_bytes": 524288,
+      "corpus_path": "mixed-balanced.txt",
+      "corpus_sha256": "cb8c5e473b7932a92bc7101ace66f0fc107535dacca8e3987e86bbfffd568f6f",
+      "expected_cohorts": 2,
+      "id": "mixed-balanced",
+      "pattern_count": 64,
+      "pattern_path": "mixed-balanced.tsv",
+      "pattern_sha256": "0de231dad25d162754f2893572027eb0c63e0f6a9dd731488e4dc5cdf9358a6b"
+    },
+    {
+      "corpus_bytes": 16384,
+      "corpus_path": "mixed-output.txt",
+      "corpus_sha256": "58963f9f5bf9c03f0cc64064880e1b605564ea56681dc7eac9c32741406c7fb8",
+      "expected_cohorts": 2,
+      "id": "mixed-output",
+      "pattern_count": 16,
+      "pattern_path": "mixed-output.tsv",
+      "pattern_sha256": "fffa4579593bb419cc5f230e1936923f15eaaa2a7c13ef0b31241e353a50a03e"
+    }
+  ],
+  "plan_sha256": "d2ea60d03c3d2986c0abd66707e9610b7058fb6f7515ee437ed7388f3cedeb52",
+  "schema_version": 1
+}

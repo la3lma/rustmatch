@@ -1,0 +1,108 @@
+{
+  "observed_utc": "2026-08-06T21:49:55Z",
+  "label": "build-start",
+  "load": "0.00 0.05 0.02 1/886 871223",
+  "top": "    PID COMMAND         %CPU %MEM\n 870647 systemd          0.9  0.0\n   7820 containerd       0.9  0.0\n 870675 user-session-he  0.6  0.0\n 870695 wireplumber      0.2  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0\n    981 systemd-oomd     0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:00Z",
+  "label": "mixed-balanced-c01-ordinary",
+  "load": "0.64 0.18 0.07 1/886 872129",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.6  0.0\n 870675 user-session-he  0.4  0.0\n 870695 wireplumber      0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0\n    981 systemd-oomd     0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:01Z",
+  "label": "mixed-balanced-c01-shared",
+  "load": "0.64 0.18 0.07 2/886 872183",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.6  0.0\n 870675 user-session-he  0.4  0.0\n 870695 wireplumber      0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0\n    981 systemd-oomd     0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:01Z",
+  "label": "mixed-balanced-c02-shared",
+  "load": "0.64 0.18 0.07 1/886 872197",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.5  0.0\n 870675 user-session-he  0.3  0.0\n 871037 bash             0.1  0.0\n 870695 wireplumber      0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:02Z",
+  "label": "mixed-balanced-c02-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872231",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.5  0.0\n 870675 user-session-he  0.3  0.0\n 871037 bash             0.1  0.0\n 870695 wireplumber      0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:03Z",
+  "label": "mixed-balanced-c03-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872288",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.5  0.0\n 870675 user-session-he  0.3  0.0\n 871037 bash             0.1  0.0\n 870695 wireplumber      0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:04Z",
+  "label": "mixed-balanced-c03-shared",
+  "load": "0.67 0.20 0.07 1/883 872343",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.5  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871037 bash             0.1  0.0\n  10302 dockerd          0.0  0.0\n   8237 gnome-shell      0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:04Z",
+  "label": "mixed-output-c01-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872381",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.1  0.0\n 871037 bash             0.1  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:04Z",
+  "label": "mixed-output-c01-shared",
+  "load": "0.67 0.20 0.07 1/883 872413",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.1  0.0\n 871037 bash             0.1  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:04Z",
+  "label": "mixed-output-c02-shared",
+  "load": "0.67 0.20 0.07 2/883 872427",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.1  0.0\n 871037 bash             0.1  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:04Z",
+  "label": "mixed-output-c02-ordinary",
+  "load": "0.67 0.20 0.07 2/883 872438",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.1  0.0\n 871037 bash             0.1  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "mixed-output-c03-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872452",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.1  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "mixed-output-c03-shared",
+  "load": "0.67 0.20 0.07 1/883 872484",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "resource-mixed-balanced-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872497",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "resource-mixed-balanced-shared",
+  "load": "0.67 0.20 0.07 1/883 872507",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "resource-mixed-output-ordinary",
+  "load": "0.67 0.20 0.07 1/883 872517",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "resource-mixed-output-shared",
+  "load": "0.67 0.20 0.07 1/883 872527",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n 871037 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}
+{
+  "observed_utc": "2026-08-06T21:50:05Z",
+  "label": "analyze",
+  "load": "0.67 0.20 0.07 1/883 872537",
+  "top": "    PID COMMAND         %CPU %MEM\n   7820 containerd       0.9  0.0\n 870647 systemd          0.4  0.0\n 870675 user-session-he  0.3  0.0\n 871037 bash             0.1  0.0\n 870695 wireplumber      0.1  0.0\n 871174 bash             0.0  0.0\n  10302 dockerd          0.0  0.0"
+}

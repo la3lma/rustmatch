@@ -8,6 +8,9 @@ repository.workspace = true
 description = "Unpublished correctness-gated benchmark adapter for rustmatch"
 publish = false
 
+[features]
+experimental-showcase = ["rustmatch/unstable-assertion-prefix-v1"]
+
 [dependencies]
 regex = "=1.13.1"
 rustmatch = { path = "../rustmatch", features = ["benchmark-internals"] }

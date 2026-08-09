@@ -71,6 +71,49 @@ pub(crate) struct PatternDatabase {
     uses_assertions: bool,
 }
 
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct PatternDatabaseView {
+    pub(crate) root: StateId,
+    pub(crate) uses_assertions: bool,
+    pub(crate) pattern_count: usize,
+    assertion_ascii_five: [u8; 5],
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+impl PatternDatabaseView {
+    pub(crate) fn assertion_ascii_five(&self) -> Option<[u8; 5]> {
+        (self.assertion_ascii_five != [0; 5]).then_some(self.assertion_ascii_five)
+    }
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+#[derive(Debug)]
+pub(crate) struct SharedCohortCompilation {
+    database: PatternDatabase,
+    assertion_free: PatternDatabaseView,
+    assertion_bearing: PatternDatabaseView,
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+impl SharedCohortCompilation {
+    pub(crate) fn into_parts(self) -> (PatternDatabase, PatternDatabaseView, PatternDatabaseView) {
+        (self.database, self.assertion_free, self.assertion_bearing)
+    }
+}
+
 impl PatternDatabase {
     pub(crate) const fn root(&self) -> StateId {
         self.root
@@ -123,6 +166,21 @@ impl PatternDatabase {
                     .len()
                     .saturating_mul(size_of::<PatternId>()),
             )
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) const fn edge_count(&self) -> usize {
+        self.edges.len()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) const fn predicate_count(&self) -> usize {
+        self.predicates.len()
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    pub(crate) const fn terminal_count(&self) -> usize {
+        self.terminal_ordinals.len()
     }
 
     #[inline]
@@ -201,6 +259,148 @@ pub(crate) fn compile(patterns: &[HirPattern]) -> Result<PatternDatabase, Error>
         pattern_ids: pattern_ids.into_boxed_slice(),
         uses_assertions,
     })
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+pub(crate) fn compile_shared_cohorts(
+    patterns: &[HirPattern],
+) -> Result<SharedCohortCompilation, Error> {
+    let mut pending_edges: Vec<Vec<Edge>> = vec![Vec::new(), Vec::new()];
+    let mut pending_terminals: Vec<Vec<usize>> = vec![Vec::new(), Vec::new()];
+    let assertion_free_root = StateId::for_index(0)?;
+    let assertion_bearing_root = StateId::for_index(1)?;
+    let mut pattern_ids = Vec::with_capacity(patterns.len());
+    let mut predicates = Vec::new();
+    let mut predicate_ids = HashMap::new();
+    let mut assertion_free_pattern_count = 0_usize;
+    let mut assertion_bearing_pattern_count = 0_usize;
+    let mut assertion_ascii_five = None;
+    let mut assertion_prefix_possible = true;
+
+    for (ordinal, pattern) in patterns.iter().enumerate() {
+        let uses_assertions = pattern.expression().uses_assertions();
+        let cohort_root = if uses_assertions {
+            assertion_bearing_pattern_count += 1;
+            if assertion_prefix_possible {
+                match strict_assertion_ascii_five(pattern.expression()) {
+                    Some(prefix)
+                        if assertion_ascii_five.is_none_or(|expected| expected == prefix) =>
+                    {
+                        assertion_ascii_five = Some(prefix);
+                    }
+                    _ => {
+                        assertion_prefix_possible = false;
+                        assertion_ascii_five = None;
+                    }
+                }
+            }
+            assertion_bearing_root
+        } else {
+            assertion_free_pattern_count += 1;
+            assertion_free_root
+        };
+        let first = add_state(&mut pending_edges, &mut pending_terminals)?;
+        let terminal = add_state(&mut pending_edges, &mut pending_terminals)?;
+        pending_edges[cohort_root.index()].push(Edge {
+            kind: EdgeKind::Epsilon,
+            target: first,
+        });
+        compile_expression(
+            pattern.expression(),
+            first,
+            terminal,
+            &mut pending_edges,
+            &mut pending_terminals,
+            &mut predicates,
+            &mut predicate_ids,
+        )?;
+        pending_terminals[terminal.index()].push(ordinal);
+        pattern_ids.push(pattern.pattern_id());
+    }
+
+    let mut states = Vec::with_capacity(pending_edges.len());
+    let edge_count = pending_edges.iter().map(Vec::len).sum();
+    let terminal_count = pending_terminals.iter().map(Vec::len).sum();
+    let mut edges = Vec::with_capacity(edge_count);
+    let mut terminal_ordinals = Vec::with_capacity(terminal_count);
+    for (state_edges, state_terminals) in pending_edges.into_iter().zip(pending_terminals) {
+        let edge_start = edges.len();
+        let edge_len = state_edges.len();
+        edges.extend(state_edges);
+        let terminal_start = terminal_ordinals.len();
+        let terminal_len = state_terminals.len();
+        terminal_ordinals.extend(state_terminals);
+        states.push(State {
+            edge_start,
+            edge_len,
+            terminal_start,
+            terminal_len,
+        });
+    }
+
+    let database = PatternDatabase {
+        root: assertion_free_root,
+        states: states.into_boxed_slice(),
+        edges: edges.into_boxed_slice(),
+        predicates: predicates.into_boxed_slice(),
+        terminal_ordinals: terminal_ordinals.into_boxed_slice(),
+        pattern_ids: pattern_ids.into_boxed_slice(),
+        uses_assertions: false,
+    };
+    Ok(SharedCohortCompilation {
+        database,
+        assertion_free: PatternDatabaseView {
+            root: assertion_free_root,
+            uses_assertions: false,
+            pattern_count: assertion_free_pattern_count,
+            assertion_ascii_five: [0; 5],
+        },
+        assertion_bearing: PatternDatabaseView {
+            root: assertion_bearing_root,
+            uses_assertions: true,
+            pattern_count: assertion_bearing_pattern_count,
+            assertion_ascii_five: assertion_ascii_five
+                .filter(|_| assertion_bearing_pattern_count >= 256)
+                .unwrap_or([0; 5]),
+        },
+    })
+}
+
+#[cfg(any(
+    feature = "benchmark-internals",
+    feature = "unstable-assertion-prefix-v1"
+))]
+fn strict_assertion_ascii_five(expression: &Hir) -> Option<[u8; 5]> {
+    let Hir::Sequence(expressions) = expression else {
+        return None;
+    };
+    let mut prefix = [0_u8; 5];
+    let mut symbols = 0_usize;
+    let mut saw_assertion = false;
+    for expression in expressions {
+        if symbols == 0 {
+            match expression {
+                Hir::Assertion(_) => {
+                    saw_assertion = true;
+                    continue;
+                }
+                Hir::Epsilon => continue,
+                _ => {}
+            }
+        }
+        let Hir::Symbol(symbol @ 1..128) = expression else {
+            return None;
+        };
+        prefix[symbols] = u8::try_from(*symbol).ok()?;
+        symbols += 1;
+        if symbols == prefix.len() {
+            return saw_assertion.then_some(prefix);
+        }
+    }
+    None
 }
 
 fn compile_expression(
@@ -398,6 +598,9 @@ fn add_state(
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "benchmark-internals")]
+    use std::collections::BTreeSet;
+
     use super::{EdgeKind, compile};
     use crate::PatternId;
     use crate::parser::parse;
@@ -481,6 +684,65 @@ mod tests {
         assert!(retained_bytes >= std::mem::size_of_val(&database));
         assert!(retained_bytes > database.state_count() * std::mem::size_of::<super::State>());
         Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    #[test]
+    fn shared_cohort_roots_reuse_every_compiled_pattern_body() -> Result<(), crate::Error> {
+        // Prepare
+        let patterns = [
+            parse(PatternId::new(10), "cat")?,
+            parse(PatternId::new(20), "^dog")?,
+            parse(PatternId::new(30), "[a-z]+")?,
+            parse(PatternId::new(40), "fox$")?,
+        ];
+        let ordinary = compile(&patterns)?;
+
+        // Test
+        let shared = super::compile_shared_cohorts(&patterns)?;
+        let (database, assertion_free, assertion_bearing) = shared.into_parts();
+        let free_ordinals = reachable_terminals(&database, assertion_free.root);
+        let bearing_ordinals = reachable_terminals(&database, assertion_bearing.root);
+
+        // Assert
+        assert_eq!(database.state_count(), ordinary.state_count() + 1);
+        assert_eq!(database.edge_count(), ordinary.edge_count());
+        assert_eq!(database.predicate_count(), ordinary.predicate_count());
+        assert_eq!(database.terminal_count(), ordinary.terminal_count());
+        assert_eq!(database.pattern_count(), ordinary.pattern_count());
+        assert_eq!(assertion_free.pattern_count, 2);
+        assert_eq!(assertion_bearing.pattern_count, 2);
+        assert!(!assertion_free.uses_assertions);
+        assert!(assertion_bearing.uses_assertions);
+        assert_eq!(free_ordinals, BTreeSet::from([0, 2]));
+        assert_eq!(bearing_ordinals, BTreeSet::from([1, 3]));
+        assert!(free_ordinals.is_disjoint(&bearing_ordinals));
+        assert_eq!(
+            free_ordinals
+                .union(&bearing_ordinals)
+                .copied()
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from([0, 1, 2, 3])
+        );
+        Ok(())
+    }
+
+    #[cfg(feature = "benchmark-internals")]
+    fn reachable_terminals(
+        database: &super::PatternDatabase,
+        root: super::StateId,
+    ) -> BTreeSet<usize> {
+        let mut visited = vec![false; database.state_count()];
+        let mut stack = vec![root];
+        let mut terminals = BTreeSet::new();
+        while let Some(state) = stack.pop() {
+            if std::mem::replace(&mut visited[state.index()], true) {
+                continue;
+            }
+            terminals.extend(database.terminals_at(state));
+            stack.extend(database.edges_from(state).iter().map(|edge| edge.target));
+        }
+        terminals
     }
 
     #[test]

@@ -1,0 +1,8 @@
+10	abc
+20	^abc$
+30	(?:far|foo)
+40	\bcat
+50	abc
+60	foo$
+70	a+
+80	far\B
